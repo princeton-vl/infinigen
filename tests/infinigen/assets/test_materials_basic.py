@@ -37,9 +37,9 @@ def check_material_runs(pathspec):
     assert isinstance(material_inst, bpy.types.Material)
 
 
-@pytest.mark.nature
 @pytest.mark.parametrize(
-    "pathspec", load_txt_list("tests/assets/list_materials_deprecated_interface.txt")
+    "pathspec",
+    load_txt_list("tests/infinigen/assets/list_materials_deprecated_interface.txt"),
 )
 def test_material_runs_deprecated_interface(pathspec, **kwargs):
     setup_gin(
@@ -49,7 +49,9 @@ def test_material_runs_deprecated_interface(pathspec, **kwargs):
     check_material_runs_deprecated_interface(pathspec)
 
 
-@pytest.mark.parametrize("pathspec", load_txt_list("tests/assets/list_materials.txt"))
+@pytest.mark.parametrize(
+    "pathspec", load_txt_list("tests/infinigen/assets/list_materials.txt")
+)
 def test_material_runs(pathspec, **kwargs):
     setup_gin(
         ["infinigen_examples/configs_indoor", "infinigen_examples/configs_nature"],

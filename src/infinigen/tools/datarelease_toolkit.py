@@ -14,7 +14,7 @@ from multiprocessing import Pool
 from pathlib import Path
 
 import cv2
-import imageio
+import imageio.v2 as imageio
 import numpy as np
 from tqdm import tqdm
 

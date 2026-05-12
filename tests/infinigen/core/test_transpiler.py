@@ -47,9 +47,9 @@ def test_disabled_input_socket():
     assert result is None, "Second input should be skipped when operation is ABSOLUTE"
 
     inputs_dict, code, targets = create_inputs_dict(node_tree, math_node, memo)
-    assert (
-        len(inputs_dict) == 1
-    ), "Only one input should be in the dict for ABSOLUTE operation"
+    assert len(inputs_dict) == 1, (
+        "Only one input should be in the dict for ABSOLUTE operation"
+    )
 
 
 def test_default_value_disabled_socket():
@@ -63,6 +63,6 @@ def test_default_value_disabled_socket():
     result = process_single_input(
         node_tree, math_node, math_node.inputs[1], "Value", memo={}
     )
-    assert (
-        result is None
-    ), "Disabled socket should be skipped even if it has a default value"
+    assert result is None, (
+        "Disabled socket should be skipped even if it has a default value"
+    )

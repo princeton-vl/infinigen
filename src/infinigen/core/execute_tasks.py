@@ -28,7 +28,7 @@ from infinigen.core.util import exporting
 from infinigen.core.util.logging import Timer, create_text_file, save_polycounts
 from infinigen.core.util.math import int_hash
 from infinigen.core.util.organization import Task
-from infinigen.terrain.core import Terrain
+from infinigen.terrain import Terrain
 from infinigen.tools.export import export_scene, triangulate_meshes
 
 logger = logging.getLogger(__name__)

@@ -1,0 +1,69 @@
+
+name: Lint & Test (Renderbot)
+
+on:
+  workflow_dispatch:
+  # only triggered manually for now
+  # pull_request:
+
+env:
+  INFINIGEN_INSTALL_TERRAIN: False
+  INFINIGEN_INSTALL_CUSTOMGT: False
+
+jobs:
+
+  lint:
+    runs-on: [self-hosted, renderbot]
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Update submodules
+        run: |
+          git submodule update --init --recursive
+
+      - name: Lint with ruff
+        run: |
+          # stop the build if there are Python syntax errors or undefined names
+          uvx ruff check --output-format=github --select=E9,F63,F7,F82 .
+          # default set of ruff rules with GitHub Annotations
+          uvx ruff check --output-format=github .
+
+      #- name: Check for copyright statements
+      #  run: |
+      #    uvx ruff check --output-format=github --preview --select CPY001 .
+
+  test:
+    runs-on: [self-hosted, renderbot]
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Set up SSH for procfunc
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.PROCFUNC_DEPLOY_KEY }}
+
+      - name: Update submodules
+        run: |
+          git submodule update --init --recursive
+
+      - name: Install infinigen & dependencies
+        run: |
+          uv venv
+          uv pip install -e ".[dev,vis]"
+
+      - name: Test with pytest (cpu)
+        run: |
+          source .venv/bin/activate
+          export CUDA_VISIBLE_DEVICES="-1" # hide cuda devices for these tests
+          pytest tests/infinigen_v2 -k 'not skip_for_ci and not render_gpu' -n auto
+      
+      - name: Test with pytest (gpu)
+        run: |
+          source .venv/bin/activate
+          pytest tests/infinigen_v2 -k 'not skip_for_ci and render_gpu' -n 1

@@ -12,9 +12,9 @@ from .utils import nodegroup_scalar_positive_modulo, nodegroup_u_v_recenter
 
 
 @node_utils.to_nodegroup(
-    "nodegroup_spanish_bond", singleton=False, type="ShaderNodeTree"
+    "nodegroup_spanish_bound", singleton=False, type="ShaderNodeTree"
 )
-def nodegroup_spanish_bond(nw: NodeWrangler):
+def nodegroup_spanish_bound(nw: NodeWrangler):
     # Code generated using version 2.6.5 of the node_transpiler
 
     group_input = nw.new_node(

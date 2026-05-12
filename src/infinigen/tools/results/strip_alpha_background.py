@@ -8,7 +8,7 @@ import argparse
 import logging
 from pathlib import Path
 
-import imageio
+import imageio.v2 as imageio
 
 logger = logging.getLogger(__name__)
 

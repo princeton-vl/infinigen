@@ -34,7 +34,7 @@ from matplotlib import cm
 sys.path.append(str(Path(__file__).parent.parent))
 import argparse
 
-import imageio
+import imageio.v2 as imageio
 from suffixes import parse_suffix
 
 

@@ -7,7 +7,7 @@ import json
 import logging
 from pathlib import Path
 
-import imageio
+import imageio.v2 as imageio
 import numpy as np
 
 from .suffixes import parse_suffix

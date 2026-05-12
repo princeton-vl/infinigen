@@ -70,7 +70,7 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger(__name__)
-OBJECTS_PATH = infinigen.repo_root() / "infinigen/assets/objects"
+OBJECTS_PATH = infinigen.module_parent_path() / "infinigen/assets/objects"
 assert OBJECTS_PATH.exists(), OBJECTS_PATH
 
 
@@ -81,18 +81,22 @@ def unified_asset_import(name):
         pass
 
     """Unified import function using test lists."""
-    test_lists = {
-        "scatter": "tests/assets/list_scatters.txt",
-        "material": "tests/assets/list_materials.txt",
-        "material_deprec": "tests/assets/list_materials_deprecated_interface.txt",
-        "object": "tests/assets/list_indoor_meshes.txt",
-    }
+    test_lists = [
+        ("scatter", "tests/infinigen/assets/list_scatters.txt"),
+        ("material", "tests/infinigen/assets/list_materials.txt"),
+        (
+            "material_deprec",
+            "tests/infinigen/assets/list_materials_deprecated_interface.txt",
+        ),
+        ("object", "tests/infinigen/assets/list_nature_meshes.txt"),
+        ("object", "tests/infinigen/assets/list_indoor_meshes.txt"),
+    ]
 
     # Create single list with (asset_path, asset_type) tuples
     all_assets = [
         (asset, asset_type)
-        for asset_type, path in test_lists.items()
-        for asset in load_txt_list(infinigen.repo_root() / path)
+        for asset_type, path in test_lists
+        for asset in load_txt_list(infinigen.module_parent_path().parent / path)
     ]
 
     # Check exact match first
@@ -584,7 +588,7 @@ def snake_case(s):
     ).lower()
 
 
-def make_args():
+def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-o", "--output_folder", type=Path, default=None)
     parser.add_argument(
@@ -748,6 +752,11 @@ def make_args():
         help="List of gin overrides to apply",
     )
 
+    return parser
+
+
+def make_args():
+    parser = get_parser()
     return init.parse_args_blender(parser)
 
 

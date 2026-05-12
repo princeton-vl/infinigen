@@ -7,7 +7,7 @@
 
 """
 # INSTRUCTIONS FOR USE IN BLENDER
-# Create a blender file at repo_root/worldgen/dev_scene.blend
+# Create a blender file at module_parent_path/worldgen/dev_scene.blend
 # Click the 'Scripting' Tab, then + to make a new empty script
 # Put python code in quotations below into that script, and run it.
 

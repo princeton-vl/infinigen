@@ -1,0 +1,2 @@
+class RejectedScene(Exception):
+    pass

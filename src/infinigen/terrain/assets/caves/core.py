@@ -33,9 +33,9 @@ def select_vert(idx: int):
     bpy.ops.mesh.select_all(action="DESELECT")
     bpy.ops.object.mode_set(mode="OBJECT")
     # assert False, [len(bpy.context.active_object.data.vertices), len(get_all_verts())]
-    assert (
-        idx < len(obj.data.vertices)
-    ), f"There are only {len(obj.data.vertices)} {len(get_all_verts())} verts, cannot select {idx}"
+    assert idx < len(obj.data.vertices), (
+        f"There are only {len(obj.data.vertices)} {len(get_all_verts())} verts, cannot select {idx}"
+    )
     obj.data.vertices[idx].select = True
     bpy.ops.object.mode_set(mode="EDIT")
 

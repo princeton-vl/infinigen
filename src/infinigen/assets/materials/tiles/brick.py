@@ -96,8 +96,8 @@ def nodegroup_positive_modulo(nw: NodeWrangler):
     )
 
 
-@node_utils.to_nodegroup("nodegroup_birck", singleton=False, type="ShaderNodeTree")
-def nodegroup_birck(nw: NodeWrangler):
+@node_utils.to_nodegroup("nodegroup_brick", singleton=False, type="ShaderNodeTree")
+def nodegroup_brick(nw: NodeWrangler):
     # Code generated using version 2.6.5 of the node_transpiler
 
     group_input = nw.new_node(

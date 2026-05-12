@@ -30,7 +30,9 @@ import infinigen.core.constraints.evaluator.node_impl.symmetry as symmetry
 from infinigen.core import tagging
 from infinigen.core import tags as t
 from infinigen.core.constraints.example_solver import state_def
-from infinigen.core.constraints.example_solver.geometry.parse_scene import add_to_scene
+from infinigen.core.constraints.example_solver.geometry.parse_scene import (
+    add_to_scene,
+)
 from infinigen.core.util import blender as butil
 from infinigen.core.util.logging import lazydebug
 

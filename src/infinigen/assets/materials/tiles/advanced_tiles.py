@@ -17,25 +17,25 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util.color import hsv2rgba
 
 from .basket_weave import nodegroup_basket_weave
-from .brick import nodegroup_birck
+from .brick import nodegroup_brick
 from .cheveron import nodegroup_cheveron
 from .diamond import nodegroup_diamond
 from .herringbone import nodegroup_herringbone
 from .hexagon import nodegroup_hexagon
 from .shell import nodegroup_shell
-from .spanish_bound import nodegroup_spanish_bond
+from .spanish_bound import nodegroup_spanish_bound
 from .star import nodegroup_star
 from .triangle import nodegroup_triangle
 
 tile_pattern_dict = {
     "basket_weave": nodegroup_basket_weave,
-    "brick": nodegroup_birck,
+    "brick": nodegroup_brick,
     "cheveron": nodegroup_cheveron,
     "diamond": nodegroup_diamond,
     "herringbone": nodegroup_herringbone,
     "hexagon": nodegroup_hexagon,
     "shell": nodegroup_shell,
-    "spanish_bound": nodegroup_spanish_bond,
+    "spanish_bound": nodegroup_spanish_bound,
     "star": nodegroup_star,
     "triangle": nodegroup_triangle,
 }
@@ -259,9 +259,9 @@ def apply(obj, selection=None, vertical=False, **kwargs):
     name = shader_func.__name__
 
     low, high = sorted(uniform(0.1, 0.7, 2))
-    if shader_func is ceramic.shader_ceramic:
+    if shader_func is ceramic.ceramic.shader_ceramic:
         shader_func = partial(
-            ceramic.shader_ceramic,
+            ceramic.ceramic.shader_ceramic,
             roughness_min=low,
             roughness_max=high,
         )

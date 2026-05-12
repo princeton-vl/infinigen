@@ -147,7 +147,7 @@ def apply_gin_configs(
     if not isinstance(config_folders, list):
         config_folders = [config_folders]
 
-    root = infinigen.repo_root()
+    root = infinigen.module_parent_path()
 
     def find_config(p):
         p = Path(p)
@@ -188,6 +188,8 @@ def apply_gin_configs(
             raise ValueError(
                 f"At most one config file must be loaded from {mutex_folder} to avoid unexpected behavior, instead got {both=}"
             )
+
+    gin.add_config_file_search_path(root / "infinigen_examples/")
 
     with LogLevel(logger=logging.getLogger(), level=logging.WARNING):
         gin.parse_config_files_and_bindings(
@@ -237,7 +239,6 @@ def configure_render_cycles(
         bpy.context.scene.render.use_persistent_data = True
 
 
-@gin.configurable
 def configure_cycles_devices(use_gpu=True):
     if use_gpu is False:
         logger.info(f"Job will use CPU-only due to {use_gpu=}")

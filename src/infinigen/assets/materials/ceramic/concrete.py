@@ -13,7 +13,7 @@ from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
 
-@node_utils.to_nodegroup("nodegroup_crack", singleton=False, type="ShaderNodeTree")
+@node_utils.to_nodegroup("nodegroup_crack", singleton=True, type="ShaderNodeTree")
 def nodegroup_crack(nw: NodeWrangler):
     # Code generated using version 2.6.4 of the node_transpiler
 
@@ -176,7 +176,7 @@ def nodegroup_crack(nw: NodeWrangler):
     )
 
 
-@node_utils.to_nodegroup("nodegroup_concrete", singleton=False, type="ShaderNodeTree")
+@node_utils.to_nodegroup("nodegroup_concrete", singleton=True, type="ShaderNodeTree")
 def nodegroup_concrete(nw: NodeWrangler):
     # Code generated using version 2.6.4 of the node_transpiler
 

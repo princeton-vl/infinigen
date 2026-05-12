@@ -1,5 +1,5 @@
-include 'infinigen_examples/configs_nature/base.gin'
-include 'infinigen_examples/configs_nature/performance/fast_terrain_assets.gin'
+include 'configs_nature/base.gin'
+include 'configs_nature/performance/fast_terrain_assets.gin'
 
 # overriden in fast_solve.gin if present
 compose_indoors.solve_steps_large = 300

@@ -19,7 +19,7 @@ from setuptools import Extension, setup
 cwd = Path(__file__).parent
 
 str_true = "True"
-MINIMAL_INSTALL = os.environ.get("INFINIGEN_MINIMAL_INSTALL") == str_true
+MINIMAL_INSTALL = os.environ.get("INFINIGEN_MINIMAL_INSTALL", str_true) == str_true
 BUILD_TERRAIN = os.environ.get("INFINIGEN_INSTALL_TERRAIN", str_true) == str_true
 BUILD_OPENGL = os.environ.get("INFINIGEN_INSTALL_CUSTOMGT", "False") == str_true
 BUILD_BNURBS = os.environ.get("INFINIGEN_INSTALL_BNURBS", "False") == str_true
@@ -62,7 +62,7 @@ if not MINIMAL_INSTALL:
         cython_extensions.append(
             Extension(
                 name="bnurbs",
-                sources=["infinigen/assets/utils/geometry/cpp_utils/bnurbs.pyx"],
+                sources=["src/infinigen/assets/utils/geometry/cpp_utils/bnurbs.pyx"],
                 include_dirs=[numpy.get_include()],
             )
         )
@@ -71,7 +71,7 @@ if not MINIMAL_INSTALL:
             Extension(
                 name="infinigen.terrain.marching_cubes",
                 sources=[
-                    "infinigen/terrain/marching_cubes/_marching_cubes_lewiner_cy.pyx"
+                    "src/infinigen/terrain/marching_cubes/_marching_cubes_lewiner_cy.pyx"
                 ],
                 include_dirs=[numpy.get_include()],
             )

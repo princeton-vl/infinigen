@@ -53,7 +53,7 @@ def run_erosion(
     tile_size = float(np.loadtxt(f"{folder}/{AssetFile.TileSize}.txt"))
 
     soil_config_path = (
-        infinigen.repo_root()
+        infinigen.module_parent_path()
         / "infinigen/terrain/source/cpu/soil_machine/soil/sand.soil"
     )
 

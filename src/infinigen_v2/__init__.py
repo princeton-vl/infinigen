@@ -4,10 +4,27 @@
 # of this source tree.
 
 import logging
-from pathlib import Path
 
-__version__ = "1.17.1"
+import bpy
+
+from .util.import_utils import module_path
+
+__version__ = "2.0.1-alpha"
 
 
-def repo_root():
-    return Path(__file__).parent.parent
+def clear_default_scene():
+    for name in ["Camera", "Light", "Cube"]:
+        if o := bpy.data.objects.get(name):
+            bpy.data.objects.remove(o)
+    if c := bpy.data.collections.get("Collection"):
+        bpy.data.collections.remove(c)
+
+
+# clear_default_scene()
+
+
+__all__ = [
+    "context",
+    "module_path",
+    "__version__",
+]

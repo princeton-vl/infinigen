@@ -34,9 +34,9 @@ def smooth(arr, k):
 
 def read(input_heightmap_path):
     input_heightmap_path = str(input_heightmap_path)
-    assert os.path.exists(
-        input_heightmap_path
-    ), f"{input_heightmap_path} does not exists"
+    assert os.path.exists(input_heightmap_path), (
+        f"{input_heightmap_path} does not exists"
+    )
     heightmap = (
         cv2.imread(input_heightmap_path, cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH)
         .copy()

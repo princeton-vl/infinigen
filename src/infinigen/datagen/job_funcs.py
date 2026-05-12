@@ -27,7 +27,7 @@ from . import states
 logger = logging.getLogger(__name__)
 
 UPLOAD_UTIL_PATH = (
-    infinigen.repo_root() / "infinigen" / "datagen" / "util" / "upload_util.py"
+    infinigen.module_parent_path() / "infinigen" / "datagen" / "util" / "upload_util.py"
 )
 assert UPLOAD_UTIL_PATH.exists(), f"{UPLOAD_UTIL_PATH=} does not exist"
 
@@ -110,7 +110,7 @@ def queue_upload(
     **kwargs,
 ):
     modulepath = str(
-        UPLOAD_UTIL_PATH.with_suffix("").relative_to(infinigen.repo_root())
+        UPLOAD_UTIL_PATH.with_suffix("").relative_to(infinigen.module_parent_path())
     ).replace("/", ".")
 
     cmd = (
@@ -584,7 +584,7 @@ def queue_opengl(
             """,
         ]
         lines.append(
-            f"{sys.executable} {infinigen.repo_root() / 'infinigen/tools/process_static_meshes.py'} {input_folder} {point_trajectory_src_frame}"
+            f"{sys.executable} {infinigen.module_parent_path() / 'infinigen/tools/process_static_meshes.py'} {input_folder} {point_trajectory_src_frame}"
         )
         lines += [
             f"{CUSTOMGT_PATH} --input_dir {input_folder} --dst_input_dir {input_folder} "
@@ -610,14 +610,14 @@ def queue_opengl(
         ]
 
         lines.append(
-            f"{sys.executable} {infinigen.repo_root() / 'infinigen/tools/compress_masks.py'} {output_folder}"
+            f"{sys.executable} {infinigen.module_parent_path() / 'infinigen/tools/compress_masks.py'} {output_folder}"
         )
         lines.append(
-            f"{sys.executable} {infinigen.repo_root() / 'infinigen/tools/compute_occlusion_masks.py'} {output_folder} {point_trajectory_src_frame}"
+            f"{sys.executable} {infinigen.module_parent_path() / 'infinigen/tools/compute_occlusion_masks.py'} {output_folder} {point_trajectory_src_frame}"
         )
 
         lines.append(
-            f"{sys.executable} {infinigen.repo_root() / 'infinigen/tools/compress_masks.py'} {output_folder}"
+            f"{sys.executable} {infinigen.module_parent_path() / 'infinigen/tools/compress_masks.py'} {output_folder}"
         )
 
         lines.append(

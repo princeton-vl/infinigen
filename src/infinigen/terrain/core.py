@@ -366,7 +366,9 @@ class Terrain:
                         assert (
                             surface.mod_name
                             in bpy.data.objects[mesh_name_unapplied].modifiers
-                        ), "please make sure you include one of the scene config in your configs and the same in all tasks"
+                        ), (
+                            "please make sure you include one of the scene config in your configs and the same in all tasks"
+                        )
                         surface_kernel = SurfaceKernel(
                             surface.name,
                             attribute,
@@ -448,9 +450,9 @@ class Terrain:
             for attribute in element.attributes:
                 surface = self.surfaces[attribute]
                 if get_surface_type(surface) == SurfaceTypes.SDFPerturb:
-                    assert (
-                        surface.mod_name in corresponding_mesh.modifiers
-                    ), f"{surface.mod_name} not in {corresponding_mesh.modifiers.keys()} please make sure you include one of the scene config in your configs and the same in all tasks"
+                    assert surface.mod_name in corresponding_mesh.modifiers, (
+                        f"{surface.mod_name} not in {corresponding_mesh.modifiers.keys()} please make sure you include one of the scene config in your configs and the same in all tasks"
+                    )
                     element.displacement.append(
                         SurfaceKernel(
                             surface.name,

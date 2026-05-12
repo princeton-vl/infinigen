@@ -1,0 +1,3 @@
+infinigen_v2.generators.scenes.nature_small.arctic_small.sample_arctic_small_scene
+#infinigen_v2.generators.scenes.asset_demo.material_sphere
+#infinigen_v2.generators.scenes.asset_demo.object_demo

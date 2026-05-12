@@ -16,7 +16,7 @@ import infinigen
 from infinigen.core.init import apply_gin_configs
 from infinigen.datagen import manage_jobs
 
-conf = infinigen.repo_root() / "infinigen/datagen/configs"
+conf = infinigen.module_parent_path() / "infinigen/datagen/configs"
 assert conf.exists()
 
 compute_platforms = [x.name for x in (conf / "compute_platform").glob("*.gin")]

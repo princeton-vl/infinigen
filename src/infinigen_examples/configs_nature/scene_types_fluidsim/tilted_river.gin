@@ -1,4 +1,4 @@
-include 'infinigen_examples/configs_nature/scene_types/river.gin'
+include 'configs_nature/scene_types/river.gin'
 
 UniformMesher.enclosed=1
 animate_cameras.animation_mode = "random_forward_walk"

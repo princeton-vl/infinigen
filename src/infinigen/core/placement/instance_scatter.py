@@ -338,9 +338,9 @@ def scatter_instances(
         avg_scale = 1
 
     if vol_density is not None:
-        assert (
-            scale is not None
-        ), "Cannot compute expected collection vol when using legacy scaling= func"
+        assert scale is not None, (
+            "Cannot compute expected collection vol when using legacy scaling= func"
+        )
         assert density is None  # ensured by check above
 
         avg_vol = np.mean([prod(list(o.dimensions)) for o in collection.objects])

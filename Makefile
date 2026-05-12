@@ -3,9 +3,9 @@ cleanpip:
 	rm -rf build
 
 clean_terrain:
-	rm -rf infinigen/terrain/*.egg-info
-	rm -rf infinigen/terrain/__pycache__
-	rm -rf infinigen/terrain/build
+	rm -rf src/infinigen/terrain/*.egg-info
+	rm -rf src/infinigen/terrain/__pycache__
+	rm -rf src/infinigen/terrain/build
 
 terrain: clean_terrain
 	bash scripts/install/compile_terrain.sh
@@ -15,6 +15,16 @@ customgt:
 
 flip_fluids:
 	bash scripts/install/compile_flip_fluids.sh
+
+clean_docs:
+	rm -rf docs/build
+
+docs: clean_docs
+	@if [ -n "$(OUTPUT_DIR)" ]; then \
+		uv run sphinx-build docs/source $(OUTPUT_DIR); \
+	else \
+		uv run sphinx-build docs/source docs/build; \
+	fi
 
 DOCKER_BUILD_PROGRESS ?= auto
 DOCKER_TAG ?= infinigen_docker_img

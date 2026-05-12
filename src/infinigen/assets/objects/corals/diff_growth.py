@@ -20,7 +20,9 @@ from infinigen.assets.utils.object import data2mesh, mesh2obj
 from infinigen.core import surface
 from infinigen.core.tagging import tag_object
 from infinigen.core.util.math import FixedSeed
-from infinigen.infinigen_gpl.extras.diff_growth import build_diff_growth  
+
+# ruff: noqa: I001 # import order in this file depends on whether submodules have been initalized
+from infinigen.infinigen_gpl.extras.diff_growth import build_diff_growth
 
 
 class DiffGrowthBaseCoralFactory(BaseCoralFactory):

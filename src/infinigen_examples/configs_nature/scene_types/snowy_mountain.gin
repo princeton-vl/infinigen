@@ -1,4 +1,4 @@
-include 'infinigen_examples/configs_nature/disable_assets/no_assets.gin'
+include 'configs_nature/disable_assets/no_assets.gin'
 
 Terrain.mountain_collection = [
     ("infinigen.assets.materials.terrain.mountain.Mountain", 1)

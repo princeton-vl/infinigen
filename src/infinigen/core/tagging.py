@@ -139,9 +139,9 @@ class AutoTag:
                     self.tag_dict[new_tag_name] = tag_value
                     tag_name_lookup.append(new_tag_name)
 
-                assert (
-                    len(self.tag_dict) == len(tag_name_lookup)
-                ), f"{len(self.tag_dict)=} yet {len(tag_name_lookup)=}, out of sync at {vi=} {new_tag_name=}"
+                assert len(self.tag_dict) == len(tag_name_lookup), (
+                    f"{len(self.tag_dict)=} yet {len(tag_name_lookup)=}, out of sync at {vi=} {new_tag_name=}"
+                )
                 assert new_tag_name in tag_name_lookup
 
                 lazydebug(

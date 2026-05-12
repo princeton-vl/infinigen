@@ -18,10 +18,12 @@ import bpy
 import gin
 import numpy as np
 
-from infinigen import repo_root
+from infinigen import module_parent_path
 from infinigen.assets import lighting
 from infinigen.assets.materials.dev import InvisibleToCamera
-from infinigen.assets.objects.wall_decorations.skirting_board import make_skirting_board
+from infinigen.assets.objects.wall_decorations.skirting_board import (
+    make_skirting_board,
+)
 from infinigen.assets.placement.floating_objects import FloatingObjectPlacement
 from infinigen.assets.utils.decorate import read_co
 from infinigen.core import execute_tasks, init, placement, tagging
@@ -314,7 +316,7 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
         pholder_objs = butil.get_collection("placeholders")
 
         obj_fac_names = load_txt_list(
-            repo_root() / "tests" / "assets" / "list_indoor_meshes.txt"
+            module_parent_path() / "tests" / "assets" / "list_indoor_meshes.txt"
         )
         facs = [import_item(path) for path in obj_fac_names]
 
@@ -534,7 +536,7 @@ def main(args):
     )
 
 
-if __name__ == "__main__":
+def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--output_folder", type=Path)
     parser.add_argument("--input_folder", type=Path, default=None)
@@ -574,6 +576,11 @@ if __name__ == "__main__":
     )
     parser.add_argument("--task_uniqname", type=str, default=None)
     parser.add_argument("-d", "--debug", type=str, nargs="*", default=None)
+    return parser
+
+
+if __name__ == "__main__":
+    parser = get_parser()
 
     args = init.parse_args_blender(parser)
 

@@ -215,9 +215,9 @@ class LandTiles(Element):
                 asset_paths.append(self.on_the_fly_asset_folder / tile / f"{i}")
             if reused_instances > 0:
                 assert self.reused_asset_folder is not None
-                assert (
-                    self.reused_asset_folder / tile
-                ).exists(), f"{self.reused_asset_folder / tile} does not exists"
+                assert (self.reused_asset_folder / tile).exists(), (
+                    f"{self.reused_asset_folder / tile} does not exists"
+                )
                 all_instances = len(
                     [
                         x

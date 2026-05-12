@@ -161,7 +161,7 @@ def shader_wood(nw: NodeWrangler, **kwargs):
 
     displacement = nw.new_node(
         Nodes.Displacement,
-        input_kwargs={"Height": mix_2.outputs[2], "Midlevel": 0.0, "Scale": 0.05},
+        input_kwargs={"Height": mix_2.outputs[2], "Midlevel": 0.0, "Scale": 0.0},
     )
 
     principled_bsdf = nw.new_node(

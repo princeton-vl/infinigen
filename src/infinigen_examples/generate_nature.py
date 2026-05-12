@@ -72,7 +72,7 @@ from infinigen.core.util.math import FixedSeed, int_hash
 from infinigen.core.util.organization import Tags
 from infinigen.core.util.pipeline import RandomStageExecutor
 from infinigen.core.util.random import random_general, weighted_sample
-from infinigen.terrain.core import Terrain
+from infinigen.terrain import Terrain
 
 logger = logging.getLogger(__name__)
 
@@ -1074,7 +1074,7 @@ def main(args):
     )
 
 
-if __name__ == "__main__":
+def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--output_folder", type=Path)
     parser.add_argument("--input_folder", type=Path, default=None)
@@ -1114,6 +1114,11 @@ if __name__ == "__main__":
     )
     parser.add_argument("--task_uniqname", type=str, default=None)
     parser.add_argument("-d", "--debug", type=str, nargs="*", default=None)
+    return parser
+
+
+if __name__ == "__main__":
+    parser = get_parser()
 
     args = init.parse_args_blender(parser)
 

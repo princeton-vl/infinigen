@@ -12,7 +12,11 @@ from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
-from infinigen.core.util.bevelling import add_bevel, complete_no_bevel, get_bevel_edges
+from infinigen.core.util.bevelling import (
+    add_bevel,
+    complete_no_bevel,
+    get_bevel_edges,
+)
 from infinigen.core.util.blender import delete
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import weighted_sample

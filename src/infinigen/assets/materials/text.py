@@ -29,7 +29,7 @@ from matplotlib.patches import (
 from numpy.random import rand, uniform
 from PIL import Image
 
-from infinigen import repo_root
+from infinigen import module_parent_path
 from infinigen.assets.utils.decorate import decimate
 from infinigen.assets.utils.misc import generate_text
 from infinigen.assets.utils.object import new_plane
@@ -44,7 +44,7 @@ from infinigen.core.util.random import random_general as rg
 
 logger = logging.getLogger(__name__)
 
-font_dir = repo_root() / "infinigen/assets/fonts"
+font_dir = module_parent_path() / "infinigen/assets/fonts"
 for f in matplotlib.font_manager.findSystemFonts([font_dir]):
     matplotlib.font_manager.fontManager.addfont(f)
 font_names = [_.replace("_", " ") for _ in os.listdir(font_dir)]

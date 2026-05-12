@@ -86,7 +86,7 @@ Conference on Computer Vision and Pattern Recognition (CVPR) 2023
 </p>
 
 ```
-@inproceedings{infinigen2023infinite,
+@inproceedings{infinigen023infinite,
   title={Infinite Photorealistic Worlds Using Procedural Generation},
   author={Raistrick, Alexander and Lipson, Lahav and Ma, Zeyu and Mei, Lingjie and Wang, Mingzhe and Zuo, Yiming and Kayan, Karhan and Wen, Hongyu and Han, Beining and Wang, Yihan and Newell, Alejandro and Law, Hei and Goyal, Ankit and Yang, Kaiyu and Deng, Jia},
   booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition},
@@ -115,7 +115,7 @@ Conference on Computer Vision and Pattern Recognition (CVPR) 2023
 </p>
 
 ```
-@inproceedings{infinigen2024indoors,
+@inproceedings{infinigen024indoors,
     author    = {Raistrick, Alexander and Mei, Lingjie and Kayan, Karhan and Yan, David and Zuo, Yiming and Han, Beining and Wen, Hongyu and Parakh, Meenal and Alexandropoulos, Stamatis and Lipson, Lahav and Ma, Zeyu and Deng, Jia},
     title     = {Infinigen Indoors: Photorealistic Indoor Scenes using Procedural Generation},
     booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},

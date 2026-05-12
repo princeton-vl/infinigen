@@ -5,6 +5,19 @@ blender.tar.xz
 Blender.app
 build/
 
+.claude/settings.local.json
+.claude/memory/
+.claude/worktrees
+
+optix7cache.db
+optix7cache.db-shm
+optix7cache.db-wal
+
+render.png
+render.jpg
+output.png
+output.jpg
+
 .nfs*
 
 *.c
@@ -35,8 +48,6 @@ blender.dmg
 screenlog.*
 
 dev_install.sh
-
-dev.py
 
 cache
 Blender-FLIP-Fluids

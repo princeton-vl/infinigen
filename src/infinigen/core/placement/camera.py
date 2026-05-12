@@ -17,7 +17,7 @@ from pathlib import Path
 
 import bpy
 import gin
-import imageio
+import imageio.v2 as imageio
 import numpy as np
 from mathutils import Vector
 from mathutils.bvhtree import BVHTree
@@ -34,7 +34,7 @@ from infinigen.core.util.blender import SelectObjects, delete
 from infinigen.core.util.logging import Timer
 from infinigen.core.util.organization import SelectionCriterions
 from infinigen.core.util.random import random_general
-from infinigen.terrain.core import Terrain
+from infinigen.terrain import Terrain
 from infinigen.tools.suffixes import get_suffix
 
 from . import animation_policy

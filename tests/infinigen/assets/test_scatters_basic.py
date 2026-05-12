@@ -23,7 +23,9 @@ def check_scatter_runs(pathspec):
     scatter_inst.apply(base_cube)
 
 
-@pytest.mark.parametrize("pathspec", load_txt_list("tests/assets/list_scatters.txt"))
+@pytest.mark.parametrize(
+    "pathspec", load_txt_list("tests/infinigen/assets/list_scatters.txt")
+)
 def test_scatter_runs(pathspec, **kwargs):
     setup_gin("infinigen_examples/configs_nature", ["base_nature.gin"])
     configure_blender()

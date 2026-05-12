@@ -381,7 +381,7 @@ def get_disk_usage(folder):
 
 
 def make_html_page(output_path, scenes, frame, camera_pair_id, **kwargs):
-    template_path = infinigen.repo_root() / "infinigen/datagen/util"
+    template_path = infinigen.module_parent_path() / "infinigen/datagen/util"
     assert template_path.exists(), template_path
     env = Environment(
         loader=FileSystemLoader(template_path),
@@ -828,8 +828,9 @@ mandatory_exclusive_configs = [
     "infinigen/datagen/configs/data_schema",
 ]
 
-if __name__ == "__main__":
-    slurm_available = which("sbatch") is not None
+
+def get_parser():
+    # slurm_available = which("sbatch") is not None
     parser = argparse.ArgumentParser()
 
     parser.add_argument("-o", "--output_folder", type=Path, default=None)  #
@@ -924,6 +925,11 @@ if __name__ == "__main__":
         "-v", "--verbose", action="store_const", dest="loglevel", const=logging.INFO
     )
     parser.add_argument("--print_stats", type=int, default=1)
+    return parser
+
+
+if __name__ == "__main__":
+    parser = get_parser()
     args = parser.parse_args()
 
     using_upload = any(

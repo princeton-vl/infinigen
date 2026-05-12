@@ -10,6 +10,7 @@ from pathlib import Path
 
 import bpy
 import numpy as np
+import procfunc as pf
 
 logger = logging.getLogger(__name__)
 
@@ -187,16 +188,72 @@ def data_from_keyframes(keyframe_points, frame_start, frame_end, for_acceleratio
     return data, locs
 
 
-def get_imu_tum_data(object, start, end):
+def _validate_bezier_accurate(
+    obj: bpy.types.Object,
+    arrays: list[np.ndarray | None],
+    start: int,
+    end: int,
+    eps: float = 1e-4,
+):
+    x, y, z, rx, ry, rz = arrays
+    length = end - start + 1
+
+    for i in range(length):
+        bpy.context.scene.frame_set(i + start)
+        if x is not None:
+            if abs(x[i] - obj.location[0]) > eps:
+                raise Exception(
+                    "Bezier interpolation innacurate at frame {} for x translation {} vs {}".format(
+                        i, x[i], obj.location[0]
+                    )
+                )
+        if y is not None:
+            if abs(y[i] - obj.location[1]) > eps:
+                raise Exception(
+                    "Bezier interpolation innacurate at frame {} for y translation {} vs {}".format(
+                        i, y[i], obj.location[1]
+                    )
+                )
+        if z is not None:
+            if abs(z[i] - obj.location[2]) > eps:
+                raise Exception(
+                    "Bezier interpolation innacurate at frame {} for z translation {} vs {}".format(
+                        i, z[i], obj.location[2]
+                    )
+                )
+        if rx is not None:
+            if abs(rx[i] - obj.rotation_euler[0]) > eps:
+                raise Exception(
+                    "Bezier interpolation innacurate at frame {} for x Euler rotation {} vs {}".format(
+                        i, rx[i], obj.rotation_euler[0]
+                    )
+                )
+        if ry is not None:
+            if abs(ry[i] - obj.rotation_euler[1]) > eps:
+                raise Exception(
+                    "Bezier interpolation innacurate at frame {} for y Euler rotation {} vs {}".format(
+                        i, ry[i], obj.rotation_euler[1]
+                    )
+                )
+        if rz is not None:
+            if abs(rz[i] - obj.rotation_euler[2]) > eps:
+                raise Exception(
+                    "Bezier interpolation innacurate at frame {} for z Euler rotation {} vs {}".format(
+                        i, rz[i], obj.rotation_euler[2]
+                    )
+                )
+
+
+def get_imu_tum_data(obj: bpy.types.Object, start: int, end: int) -> tuple[str, str]:
     """
     Returns imu and tum data of camera in file formatted strings
     """
 
-    if object.animation_data is None:
-        raise Exception(f"{object.name} has no animation data")
+    if obj.animation_data is None:
+        raise Exception(f"{obj.name} has no animation data")
 
-    if object.animation_data.action is None:
-        raise Exception(f"{object.name} has no action")
+    if obj.animation_data.action is None:
+        raise Exception(f"{obj.name} has no action")
 
     start = ceil(start)
     end = floor(end)
@@ -205,8 +262,8 @@ def get_imu_tum_data(object, start, end):
     if length <= 1:
         raise Exception(f"trajectory duration is too short: {length} frames")
 
-    old_rotation = object.rotation_mode
-    object.rotation_mode = "XYZ"
+    old_rotation = obj.rotation_mode
+    obj.rotation_mode = "XYZ"
 
     ax, ay, az, rvx, rvy, rvz = (
         np.zeros(length),
@@ -219,7 +276,7 @@ def get_imu_tum_data(object, start, end):
     x, y, z, rx, ry, rz = None, None, None, None, None, None
 
     # find data
-    for curve in object.animation_data.action.fcurves:
+    for curve in obj.animation_data.action.fcurves:
         if curve.data_path == "location":
             if curve.array_index == 0:
                 ax, x = data_from_keyframes(curve.keyframe_points, start, end, True)
@@ -239,53 +296,9 @@ def get_imu_tum_data(object, start, end):
         else:
             raise Exception("Unsupported action fcurve: {}".format(curve.data_path))
 
-    SMALL = float(1e-4)
+    _validate_bezier_accurate(obj, [x, y, z, rx, ry, rz], start, end, eps=1e-4)
 
     # check data accuracy
-    for i in range(length):
-        bpy.context.scene.frame_set(i + start)
-        if x is not None:
-            if abs(x[i] - object.location[0]) > SMALL:
-                raise Exception(
-                    "Bezier interpolation innacurate at frame {} for x translation {} vs {}".format(
-                        i, x[i], object.location[0]
-                    )
-                )
-        if y is not None:
-            if abs(y[i] - object.location[1]) > SMALL:
-                raise Exception(
-                    "Bezier interpolation innacurate at frame {} for y translation {} vs {}".format(
-                        i, y[i], object.location[1]
-                    )
-                )
-        if z is not None:
-            if abs(z[i] - object.location[2]) > SMALL:
-                raise Exception(
-                    "Bezier interpolation innacurate at frame {} for z translation {} vs {}".format(
-                        i, z[i], object.location[2]
-                    )
-                )
-        if rx is not None:
-            if abs(rx[i] - object.rotation_euler[0]) > SMALL:
-                raise Exception(
-                    "Bezier interpolation innacurate at frame {} for x Euler rotation {} vs {}".format(
-                        i, rx[i], object.rotation_euler[0]
-                    )
-                )
-        if ry is not None:
-            if abs(ry[i] - object.rotation_euler[1]) > SMALL:
-                raise Exception(
-                    "Bezier interpolation innacurate at frame {} for y Euler rotation {} vs {}".format(
-                        i, ry[i], object.rotation_euler[1]
-                    )
-                )
-        if rz is not None:
-            if abs(rz[i] - object.rotation_euler[2]) > SMALL:
-                raise Exception(
-                    "Bezier interpolation innacurate at frame {} for z Euler rotation {} vs {}".format(
-                        i, rz[i], object.rotation_euler[2]
-                    )
-                )
 
     imu_text = []
     tum_text = []
@@ -293,7 +306,7 @@ def get_imu_tum_data(object, start, end):
     # format data
     for i in range(length):
         bpy.context.scene.frame_set(i + start)
-        rot_euler = object.rotation_euler
+        rot_euler = obj.rotation_euler
         rot_quat = rot_euler.to_quaternion()
         imu_text.append(
             " ".join(
@@ -312,9 +325,9 @@ def get_imu_tum_data(object, start, end):
             " ".join(
                 [
                     str(i + start),
-                    str(object.location[0]),
-                    str(object.location[1]),
-                    str(object.location[2]),
+                    str(obj.location[0]),
+                    str(obj.location[1]),
+                    str(obj.location[2]),
                     str(rot_quat.x),
                     str(rot_quat.y),
                     str(rot_quat.z),
@@ -323,24 +336,27 @@ def get_imu_tum_data(object, start, end):
             )
         )
 
-    object.rotation_mode = old_rotation
+    obj.rotation_mode = old_rotation
     return "\n".join(imu_text), "\n".join(tum_text)
 
 
 def save_imu_tum_files(
     output_folder,
     objects: list[bpy.types.Object],
-    start=None,
-    end=None,
+    frame_start: int | None = None,
+    frame_end: int | None = None,
 ):
     """
-    Write imu and tum data to output files for each object.
+    Write imu and tum data to output files for each obj.
     """
 
-    if start is None:
-        start = bpy.context.scene.frame_start
-    if end is None:
-        end = bpy.context.scene.frame_end
+    if not isinstance(objects, list):
+        objects = [objects]
+
+    if frame_start is None:
+        frame_start = bpy.context.scene.frame_start
+    if frame_end is None:
+        frame_end = bpy.context.scene.frame_end
 
     output_folder = Path(output_folder)
     output_folder.mkdir(exist_ok=True, parents=True)
@@ -348,11 +364,15 @@ def save_imu_tum_files(
     anim_objects = [x for x in objects if x.animation_data is not None]
     if len(anim_objects) == 0:
         logger.warning("save_imu_tum_files: No animation data in given objects")
-        return
+        return []
+
+    paths = []
 
     for i in range(len(objects)):
         try:
-            imu_text, tum_text = get_imu_tum_data(anim_objects[i], start, end)
+            imu_text, tum_text = get_imu_tum_data(
+                anim_objects[i], frame_start, frame_end
+            )
             name = anim_objects[i].name.replace("/", "_").replace(".", "_")
         except Exception as e:
             logger.warning(
@@ -372,7 +392,12 @@ def save_imu_tum_files(
         with open(tum_file_name, "w") as tum_file:
             tum_file.write("#Format: timestamp position(x y z) rotation(x y z w)\n")
             tum_file.write(tum_text)
-            logger.info(f"Saved TUM data for {anim_objects[i].name} at {tum_file_name}")
+            logger.info(f"Saved TUM data for {anim_objects[i].name} to {tum_file_name}")
+
+        paths.append(imu_file_name)
+        paths.append(tum_file_name)
+
+    return paths
 
 
 def get_camera_intrinsics(camera):
@@ -407,3 +432,41 @@ def get_camera_intrinsics(camera):
     ret = f"{f_in_px} {f_in_px} {c_x} {c_y}"
 
     return ret
+
+
+@pf.tracer.primitive
+def save_imu(
+    camera,
+    objects,
+    output_folder: Path,
+    frame_start: int,
+    frame_end: int,
+) -> dict:
+    from infinigen_v2.exporters.util.format import ExportType
+
+    output_folder = Path(output_folder)
+    cam_obj = camera.item() if hasattr(camera, "item") else camera
+    scene_objs = [o.item() if hasattr(o, "item") else o for o in objects]
+    cam_paths = save_imu_tum_files(
+        output_folder / "cam-imu-tum",
+        objects=[cam_obj],
+        frame_start=frame_start,
+        frame_end=frame_end,
+    )
+    obj_paths = save_imu_tum_files(
+        output_folder / "obj-imu-tum",
+        objects=scene_objs,
+        frame_start=frame_start,
+        frame_end=frame_end,
+    )
+    return {
+        ExportType.CAM_IMU_TUM_TRAJ: cam_paths,
+        ExportType.OBJ_IMU_TUM_TRAJ: obj_paths,
+    }
+
+
+__all__ = [
+    "save_imu_tum_files",
+    "save_imu",
+    "get_camera_intrinsics",
+]

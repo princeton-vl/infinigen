@@ -10,11 +10,10 @@ import pytest
 from infinigen.core.init import configure_blender
 from infinigen.core.util.organization import Task
 from infinigen.core.util.test_utils import setup_gin
-from infinigen.terrain.core import Terrain
+from infinigen.terrain import Terrain
 
 
-@pytest.mark.skip
-@pytest.mark.nature
+@pytest.mark.skip_for_ci
 def test_terrain_runs():
     setup_gin(
         "infinigen_examples/configs_nature",

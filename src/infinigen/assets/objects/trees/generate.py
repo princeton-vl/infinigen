@@ -494,9 +494,9 @@ class TreeFactory(GenericTreeFactory):
                 )
                 self.child_col.name = colname
 
-                assert (
-                    self.child_col.name == colname
-                ), f"Blender truncated {colname} to {self.child_col.name}"
+                assert self.child_col.name == colname, (
+                    f"Blender truncated {colname} to {self.child_col.name}"
+                )
             else:
                 self.child_col = bpy.data.collections[colname]
 
@@ -547,8 +547,8 @@ class BushFactory(GenericTreeFactory):
                     leaf_type,
                 )
                 self.child_col.name = colname
-                assert (
-                    self.child_col.name == colname
-                ), f"Blender truncated {colname} to {self.child_col.name}"
+                assert self.child_col.name == colname, (
+                    f"Blender truncated {colname} to {self.child_col.name}"
+                )
             else:
                 self.child_col = bpy.data.collections[colname]

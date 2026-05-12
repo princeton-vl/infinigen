@@ -30,7 +30,9 @@ See our [Configuring Infinigen](./ConfiguringInfinigen.md), [Ground Truth Annota
 
 Once you have chosen your configuration, proceed to the relevant section below for instructions.
 
-## Installing Infinigen as a Python Module
+(install)=
+
+## Installing Infinigen as a Python Package
 
 ### Dependencies
 
@@ -55,56 +57,39 @@ export LIBRARY_PATH=$CONDA_PREFIX/lib:$LIBRARY_PATH
 export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH
 ```
 
-### Installation
+### Developer Install
 
-First, download the repo and set up a conda environment (you may need to [install conda](https://conda.io/projects/conda/en/latest/user-guide/install/index.html))
+Install uv: [instructions here](https://docs.astral.sh/uv/getting-started/installation/)
+
+Then install a local copy of infinigen:
 ```bash
 git clone https://github.com/princeton-vl/infinigen.git
 cd infinigen
-conda create --name infinigen python=3.11
-conda activate infinigen
+uv venv
+uv pip install -e ".[dev,terrain,vis]"
+uv run pre-commit install
 ```
 
-Then, install the infinigen package using one of the options below:
+### Minimal Install
+
+No terrain or opengl GT, ok for Infinigen-Indoors or single-object generation
+
+This avoids building any C++ or installing dependencies which are sometimes problematic (e.g. landlab)
 
 ```bash
-# Minimal install (No terrain or opengl GT, ok for Infinigen-Indoors or single-object generation) 
-INFINIGEN_MINIMAL_INSTALL=True pip install -e .
-
-# Full install (Terrain & OpenGL-GT enabled, needed for Infinigen-Nature HelloWorld)
-pip install -e ".[terrain,vis]"
-
-# Installation for simulation assets
-pip install -e ".[sim]"
-
-# Developer install (includes pytest, ruff, other recommended dev tools)
-pip install -e ".[dev,terrain,vis]"
-pre-commit install
+INFINIGEN_MINIMAL_INSTALL=True uv pip install -e .
 ```
 
 :exclamation: If you encounter any issues with the above, please add `-vv > logs.txt 2>&1` to the end of your command and run again, then provide the resulting logs.txt file as an attachment when making a Github Issue.
 
-## Installing Infinigen as a Blender Python script
+## Installing Infinigen into Blender's internal Python interpreter
+
+First, complete normal installation as shown above
 
 On Linux / Mac / WSL:
 ```bash
 git clone https://github.com/princeton-vl/infinigen.git
-cd infinigen
-conda create --name infinigen python=3.11
-conda activate infinigen 
-```
-
-Then, install using one of the options below:
-```bash
-
-# Minimal installation (recommended setting for use in the Blender UI)
 INFINIGEN_MINIMAL_INSTALL=True bash scripts/install/interactive_blender.sh
-
-# Normal install
-bash scripts/install/interactive_blender.sh
-
-# Enable OpenGL GT
-INFINIGEN_INSTALL_CUSTOMGT=True bash scripts/install/interactive_blender.sh
 ```
 
 :exclamation: If you encounter any issues with the above, please add ` > logs.txt 2>&1` to the end of your command and run again, then provide the resulting logs.txt file as an attachment when making a Github Issue.
