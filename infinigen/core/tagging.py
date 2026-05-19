@@ -121,7 +121,11 @@ class AutoTag:
         else:
             tagint = np.full(n_poly, 0, np.int64)
 
-        assert tagint.dtype == np.int64, tagint.dtype
+        if not np.issubdtype(tagint.dtype, np.integer):
+            raise TypeError(f"{obj.name=} had {COMBINED_ATTR_NAME} with non-integer dtype {tagint.dtype}")
+        # Blender may expose INT face attributes as int32 on some platforms (e.g. Windows).
+        # Normalize to int64 so downstream tag operations are dtype-stable.
+        tagint = tagint.astype(np.int64, copy=False)
 
         for name, new_mask in new_attrs.items():
             affected_tagints = np.unique(tagint[new_mask])
