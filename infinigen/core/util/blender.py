@@ -787,6 +787,16 @@ def save_blend(path, autopack=False, verbose=False):
     with Suppress():
         if autopack:
             bpy.ops.file.autopack_toggle()
+
+        # Remove orphaned shape keys that cause save crashes
+        for sk in list(bpy.data.shape_keys):
+            # If the shape key has no users, or we want to force cleanup
+            if sk.user == 0:
+                bpy.data.shape_keys.remove(sk)
+                
+        # Run a full orphan purge just to be safe
+        bpy.ops.outliner.orphans_purge(do_local_ids=True, do_linked_ids=True, do_recursive=True)
+        
         bpy.ops.wm.save_as_mainfile(filepath=str(path))
         if autopack:
             bpy.ops.file.autopack_toggle()
