@@ -60,7 +60,10 @@ export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH
 First, download the repo and set up a conda environment (you may need to [install conda](https://conda.io/projects/conda/en/latest/user-guide/install/index.html))
 ```bash
 git clone https://github.com/princeton-vl/infinigen.git
+
 cd infinigen
+git submodule update --init
+
 conda create --name infinigen python=3.11
 conda activate infinigen
 ```
