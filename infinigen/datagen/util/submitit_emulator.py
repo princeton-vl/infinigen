@@ -13,6 +13,7 @@ import logging
 import os
 import re
 import subprocess
+import sys
 from dataclasses import dataclass
 from multiprocessing import Process
 from pathlib import Path
@@ -218,6 +219,11 @@ class LocalScheduleHandler:
 
         if self.use_gpu:
             if which(NVIDIA_SMI_PATH) is None:
+                if sys.platform == "darwin":
+                    # Apple Silicon exposes GPU devices to Blender via Metal,
+                    # so there is no nvidia-smi to query. Model this as one local GPU.
+                    resources["gpus"] = {(0, slot) for slot in range(self.jobs_per_gpu)}
+                    return resources
                 raise ValueError(
                     f"LocalScheduleHandler.use_gpu=True yet could not find {NVIDIA_SMI_PATH}, "
                     "please use --pipeline_overrides LocalScheduleHandler.use_gpu=False if your machine does not have a supported GPU"

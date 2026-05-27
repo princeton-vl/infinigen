@@ -1,0 +1,9 @@
+include 'infinigen/datagen/configs/compute_platform/local_64GB.gin'
+
+# Conservative default for unified memory systems.
+manage_datagen_jobs.num_concurrent = 2
+queue_combined.cpus = 4
+queue_combined.mem_gb = 8
+queue_render.cpus = 4
+queue_render.gpus = 1
+LocalScheduleHandler.use_gpu = True

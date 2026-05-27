@@ -91,6 +91,12 @@ fi
 alias gx1="${compiler} \$CXXFLAGS -O3 -c -fpic -fopenmp "
 alias gx2="${compiler} \$LDFLAGS -O3 -shared -fopenmp "
 
+# Apple Silicon: enable native arch targeting for M-series NEON/AMX codegen
+if [ "${OS}" = "Darwin" ] && [ "${ARCH}" = "arm64" ]; then
+    alias gx1="${compiler} \$CXXFLAGS -O3 -mcpu=native -ffast-math -c -fpic -fopenmp "
+    alias gx2="${compiler} \$LDFLAGS -O3 -mcpu=native -ffast-math -shared -fopenmp "
+fi
+
 mkdir -p lib/cpu/utils
 gx1 -o lib/cpu/utils/FastNoiseLite.o source/cpu/utils/FastNoiseLite.cpp
 gx2 -o lib/cpu/utils/FastNoiseLite.so lib/cpu/utils/FastNoiseLite.o
@@ -128,8 +134,8 @@ gx2 -o lib/cpu/sdf_from_mesh/sdf_from_mesh.so lib/cpu/sdf_from_mesh/sdf_from_mes
 echo "compiled lib/cpu/sdf_from_mesh/sdf_from_mesh.so"
 
 if [ "${OS}" = "Darwin" ]; then
-    alias gx1="CPATH=/opt/homebrew/include:${CPATH} ${compiler} -O3 -c -fpic -std=c++17"
-    alias gx2="CPATH=/opt/homebrew/include:${CPATH} ${compiler} -O3 -shared -std=c++17"
+    alias gx1="CPATH=/opt/homebrew/include:\${CPATH} ${compiler} -O3 -mcpu=native -ffast-math -c -fpic -std=c++17"
+    alias gx2="CPATH=/opt/homebrew/include:\${CPATH} ${compiler} -O3 -mcpu=native -ffast-math -shared -std=c++17"
 fi
 mkdir -p lib/cpu/soil_machine
 gx1 -I../datagen/customgt/dependencies/glm -o lib/cpu/soil_machine/SoilMachine.o source/cpu/soil_machine/SoilMachine.cpp

@@ -1,0 +1,7 @@
+include 'infinigen_examples/configs_nature/performance/dev.gin'
+
+# Apple Silicon preset: denoise + lower samples for much faster renders.
+configure_render_cycles.denoise = True
+configure_render_cycles.min_samples = 16
+configure_render_cycles.num_samples = 1024
+configure_render_cycles.adaptive_threshold = 0.01

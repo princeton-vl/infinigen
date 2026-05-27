@@ -67,6 +67,10 @@ if not MINIMAL_INSTALL:
             )
         )
     if BUILD_TERRAIN:
+        mc_compile_args = []
+        if sys.platform == "darwin" and os.uname().machine == "arm64":
+            mc_compile_args = ["-O3", "-mcpu=native", "-ffast-math"]
+
         cython_extensions.append(
             Extension(
                 name="infinigen.terrain.marching_cubes",
@@ -74,6 +78,7 @@ if not MINIMAL_INSTALL:
                     "infinigen/terrain/marching_cubes/_marching_cubes_lewiner_cy.pyx"
                 ],
                 include_dirs=[numpy.get_include()],
+                extra_compile_args=mc_compile_args,
             )
         )
 

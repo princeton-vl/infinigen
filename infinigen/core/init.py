@@ -210,13 +210,20 @@ def configure_render_cycles(
 ):
     bpy.context.scene.render.engine = "CYCLES"
 
-    # For now, denoiser is always turned on, but the  _used_
     bpy.context.scene.cycles.use_denoising = denoise
     if denoise:
-        try:
-            bpy.context.scene.cycles.denoiser = "OPTIX"
-        except Exception as e:
-            logger.warning(f"Cannot use OPTIX denoiser {e}")
+        # Prefer OPTIX (NVIDIA), fall back to OPENIMAGEDENOISE (ships with
+        # Blender, works on all platforms including Apple Silicon Metal).
+        for _denoiser in ("OPTIX", "OPENIMAGEDENOISE"):
+            try:
+                bpy.context.scene.cycles.denoiser = _denoiser
+                logger.info(f"Using {_denoiser} denoiser")
+                break
+            except Exception:
+                continue
+        else:
+            logger.warning("No supported denoiser found, rendering without denoising")
+            bpy.context.scene.cycles.use_denoising = False
 
     bpy.context.scene.cycles.samples = num_samples  # i.e. infinity
     bpy.context.scene.cycles.adaptive_min_samples = min_samples
@@ -271,6 +278,11 @@ def configure_cycles_devices(use_gpu=True):
     use_devices = [d for d in prefs.devices if d.type == use_device_type]
 
     logger.info(f"Cycles will use {use_device_type=}, {len(use_devices)=}")
+    if use_device_type == "METAL":
+        logger.info(
+            "Metal GPU rendering enabled (Apple Silicon). "
+            "For best results use OPENIMAGEDENOISE denoiser."
+        )
 
     for d in prefs.devices:
         d.use = False

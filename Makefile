@@ -18,6 +18,7 @@ flip_fluids:
 
 DOCKER_BUILD_PROGRESS ?= auto
 DOCKER_TAG ?= infinigen_docker_img
+DOCKER_PLATFORM ?=
 
 PWD = $(shell pwd)
 
@@ -28,14 +29,19 @@ default:
 
 docker-build:
 	docker build \
+		$(if $(DOCKER_PLATFORM),--platform $(DOCKER_PLATFORM)) \
 		--tag $(DOCKER_TAG) \
 		--progress $(DOCKER_BUILD_PROGRESS) .
 
 docker-build-cuda:
 	docker build \
+		$(if $(DOCKER_PLATFORM),--platform $(DOCKER_PLATFORM)) \
 		--tag $(DOCKER_TAG) \
 		--progress $(DOCKER_BUILD_PROGRESS) \
 		--build-arg APP_IMAGE=nvidia/cuda:12.0.0-devel-ubuntu22.04 .
+
+docker-build-arm64:
+	$(MAKE) docker-build DOCKER_PLATFORM=linux/arm64
 
 docker-clean:
 	echo "Removing infinigen docker image if already exists..."
@@ -98,8 +104,7 @@ docker-run-no-gpu:
 		-e ROS_IP=127.0.0.1 \
 		--cap-add=SYS_PTRACE \
 		-v /etc/group:/etc/group:ro \
-		"$(DOCKER_TAG)" /bin/bash \
-]
+		"$(DOCKER_TAG)" /bin/bash
 
 docker-run-no-gpu-opengl:
 	echo "Launching Docker image without GPU passthrough or OpenGL"
