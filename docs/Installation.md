@@ -137,6 +137,28 @@ Note: `make docker-setup` can be skipped if not using OpenGL.
 
 Use `exit` to exit the container and `docker exec -it infinigen bash` to re-enter the container as needed. Remember to `conda activate infinigen` before running scenes.
 
+**Docker on ARM64 / Apple Silicon (Mac M1/M2/M3/M4)**
+
+The Docker setup supports linux/arm64 for running on Apple Silicon Macs. Use the dedicated ARM64 target or specify the platform explicitly:
+
+```bash
+git clone https://github.com/princeton-vl/infinigen.git
+cd infinigen
+
+# Option 1: Use the ARM64 convenience target
+make docker-build-arm64
+
+# Option 2: Specify the platform explicitly
+make docker-build DOCKER_PLATFORM=linux/arm64
+```
+
+Then run the container without GPU passthrough or OpenGL (neither is available on ARM64):
+```bash
+make docker-run-no-gpu-opengl
+```
+
+Note: CUDA and OpenGL ground truth are not supported on ARM64. Use `make docker-build` (not `docker-build-cuda`) for ARM64 builds.
+
 **Docker on Windows**
 
 Install [WSL2](https://infinigen.org/docs/installation/intro#setup-for-windows) and [Docker Desktop](https://www.docker.com/products/docker-desktop/), with "Use the WSL 2 based engine..." enabled in settings. Keep the Docker Desktop application open while running containers. Then follow instructions as above.

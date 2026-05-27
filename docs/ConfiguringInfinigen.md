@@ -78,6 +78,8 @@ This section highlights commandline options to help you deploy Infinigen on your
 
 `local_16GB.gin` through `local_256GB.gin` are intended for laptops, desktop workstations, or a single headless node. These configs run each task as a child process on the same machine that ran `manage_jobs.py`. Each config runs the right number of concurrent jobs for the specified amount of RAM. If you have a different amount of RAM than the options provided, you should override `manage_jobs.num_concurrent`to your amount of system RAM divided by 20GB. Ultimately, the amount of concurrent process you can run will depend on the format (single-image vs. video) and complexity (detail, clutter, etc) of the scenes you wish to generate - see [here](#config-overrides-for-mesh-detail-and-performance) to customize.
 
+`local_apple_silicon.gin` is a Metal-enabled preset for Apple Silicon machines. It defaults to a more aggressive local schedule than the generic laptop presets, including multiple concurrent render slots on the single integrated GPU. On machines with 48GB+ unified memory, this is usually a better starting point than the generic `local_64GB.gin`. If you still see low utilization, the most important tuning knobs are `manage_datagen_jobs.num_concurrent`, `LocalScheduleHandler.jobs_per_gpu`, `queue_combined.cpus`, and `queue_render.cpus`.
+
 `slurm.gin` is a special config designed to deploy Infinigen onto SLURM computing clusters. When using this config, each task will be executed as a remote slurm job (using [submitit](https://github.com/facebookincubator/submitit)), with time-limit/CPU/RAM requests set as specified in `slurm.gin`. If your group has a SLURM partition name, please set `PARTITION = "mygroupname"` in `slurm.gin`. If you are able to run very long SLURM jobs (>= ~3 days) you may also consider submitting `manage_jobs` with `local_256GB.gin` as a single long slurm job. 
 
 Please submit a Github Issue for help with deploying Infinigen on your compute.
@@ -96,6 +98,7 @@ To enable these GPU accelerated steps:
 
 Even if GPU access is enabled, *you will likely not see the GPU at 100% usage*. Both blender and our code require some CPU setup time to build acceleration data-structures before GPU usage can start, and even then, a single render job may not saturate your GPU's FLOPS. 
    - If you are using a GPU with >=32 GB VRAM, you may consider `--pipeline_override LocalScheduleHandler.jobs_per_gpu=2` to put 2 render jobs on each GPU and increase utilization. 
+   - On Apple Silicon, Metal rendering is supported for Blender Cycles render tasks, but much of scene generation remains CPU-bound. If your GPU looks idle during `coarse`, `populate`, or terrain-heavy steps, that is expected. To better saturate an M-series machine during mixed workloads, increase CPU-side concurrency with `manage_datagen_jobs.num_concurrent` and allow multiple render jobs to share the Metal device with `LocalScheduleHandler.jobs_per_gpu`.
 
 If you have more than one GPU and are using a `local_*.gin` compute config, each GPU-enabled task will be assigned to a single GPU, and you will need to run many concurrent jobs to keep your GPUs fed. Blender natively supports multi-GPU rendering, but we do not use this by default - create a Github Issue \[REQUEST\] if your application requires this.
 

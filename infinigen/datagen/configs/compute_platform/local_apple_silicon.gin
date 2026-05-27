@@ -1,0 +1,17 @@
+include 'infinigen/datagen/configs/compute_platform/local_64GB.gin'
+
+# Tuned for Apple Silicon desktops with unified memory.
+#
+# The original preset was intentionally conservative and tended to underutilize
+# M-series CPUs and the Metal device, especially on M4-class machines. These
+# values keep per-job memory modest while allowing more in-flight work and two
+# concurrent render slots on the single Metal GPU.
+manage_datagen_jobs.num_concurrent = 4
+LocalScheduleHandler.jobs_per_gpu = 2
+LocalScheduleHandler.use_gpu = True
+
+queue_combined.cpus = 6
+queue_combined.mem_gb = 10
+
+queue_render.cpus = 8
+queue_render.gpus = 1
