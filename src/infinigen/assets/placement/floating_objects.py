@@ -65,6 +65,7 @@ def bbox_sample(bbox):
 
     return (x, y, z)
 
+
 class FloatingObjectPlacement:
     def __init__(
         self,

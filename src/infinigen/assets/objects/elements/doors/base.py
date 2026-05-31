@@ -114,34 +114,55 @@ def geometry_node_join(
         )
 
         push_bar_parent = nw.new_node(
-                    nodegroup_add_jointed_geometry_metadata().name,
-                    input_kwargs={"Geometry": handle_elements.outputs["Parent"], "Label": "push_bar_base"},
-                )
-        
+            nodegroup_add_jointed_geometry_metadata().name,
+            input_kwargs={
+                "Geometry": handle_elements.outputs["Parent"],
+                "Label": "push_bar_base",
+            },
+        )
+
         push_bar_child = nw.new_node(
-                    nodegroup_add_jointed_geometry_metadata().name,
-                    input_kwargs={"Geometry": handle_elements.outputs["Child"], "Label": "push_bar_paddle"},
-                )
-    
-        sliding_joint = nw.new_node(nodegroup_sliding_joint().name,
-            input_kwargs={'Joint Label': 'door_push_bar_handle', 
-                          'Parent': push_bar_parent, 
-                          'Child': push_bar_child, 
-                          'Axis': (0.0000, -1.0000, 0.0000), 
-                          'Max': handle_elements.outputs["Joint Max"]})
-    
-        transform_geometry_3 = nw.new_node(Nodes.Transform,
-            input_kwargs={'Geometry': sliding_joint.outputs["Geometry"], 
-                          'Translation': handle_elements.outputs["Translation1"], 
-                          'Rotation': (0.0000, 1.5708, 0.0000)})
-        
-        transform_geometry_4 = nw.new_node(Nodes.Transform,
-            input_kwargs={'Geometry': transform_geometry_3, 
-                          'Translation': handle_elements.outputs["Translation2"]})
+            nodegroup_add_jointed_geometry_metadata().name,
+            input_kwargs={
+                "Geometry": handle_elements.outputs["Child"],
+                "Label": "push_bar_paddle",
+            },
+        )
+
+        sliding_joint = nw.new_node(
+            nodegroup_sliding_joint().name,
+            input_kwargs={
+                "Joint Label": "door_push_bar_handle",
+                "Parent": push_bar_parent,
+                "Child": push_bar_child,
+                "Axis": (0.0000, -1.0000, 0.0000),
+                "Max": handle_elements.outputs["Joint Max"],
+            },
+        )
+
+        transform_geometry_3 = nw.new_node(
+            Nodes.Transform,
+            input_kwargs={
+                "Geometry": sliding_joint.outputs["Geometry"],
+                "Translation": handle_elements.outputs["Translation1"],
+                "Rotation": (0.0000, 1.5708, 0.0000),
+            },
+        )
+
+        transform_geometry_4 = nw.new_node(
+            Nodes.Transform,
+            input_kwargs={
+                "Geometry": transform_geometry_3,
+                "Translation": handle_elements.outputs["Translation2"],
+            },
+        )
 
         handle_object_info = nw.new_node(
             Nodes.SetMaterial,
-            input_kwargs={"Geometry": transform_geometry_4, "Material": handle_material},
+            input_kwargs={
+                "Geometry": transform_geometry_4,
+                "Material": handle_material,
+            },
         )
 
     elif handle_type == "none":
@@ -297,7 +318,7 @@ def geometry_node_join(
                     nodegroup_add_jointed_geometry_metadata().name,
                     input_kwargs={
                         "Geometry": door_body.outputs["Geometry"],
-                        "Label": "door"
+                        "Label": "door",
                     },
                 )
 
@@ -322,7 +343,11 @@ def geometry_node_join(
                 )
                 handle_label = "door_handle_right"
             else:
-                handle_position = [-door_width * np.random.uniform(0.42, 0.45), 0.0, 0.0]
+                handle_position = [
+                    -door_width * np.random.uniform(0.42, 0.45),
+                    0.0,
+                    0.0,
+                ]
                 handle_transformed = handle_object_info
                 handle_transformed = nw.new_node(
                     nodegroup_add_jointed_geometry_metadata().name,
@@ -332,7 +357,6 @@ def geometry_node_join(
                     },
                 )
                 handle_label = "door_handle_left"
-                
 
             door = nw.new_node(
                 nodegroup_hinge_joint().name,
@@ -367,10 +391,7 @@ def geometry_node_join(
 
                     door_arc = nw.new_node(
                         nodegroup_add_jointed_geometry_metadata().name,
-                        input_kwargs={
-                            "Geometry": door_arc,
-                            "Label": "door"
-                        },
+                        input_kwargs={"Geometry": door_arc, "Label": "door"},
                     )
 
                 else:
@@ -380,7 +401,7 @@ def geometry_node_join(
                         nodegroup_add_jointed_geometry_metadata().name,
                         input_kwargs={
                             "Geometry": door_arc.outputs["Geometry"],
-                            "Label": "door"
+                            "Label": "door",
                         },
                     )
 
@@ -407,7 +428,7 @@ def geometry_node_join(
                     nodegroup_add_jointed_geometry_metadata().name,
                     input_kwargs={
                         "Geometry": door_info.outputs["Geometry"],
-                        "Label": "door"
+                        "Label": "door",
                     },
                 )
             else:
@@ -415,7 +436,7 @@ def geometry_node_join(
                     nodegroup_add_jointed_geometry_metadata().name,
                     input_kwargs={
                         "Geometry": door_info.outputs["Geometry"],
-                        "Label": "door"
+                        "Label": "door",
                     },
                 )
 
@@ -435,7 +456,7 @@ def geometry_node_join(
                         nodegroup_add_jointed_geometry_metadata().name,
                         input_kwargs={
                             "Geometry": door_arc_info.outputs["Geometry"],
-                            "Label": "door"
+                            "Label": "door",
                         },
                     )
                 else:
@@ -443,7 +464,7 @@ def geometry_node_join(
                         nodegroup_add_jointed_geometry_metadata().name,
                         input_kwargs={
                             "Geometry": door_arc_info.outputs["Geometry"],
-                            "Label": "door"
+                            "Label": "door",
                         },
                     )
 
@@ -484,7 +505,7 @@ def geometry_node_join(
                     nodegroup_add_jointed_geometry_metadata().name,
                     input_kwargs={
                         "Geometry": door_info.outputs["Geometry"],
-                        "Label": "door"
+                        "Label": "door",
                     },
                 )
             else:
@@ -492,7 +513,7 @@ def geometry_node_join(
                     nodegroup_add_jointed_geometry_metadata().name,
                     input_kwargs={
                         "Geometry": door_info.outputs["Geometry"],
-                        "Label": "door"
+                        "Label": "door",
                     },
                 )
 
@@ -505,7 +526,7 @@ def geometry_node_join(
                         nodegroup_add_jointed_geometry_metadata().name,
                         input_kwargs={
                             "Geometry": door_arc_info.outputs["Geometry"],
-                            "Label": "door"
+                            "Label": "door",
                         },
                     )
                 else:
@@ -513,7 +534,7 @@ def geometry_node_join(
                         nodegroup_add_jointed_geometry_metadata().name,
                         input_kwargs={
                             "Geometry": door_arc_info.outputs["Geometry"],
-                            "Label": "door"
+                            "Label": "door",
                         },
                     )
 
@@ -639,12 +660,12 @@ def geometry_node_join(
         axis = (0.0000, 0.0000, 1.0000)
 
     final_door = nw.new_node(
-                    nodegroup_add_jointed_geometry_metadata().name,
-                    input_kwargs={
-                        "Geometry": final_door,
-                        "Label": "door_left",
-                    },
-                )
+        nodegroup_add_jointed_geometry_metadata().name,
+        input_kwargs={
+            "Geometry": final_door,
+            "Label": "door_left",
+        },
+    )
 
     hinge_joint = nw.new_node(
         nodegroup_hinge_joint().name,
@@ -693,20 +714,20 @@ def geometry_node_join(
         )
 
         door_other = nw.new_node(
-                    nodegroup_add_jointed_geometry_metadata().name,
-                    input_kwargs={
-                        "Geometry": door_other,
-                        "Label": "door_right",
-                    },
-                )
-        
+            nodegroup_add_jointed_geometry_metadata().name,
+            input_kwargs={
+                "Geometry": door_other,
+                "Label": "door_right",
+            },
+        )
+
         hinge_joint = nw.new_node(
-                    nodegroup_add_jointed_geometry_metadata().name,
-                    input_kwargs={
-                        "Geometry": hinge_joint,
-                        "Label": "frame_with_door_left",
-                    },
-                )
+            nodegroup_add_jointed_geometry_metadata().name,
+            input_kwargs={
+                "Geometry": hinge_joint,
+                "Label": "frame_with_door_left",
+            },
+        )
 
         # another hinge joint
         hinge_joint = nw.new_node(
@@ -726,24 +747,46 @@ def geometry_node_join(
 
     # move the bottom to z=0
     vertex_neighbors = nw.new_node(Nodes.VertexNeighbors)
-    
-    less_than = nw.new_node(Nodes.Compare,
+
+    less_than = nw.new_node(
+        Nodes.Compare,
         input_kwargs={2: vertex_neighbors.outputs["Vertex Count"], 3: 1},
-        attrs={'data_type': 'INT', 'operation': 'LESS_THAN'})
-    
-    delete_geometry = nw.new_node(Nodes.DeleteGeometry,
-        input_kwargs={'Geometry': hinge_joint.outputs["Geometry"], 'Selection': less_than})
-    
-    bounding_box_4 = nw.new_node(Nodes.BoundingBox, input_kwargs={'Geometry': delete_geometry.outputs["Geometry"]})
-    
-    separate_xyz_3 = nw.new_node(Nodes.SeparateXYZ, input_kwargs={'Vector': bounding_box_4.outputs["Min"]})
-    
-    multiply_4 = nw.new_node(Nodes.Math, input_kwargs={0: separate_xyz_3.outputs["Z"], 1: -1.0000}, attrs={'operation': 'MULTIPLY'})
-    
-    combine_xyz_2 = nw.new_node(Nodes.CombineXYZ, input_kwargs={'Z': multiply_4})
-    
-    transform_geometry_2 = nw.new_node(Nodes.Transform,
-        input_kwargs={'Geometry': hinge_joint.outputs["Geometry"], 'Translation': combine_xyz_2, 'Rotation': (0.0000, 0.0000, 1.5708)})
+        attrs={"data_type": "INT", "operation": "LESS_THAN"},
+    )
+
+    delete_geometry = nw.new_node(
+        Nodes.DeleteGeometry,
+        input_kwargs={
+            "Geometry": hinge_joint.outputs["Geometry"],
+            "Selection": less_than,
+        },
+    )
+
+    bounding_box_4 = nw.new_node(
+        Nodes.BoundingBox,
+        input_kwargs={"Geometry": delete_geometry.outputs["Geometry"]},
+    )
+
+    separate_xyz_3 = nw.new_node(
+        Nodes.SeparateXYZ, input_kwargs={"Vector": bounding_box_4.outputs["Min"]}
+    )
+
+    multiply_4 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: separate_xyz_3.outputs["Z"], 1: -1.0000},
+        attrs={"operation": "MULTIPLY"},
+    )
+
+    combine_xyz_2 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Z": multiply_4})
+
+    transform_geometry_2 = nw.new_node(
+        Nodes.Transform,
+        input_kwargs={
+            "Geometry": hinge_joint.outputs["Geometry"],
+            "Translation": combine_xyz_2,
+            "Rotation": (0.0000, 0.0000, 1.5708),
+        },
+    )
 
     group_output = nw.new_node(
         Nodes.GroupOutput, input_kwargs={"Geometry": transform_geometry_2}

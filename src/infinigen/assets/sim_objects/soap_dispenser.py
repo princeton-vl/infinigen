@@ -772,7 +772,6 @@ def geometry_nodes(nw: NodeWrangler):
     )
     node_utils.assign_curve(float_curve.mapping.curves[0], [])
 
-
     set_curve_radius = nw.new_node(
         Nodes.SetCurveRadius,
         input_kwargs={"Curve": resample_curve, "Radius": float_curve},

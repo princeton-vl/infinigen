@@ -199,95 +199,186 @@ def nodegroup_handle_end(nw: NodeWrangler):
         attrs={"is_active_output": True},
     )
 
-@node_utils.to_nodegroup('nodegroup_push_bar_handle', singleton=False, type='GeometryNodeTree')
+
+@node_utils.to_nodegroup(
+    "nodegroup_push_bar_handle", singleton=False, type="GeometryNodeTree"
+)
 def nodegroup_push_bar_handle(nw: NodeWrangler):
     # Code generated using version 2.7.1 of the node_transpiler
 
-    group_input = nw.new_node(Nodes.GroupInput,
-        expose_input=[('NodeSocketFloat', 'total_length', 1.0000),
-            ('NodeSocketFloat', 'thickness', 0.1000),
-            ('NodeSocketFloat', 'bar_aspect_ratio', 0.5000),
-            ('NodeSocketFloat', 'bar_height_ratio', 0.5000),
-            ('NodeSocketFloat', 'bar_length_ratio', 0.5000),
-            ('NodeSocketFloat', 'end_length_ratio', 0.5000),
-            ('NodeSocketFloat', 'end_height_ratio', 0.5000),
-            ('NodeSocketFloat', 'overall_x', 0.0000),
-            ('NodeSocketFloat', 'overall_y', 0.0000),
-            ('NodeSocketFloat', 'overall_z', 0.0000)])
-    
-    reroute = nw.new_node(Nodes.Reroute, input_kwargs={'Input': group_input.outputs["bar_aspect_ratio"]})
-    
-    multiply = nw.new_node(Nodes.Math,
-        input_kwargs={0: group_input.outputs["total_length"], 1: group_input.outputs["end_length_ratio"]},
-        attrs={'operation': 'MULTIPLY'})
-    
-    multiply_1 = nw.new_node(Nodes.Math,
-        input_kwargs={0: group_input.outputs["end_height_ratio"], 1: group_input.outputs["thickness"]},
-        attrs={'operation': 'MULTIPLY'})
-    
-    handle_end = nw.new_node(nodegroup_handle_end().name,
-        input_kwargs={'Bump': 0.7500, 'aspect_ratio': reroute, 'height': multiply, 'width': multiply_1})
-    
-    beveled_cylinder = nw.new_node(nodegroup_beveled_cylinder().name,
-        input_kwargs={'width': group_input.outputs["thickness"], 'aspect_ratio': group_input.outputs["bar_aspect_ratio"], 'height': group_input.outputs["total_length"]})
-    
-    reroute_2 = nw.new_node(Nodes.Reroute, input_kwargs={'Input': beveled_cylinder})
-    
-    join_geometry = nw.new_node(Nodes.JoinGeometry, input_kwargs={'Geometry': [handle_end, reroute_2]})
-    
-    multiply_2 = nw.new_node(Nodes.Math,
-        input_kwargs={0: group_input.outputs["thickness"], 1: group_input.outputs["bar_height_ratio"]},
-        attrs={'operation': 'MULTIPLY'})
-    
-    multiply_3 = nw.new_node(Nodes.Math,
-        input_kwargs={0: group_input.outputs["total_length"], 1: group_input.outputs["bar_length_ratio"]},
-        attrs={'operation': 'MULTIPLY'})
-    
-    beveled_cylinder_001 = nw.new_node(nodegroup_beveled_cylinder().name,
-        input_kwargs={'width': multiply_2, 'aspect_ratio': reroute, 'height': multiply_3})
-    
-    reroute_7 = nw.new_node(Nodes.Reroute, input_kwargs={'Input': beveled_cylinder_001})
-    
-    reroute_8 = nw.new_node(Nodes.Reroute, input_kwargs={'Input': reroute_7})
-    
-    reroute_1 = nw.new_node(Nodes.Reroute, input_kwargs={'Input': group_input.outputs["thickness"]})
-    
-    multiply_4 = nw.new_node(Nodes.Math, input_kwargs={0: reroute_1, 1: reroute}, attrs={'operation': 'MULTIPLY'})
-    
-    multiply_5 = nw.new_node(Nodes.Math, input_kwargs={0: multiply_4, 1: 0.4000}, attrs={'operation': 'MULTIPLY'})
-    
-    multiply_6 = nw.new_node(Nodes.Math,
+    group_input = nw.new_node(
+        Nodes.GroupInput,
+        expose_input=[
+            ("NodeSocketFloat", "total_length", 1.0000),
+            ("NodeSocketFloat", "thickness", 0.1000),
+            ("NodeSocketFloat", "bar_aspect_ratio", 0.5000),
+            ("NodeSocketFloat", "bar_height_ratio", 0.5000),
+            ("NodeSocketFloat", "bar_length_ratio", 0.5000),
+            ("NodeSocketFloat", "end_length_ratio", 0.5000),
+            ("NodeSocketFloat", "end_height_ratio", 0.5000),
+            ("NodeSocketFloat", "overall_x", 0.0000),
+            ("NodeSocketFloat", "overall_y", 0.0000),
+            ("NodeSocketFloat", "overall_z", 0.0000),
+        ],
+    )
+
+    reroute = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["bar_aspect_ratio"]}
+    )
+
+    multiply = nw.new_node(
+        Nodes.Math,
+        input_kwargs={
+            0: group_input.outputs["total_length"],
+            1: group_input.outputs["end_length_ratio"],
+        },
+        attrs={"operation": "MULTIPLY"},
+    )
+
+    multiply_1 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={
+            0: group_input.outputs["end_height_ratio"],
+            1: group_input.outputs["thickness"],
+        },
+        attrs={"operation": "MULTIPLY"},
+    )
+
+    handle_end = nw.new_node(
+        nodegroup_handle_end().name,
+        input_kwargs={
+            "Bump": 0.7500,
+            "aspect_ratio": reroute,
+            "height": multiply,
+            "width": multiply_1,
+        },
+    )
+
+    beveled_cylinder = nw.new_node(
+        nodegroup_beveled_cylinder().name,
+        input_kwargs={
+            "width": group_input.outputs["thickness"],
+            "aspect_ratio": group_input.outputs["bar_aspect_ratio"],
+            "height": group_input.outputs["total_length"],
+        },
+    )
+
+    reroute_2 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": beveled_cylinder})
+
+    join_geometry = nw.new_node(
+        Nodes.JoinGeometry, input_kwargs={"Geometry": [handle_end, reroute_2]}
+    )
+
+    multiply_2 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={
+            0: group_input.outputs["thickness"],
+            1: group_input.outputs["bar_height_ratio"],
+        },
+        attrs={"operation": "MULTIPLY"},
+    )
+
+    multiply_3 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={
+            0: group_input.outputs["total_length"],
+            1: group_input.outputs["bar_length_ratio"],
+        },
+        attrs={"operation": "MULTIPLY"},
+    )
+
+    beveled_cylinder_001 = nw.new_node(
+        nodegroup_beveled_cylinder().name,
+        input_kwargs={
+            "width": multiply_2,
+            "aspect_ratio": reroute,
+            "height": multiply_3,
+        },
+    )
+
+    reroute_7 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": beveled_cylinder_001})
+
+    reroute_8 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_7})
+
+    reroute_1 = nw.new_node(
+        Nodes.Reroute, input_kwargs={"Input": group_input.outputs["thickness"]}
+    )
+
+    multiply_4 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: reroute_1, 1: reroute},
+        attrs={"operation": "MULTIPLY"},
+    )
+
+    multiply_5 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: multiply_4, 1: 0.4000},
+        attrs={"operation": "MULTIPLY"},
+    )
+
+    multiply_6 = nw.new_node(
+        Nodes.Math,
         input_kwargs={0: group_input.outputs["total_length"], 1: -0.5000},
-        attrs={'operation': 'MULTIPLY'})
-    
+        attrs={"operation": "MULTIPLY"},
+    )
+
     add = nw.new_node(Nodes.Math, input_kwargs={0: multiply_6, 1: multiply})
-    
-    multiply_7 = nw.new_node(Nodes.Math, input_kwargs={0: add, 1: 0.9500}, attrs={'operation': 'MULTIPLY'})
-    
-    combine_xyz = nw.new_node(Nodes.CombineXYZ, input_kwargs={'Y': multiply_5, 'Z': multiply_7})
-    
-    transform_geometry = nw.new_node(Nodes.Transform, input_kwargs={'Geometry': reroute_8, 'Translation': combine_xyz})
-    
-    reroute_4 = nw.new_node(Nodes.Reroute, input_kwargs={'Input': multiply_4})
-    
-    reroute_5 = nw.new_node(Nodes.Reroute, input_kwargs={'Input': reroute_4})
-    
-    multiply_8 = nw.new_node(Nodes.Math, input_kwargs={0: reroute_5}, attrs={'operation': 'MULTIPLY'})
-    
-    combine_xyz_1 = nw.new_node(Nodes.CombineXYZ, input_kwargs={'Y': multiply_8})
-    
-    combine_xyz_2 = nw.new_node(Nodes.CombineXYZ,
-        input_kwargs={'X': group_input.outputs["overall_x"], 'Y': group_input.outputs["overall_y"], 'Z': group_input.outputs["overall_z"]})
-    
-    multiply_9 = nw.new_node(Nodes.Math, input_kwargs={0: reroute, 1: multiply_2}, attrs={'operation': 'MULTIPLY'})
-    
-    reroute_6 = nw.new_node(Nodes.Reroute, input_kwargs={'Input': multiply_9})
-    
-    multiply_10 = nw.new_node(Nodes.Math, input_kwargs={0: reroute_6}, attrs={'operation': 'MULTIPLY'})
-    
-    group_output = nw.new_node(Nodes.GroupOutput,
-        input_kwargs={'Parent': join_geometry, 'Child': transform_geometry, 'Translation1': combine_xyz_1, 'Translation2': combine_xyz_2, 'Joint Max': multiply_10},
-        attrs={'is_active_output': True})
+
+    multiply_7 = nw.new_node(
+        Nodes.Math, input_kwargs={0: add, 1: 0.9500}, attrs={"operation": "MULTIPLY"}
+    )
+
+    combine_xyz = nw.new_node(
+        Nodes.CombineXYZ, input_kwargs={"Y": multiply_5, "Z": multiply_7}
+    )
+
+    transform_geometry = nw.new_node(
+        Nodes.Transform,
+        input_kwargs={"Geometry": reroute_8, "Translation": combine_xyz},
+    )
+
+    reroute_4 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": multiply_4})
+
+    reroute_5 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": reroute_4})
+
+    multiply_8 = nw.new_node(
+        Nodes.Math, input_kwargs={0: reroute_5}, attrs={"operation": "MULTIPLY"}
+    )
+
+    combine_xyz_1 = nw.new_node(Nodes.CombineXYZ, input_kwargs={"Y": multiply_8})
+
+    combine_xyz_2 = nw.new_node(
+        Nodes.CombineXYZ,
+        input_kwargs={
+            "X": group_input.outputs["overall_x"],
+            "Y": group_input.outputs["overall_y"],
+            "Z": group_input.outputs["overall_z"],
+        },
+    )
+
+    multiply_9 = nw.new_node(
+        Nodes.Math,
+        input_kwargs={0: reroute, 1: multiply_2},
+        attrs={"operation": "MULTIPLY"},
+    )
+
+    reroute_6 = nw.new_node(Nodes.Reroute, input_kwargs={"Input": multiply_9})
+
+    multiply_10 = nw.new_node(
+        Nodes.Math, input_kwargs={0: reroute_6}, attrs={"operation": "MULTIPLY"}
+    )
+
+    group_output = nw.new_node(
+        Nodes.GroupOutput,
+        input_kwargs={
+            "Parent": join_geometry,
+            "Child": transform_geometry,
+            "Translation1": combine_xyz_1,
+            "Translation2": combine_xyz_2,
+            "Joint Max": multiply_10,
+        },
+        attrs={"is_active_output": True},
+    )
 
 
 # @node_utils.to_nodegroup(
