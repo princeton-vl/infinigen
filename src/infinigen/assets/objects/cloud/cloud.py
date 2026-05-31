@@ -7,7 +7,12 @@
 import bpy
 import numpy as np
 from scipy.ndimage import distance_transform_edt
-from skimage import measure
+
+# scikit-image is an optional dependency, not required by v2
+try:
+    from skimage import measure
+except ImportError:
+    measure = None
 
 from infinigen.assets.lighting import sky_lighting
 from infinigen.assets.objects.cloud.node import (

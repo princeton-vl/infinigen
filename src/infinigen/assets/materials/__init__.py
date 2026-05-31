@@ -5,22 +5,28 @@
 
 from infinigen.core import surface
 from infinigen.core.util.organization import SurfaceTypes
-from infinigen.infinigen_gpl.surfaces import snow
+
+# infinigen_gpl is an optional GPL-licensed dependency, not required by v2
+try:
+    from infinigen.infinigen_gpl.surfaces import snow
+except ImportError:
+    snow = None
 
 
-class Snow:
-    shader = snow.shader_snow
-    type = SurfaceTypes.SDFPerturb
-    mod_name = "geo_snowtexture"
-    name = "snow"
+if snow is not None:
 
-    def apply(self, obj, selection=None, **kwargs):
-        surface.add_geomod(
-            obj,
-            snow.geo_snowtexture,
-            selection=selection,
-        )
-        surface.add_material(obj, snow.shader_snow, selection=selection)
+    class Snow:
+        shader = snow.shader_snow
+        type = SurfaceTypes.SDFPerturb
+        mod_name = "geo_snowtexture"
+        name = "snow"
 
+        def apply(self, obj, selection=None, **kwargs):
+            surface.add_geomod(
+                obj,
+                snow.geo_snowtexture,
+                selection=selection,
+            )
+            surface.add_material(obj, snow.shader_snow, selection=selection)
 
-snow.Snow = Snow
+    snow.Snow = Snow

@@ -15,8 +15,11 @@ from infinigen.core.nodes.node_wrangler import Nodes
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.tagging import tag_object
 
-# ruff: noqa: I001 # import order in this file depends on whether submodules have been initalized, breaks CI
-from infinigen.infinigen_gpl.surfaces import snow
+# infinigen_gpl is an optional GPL-licensed dependency, not required by v2
+try:
+    from infinigen.infinigen_gpl.surfaces import snow
+except ImportError:
+    snow = None
 
 
 def shader_raindrop(nw):

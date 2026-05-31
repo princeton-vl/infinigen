@@ -36,10 +36,6 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.PROCFUNC_DEPLOY_KEY }}
 
-      - name: Checkout submodules
-        run: |
-          git submodule update --init src/infinigen/infinigen_gpl
-
       - name: Set up uv
         uses: astral-sh/setup-uv@v7
         with:

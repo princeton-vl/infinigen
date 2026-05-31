@@ -36,10 +36,6 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.PROCFUNC_DEPLOY_KEY }}
 
-      - name: Update submodules
-        run: |
-          git submodule update --init --recursive
-
       - name: Install infinigen & dependencies
         run: |
           uv venv

@@ -20,10 +20,6 @@ jobs:
         with:
           submodules: false
 
-      - name: Update submodules
-        run: |
-          git submodule update --init --recursive
-
       - name: Lint with ruff
         run: |
           # stop the build if there are Python syntax errors or undefined names
@@ -47,10 +43,6 @@ jobs:
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.PROCFUNC_DEPLOY_KEY }}
-
-      - name: Update submodules
-        run: |
-          git submodule update --init --recursive
 
       - name: Install infinigen & dependencies
         run: |

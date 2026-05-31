@@ -20,8 +20,11 @@ from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 from infinigen.core.util.color import hsv2rgba
 
-# ruff: noqa: I001 # import order in this file depends on whether submodules have been initalized, breaks CI
-from infinigen.infinigen_gpl.extras.diff_growth import build_diff_growth
+# infinigen_gpl is an optional GPL-licensed dependency, not required by v2
+try:
+    from infinigen.infinigen_gpl.extras.diff_growth import build_diff_growth
+except ImportError:
+    build_diff_growth = None
 
 
 class LichenFactory(AssetFactory):

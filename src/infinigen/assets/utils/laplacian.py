@@ -8,7 +8,12 @@ import bmesh
 import numpy as np
 from numpy.random import uniform
 from scipy.ndimage import convolve
-from skimage.measure import marching_cubes
+
+# scikit-image is an optional dependency, not required by v2
+try:
+    from skimage.measure import marching_cubes
+except ImportError:
+    marching_cubes = None
 
 from infinigen.assets.utils.object import data2mesh
 

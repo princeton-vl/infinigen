@@ -28,8 +28,11 @@ from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 
-# ruff: noqa: I001 # import order in this file depends on whether submodules have been initalized, breaks CI
-from infinigen.infinigen_gpl.extras.diff_growth import build_diff_growth
+# infinigen_gpl is an optional GPL-licensed dependency, not required by v2
+try:
+    from infinigen.infinigen_gpl.extras.diff_growth import build_diff_growth
+except ImportError:
+    build_diff_growth = None
 
 
 class SeaweedFactory(AssetFactory):

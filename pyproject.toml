@@ -41,7 +41,6 @@ dependencies = [
     "trimesh<3.23.0",
     "OpenEXR",
     "submitit", # can be removed so long as you dont use slurm.gin or --slurm args
-    "geomdl", # can be removed so long as you do not generate any creatures
     # used by trimesh, we could specify "trimesh[easy]" but this brings more packages
     "python-fcl",
     "rtree",
