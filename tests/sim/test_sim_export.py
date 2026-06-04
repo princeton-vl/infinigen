@@ -11,12 +11,13 @@ import os
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-import mujoco
 import pytest
 
 pytest.importorskip(
     "coacd", reason="coacd is not installed, skipping all tests in this file"
 )
+
+import mujoco
 
 import infinigen.core.util.blender as butil
 from infinigen.assets.sim_objects.mapping import OBJECT_CLASS_MAP

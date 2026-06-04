@@ -17,6 +17,11 @@ from infinigen.assets.composition import material_assignments
 from infinigen.assets.utils.autobevel import BevelSharp
 from infinigen.assets.utils.decorate import read_co, write_attribute, write_co
 from infinigen.assets.utils.draw import spin
+from infinigen.assets.utils.joints import (
+    nodegroup_add_jointed_geometry_metadata,
+    nodegroup_hinge_joint,
+    nodegroup_sliding_joint,
+)
 from infinigen.assets.utils.nodegroup import geo_radius
 from infinigen.assets.utils.object import (
     data2mesh,
@@ -39,11 +44,6 @@ from .joint_utils import (
     nodegroup_arc_on_door_warper,
     nodegroup_door_frame_warper,
     nodegroup_symmetry_along_y,
-)
-from infinigen.assets.utils.joints import (
-    nodegroup_add_jointed_geometry_metadata,
-    nodegroup_hinge_joint,
-    nodegroup_sliding_joint,
 )
 
 

@@ -20,27 +20,14 @@
 
 First, follow our [Installation Instructions](docs/Installation.md).
 
-### Hello Room: Getting Started with Infinigen Indoors
+### Getting Started with Infinigen V2
 
+<!-- TODO: add V2 preview images (single line, width≈210), e.g. docs/images/hello_v2/*.png -->
 <p align="center">
-  <img src="docs/images/hello_room/dining_blender.png" width="300" />
-  <img src="docs/images/hello_room/dining.png" width="300" />
-  <img src="docs/images/hello_room/dining_depth.png" width="300" />
-  <img src="docs/images/hello_room/dining_obj.png" width="300" />
+  <img src="docs/images/video_thumbnail.png" width="210" />
 </p>
 
-See instructions for Infinigen-Indoors in [HelloRoom.md](docs/HelloRoom.md)
-
-### Hello World: Getting Started with Infinigen Nature
-
-<p align="center">
-  <img src="docs/images/hello_world/Image0048_00_00.png" width="300" />
-  <img src="docs/images/hello_world/Depth0048_00_00.png" width="300" />
-  <img src="docs/images/hello_world/SurfaceNormal_0001_00_00.png" width="300" />
-  <img src="docs/images/hello_world/InstanceSegmentation_0001_00_00.png" width="300" />
-</p>
-
-See instructions for Infinigen-Nature in [HelloWorld.md](docs/HelloWorld.md)
+See instructions for Infinigen-V2 in the [`main2` branch README](https://github.com/princeton-vl/infinigen_internal/blob/main2/README.md)
 
 ### Generate Articulated Sim Assets: Getting Started with Infinigen Articulated
 
@@ -49,6 +36,28 @@ See instructions for Infinigen-Nature in [HelloWorld.md](docs/HelloWorld.md)
 </p>
 
 See instructions for Infinigen-Articulated in [Exporting to Simulators](docs/simulation/ExportingToSimulators.md)
+
+### Hello Room: Getting Started with Infinigen Indoors
+
+<p align="center">
+  <img src="docs/images/hello_room/dining_blender.png" width="210" />
+  <img src="docs/images/hello_room/dining.png" width="210" />
+  <img src="docs/images/hello_room/dining_depth.png" width="210" />
+  <img src="docs/images/hello_room/dining_obj.png" width="210" />
+</p>
+
+See instructions for Infinigen-Indoors in [HelloRoom.md](docs/HelloRoom.md)
+
+### Hello World: Getting Started with Infinigen Nature
+
+<p align="center">
+  <img src="docs/images/hello_world/Image0048_00_00.png" width="210" />
+  <img src="docs/images/hello_world/Depth0048_00_00.png" width="210" />
+  <img src="docs/images/hello_world/SurfaceNormal_0001_00_00.png" width="210" />
+  <img src="docs/images/hello_world/InstanceSegmentation_0001_00_00.png" width="210" />
+</p>
+
+See instructions for Infinigen-Nature in [HelloWorld.md](docs/HelloWorld.md)
 
 ## Papers
 

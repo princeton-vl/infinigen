@@ -28,7 +28,14 @@ from shutil import which
 import gin
 import numpy as np
 import pandas as pd
-from jinja2 import Environment, FileSystemLoader, select_autoescape
+
+try:
+    from jinja2 import Environment, FileSystemLoader, select_autoescape
+except ImportError:
+    logging.warning(
+        f"Failed to import jinja2, {Path(__file__).name} will skip writing HTML summaries"
+    )
+    Environment = FileSystemLoader = select_autoescape = None
 
 try:
     import submitit
@@ -491,6 +498,9 @@ def record_crashed_seed(scene, taskname, f, fatal=True):
 
 
 def write_html_summary(all_scenes, output_folder, max_size=5000):
+    if Environment is None:
+        logging.warning("jinja2 is not available, skipping HTML summary")
+        return
     names = [
         "index" if (idx == 0) else f"index_{idx}"
         for idx in range(0, len(all_scenes), max_size)
