@@ -13,6 +13,7 @@ on:
 jobs:
   build_sdist_purepy:
     name: Build source/pure python wheels
+    if: github.repository == 'princeton-vl/infinigen'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -36,6 +37,7 @@ jobs:
 
   build_wheels:
     name: Build wheel on ${{ matrix.os }} for ${{ matrix.cibw_archs }}
+    if: github.repository == 'princeton-vl/infinigen'
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
