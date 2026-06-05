@@ -249,3 +249,4 @@ v1.18.0
 
 v1.19.0
 - Add new articulated object generators and sim features for Infinigen-Articulated
+- Use Boolean modifier EXACT solver in populate.apply_cutter to avoid silent infinite hang on degenerate cutter geometry.

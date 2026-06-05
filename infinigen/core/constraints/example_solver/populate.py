@@ -35,7 +35,7 @@ def apply_cutter(state, objkey, cutter):
             "BOOLEAN",
             object=butil.copy(cutter),
             operation="DIFFERENCE",
-            solver="FAST",
+            solver="EXACT",
         )
 
         target_obj_name = state.objs[relation_state.target_name].obj.name
