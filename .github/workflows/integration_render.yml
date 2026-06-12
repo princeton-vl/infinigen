@@ -5,7 +5,8 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
   push:
     branches:
-      - develop_materials
+      - develop2
+      - main2
   workflow_dispatch:
     inputs:
       pr_number:
@@ -41,6 +42,36 @@ jobs:
           uv venv
           uv pip install -e ".[dev,vis]"
 
+      # Resolve every path/label this run needs, once, so the render / archive /
+      # report steps below are just simple consumers of these env vars.
+      - name: Resolve run metadata
+        run: |
+          set -e
+          # On a PR this is the PR number; via workflow_dispatch it's the input;
+          # on a branch push it's empty (RUN_LABEL stays "nopr").
+          PR_NUMBER="${{ github.event.pull_request.number || inputs.pr_number }}"
+          RUN_LABEL="nopr"
+          [ -n "$PR_NUMBER" ] && RUN_LABEL="pr${PR_NUMBER}"
+
+          REL_PATH="$(date -u +'%Y-%m-%dT%H-%M-%SZ')_${GITHUB_SHA:0:7}"
+
+          # Baseline to diff against in the viewer: the PR's target branch
+          # (<base>_latest), falling back to develop_latest when that branch has
+          # no baseline yet. base_ref is empty for push / dispatch, so those keep
+          # develop_latest.
+          BASELINE="develop_latest"
+          BASE_REF="${{ github.base_ref }}"
+          if [ -n "$BASE_REF" ] && [ -e "$RENDER_ARCHIVE_ROOT/${BASE_REF}_latest" ]; then
+            BASELINE="${BASE_REF}_latest"
+          fi
+
+          {
+            echo "REL_PATH=$REL_PATH"
+            echo "OUTPUT_DIR=$RUNNER_TEMP/integration-renders-${RUN_LABEL}-${REL_PATH}"
+            echo "TARGET_DIR=$RENDER_ARCHIVE_ROOT/$REL_PATH"
+            echo "BASELINE=$BASELINE"
+          } >> "$GITHUB_ENV"
+
       - name: Run integration renders
         id: render
         continue-on-error: true
@@ -52,22 +83,7 @@ jobs:
           SCENE_LIMIT: -1
         run: |
           set -e
-          PR_NUMBER="${{ github.event.pull_request.number }}"
-          if [ -z "$PR_NUMBER" ]; then
-            PR_NUMBER="${{ inputs.pr_number }}"
-          fi
-          RUN_LABEL="nopr"
-          if [ -n "$PR_NUMBER" ]; then
-            RUN_LABEL="pr${PR_NUMBER}"
-          fi
-          TS="$(date -u +'%Y-%m-%dT%H-%M-%SZ')"
-          SHA="${GITHUB_SHA:0:7}"
-          OUTPUT_DIR="$RUNNER_TEMP/integration-renders-$RUN_LABEL-$TS-$SHA"
           mkdir -p "$OUTPUT_DIR"
-          echo "OUTPUT_DIR=$OUTPUT_DIR" >> "$GITHUB_ENV"
-          echo "PR_NUMBER=$PR_NUMBER" >> "$GITHUB_ENV"
-          echo "TS=$TS" >> "$GITHUB_ENV"
-          echo "SHA=$SHA" >> "$GITHUB_ENV"
           uv run python scripts/integration_v2/launch_andromeda.py \
             --output_path "$OUTPUT_DIR" \
             --jobs-per-gpu 4 \
@@ -77,36 +93,33 @@ jobs:
         if: always()
         run: |
           set -e
-
-          # These vars come from the render step via $GITHUB_ENV. If that step
-          # crashed before exporting them (or didn't run at all), they'll be
-          # empty here — and `rsync -a "$OUTPUT_DIR"/ "$TARGET_DIR"/` with an
-          # empty OUTPUT_DIR expands to `rsync -a / ...`, which copies the
-          # entire root filesystem until the disk fills. Fail loudly instead.
-          echo "OUTPUT_DIR=$OUTPUT_DIR"
-          echo "TS=$TS"
-          echo "SHA=$SHA"
-          if [ -z "$OUTPUT_DIR" ] || [ -z "$TS" ] || [ -z "$SHA" ]; then
-            echo "ERROR: render step did not export OUTPUT_DIR/TS/SHA — nothing to archive."
-            exit 1
+          # Skip (don't fail) when the render produced no output — e.g. it
+          # crashed before writing anything. This also guards against an empty
+          # OUTPUT_DIR turning `rsync -a "$OUTPUT_DIR"/ ...` into `rsync -a / ...`,
+          # which would copy the whole filesystem until the disk fills.
+          if [ ! -d "$OUTPUT_DIR" ] || [ -z "$(ls -A "$OUTPUT_DIR" 2>/dev/null)" ]; then
+            echo "No render output at '$OUTPUT_DIR' — nothing to archive."
+            exit 0
           fi
 
-          TARGET_DIR="$RENDER_ARCHIVE_ROOT/${TS}_${SHA}"
-          REL_PATH="${TS}_${SHA}"
           mkdir -p "$TARGET_DIR"
           rsync -a "$OUTPUT_DIR"/ "$TARGET_DIR"/
-          if [ "${{ github.ref_name }}" = "develop_materials" ]; then
-            ln -sfn "$TARGET_DIR" "$RENDER_ARCHIVE_ROOT/develop_latest"
+
+          # On a push to a tracked branch, point that branch's baseline at this
+          # run. develop_materials also keeps the historical develop_latest alias.
+          if [ "${{ github.event_name }}" = "push" ]; then
+            ln -sfn "$TARGET_DIR" "$RENDER_ARCHIVE_ROOT/${{ github.ref_name }}_latest"
+            if [ "${{ github.ref_name }}" = "develop_materials" ]; then
+              ln -sfn "$TARGET_DIR" "$RENDER_ARCHIVE_ROOT/develop_latest"
+            fi
           fi
-          echo "TARGET_DIR=$TARGET_DIR" >> "$GITHUB_ENV"
-          echo "REL_PATH=$REL_PATH" >> "$GITHUB_ENV"
 
       - name: Print viewer link
         if: always()
         run: |
           echo "Integration renders are ready:"
           echo "${VIEWER_BASE_URL}/?v=${REL_PATH}"
-          echo "${VIEWER_BASE_URL}/?v=develop_latest&v=${REL_PATH}"
+          echo "${VIEWER_BASE_URL}/?v=${BASELINE}&v=${REL_PATH}"
           echo "Path: ${TARGET_DIR}"
 
       - name: Comment PR with viewer link
@@ -115,25 +128,22 @@ jobs:
         with:
           script: |
             const pr = context.payload.pull_request?.number || core.getInput('pr_number');
-            const targetDir = process.env.TARGET_DIR;
-            const viewerBase = process.env.VIEWER_BASE_URL;
-            const relPath = process.env.REL_PATH;
-            const link = `${viewerBase}/?v=${relPath}`;
-            const compare = `${viewerBase}/?v=develop_latest&v=${relPath}`;
+            const { VIEWER_BASE_URL, REL_PATH, TARGET_DIR } = process.env;
+            const baseline = process.env.BASELINE || 'develop_latest';
             const body = [
               "Integration renders are ready:",
-              link,
+              `${VIEWER_BASE_URL}/?v=${REL_PATH}`,
               "",
-              "Compare vs develop_latest:",
-              compare,
+              `Compare vs ${baseline}:`,
+              `${VIEWER_BASE_URL}/?v=${baseline}&v=${REL_PATH}`,
               "",
-              `Path: ${targetDir}`
+              `Path: ${TARGET_DIR}`,
             ].join("\n");
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: pr,
-              body
+              body,
             });
 
       - name: Fail job if any render failed
