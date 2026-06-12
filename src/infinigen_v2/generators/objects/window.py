@@ -272,7 +272,7 @@ def curtain_distribution(
 ) -> CurtainResult:
     if dimensions is None:
         dimensions = window_dimensions_distribution(rng)
-    vec = pf.nodes.shader.uv_map(uv_map="UVMap")
+    vec = pf.nodes.shader.coord().uv
     if material is None:
         material = curtain_fabric_distribution(rng, vec)
 
@@ -692,7 +692,7 @@ def splats_gradient_window(
     vector: t.SocketOrVal[pf.Vector],
     glass_height: float,
 ) -> pf.ProcNode[float]:
-    uv = pf.nodes.shader.uv_map(uv_map="UVMap")
+    uv = pf.nodes.shader.coord().uv
 
     reach = pf.random.uniform(rng, 0.2, 0.6)
 
@@ -811,7 +811,7 @@ def window_distribution(
     shutter_rotation = pf.random.uniform(rng_param, 0.0, 1.0) ** 0.5
     shutter_interval = shutter_width * (1 + pf.random.uniform(rng_param, 0.02, 0.1))
 
-    vec = pf.nodes.shader.uv_map(uv_map="UVMap")
+    vec = pf.nodes.shader.coord().uv
     if frame_material is None:
         frame_material = window_frame_material_distribution(rng_frame, vec)
     if glass_material is None:

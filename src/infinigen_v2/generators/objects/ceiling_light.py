@@ -167,7 +167,7 @@ def ceiling_light_distribution(
     inner_height = height * pf.random.uniform(rng, 0.5, 1.1)
     curvature = pf.random.uniform(rng, 0.1, 0.5)
 
-    vec = pf.nodes.shader.uv_map(uv_map="UVMap")
+    vec = pf.nodes.shader.coord().uv
     frame_shader = lamp_material_distribution(rng, vec)
     frame_shader = black_for_reflections(frame_shader.surface)
     frame_material = frame_shader

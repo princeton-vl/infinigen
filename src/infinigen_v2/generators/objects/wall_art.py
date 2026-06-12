@@ -50,6 +50,7 @@ def art_frame(
         name="UVMap",
         value=extrude_value * grid.uv_map,
         domain="CORNER",
+        data_type="FLOAT2",
     )
 
     extrude = pf.nodes.geo.extrude_mesh(
@@ -175,7 +176,7 @@ def wall_art_distribution(
         frame_material = furniture_material_distribution(rng, vec)
 
     if panel_material is None:
-        vec = pf.nodes.shader.attribute("UVMap").vector
+        vec = pf.nodes.shader.coord().uv
         panel_material_fn = pf.control.choice(
             rng,
             [

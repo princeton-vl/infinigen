@@ -1037,7 +1037,7 @@ def cabinet_distribution(
         height = pf.random.uniform(rng, 0.9, 1.8)
         dimensions = pf.Vector((depth, width, height))
 
-    vec = pf.nodes.shader.uv_map(uv_map="UVMap")
+    vec = pf.nodes.shader.coord().uv
     if frame_material is None:
         frame_material = furniture_material_distribution(rng, vec)
 

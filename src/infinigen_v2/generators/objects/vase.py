@@ -66,15 +66,15 @@ def cylinder_side(
         vertices=u_resolution,
         side_segments=top_side_segments.astype(dtype=int),
     )
-    # geo = pf.nodes.geo.store_named_attribute(
-    #    geometry=cylinder.mesh,
-    #    name="UVMap",
-    #    value=cylinder.uv_map,
-    #    domain="CORNER",
-    #    data_type="FLOAT2",
-    # )
+    geo = pf.nodes.geo.store_named_attribute(
+        geometry=cylinder.mesh,
+        name="UVMap",
+        value=cylinder.uv_map,
+        domain="CORNER",
+        data_type="FLOAT2",
+    )
     captured = pf.nodes.geo.capture_attribute(
-        geometry=cylinder.mesh, domain="FACE", top=cylinder.bottom
+        geometry=geo, domain="FACE", top=cylinder.bottom
     )
     return CylinderSideResult(
         geometry=captured.geometry,
@@ -383,7 +383,7 @@ def vase_distribution(rng: pf.RNG) -> VaseResult:
         foot_height=foot_height,
     )
 
-    uv = pf.nodes.shader.uv_map(uv_map="uv_map")
+    uv = pf.nodes.shader.coord().uv
     mat_result = vase_material_distribution(rng, uv)
     geo = pf.nodes.geo.set_material(geo, mat_result)
 

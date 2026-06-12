@@ -699,7 +699,7 @@ def sofa_distribution(
     leg_z = pf.random.uniform(rng, 1.1, 2.5)
     leg_faces = pf.control.choice(rng, [(4, 0.5), (25, 0.5)])
 
-    vec = pf.nodes.shader.uv_map(uv_map="UVMap")
+    vec = pf.nodes.shader.coord().uv
     if material is None:
         material = sofa_fabric_distribution(rng, vec)
     if foot_material is None:

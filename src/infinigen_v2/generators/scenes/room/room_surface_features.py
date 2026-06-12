@@ -15,20 +15,7 @@ from infinigen_v2.generators.scenes.placement_utils import (
     duplicates,
 )
 from infinigen_v2.generators.scenes.room.room_shape import RoomShapeResult
-from infinigen_v2.generators.shaders.composites import (
-    bricks,
-    paint_overlay,
-    tiles,
-    wood_planks,
-)
-from infinigen_v2.generators.shaders.masks import cracks
-from infinigen_v2.generators.shaders.materials import (
-    carpet,
-    concrete,
-    paint,
-    wood_grain,
-)
-from infinigen_v2.generators.shaders.util.coord import uv_maybe_rotate
+from infinigen_v2.generators.shaders import functionality_lists
 from infinigen_v2.generators.util.curve import curve_to_mesh_with_uv
 from infinigen_v2.generators.uv_surface import grid_placement
 
@@ -411,113 +398,6 @@ class CeilingFeaturesResult(NamedTuple):
 
 
 @pf.tracer.grammar
-def paint_wall_distribution(rng: pf.RNG, vector: pf.ProcNode[pf.Vector]) -> pf.Material:
-    displacement_pct = pf.random.uniform(rng, 0.0, 0.8)
-    paint_value = pf.random.clip_gaussian(rng, 0.5, 0.4, 0.1, 0.9)
-    color = paint.paint_color_distribution(rng, value=paint_value)
-    return paint.paint_distribution(
-        rng, vector, displacement_pct=displacement_pct, base_color=color
-    )
-
-
-@pf.tracer.grammar
-def paint_flaked_distribution(
-    rng: pf.RNG, vector: pf.ProcNode[pf.Vector]
-) -> pf.Material:
-    paint_mat = paint_wall_distribution(rng, vector)
-
-    base_material = pf.control.choice(
-        rng,
-        [
-            (wood_planks.wood_planks_distribution, 1.0),
-            (concrete.concrete_distribution, 2.0),
-            # (tiles.tile_indoor_wall_distribution, 1.0), # svm out of stack space
-        ],
-    )
-    base_material = base_material(rng, vector)
-
-    mask = cracks.cracks_distribution(
-        rng,
-        vector,
-        displacement_a=base_material.displacement,
-        displacement_b=paint_mat.displacement,
-        height_threshold=0.0,
-    )
-    return paint_overlay.paint_overlay_distribution(
-        rng, vector, material=base_material, paint=paint_mat, mask=mask
-    )
-
-
-@pf.tracer.grammar
-def wall_material_distribution(
-    rng: pf.RNG, vector: pf.ProcNode[pf.Vector]
-) -> pf.Material:
-    vector = uv_maybe_rotate(rng, vector)
-    func = pf.control.choice(
-        rng,
-        [
-            (paint_wall_distribution, 3.0),
-            (bricks.bricks_distribution, 2.0),
-            (bricks.bricks_paint_distribution, 1.0),
-            (bricks.bricks_pristine_distribution, 0.5),
-            (concrete.concrete_distribution, 0.5),
-            (tiles.tile_indoor_wall_distribution, 1.5),
-            (wood_planks.wood_planks_distribution, 1.5),
-            (paint_flaked_distribution, 1.0),
-        ],
-    )
-    return func(rng, vector)
-
-
-@pf.tracer.grammar
-def skirt_material_distribution(
-    rng: pf.RNG, vector: pf.ProcNode[pf.Vector]
-) -> pf.Material:
-    func = pf.control.choice(
-        rng,
-        [
-            (paint.paint_distribution, 1.0),
-            (wood_grain.wood_grain_distribution, 1.0),
-        ],
-    )
-    return func(rng, vector)
-
-
-@pf.tracer.grammar
-def floor_material_distribution(
-    rng: pf.RNG, vector: pf.ProcNode[pf.Vector]
-) -> pf.Material:
-    vector = uv_maybe_rotate(rng, vector)
-    func = pf.control.choice(
-        rng,
-        [
-            (concrete.concrete_distribution, 1.0),
-            (tiles.tile_indoor_ground_distribution, 3.0),
-            (wood_planks.wood_planks_distribution, 3.0),
-            (carpet.carpet_distribution, 2.0),
-        ],
-    )
-    return func(rng, vector)
-
-
-@pf.tracer.grammar
-def ceiling_material_distribution(
-    rng: pf.RNG, vector: pf.ProcNode[pf.Vector]
-) -> pf.Material:
-    vector = uv_maybe_rotate(rng, vector)
-    func = pf.control.choice(
-        rng,
-        [
-            (concrete.concrete_distribution, 1.0),
-            (paint.paint_distribution, 3.0),
-            (wood_planks.wood_planks_distribution, 0.5),
-            (paint_flaked_distribution, 1.0),
-        ],
-    )
-    return func(rng, vector)
-
-
-@pf.tracer.grammar
 def skirting_on_walls_distribution(
     rng: pf.RNG,
     floor_curve: pf.CurveObject,
@@ -646,10 +526,10 @@ def wall_feature_distribution(
     shape: RoomShapeResult,
     wall_thickness: float = 0.1,
 ) -> WallFeaturesResult:
-    vec_wall = pf.nodes.shader.uv_map(uv_map="UVMap")
+    vec_wall = pf.nodes.shader.coord().uv
 
-    wall_material_1 = wall_material_distribution(rng, vec_wall)
-    wall_material_2 = wall_material_distribution(rng, vec_wall)
+    wall_material_1 = functionality_lists.wall_material_distribution(rng, vec_wall)
+    wall_material_2 = functionality_lists.wall_material_distribution(rng, vec_wall)
 
     wall_back = extrude_for_thickness(shape.walls, wall_thickness)
 
@@ -718,7 +598,7 @@ def ceiling_feature_distribution(
 ) -> CeilingFeaturesResult:
     vec_pos = pf.nodes.shader.geometry().position
 
-    floor_mat = floor_material_distribution(rng, vec_pos)
+    floor_mat = functionality_lists.floor_material_distribution(rng, vec_pos)
     pf.ops.object.set_material(
         shape.floor,
         surface=floor_mat.surface,
@@ -726,7 +606,7 @@ def ceiling_feature_distribution(
     )
     pf.ops.modifier.subdivide_surface(shape.floor, levels=9, _skip_apply=True)
 
-    ceiling_mat = ceiling_material_distribution(rng, vec_pos)
+    ceiling_mat = functionality_lists.ceiling_material_distribution(rng, vec_pos)
     pf.ops.object.set_material(
         shape.ceiling,
         surface=ceiling_mat.surface,
@@ -753,8 +633,8 @@ def skirting_distribution(
     rng: pf.RNG,
     shape: RoomShapeResult,
 ) -> list[pf.MeshObject]:
-    vec_wall = pf.nodes.shader.uv_map(uv_map="UVMap")
-    skirt_mat = skirt_material_distribution(rng, vec_wall)
+    vec_wall = pf.nodes.shader.coord().uv
+    skirt_mat = functionality_lists.skirt_material_distribution(rng, vec_wall)
     skirt_option = pf.control.choice(
         rng,
         [(skirting_on_walls_distribution, 0.85), (lambda *_, **__: [], 0.15)],

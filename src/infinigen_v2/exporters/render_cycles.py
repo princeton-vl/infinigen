@@ -26,8 +26,12 @@ from infinigen_v2.exporters.util.format import (
     ensure_path_placeholders,
 )
 from infinigen_v2.exporters.util.render_error_check import (
-    check_scene_shader_complexity,
+    SHADER_NODE_COUNT_FAIL,
+    DisplacementCoordError,
+    ShaderTooComplexError,
+    count_material_nodes,
     detect_cycles_errors,
+    unsafe_displacement_materials,
 )
 from infinigen_v2.util.camera_projection import (
     adjust_camera_sensor,
@@ -165,6 +169,68 @@ def configure_cycles_performance(
     system.max_shader_compilation_subprocesses = pf.context.globals.num_cpu_cores
 
 
+def _assert_displacement_coords_safe(displacement_mode: DisplacementMode):
+    """Geometric displacement (DISPLACEMENT/BOTH) silently flattens when driven by
+    named-attribute nodes; fail loudly listing the offending materials."""
+    if displacement_mode not in [
+        DisplacementMode.DISPLACEMENT,
+        DisplacementMode.DISPLACEMENT_AND_BUMP,
+    ]:
+        return
+    unsafe = unsafe_displacement_materials()
+    if unsafe:
+        raise DisplacementCoordError(
+            "materials drive displacement from named-attribute nodes, which Cycles "
+            "does not evaluate in the displacement pass (geometry renders flat); "
+            f"use coord()/geometry() instead: {unsafe}"
+        )
+
+
+def _assert_shader_complexity_ok():
+    over = {
+        m.name: c
+        for m in bpy.data.materials
+        if m.users and (c := count_material_nodes(m)) >= SHADER_NODE_COUNT_FAIL
+    }
+    if over:
+        raise ShaderTooComplexError(
+            f"materials exceed {SHADER_NODE_COUNT_FAIL} flattened nodes: {over}"
+        )
+
+
+def _autorender_filepath(
+    render_passes: list[RenderPass],
+    use_denoising: bool,
+    output_folder: Path,
+    camera_name: str,
+    render_output_subdir: str | None,
+    fallback_folder: Path,
+) -> tuple[RenderPass | None, str]:
+    """Pick the pass Blender writes via its auto-save (IMAGE_DENOISED when
+    denoising, else IMAGE) and return (that pass or None, the render.filepath to
+    assign straight to bpy.context.scene.render.filepath).
+
+    Blender treats render.filepath as a filename prefix, so "rgb-denoised_" yields
+    "rgb-denoised_0001.png"; any other rgb pass goes through the compositor. A
+    trailing "/" marks a directory. With a render_output_subdir we skip the prefix
+    trick and write into the folder."""
+    autorender_pass = next(
+        (
+            rp
+            for rp in render_passes
+            if rp.type == ExportType.IMAGE_DENOISED and use_denoising
+        ),
+        next((rp for rp in render_passes if rp.type == ExportType.IMAGE), None),
+    )
+    if autorender_pass is None or render_output_subdir is not None:
+        return None, str(fallback_folder) + "/"
+    filename_prefix = autorender_pass.path.stem.replace("%f", "")
+    prefix_path = output_folder / autorender_pass.path.parent / filename_prefix
+    prefix_path = Path(str(prefix_path).replace("%c", camera_name))
+    prefix_path.parent.mkdir(parents=True, exist_ok=True)
+    return autorender_pass, str(prefix_path) + ("" if filename_prefix else "/")
+
+
 def _render_cycles_impl(
     objects: list[pf.MeshObject],
     camera: pf.CameraObject,
@@ -263,6 +329,8 @@ def _render_cycles_impl(
         for material in bpy.data.materials:
             material.displacement_method = displacement_mode.value
 
+    _assert_displacement_coords_safe(displacement_mode)
+
     # DENOISING
     denoised_passes = {ExportType.IMAGE_DENOISED, ExportType.IMAGE_DENOISED_HDR}
     use_denoising = any(rp.type in denoised_passes for rp in render_passes)
@@ -292,31 +360,17 @@ def _render_cycles_impl(
     )
     render_filepath_folder.mkdir(exist_ok=True, parents=True)
 
-    # Use render.filepath as a filename prefix so Blender writes the auto-save directly
-    # to the final path (e.g. "rgb-denoised_" → "rgb-denoised_0001.png").
-    # Priority: IMAGE_DENOISED (denoised) > IMAGE (noisy). The chosen pass is written
-    # via the auto-save; the other rgb pass (if present) goes through the compositor.
-    autorender_pass = next(
-        (
-            rp
-            for rp in render_passes
-            if rp.type == ExportType.IMAGE_DENOISED and use_denoising
-        ),
-        next((rp for rp in render_passes if rp.type == ExportType.IMAGE), None),
+    autorender_pass, render_filepath = _autorender_filepath(
+        render_passes,
+        use_denoising,
+        output_folder,
+        camera_name,
+        render_output_subdir,
+        render_filepath_folder,
     )
-    if autorender_pass is not None and render_output_subdir is None:
-        filename_prefix = autorender_pass.path.stem.replace("%f", "")
-        prefix_path = output_folder / autorender_pass.path.parent / filename_prefix
-        prefix_path = Path(str(prefix_path).replace("%c", camera_name))
-        prefix_path.parent.mkdir(parents=True, exist_ok=True)
-        # Trailing "/" tells Blender path is a directory, not a filename prefix
-        bpy.context.scene.render.filepath = str(prefix_path) + (
-            "" if filename_prefix else "/"
-        )
+    bpy.context.scene.render.filepath = render_filepath
+    if autorender_pass is not None:
         bpy.context.scene.render.image_settings.color_mode = "RGB"
-    else:
-        autorender_pass = None
-        bpy.context.scene.render.filepath = str(render_filepath_folder) + "/"
 
     if ExportType.OBJECT_INDEX in pass_types:
         table = configure_object_index_table()
@@ -351,7 +405,7 @@ def _render_cycles_impl(
     if len(render_passes) == 0:
         return result
 
-    check_scene_shader_complexity()
+    _assert_shader_complexity_ok()
     replay = logger.getEffectiveLevel() <= logging.INFO
     with detect_cycles_errors(replay=replay):
         bpy.ops.render.render(animation=True)

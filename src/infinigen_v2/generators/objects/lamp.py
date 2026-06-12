@@ -568,7 +568,7 @@ def lamp_distribution(
     curve_point2 = pf.Vector((0, 0, z2))
     curve_point3 = pf.Vector((0, 0, z3))
 
-    vec = pf.nodes.shader.uv_map(uv_map="UVMap")
+    vec = pf.nodes.shader.coord().uv
 
     stem_mat = furniture_material_distribution(rng, vec)
     lampshade_mat = lampshade_fabric_distribution(rng, vec)
