@@ -52,7 +52,7 @@ def carpet_weaver(
 
     warp_uv_x = pf.nodes.math.floor_mod(a=vector.x, b=thread_id_b_increment)
 
-    linear_to_round_value = pf.nodes.func.map_range(
+    linear_to_round_value = pf.nodes.math.map_range(
         value=warp_uv_x, from_max=warp_warp_thickness
     )
     linear_to_round_result = linear_to_round(value=linear_to_round_value)
@@ -67,7 +67,7 @@ def carpet_weaver(
     linear_value_value_1 = pf.nodes.math.floor_mod(a=warp_value, b=warp_increment)
 
     linear_value_from_max = weft_weft_gab * 2.0
-    linear_value_2 = pf.nodes.func.map_range(
+    linear_value_2 = pf.nodes.math.map_range(
         value=linear_value_value_1,
         from_max=weft_weft_thickness + linear_value_from_max,
     )
@@ -78,7 +78,7 @@ def carpet_weaver(
 
     weft_uv_x = pf.nodes.math.floor_mod(a=vector.y, b=thread_id_a_increment)
 
-    linear_value_1 = pf.nodes.func.map_range(
+    linear_value_1 = pf.nodes.math.map_range(
         value=weft_uv_x,
         from_max=thread_id_a_increment,
         from_min=weft_weft_gab,
@@ -91,7 +91,7 @@ def carpet_weaver(
     weft_increment = thread_id_b_increment * 2.0
     linear_value_value_0 = pf.nodes.math.floor_mod(a=weft_value, b=weft_increment)
 
-    linear_value_0 = pf.nodes.func.map_range(
+    linear_value_0 = pf.nodes.math.map_range(
         value=linear_value_value_0,
         from_max=weft_increment,
         from_min=warp_warp_thickness,
@@ -102,7 +102,7 @@ def carpet_weaver(
     )
 
     thread_mask = thread_mask_a > thread_mask_b
-    color_0_vector = pf.nodes.func.mix_rgb(
+    color_0_vector = pf.nodes.color.mix_rgb(
         factor=thread_mask, a=weft_weft_color, b=warp_warp_color
     )
 
@@ -118,44 +118,44 @@ def carpet_weaver(
     thread_id_a = pf.nodes.math.snap(value=vector.y, increment=thread_id_a_increment)
 
     thread_id_b = pf.nodes.math.snap(value=vector.x, increment=thread_id_b_increment)
-    thread_id = pf.nodes.func.mix(a=thread_id_a, b=thread_id_b, factor=thread_mask)
-    cell_id_a_vector = pf.nodes.func.combine_xyz(
+    thread_id = pf.nodes.math.mix(a=thread_id_a, b=thread_id_b, factor=thread_mask)
+    cell_id_a_vector = pf.nodes.math.combine_xyz(
         x=warp_warp_thickness, y=weft_weft_thickness
     )
 
     cell_id_a = pf.nodes.math.vector_scale(vector=cell_id_a_vector, scale=0.5)
     weft_cell_id_x = pf.nodes.math.snap(value=weft_value, increment=weft_increment)
 
-    weft_cell_id = pf.nodes.func.combine_xyz(x=weft_cell_id_x, y=thread_id_a)
+    weft_cell_id = pf.nodes.math.combine_xyz(x=weft_cell_id_x, y=thread_id_a)
     warp_cell_id_y = pf.nodes.math.snap(value=warp_value, increment=warp_increment)
 
-    warp_cell_id = pf.nodes.func.combine_xyz(x=thread_id_b, y=warp_cell_id_y)
-    cell_id = pf.nodes.func.mix(
+    warp_cell_id = pf.nodes.math.combine_xyz(x=thread_id_b, y=warp_cell_id_y)
+    cell_id = pf.nodes.math.mix(
         a=cell_id_a + weft_cell_id, b=warp_cell_id, factor=thread_mask
     )
 
-    white_noise_vector = pf.nodes.func.combine_xyz(x=thread_id, y=random_seed)
+    white_noise_vector = pf.nodes.math.combine_xyz(x=thread_id, y=random_seed)
 
-    white_noise = pf.nodes.shader.white_noise(
+    white_noise = pf.nodes.texture.white_noise(
         vector=white_noise_vector, noise_dimensions="2D"
     )
-    thread_uv_a_a_0 = pf.nodes.func.combine_xyz(
+    thread_uv_a_a_0 = pf.nodes.math.combine_xyz(
         x=white_noise.color.astype(dtype=pf.Vector).y,
         y=white_noise.color.astype(dtype=pf.Vector).z,
     )
     thread_uv_a_1 = thread_uv_a_a_0 - (0.5, 0.5, 0.0)
     thread_uv_a_0 = randomize_uv.astype(dtype=pf.Vector) * (10.0, 100.0, 0.0)
-    weft_uv = pf.nodes.func.combine_xyz(x=weft_uv_x, y=vector.x)
-    warp_uv = pf.nodes.func.combine_xyz(x=warp_uv_x, y=vector.y)
-    thread_uv_1 = pf.nodes.func.mix(a=weft_uv, b=warp_uv, factor=thread_mask)
+    weft_uv = pf.nodes.math.combine_xyz(x=weft_uv_x, y=vector.x)
+    warp_uv = pf.nodes.math.combine_xyz(x=warp_uv_x, y=vector.y)
+    thread_uv_1 = pf.nodes.math.mix(a=weft_uv, b=warp_uv, factor=thread_mask)
     thread_uv = (thread_uv_a_1 * thread_uv_a_0) + thread_uv_1
 
-    height_a_factor = pf.nodes.func.mix(
+    height_a_factor = pf.nodes.math.mix(
         a=weft_weft_height_variation,
         b=warp_warp_height_variation,
         factor=thread_mask,
     )
-    height_a = pf.nodes.func.mix(
+    height_a = pf.nodes.math.mix(
         a=1.0,
         b=white_noise.color.astype(dtype=pf.Vector).x,
         factor=height_a_factor,
@@ -201,7 +201,7 @@ def carpet_cell_randomizer(
     color_a_a_factor = pf.nodes.math.clamp(noise_settings_type - 1.0)
     voronoi_vector = cell_id / noise_settings_stretch
 
-    white_noise = pf.nodes.shader.white_noise(
+    white_noise = pf.nodes.texture.white_noise(
         vector=voronoi_vector,
         noise_dimensions="4D",
         w=noise_settings_seed,
@@ -209,7 +209,7 @@ def carpet_cell_randomizer(
 
     voronoi_scale = 1.0 / noise_settings_size
 
-    noise = pf.nodes.shader.noise(
+    noise = pf.nodes.texture.noise(
         vector=voronoi_vector,
         scale=voronoi_scale,
         detail=noise_settings_detail,
@@ -219,12 +219,12 @@ def carpet_cell_randomizer(
         w=noise_settings_seed,
     )
 
-    color_a_a_b = pf.nodes.func.map_range(value=noise.fac, from_max=0.8, from_min=0.2)
+    color_a_a_b = pf.nodes.math.map_range(value=noise.fac, from_max=0.8, from_min=0.2)
 
-    color_a_a = pf.nodes.func.mix(
+    color_a_a = pf.nodes.math.mix(
         a=white_noise.fac, b=color_a_a_b, factor=color_a_a_factor
     )
-    voronoi = pf.nodes.shader.voronoi(
+    voronoi = pf.nodes.texture.voronoi(
         vector=voronoi_vector,
         scale=voronoi_scale,
         detail=noise_settings_detail,
@@ -235,32 +235,32 @@ def carpet_cell_randomizer(
         w=noise_settings_seed,
     )
 
-    color_a_0 = pf.nodes.func.mix(
+    color_a_0 = pf.nodes.math.mix(
         a=color_a_a, b=voronoi.distance, factor=color_a_factor
     )
 
-    color_factor_a_value = pf.nodes.func.mix(
+    color_factor_a_value = pf.nodes.math.mix(
         a=color_a_0, b=1.0 - color_a_0, factor=noise_settings_invert
     )
     color_factor_a_from_min = pf.nodes.math.clamp(1.0 - coverage)
-    color_factor_a_0 = pf.nodes.func.map_range(
+    color_factor_a_0 = pf.nodes.math.map_range(
         value=color_factor_a_value,
         from_min=color_factor_a_from_min,
     )
     color_factor_0 = color_factor_a_0 > 0.0
     color_b_numerator = pf.nodes.math.maximum(a=color_settings_blending, b=0.0001)
     color_b_1 = color_b_numerator / 2.0
-    color_b_factor = pf.nodes.func.map_range(
+    color_b_factor = pf.nodes.math.map_range(
         value=color_factor_a_0,
         from_max=color_settings_spread + color_b_1,
         from_min=color_settings_spread - color_b_1,
     )
-    color_b_0 = pf.nodes.func.mix_rgb(
+    color_b_0 = pf.nodes.color.mix_rgb(
         factor=color_b_factor,
         a=color_settings_color_1,
         b=color_settings_color_2,
     )
-    color_1 = pf.nodes.func.mix_rgb(
+    color_1 = pf.nodes.color.mix_rgb(
         factor=color_factor_1 * color_factor_0, a=color, b=color_b_0
     )
     return CarpetCellRandomizerResult(color_1, cell_id, thread_mask)
@@ -296,12 +296,12 @@ def carpet_thread_randomizer(
 
     color_factor_2 = (thread_mask * alpha_warp) + (color_factor_b_0 * alpha_weft)
     color_factor_1 = pf.nodes.math.clamp(noise_settings_type - 1.0)
-    white_noise_vector = pf.nodes.func.combine_xyz(x=thread_id, y=noise_settings_seed)
+    white_noise_vector = pf.nodes.math.combine_xyz(x=thread_id, y=noise_settings_seed)
 
-    white_noise = pf.nodes.shader.white_noise(
+    white_noise = pf.nodes.texture.white_noise(
         vector=white_noise_vector, noise_dimensions="2D"
     )
-    noise = pf.nodes.shader.noise(
+    noise = pf.nodes.texture.noise(
         vector=white_noise_vector,
         scale=1.0 / noise_settings_size,
         detail=noise_settings_detail,
@@ -310,30 +310,30 @@ def carpet_thread_randomizer(
         noise_dimensions="2D",
     )
 
-    color_b_2 = pf.nodes.func.map_range(value=noise.fac, from_max=0.8, from_min=0.2)
+    color_b_2 = pf.nodes.math.map_range(value=noise.fac, from_max=0.8, from_min=0.2)
 
-    color_factor_a_value = pf.nodes.func.mix(
+    color_factor_a_value = pf.nodes.math.mix(
         a=white_noise.fac, b=color_b_2, factor=color_factor_1
     )
     color_factor_a_from_min = pf.nodes.math.clamp(1.0 - coverage)
-    color_factor_a_0 = pf.nodes.func.map_range(
+    color_factor_a_0 = pf.nodes.math.map_range(
         value=color_factor_a_value,
         from_min=color_factor_a_from_min,
     )
     color_factor_0 = color_factor_a_0 > 0.0
     color_b_numerator = pf.nodes.math.maximum(a=color_settings_blending, b=0.0001)
     color_b_1 = color_b_numerator / 2.0
-    color_b_factor = pf.nodes.func.map_range(
+    color_b_factor = pf.nodes.math.map_range(
         value=color_factor_a_0,
         from_max=color_settings_spread + color_b_1,
         from_min=color_settings_spread - color_b_1,
     )
-    color_b_0 = pf.nodes.func.mix_rgb(
+    color_b_0 = pf.nodes.color.mix_rgb(
         factor=color_b_factor,
         a=color_settings_color_1,
         b=color_settings_color_2,
     )
-    color_1 = pf.nodes.func.mix_rgb(
+    color_1 = pf.nodes.color.mix_rgb(
         factor=color_factor_2 * color_factor_0, a=color, b=color_b_0
     )
     return CarpetThreadRandomizerResult(color_1, thread_id, thread_mask)
@@ -761,13 +761,13 @@ def carpet_streaks_right_angle(vector: pf.ProcNode[pf.Vector]):
         noise_settings_roughness=0.5,
         noise_settings_lacunarity=2.0,
     )
-    noise = pf.nodes.shader.noise(
+    noise = pf.nodes.texture.noise(
         vector=carpet_weaver_result.thread_uv, scale=406.599976
     )
-    surface_base_color_b = pf.nodes.func.map_range(
+    surface_base_color_b = pf.nodes.math.map_range(
         value=noise.fac, from_max=0.7, from_min=0.3
     )
-    surface_base_color = pf.nodes.func.mix_rgb(
+    surface_base_color = pf.nodes.color.mix_rgb(
         factor=0.841667,
         a=carpet_cell_randomizer_result_1.color,
         b=surface_base_color_b.astype(dtype=pf.Color),
@@ -933,9 +933,9 @@ def _thread_uv_noise_overlay_distribution(
 ) -> pf.ProcNode[pf.Color]:
     strength = pf.random.uniform(rng, 0.5, 0.84)
     scale = pf.random.uniform(rng, 200.0, 600.0)
-    noise = pf.nodes.shader.noise(vector=thread_uv, scale=scale)
-    noise_mapped = pf.nodes.func.map_range(value=noise.fac, from_max=0.7, from_min=0.3)
-    return pf.nodes.func.mix_rgb(
+    noise = pf.nodes.texture.noise(vector=thread_uv, scale=scale)
+    noise_mapped = pf.nodes.math.map_range(value=noise.fac, from_max=0.7, from_min=0.3)
+    return pf.nodes.color.mix_rgb(
         factor=strength,
         a=color,
         b=noise_mapped.astype(dtype=pf.Color),

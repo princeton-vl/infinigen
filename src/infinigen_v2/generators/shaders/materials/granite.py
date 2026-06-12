@@ -47,20 +47,21 @@ def fieldspar(
         vector=space_warp_result.vector, strength=2.19, w=w, size=0.005, detail=1.0
     )
 
-    alpha_value_1 = pf.nodes.shader.voronoi(
+    alpha_value_1 = pf.nodes.texture.voronoi(
         vector=space_warp_result_1.vector,
         w=w,
         scale=1.0 / 0.0067,
         detail=4.0,
         voronoi_dimensions="4D",
     )
-    alpha_value = pf.nodes.func.float_curve(
+    alpha_value = pf.nodes.math.float_curve(
         value=spread,
         curve=np.array([[0.0, 0.0], [0.4, 0.7313], [1.0, 1.0]]),
+        factor=1.0,
     )
-    alpha_1 = pf.nodes.func.map_range(value=alpha_value, to_min=0.25, to_max=1.64)
-    alpha_from_min = pf.nodes.func.mix(factor=smoothness, a=alpha_1 - 0.0001, b=0.0)
-    alpha = pf.nodes.func.map_range(
+    alpha_1 = pf.nodes.math.map_range(value=alpha_value, to_min=0.25, to_max=1.64)
+    alpha_from_min = pf.nodes.math.mix(factor=smoothness, a=alpha_1 - 0.0001, b=0.0)
+    alpha = pf.nodes.math.map_range(
         value=alpha_value_1.distance,
         from_min=alpha_from_min,
         from_max=alpha_1,
@@ -68,7 +69,7 @@ def fieldspar(
         to_max=0.0,
     )
 
-    color_vector = pf.nodes.shader.voronoi(
+    color_vector = pf.nodes.texture.voronoi(
         vector=space_warp_result_1.vector,
         w=w,
         scale=1.0 / 0.0067,
@@ -94,7 +95,7 @@ def fieldspar(
         lacunarity=1.5,
     )
 
-    color_value_value = pf.nodes.shader.voronoi(
+    color_value_value = pf.nodes.texture.voronoi(
         vector=color_vector.color.astype(dtype=pf.Vector) + space_warp_result_3.vector,
         w=w,
         scale=30.34,
@@ -103,22 +104,23 @@ def fieldspar(
         lacunarity=1.6,
         voronoi_dimensions="4D",
     )
-    color_value_2 = pf.nodes.func.map_range(
+    color_value_2 = pf.nodes.math.map_range(
         value=color_value_value.distance, from_min=0.59, from_max=1.9
     )
-    color_hue_value = pf.nodes.func.float_curve(
+    color_hue_value = pf.nodes.math.float_curve(
         value=color_value_2,
         curve=np.array([[0.0, 0.0], [0.3045, 0.1813], [0.7364, 0.7063], [1.0, 1.0]]),
+        factor=1.0,
     )
-    color_hue = pf.nodes.func.map_range(value=color_hue_value, to_min=0.48, to_max=0.52)
-    color_saturation = pf.nodes.func.map_range(
+    color_hue = pf.nodes.math.map_range(value=color_hue_value, to_min=0.48, to_max=0.52)
+    color_saturation = pf.nodes.math.map_range(
         value=color_hue_value, to_min=0.9, to_max=1.1
     )
-    color_value_1 = pf.nodes.func.map_range(
+    color_value_1 = pf.nodes.math.map_range(
         value=color_hue_value, to_min=0.8, to_max=2.0
     )
 
-    height_3 = pf.nodes.shader.noise(
+    height_3 = pf.nodes.texture.noise(
         vector=alpha_value_1.position,
         w=alpha_value_1.w,
         scale=267.4,
@@ -126,10 +128,10 @@ def fieldspar(
         noise_dimensions="4D",
     )
 
-    color_color_factor = pf.nodes.func.map_range(
+    color_color_factor = pf.nodes.math.map_range(
         value=height_3.fac, from_min=0.4, from_max=0.6
     )
-    color_color_5 = pf.nodes.func.rgb_curve(
+    color_color_5 = pf.nodes.color.rgb_curve(
         color=color,
         curves=[
             np.array([[0.0, 0.0], [0.5091, 0.5625], [1.0, 1.0]]),
@@ -137,11 +139,12 @@ def fieldspar(
             np.array([[0.0, 0.0], [1.0, 1.0]]),
             np.array([[0.0, 0.0], [0.5455, 0.3688], [1.0, 1.0]]),
         ],
+        fac=1.0,
     )
-    color_color_4 = pf.nodes.func.mix_rgb(
+    color_color_4 = pf.nodes.color.mix_rgb(
         factor=color_color_factor, a=color, b=color_color_5
     )
-    color_value = pf.nodes.shader.voronoi_distance(
+    color_value = pf.nodes.texture.voronoi_distance(
         vector=vector / size.astype(dtype=pf.Vector),
         w=w,
         scale=1.0 / 0.0022,
@@ -150,14 +153,15 @@ def fieldspar(
         lacunarity=1.6,
         voronoi_dimensions="4D",
     )
-    color_color_value = pf.nodes.func.map_range(
+    color_color_value = pf.nodes.math.map_range(
         value=color_value, from_max=0.11, to_min=1.0, to_max=0.0
     )
-    color_color_3 = pf.nodes.func.float_curve(
+    color_color_3 = pf.nodes.math.float_curve(
         value=color_color_value,
         curve=np.array([[0.0, 0.0], [0.6864, 0.2187], [1.0, 1.0]]),
+        factor=1.0,
     )
-    color_color_2 = pf.nodes.func.mix_rgb(
+    color_color_2 = pf.nodes.color.mix_rgb(
         factor=0.4083,
         a=color_color_4,
         b=color_color_3.astype(dtype=pf.Color),
@@ -172,16 +176,16 @@ def fieldspar(
         fractal_step_size=1.5,
     )
 
-    color_color_1 = pf.nodes.func.map_range(
+    color_color_1 = pf.nodes.math.map_range(
         value=fractal_chip_result.height, from_min=0.1, from_max=0.25
     )
-    color_color = pf.nodes.func.mix_rgb(
+    color_color = pf.nodes.color.mix_rgb(
         factor=0.5333,
         a=color_color_2,
         b=color_color_1.astype(dtype=pf.Color),
         blend_type="SOFT_LIGHT",
     )
-    color_1 = pf.nodes.shader.hue_saturation(
+    color_1 = pf.nodes.color.hue_saturation(
         hue=color_hue,
         saturation=color_saturation,
         value=color_value_1,
@@ -193,7 +197,7 @@ def fieldspar(
     height_1 = height_3.fac + (height_2 * 0.5)
     height = (height_scale * height_1) + 3.0
 
-    chisel = pf.nodes.shader.voronoi(
+    chisel = pf.nodes.texture.voronoi(
         vector=vector / size.astype(dtype=pf.Vector),
         w=w + 15.1,
         scale=1000.0,
@@ -248,19 +252,20 @@ def quartz(
         fractal_step_size=1.5,
     )
 
-    alpha_value = pf.nodes.func.float_curve(
+    alpha_value = pf.nodes.math.float_curve(
         value=spread,
         curve=np.array([[0.0, 0.0], [0.4, 0.7313], [1.0, 1.0]]),
+        factor=1.0,
     )
-    alpha_1 = pf.nodes.func.map_range(value=alpha_value, to_min=0.61, to_max=-0.04)
-    alpha_from_max = pf.nodes.func.mix(factor=smoothness, a=alpha_1 + 0.0001, b=1.0)
-    alpha = pf.nodes.func.map_range(
+    alpha_1 = pf.nodes.math.map_range(value=alpha_value, to_min=0.61, to_max=-0.04)
+    alpha_from_max = pf.nodes.math.mix(factor=smoothness, a=alpha_1 + 0.0001, b=1.0)
+    alpha = pf.nodes.math.map_range(
         value=fractal_chip_result.height,
         from_min=alpha_1,
         from_max=alpha_from_max,
     )
 
-    chisel_vector_1 = pf.nodes.shader.voronoi(
+    chisel_vector_1 = pf.nodes.texture.voronoi(
         vector=vector / size.astype(dtype=pf.Vector),
         w=w,
         scale=700.0,
@@ -279,7 +284,7 @@ def quartz(
         roughness=0.8417,
     )
 
-    color_hue_value = pf.nodes.shader.voronoi(
+    color_hue_value = pf.nodes.texture.voronoi(
         vector=chisel_vector + space_warp_result_1.vector,
         w=w,
         scale=100.0,
@@ -288,15 +293,15 @@ def quartz(
         lacunarity=1.5,
         voronoi_dimensions="4D",
     )
-    color_hue_1 = pf.nodes.func.map_range(
+    color_hue_1 = pf.nodes.math.map_range(
         value=color_hue_value.distance, from_min=0.81, from_max=1.89
     )
-    color_hue = pf.nodes.func.map_range(value=color_hue_1, to_min=0.3, to_max=0.7)
-    color_saturation = pf.nodes.func.map_range(
+    color_hue = pf.nodes.math.map_range(value=color_hue_1, to_min=0.3, to_max=0.7)
+    color_saturation = pf.nodes.math.map_range(
         value=color_hue_1, to_min=0.85, to_max=1.3
     )
-    color_value_1 = pf.nodes.func.map_range(value=color_hue_1, to_min=0.1, to_max=2.0)
-    color_5 = pf.nodes.shader.hue_saturation(
+    color_value_1 = pf.nodes.math.map_range(value=color_hue_1, to_min=0.1, to_max=2.0)
+    color_5 = pf.nodes.color.hue_saturation(
         hue=color_hue,
         saturation=color_saturation,
         value=color_value_1,
@@ -304,13 +309,13 @@ def quartz(
         color=color,
     )
     color_4 = chisel_vector_1.color.astype(dtype=pf.Vector)
-    color_3 = pf.nodes.func.mix_rgb(
+    color_3 = pf.nodes.color.mix_rgb(
         factor=0.6,
         a=color_5,
         b=color_4.x.astype(dtype=pf.Color),
         blend_type="SOFT_LIGHT",
     )
-    color_value_value = pf.nodes.shader.voronoi_distance(
+    color_value_value = pf.nodes.texture.voronoi_distance(
         vector=chisel_vector + vector / size.astype(dtype=pf.Vector),
         w=w,
         scale=529.7,
@@ -319,21 +324,22 @@ def quartz(
         lacunarity=0.98,
         voronoi_dimensions="4D",
     )
-    color_value = pf.nodes.func.map_range(
+    color_value = pf.nodes.math.map_range(
         value=color_value_value, from_max=0.07, to_min=1.0, to_max=0.0
     )
-    color_2 = pf.nodes.func.float_curve(
+    color_2 = pf.nodes.math.float_curve(
         value=color_value,
         curve=np.array([[0.0, 0.0], [0.7955, 0.2313], [1.0, 1.0]]),
+        factor=1.0,
     )
-    color_1 = pf.nodes.func.mix_rgb(
+    color_1 = pf.nodes.color.mix_rgb(
         factor=0.6,
         a=color_3,
         b=color_2.astype(dtype=pf.Color),
         blend_type="SOFT_LIGHT",
     )
 
-    depth = pf.nodes.shader.voronoi_distance(
+    depth = pf.nodes.texture.voronoi_distance(
         vector=vector / size.astype(dtype=pf.Vector),
         w=w,
         scale=300.0,
@@ -346,7 +352,7 @@ def quartz(
     height_1 = fractal_chip_result.height + (height_2 * 0.1)
     height = (height_scale * height_1) + 2.0
 
-    chisel = pf.nodes.shader.voronoi(
+    chisel = pf.nodes.texture.voronoi(
         vector=chisel_vector + vector / size.astype(dtype=pf.Vector),
         w=w,
         scale=900.0,
@@ -399,20 +405,21 @@ def mica_hornblende(
         fractal_step_size=1.5,
     )
 
-    alpha_value = pf.nodes.func.float_curve(
+    alpha_value = pf.nodes.math.float_curve(
         value=spread,
         curve=np.array([[0.0, 0.0], [0.4, 0.7313], [1.0, 1.0]]),
+        factor=1.0,
     )
-    alpha_1 = pf.nodes.func.map_range(value=alpha_value, to_min=0.4, to_max=0.0)
-    alpha_from_max = pf.nodes.func.mix(factor=smoothness, a=alpha_1 + 0.0001, b=1.0)
-    alpha = pf.nodes.func.map_range(
+    alpha_1 = pf.nodes.math.map_range(value=alpha_value, to_min=0.4, to_max=0.0)
+    alpha_from_max = pf.nodes.math.mix(factor=smoothness, a=alpha_1 + 0.0001, b=1.0)
+    alpha = pf.nodes.math.map_range(
         value=fractal_chip_result.height,
         from_min=alpha_1,
         from_max=alpha_from_max,
     )
 
-    color_vector_scale = pf.nodes.func.constant(464.3999938964844)
-    color_vector_1 = pf.nodes.shader.voronoi(
+    color_vector_scale = pf.nodes.math.constant(464.3999938964844)
+    color_vector_1 = pf.nodes.texture.voronoi(
         vector=space_warp_result.vector,
         w=w,
         scale=color_vector_scale,
@@ -430,7 +437,7 @@ def mica_hornblende(
         roughness=0.9167,
     )
 
-    color_hue_value = pf.nodes.shader.voronoi(
+    color_hue_value = pf.nodes.texture.voronoi(
         vector=color_vector + space_warp_result_1.vector,
         w=w,
         scale=33.8,
@@ -439,15 +446,15 @@ def mica_hornblende(
         lacunarity=1.5,
         voronoi_dimensions="4D",
     )
-    color_hue_1 = pf.nodes.func.map_range(
+    color_hue_1 = pf.nodes.math.map_range(
         value=color_hue_value.distance, from_min=0.59, from_max=2.0
     )
-    color_hue = pf.nodes.func.map_range(value=color_hue_1, to_min=0.3, to_max=0.7)
-    color_saturation = pf.nodes.func.map_range(
+    color_hue = pf.nodes.math.map_range(value=color_hue_1, to_min=0.3, to_max=0.7)
+    color_saturation = pf.nodes.math.map_range(
         value=color_hue_1, to_min=0.9, to_max=1.3
     )
-    color_value = pf.nodes.func.map_range(value=color_hue_1, to_min=0.8, to_max=2.0)
-    color_3 = pf.nodes.shader.hue_saturation(
+    color_value = pf.nodes.math.map_range(value=color_hue_1, to_min=0.8, to_max=2.0)
+    color_3 = pf.nodes.color.hue_saturation(
         hue=color_hue,
         saturation=color_saturation,
         value=color_value,
@@ -455,7 +462,7 @@ def mica_hornblende(
         color=color,
     )
     color_2 = color_vector_1.color.astype(dtype=pf.Vector)
-    color_1 = pf.nodes.func.mix_rgb(
+    color_1 = pf.nodes.color.mix_rgb(
         factor=0.25,
         a=color_3,
         b=color_2.x.astype(dtype=pf.Color),
@@ -466,7 +473,7 @@ def mica_hornblende(
     height_1 = fractal_chip_result.height + (height_2 * 0.1)
     height = (height_scale * height_1) + 1.0
 
-    chisel = pf.nodes.shader.voronoi(
+    chisel = pf.nodes.texture.voronoi(
         vector=space_warp_result.vector,
         w=w,
         scale=1000.0,
@@ -584,18 +591,18 @@ def granite(
         roughness=0.9,
     )
 
-    surface_value_value = pf.nodes.shader.voronoi(
+    surface_value_value = pf.nodes.texture.voronoi(
         vector=space_warp_result_1.vector,
         w=w / size,
         scale=59.61,
         voronoi_dimensions="4D",
     )
-    surface_value_1 = pf.nodes.func.map_range(
+    surface_value_1 = pf.nodes.math.map_range(
         value=surface_value_value.distance, from_min=0.32
     )
     surface_value = surface_value_1 * 0.5
     surface_fac_value = pf.nodes.math.clamp(values_layering_5_result - surface_value)
-    surface_fac = pf.nodes.func.map_range(
+    surface_fac = pf.nodes.math.map_range(
         value=surface_fac_value, to_min=min_spec, to_max=max_spec
     )
 
@@ -633,7 +640,7 @@ def granite(
         layer_5=0.35,
     )
 
-    shader_1_color = pf.nodes.func.mix_rgb(
+    shader_1_color = pf.nodes.color.mix_rgb(
         factor=values_layering_5_result_1,
         a=pf.Color((0.707, 0.707, 0.707)),
         b=colors_layering_5_result,
@@ -650,7 +657,7 @@ def granite(
         layer_5=0.3,
     )
 
-    shader_1_roughness = pf.nodes.func.map_range(
+    shader_1_roughness = pf.nodes.math.map_range(
         value=values_layering_5_result_2 + surface_value,
         to_min=min_roughness,
         to_max=max_roughness,
@@ -706,13 +713,13 @@ def granite_yellow(
         roughness=0.775,
     )
 
-    surface_map_value = pf.nodes.shader.voronoi(
+    surface_map_value = pf.nodes.texture.voronoi(
         vector=space_warp_result_1.vector,
         scale=10.0,
         detail=3.0,
         normalize=True,
     )
-    surface_map = pf.nodes.func.map_range(
+    surface_map = pf.nodes.math.map_range(
         value=surface_map_value.distance, from_min=0.2, from_max=0.53
     )
     surface_color_3 = pf.color.hsv_to_rgba((0.1111, 0.3, 0.01))
@@ -791,10 +798,10 @@ def granite_white_brown(
         roughness=0.775,
     )
 
-    surface_map_value = pf.nodes.shader.voronoi(
+    surface_map_value = pf.nodes.texture.voronoi(
         vector=space_warp_result_1.vector, detail=3.0, normalize=True
     )
-    surface_map = pf.nodes.func.map_range(
+    surface_map = pf.nodes.math.map_range(
         value=surface_map_value.distance,
         from_min=0.22,
         from_max=0.36,
@@ -870,13 +877,13 @@ def granite_no_displacement(
         roughness=0.775,
     )
 
-    surface_map_value = pf.nodes.shader.voronoi(
+    surface_map_value = pf.nodes.texture.voronoi(
         vector=space_warp_result_1.vector,
         scale=10.0,
         detail=3.0,
         normalize=True,
     )
-    surface_map = pf.nodes.func.map_range(
+    surface_map = pf.nodes.math.map_range(
         value=surface_map_value.distance, from_min=0.1, from_max=0.43
     )
     surface_color_3 = pf.color.hsv_to_rgba((0.0833, 0.1667, 0.012))
@@ -952,10 +959,10 @@ def granite_crystals(
         roughness=0.775,
     )
 
-    surface_map_value = pf.nodes.shader.voronoi(
+    surface_map_value = pf.nodes.texture.voronoi(
         vector=space_warp_result_1.vector, detail=3.0, normalize=True
     )
-    surface_map = pf.nodes.func.map_range(
+    surface_map = pf.nodes.math.map_range(
         value=surface_map_value.distance, from_min=0.1, from_max=0.43
     )
     surface_color_3 = pf.color.hsv_to_rgba((0.0833, 0.1667, 0.012))
@@ -1181,7 +1188,7 @@ def _create_gradient_color(
 
     # Create voronoi pattern
     voronoi_scale = pf.random.uniform(rng, 5.0, 15.0)
-    voronoi = pf.nodes.shader.voronoi(
+    voronoi = pf.nodes.texture.voronoi(
         vector=space_warp_result_1.vector,
         scale=voronoi_scale,
         detail=pf.random.uniform(rng, 2.0, 4.0),
@@ -1191,7 +1198,7 @@ def _create_gradient_color(
     # Map voronoi distance to color gradient
     from_min = pf.random.uniform(rng, 0.05, 0.25)
     from_max = pf.random.uniform(rng, 0.35, 0.55)
-    color_mix_4_map = pf.nodes.func.map_range(
+    color_mix_4_map = pf.nodes.math.map_range(
         value=voronoi.distance, from_max=from_max, from_min=from_min
     )
 

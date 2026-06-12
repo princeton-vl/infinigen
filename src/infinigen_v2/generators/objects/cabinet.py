@@ -29,17 +29,19 @@ def bottom_board(
 ) -> pf.ProcNode:
     board_h = height + 0.0
     cube = pf.nodes.geo.mesh_cube(
-        size=pf.nodes.func.combine_xyz(x=width, y=thickness, z=board_h),
+        size=pf.nodes.math.combine_xyz(x=width, y=thickness, z=board_h),
         vertices_x=10,
         vertices_y=10,
         vertices_z=10,
     )
-    tvec = pf.nodes.func.combine_xyz(
+    tvec = pf.nodes.math.combine_xyz(
         x=x_translation,
         y=(depth * 0.5) - y_gap,
         z=board_h * 0.5,
     )
-    return pf.nodes.geo.transform(geometry=cube.mesh, translation=tvec)
+    return pf.nodes.geo.transform(
+        geometry=cube.mesh, translation=tvec, rotation=(0, 0, 0), scale=(1, 1, 1)
+    )
 
 
 @pf.nodes.node_function
@@ -51,16 +53,18 @@ def back_board(
 ) -> pf.ProcNode:
     h = height + 0.0
     cube = pf.nodes.geo.mesh_cube(
-        size=pf.nodes.func.combine_xyz(x=width, y=thickness, z=h),
+        size=pf.nodes.math.combine_xyz(x=width, y=thickness, z=h),
         vertices_x=10,
         vertices_y=10,
         vertices_z=10,
     )
-    tvec = pf.nodes.func.combine_xyz(
+    tvec = pf.nodes.math.combine_xyz(
         y=pf.nodes.math.multiply_add(a=depth + 0.0, b=-0.5, addend=thickness * -0.5),
         z=h * 0.5,
     )
-    return pf.nodes.geo.transform(geometry=cube.mesh, translation=tvec)
+    return pf.nodes.geo.transform(
+        geometry=cube.mesh, translation=tvec, rotation=(0, 0, 0), scale=(1, 1, 1)
+    )
 
 
 @pf.nodes.node_function
@@ -72,14 +76,16 @@ def side_board(
 ) -> pf.ProcNode:
     h = height + 0.0
     cube = pf.nodes.geo.mesh_cube(
-        size=pf.nodes.func.combine_xyz(x=board_thickness + 0.0, y=depth + 0.0, z=h),
+        size=pf.nodes.math.combine_xyz(x=board_thickness + 0.0, y=depth + 0.0, z=h),
         vertices_x=10,
         vertices_y=10,
         vertices_z=10,
     )
     return pf.nodes.geo.transform(
         geometry=cube.mesh,
-        translation=pf.nodes.func.combine_xyz(x=x_translation, z=h * 0.5),
+        translation=pf.nodes.math.combine_xyz(x=x_translation, z=h * 0.5),
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
 
 
@@ -90,18 +96,24 @@ def node_group(
 ) -> pf.ProcNode:
     cube = pf.nodes.geo.mesh_cube((0.02, 0.0006, 0.012))
     transform_1 = pf.nodes.geo.transform(
-        geometry=cube.mesh, translation=(0.008, 0.0, 0.0)
+        geometry=cube.mesh,
+        translation=(0.008, 0.0, 0.0),
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
     cylinder = pf.nodes.geo.mesh_cylinder(vertices=64, radius=0.01, depth=0.0005)
     transform_2 = pf.nodes.geo.transform(
         geometry=cylinder.mesh,
         translation=(0.005, 0.0, 0.0),
         rotation=(1.5708, 0.0, 0.0),
+        scale=(1, 1, 1),
     )
     cube_1 = pf.nodes.geo.mesh_cube((0.012, 0.0006, 0.04))
     join = pf.nodes.geo.join_geometry([transform_1, transform_2, cube_1.mesh])
-    tvec = pf.nodes.func.combine_xyz(x=door_width * 0.5 - 0.0181, z=attach_height)
-    return pf.nodes.geo.transform(geometry=join, translation=tvec)
+    tvec = pf.nodes.math.combine_xyz(x=door_width * 0.5 - 0.0181, z=attach_height)
+    return pf.nodes.geo.transform(
+        geometry=join, translation=tvec, rotation=(0, 0, 0), scale=(1, 1, 1)
+    )
 
 
 @pf.nodes.node_function
@@ -116,7 +128,7 @@ def knob_handle(
 ) -> pf.ProcNode:
     cyl_depth = (thickness_2 + thickness_1) + length
     cyl = pf.nodes.geo.mesh_cylinder(vertices=64, radius=radius, depth=cyl_depth)
-    tvec = pf.nodes.func.combine_xyz(
+    tvec = pf.nodes.math.combine_xyz(
         x=((door_width - edge_width) * -0.5) - 0.005,
         y=cyl_depth * 0.5,
         z=knob_mid_height,
@@ -125,6 +137,7 @@ def knob_handle(
         geometry=cyl.mesh,
         translation=tvec,
         rotation=(1.5708, 0.0, 0.0),
+        scale=(1, 1, 1),
     )
 
 
@@ -139,7 +152,8 @@ def double_rampled_edge(
     # Keep transpiled shape for parity with v1 door profile.
     curve_line_end_z = height + 0.0
     curve_line = pf.nodes.geo.curve_line(
-        end=pf.nodes.func.combine_xyz(z=curve_line_end_z)
+        end=pf.nodes.math.combine_xyz(z=curve_line_end_z),
+        start=(0, 0, 0),
     )
     curve_circle = pf.nodes.geo.curve_circle(resolution=3, radius=0.01)
     end_sel = pf.nodes.geo.curve_endpoint_selection(end_size=0)
@@ -152,13 +166,13 @@ def double_rampled_edge(
     set_pos = pf.nodes.geo.set_position(
         geometry=curve_circle,
         selection=end_sel,
-        position=pf.nodes.func.combine_xyz(x=(cube_size_x * 0.5) * -1.0, y=set_y),
+        position=pf.nodes.math.combine_xyz(x=(cube_size_x * 0.5) * -1.0, y=set_y),
     )
     start_sel = pf.nodes.geo.curve_endpoint_selection(0)
     set_pos_1 = pf.nodes.geo.set_position(
         geometry=set_pos,
         selection=start_sel,
-        position=pf.nodes.func.combine_xyz(
+        position=pf.nodes.math.combine_xyz(
             x=(cube_size_x * 0.5) * -1.0, y=set_y + set_y_b
         ),
     )
@@ -170,33 +184,43 @@ def double_rampled_edge(
     prof = pf.nodes.geo.set_position(
         geometry=set_pos_1,
         selection=mask,
-        position=pf.nodes.func.combine_xyz(x=(set_x_a * 0.5) * -1.0, y=set_y),
+        position=pf.nodes.math.combine_xyz(x=(set_x_a * 0.5) * -1.0, y=set_y),
     )
-    prof_mirror = pf.nodes.geo.transform(geometry=prof, scale=(-1.0, 1.0, 1.0))
+    prof_mirror = pf.nodes.geo.transform(
+        geometry=prof, scale=(-1.0, 1.0, 1.0), translation=(0, 0, 0), rotation=(0, 0, 0)
+    )
     curve_to = pf.nodes.geo.curve_to_mesh(
         curve=curve_line, profile_curve=prof_mirror, fill_caps=True
     )
 
     cube = pf.nodes.geo.mesh_cube(
-        pf.nodes.func.combine_xyz(x=cube_size_x, y=set_y_b, z=curve_line_end_z)
+        pf.nodes.math.combine_xyz(x=cube_size_x, y=set_y_b, z=curve_line_end_z)
     )
     cube_t = pf.nodes.geo.transform(
         geometry=cube.mesh,
-        translation=pf.nodes.func.combine_xyz(y=set_y + set_y_b * 0.5),
+        translation=pf.nodes.math.combine_xyz(y=set_y + set_y_b * 0.5),
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
     cube_1 = pf.nodes.geo.mesh_cube(
-        pf.nodes.func.combine_xyz(x=set_x_a, y=set_y, z=curve_line_end_z)
+        pf.nodes.math.combine_xyz(x=set_x_a, y=set_y, z=curve_line_end_z)
     )
     cube_1_t = pf.nodes.geo.transform(
-        geometry=cube_1.mesh, translation=pf.nodes.func.combine_xyz(y=set_y * 0.5)
+        geometry=cube_1.mesh,
+        translation=pf.nodes.math.combine_xyz(y=set_y * 0.5),
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
     body = pf.nodes.geo.transform(
         geometry=pf.nodes.geo.join_geometry([cube_t, cube_1_t]),
-        translation=pf.nodes.func.combine_xyz(z=curve_line_end_z * 0.5),
+        translation=pf.nodes.math.combine_xyz(z=curve_line_end_z * 0.5),
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
     curve_to_1 = pf.nodes.geo.curve_to_mesh(
         curve=pf.nodes.geo.curve_line(
-            end=pf.nodes.func.combine_xyz(z=curve_line_end_z)
+            end=pf.nodes.math.combine_xyz(z=curve_line_end_z),
+            start=(0, 0, 0),
         ),
         profile_curve=prof,
         fill_caps=True,
@@ -223,34 +247,43 @@ def ramped_edge(
     taper = pf.nodes.math.tan(ramp_angle + 0.0) * y2
     x_inner = x_full - taper
 
-    cube_a = pf.nodes.geo.mesh_cube(pf.nodes.func.combine_xyz(x=x_inner, y=y2, z=z))
+    cube_a = pf.nodes.geo.mesh_cube(pf.nodes.math.combine_xyz(x=x_inner, y=y2, z=z))
     cube_a = pf.nodes.geo.transform(
         geometry=cube_a.mesh,
-        translation=pf.nodes.func.combine_xyz(x=taper * 0.5, y=y1 + y2 * 0.5),
+        translation=pf.nodes.math.combine_xyz(x=taper * 0.5, y=y1 + y2 * 0.5),
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
-    cube_b = pf.nodes.geo.mesh_cube(pf.nodes.func.combine_xyz(x=x_full, y=y1, z=z))
+    cube_b = pf.nodes.geo.mesh_cube(pf.nodes.math.combine_xyz(x=x_full, y=y1, z=z))
     cube_b = pf.nodes.geo.transform(
-        geometry=cube_b.mesh, translation=pf.nodes.func.combine_xyz(y=y1 * 0.5)
+        geometry=cube_b.mesh,
+        translation=pf.nodes.math.combine_xyz(y=y1 * 0.5),
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
     body = pf.nodes.geo.transform(
         geometry=pf.nodes.geo.join_geometry([cube_a, cube_b]),
-        translation=pf.nodes.func.combine_xyz(z=z * 0.5),
+        translation=pf.nodes.math.combine_xyz(z=z * 0.5),
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
 
-    curve_line = pf.nodes.geo.curve_line(end=pf.nodes.func.combine_xyz(z=z))
+    curve_line = pf.nodes.geo.curve_line(
+        end=pf.nodes.math.combine_xyz(z=z), start=(0, 0, 0)
+    )
     profile = pf.nodes.geo.curve_circle(resolution=3, radius=0.01)
     end_sel = pf.nodes.geo.curve_endpoint_selection(end_size=0)
     set_x = (x_full * 0.5) - x_inner
     p0 = pf.nodes.geo.set_position(
         geometry=profile,
         selection=end_sel,
-        position=pf.nodes.func.combine_xyz(x=set_x, y=y1),
+        position=pf.nodes.math.combine_xyz(x=set_x, y=y1),
     )
     start_sel = pf.nodes.geo.curve_endpoint_selection(0)
     p1 = pf.nodes.geo.set_position(
         geometry=p0,
         selection=start_sel,
-        position=pf.nodes.func.combine_xyz(x=set_x, y=y1 + y2),
+        position=pf.nodes.math.combine_xyz(x=set_x, y=y1 + y2),
     )
     idx = pf.nodes.geo.input_index()
     mid_mask = pf.nodes.func.boolean_and(
@@ -260,7 +293,7 @@ def ramped_edge(
     p2 = pf.nodes.geo.set_position(
         geometry=p1,
         selection=mid_mask,
-        position=pf.nodes.func.combine_xyz(x=(x_full * 0.5) * -1.0, y=y1),
+        position=pf.nodes.math.combine_xyz(x=(x_full * 0.5) * -1.0, y=y1),
     )
     wedge = pf.nodes.geo.curve_to_mesh(
         curve=curve_line, profile_curve=p2, fill_caps=True
@@ -269,7 +302,10 @@ def ramped_edge(
     geo = pf.nodes.geo.merge_by_distance(geometry=geo, distance=0.0001)
     geo = pf.nodes.geo.subdivide_mesh(mesh=pf.nodes.geo.realize_instances(geo), level=4)
     return pf.nodes.geo.transform(
-        geometry=geo, translation=pf.nodes.func.combine_xyz(x=x_full * -0.5)
+        geometry=geo,
+        translation=pf.nodes.math.combine_xyz(x=x_full * -0.5),
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
 
 
@@ -289,25 +325,35 @@ def panel_edge_frame(
     value = value_a * -1.0
     transform = pf.nodes.geo.transform(
         geometry=vertical_edge,
-        translation=pf.nodes.func.combine_xyz(value_a),
+        translation=pf.nodes.math.combine_xyz(value_a),
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
-    transform_1 = pf.nodes.geo.transform(geometry=transform, scale=(-1.0, 1.0, 1.0))
+    transform_1 = pf.nodes.geo.transform(
+        geometry=transform,
+        scale=(-1.0, 1.0, 1.0),
+        translation=(0, 0, 0),
+        rotation=(0, 0, 0),
+    )
     transform_2 = pf.nodes.geo.transform(
         geometry=horizontal_edge,
         translation=(0.0, -0.0001, 0.0),
         scale=(0.9999, 1.0, 1.0),
+        rotation=(0, 0, 0),
     )
     transform_3 = pf.nodes.geo.transform(
         geometry=transform_2,
-        translation=pf.nodes.func.combine_xyz(value + 0.0001),
+        translation=pf.nodes.math.combine_xyz(value + 0.0001),
         rotation=(0.0, 1.5708, 0.0),
+        scale=(1, 1, 1),
     )
     transform_4 = pf.nodes.geo.transform(
         geometry=transform_2,
-        translation=pf.nodes.func.combine_xyz(
+        translation=pf.nodes.math.combine_xyz(
             x=value_a - 0.0001, z=door_height + 0.0001
         ),
         rotation=(0.0, -1.5708, 0.0),
+        scale=(1, 1, 1),
     )
     return PanelEdgeFrameResult(
         value=value,
@@ -503,6 +549,8 @@ def _shelf_geometry(
             board = pf.nodes.geo.transform(
                 geometry=cube.mesh,
                 translation=(division_board_x_translation[i], 0.0, z),
+                rotation=(0, 0, 0),
+                scale=(1, 1, 1),
             )
             div_boards.append(board)
 
@@ -516,7 +564,9 @@ def _shelf_geometry(
     joined = pf.nodes.geo.join_geometry([frame_geo, board_geo])
     joined = pf.nodes.geo.realize_instances(joined)
     joined = pf.nodes.geo.triangulate(joined)
-    joined = pf.nodes.geo.transform(joined, rotation=(0.0, 0.0, -1.5708))
+    joined = pf.nodes.geo.transform(
+        joined, rotation=(0.0, 0.0, -1.5708), scale=(1, 1, 1), translation=(0, 0, 0)
+    )
     return joined
 
 
@@ -568,6 +618,8 @@ def _door_geometry(
         lower = pf.nodes.geo.transform(
             geometry=lower.mesh,
             translation=(0.0, panel_y, mid_height * 0.5),
+            rotation=(0, 0, 0),
+            scale=(1, 1, 1),
         )
         lower = pf.nodes.geo.set_material(
             lower, material=panel_material[0], selection=True
@@ -579,6 +631,8 @@ def _door_geometry(
         upper = pf.nodes.geo.transform(
             geometry=upper.mesh,
             translation=(0.0, panel_y, mid_height * 1.5),
+            rotation=(0, 0, 0),
+            scale=(1, 1, 1),
         )
         upper = pf.nodes.geo.set_material(
             upper, material=panel_material[1], selection=True
@@ -592,7 +646,7 @@ def _door_geometry(
             thickness_1=edge_thickness_1,
             ramp_angle=edge_ramp_angle,
         )
-        mid_ramp_translation = pf.nodes.func.combine_xyz(
+        mid_ramp_translation = pf.nodes.math.combine_xyz(
             x=panel_edge.value + 0.0001,
             y=-0.0001,
             z=mid_height,
@@ -601,6 +655,7 @@ def _door_geometry(
             geometry=mid_ramp,
             translation=mid_ramp_translation,
             rotation=(0.0, 1.5708, 0.0),
+            scale=(1, 1, 1),
         )
         frame_geo = pf.nodes.geo.join_geometry([panel_edge.geometry, mid_ramp])
     else:
@@ -611,6 +666,8 @@ def _door_geometry(
         panel_geo = pf.nodes.geo.transform(
             geometry=panel.mesh,
             translation=(0.0, panel_y, mid_height * 0.5),
+            rotation=(0, 0, 0),
+            scale=(1, 1, 1),
         )
         panel_geo = pf.nodes.geo.set_material(
             panel_geo,
@@ -641,13 +698,22 @@ def _door_geometry(
         attach_geos.append(g)
 
     geo = pf.nodes.geo.join_geometry([frame_geo, knob, panel_geo] + attach_geos)
-    geo = pf.nodes.geo.transform(geo, translation=(door_width * -0.5, 0.0, 0.0))
+    geo = pf.nodes.geo.transform(
+        geo,
+        translation=(door_width * -0.5, 0.0, 0.0),
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
+    )
     geo = pf.nodes.geo.realize_instances(geo)
     geo = pf.nodes.geo.triangulate(geo)
     if door_left_hinge:
-        geo = pf.nodes.geo.transform(geo, scale=(-1.0, 1.0, 1.0))
+        geo = pf.nodes.geo.transform(
+            geo, scale=(-1.0, 1.0, 1.0), rotation=(0, 0, 0), translation=(0, 0, 0)
+        )
         geo = pf.nodes.geo.flip_faces(geo)
-    geo = pf.nodes.geo.transform(geo, rotation=(0.0, 0.0, -1.5708))
+    geo = pf.nodes.geo.transform(
+        geo, rotation=(0.0, 0.0, -1.5708), scale=(1, 1, 1), translation=(0, 0, 0)
+    )
     return geo
 
 
@@ -907,6 +973,7 @@ def cabinet(
             geometry=right_door_geo,
             translation=cab_params["door_hinge_pos"][0],
             rotation=(0.0, 0.0, cab_params["door_open_angle"]),
+            scale=(1, 1, 1),
         )
     ]
     if len(cab_params["door_hinge_pos"]) > 1:
@@ -915,6 +982,7 @@ def cabinet(
                 geometry=left_door_geo,
                 translation=cab_params["door_hinge_pos"][1],
                 rotation=(0.0, 0.0, cab_params["door_open_angle"]),
+                scale=(1, 1, 1),
             )
         )
 
@@ -922,15 +990,28 @@ def cabinet(
     for pos in cab_params["attach_pos"]:
         cube = pf.nodes.geo.mesh_cube((0.0006, 0.0200, 0.04500))
         bar = pf.nodes.geo.transform(
-            geometry=cube.mesh, translation=(0.0, -0.0100, 0.0)
+            geometry=cube.mesh,
+            translation=(0.0, -0.0100, 0.0),
+            rotation=(0, 0, 0),
+            scale=(1, 1, 1),
         )
         plate = pf.nodes.geo.mesh_cube((0.0005, 0.0340, 0.0200))
         attach = pf.nodes.geo.join_geometry([bar, plate.mesh])
         attach = pf.nodes.geo.transform(
-            geometry=attach, translation=(0.0, -0.0170, 0.0)
+            geometry=attach,
+            translation=(0.0, -0.0170, 0.0),
+            rotation=(0, 0, 0),
+            scale=(1, 1, 1),
         )
-        attach = pf.nodes.geo.transform(geometry=attach, rotation=(0.0, 0.0, -1.5708))
-        attach = pf.nodes.geo.transform(geometry=attach, translation=pos)
+        attach = pf.nodes.geo.transform(
+            geometry=attach,
+            rotation=(0.0, 0.0, -1.5708),
+            translation=(0, 0, 0),
+            scale=(1, 1, 1),
+        )
+        attach = pf.nodes.geo.transform(
+            geometry=attach, translation=pos, rotation=(0, 0, 0), scale=(1, 1, 1)
+        )
         attach = pf.nodes.geo.set_material(
             geometry=attach, material=frame_material, selection=True
         )

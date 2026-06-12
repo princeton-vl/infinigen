@@ -42,7 +42,7 @@ def staircase_translation(
         index=sample.astype(dtype=int),
     )
 
-    result_0_position = pf.nodes.func.combine_xyz(x=sample_index, y=sample_index_1)
+    result_0_position = pf.nodes.math.combine_xyz(x=sample_index, y=sample_index_1)
 
     set_position = pf.nodes.geo.set_position(
         geometry=input_curve,
@@ -98,7 +98,7 @@ def skirting_profile(
         max_offset_pct=max_offset_pct,
     )
 
-    set_position_offset = pf.nodes.func.combine_xyz(offset_spacing_result)
+    set_position_offset = pf.nodes.math.combine_xyz(offset_spacing_result)
     set_position = pf.nodes.geo.set_position(
         geometry=resample_curve_count, offset=set_position_offset
     )

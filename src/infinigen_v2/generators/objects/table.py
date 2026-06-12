@@ -20,34 +20,43 @@ def n_gon_profile(
     profile_aspect_ratio: t.SocketOrVal[float],
     profile_fillet_ratio: t.SocketOrVal[float] = 0.0,
 ) -> t.ProcNode[pf.CurveObject]:
-    curve_circle_radius = pf.nodes.func.constant(0.5)
+    curve_circle_radius = pf.nodes.math.constant(0.5)
     curve_circle = pf.nodes.geo.curve_circle(
         resolution=profile_n_gon, radius=curve_circle_radius
     )
 
-    transform_rotation = pf.nodes.func.combine_xyz(
+    transform_rotation = pf.nodes.math.combine_xyz(
         z=3.1416 / profile_n_gon.astype(dtype=float)
     )
     transform = pf.nodes.geo.transform(
         geometry=curve_circle,
         rotation=transform_rotation.astype(dtype=pf.Euler),
+        translation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
     transform_1 = pf.nodes.geo.transform(
-        geometry=transform, rotation=(0.0, 0.0, -1.5708)
+        geometry=transform,
+        rotation=(0.0, 0.0, -1.5708),
+        translation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
-    transform_2_scale = pf.nodes.func.combine_xyz(
+    transform_2_scale = pf.nodes.math.combine_xyz(
         x=profile_width,
         y=profile_aspect_ratio * profile_width,
         z=1.0,
     )
-    transform_2 = pf.nodes.geo.transform(geometry=transform_1, scale=transform_2_scale)
+    transform_2 = pf.nodes.geo.transform(
+        geometry=transform_1,
+        scale=transform_2_scale,
+        translation=(0, 0, 0),
+        rotation=(0, 0, 0),
+    )
 
-    fillet_curve = pf.nodes.geo.fillet_curve(
+    fillet_curve = pf.nodes.geo.fillet_curve_poly(
         curve=transform_2,
         radius=profile_width * profile_fillet_ratio,
         limit_radius=True,
         count=8,
-        mode="POLY",
     )
     return fillet_curve
 
@@ -83,8 +92,8 @@ def n_gon_cylinder(
 ) -> NGonCylinderResult:
     mesh_position_z_to_min = height * -1.0
 
-    curve_line_end = pf.nodes.func.combine_xyz(z=mesh_position_z_to_min)
-    curve_line = pf.nodes.geo.curve_line(end=curve_line_end)
+    curve_line_end = pf.nodes.math.combine_xyz(z=mesh_position_z_to_min)
+    curve_line = pf.nodes.geo.curve_line(end=curve_line_end, start=(0, 0, 0))
 
     set_curve_tilt = pf.nodes.geo.set_curve_tilt(curve=curve_line, tilt=3.1416)
 
@@ -126,7 +135,7 @@ def n_gon_cylinder(
         use_all_curves=True,
     )
 
-    mesh_position_x_vector = pf.nodes.func.combine_xyz(
+    mesh_position_x_vector = pf.nodes.math.combine_xyz(
         x=sample_curve.position.x, y=sample_curve.position.y
     )
     mesh_position_x = pf.nodes.math.vector_length(mesh_position_x_vector)
@@ -138,14 +147,14 @@ def n_gon_cylinder(
         attribute=input_position_1.z,
     )
 
-    mesh_position_z = pf.nodes.func.map_range(
+    mesh_position_z = pf.nodes.math.map_range(
         value=sample_curve.position.z,
         from_max=attribute_statistic.max,
         from_min=attribute_statistic.min,
         to_max=0.0,
         to_min=mesh_position_z_to_min,
     )
-    mesh_position = pf.nodes.func.combine_xyz(
+    mesh_position = pf.nodes.math.combine_xyz(
         x=input_position.x * mesh_position_x,
         y=input_position.y * mesh_position_x,
         z=mesh_position_z,
@@ -212,8 +221,8 @@ def create_anchors(
     )
 
     curve_to_points = pf.nodes.geo.curve_to_points_evaluated(curve=n_gon_profile_result)
-    curve_line_start = pf.nodes.func.combine_xyz(profile_width * 0.3535)
-    curve_line_end = pf.nodes.func.combine_xyz(profile_width * -0.3535)
+    curve_line_start = pf.nodes.math.combine_xyz(profile_width * 0.3535)
+    curve_line_end = pf.nodes.math.combine_xyz(profile_width * -0.3535)
     curve_line = pf.nodes.geo.curve_line(start=curve_line_start, end=curve_line_end)
     curve_to_points_1 = pf.nodes.geo.curve_to_points_evaluated(curve=curve_line)
 
@@ -223,16 +232,18 @@ def create_anchors(
         b=curve_to_points_1.points,
     )
 
-    points = pf.nodes.geo.points()
+    points = pf.nodes.geo.points(position=(0, 0, 0))
 
     set_point_radius_points = pf.nodes.func.switch(switch=set_switch, a=set_a, b=points)
     set_point_radius = pf.nodes.geo.set_point_radius(set_point_radius_points)
 
-    result_0_rotation = pf.nodes.func.combine_xyz(z=profile_rotation)
+    result_0_rotation = pf.nodes.math.combine_xyz(z=profile_rotation)
 
     transform = pf.nodes.geo.transform(
         geometry=set_point_radius,
         rotation=result_0_rotation.astype(dtype=pf.Euler),
+        translation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
     return transform
 
@@ -253,21 +264,25 @@ def create_legs_and_strechers(
     leg_bottom_offset: t.SocketOrVal[float],
     align_leg_x_rot: t.SocketOrVal[bool],
 ) -> t.ProcNode[pf.MeshObject]:
-    transform_translation = pf.nodes.func.combine_xyz(z=table_height)
+    transform_translation = pf.nodes.math.combine_xyz(z=table_height)
     transform = pf.nodes.geo.transform(
-        geometry=anchors, translation=transform_translation
+        geometry=anchors,
+        translation=transform_translation,
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
 
     input_position = pf.nodes.geo.input_position()
 
-    set_b_vector_b = pf.nodes.func.combine_xyz(z=leg_bottom_offset)
+    set_b_vector_b = pf.nodes.math.combine_xyz(z=leg_bottom_offset)
     set_b_vector = transform_translation - set_b_vector_b
-    set_b_rotation = pf.nodes.func.combine_xyz(0, 0, leg_bottom_relative_rotation)
+    set_b_rotation = pf.nodes.math.combine_xyz(0, 0, leg_bottom_relative_rotation)
     set_b_1 = pf.nodes.math.vector_rotate_euler(
         vector=input_position - set_b_vector,
         rotation=set_b_rotation,
+        center=(0, 0, 0),
     )
-    set_b_0 = pf.nodes.func.combine_xyz(
+    set_b_0 = pf.nodes.math.combine_xyz(
         x=leg_bottom_relative_scale,
         y=leg_bottom_relative_scale,
         z=1.0,
@@ -325,13 +340,19 @@ def create_legs_and_strechers(
 
     instance_z_vector = input_position_2 - field_at_index
     instance_0_rotation = pf.nodes.func.align_euler_to_vector(
-        vector=instance_z_vector, axis="Z"
+        vector=instance_z_vector,
+        axis="Z",
+        rotation=(0, 0, 0),
+        factor=1.0,
     )
     instance = pf.nodes.func.align_euler_to_vector(
-        rotation=instance_0_rotation, pivot_axis="Z"
+        rotation=instance_0_rotation,
+        pivot_axis="Z",
+        factor=1.0,
+        vector=(0, 0, 1),
     )
     instance_z = pf.nodes.math.vector_length(instance_z_vector)
-    instance_on_points_scale = pf.nodes.func.combine_xyz(x=1.0, y=1.0, z=instance_z)
+    instance_on_points_scale = pf.nodes.math.combine_xyz(x=1.0, y=1.0, z=instance_z)
     instance_on_points = pf.nodes.geo.instance_on_points(
         points=set_position,
         instance=strecher_instance,
@@ -343,12 +364,16 @@ def create_legs_and_strechers(
     realize_instances = pf.nodes.geo.realize_instances(instance_on_points)
 
     instance_rotation_a = pf.nodes.func.align_euler_to_vector(
-        vector=set_position_position_vector, axis="Z"
+        vector=set_position_position_vector,
+        axis="Z",
+        rotation=(0, 0, 0),
+        factor=1.0,
     )
     instance_rotation_b = pf.nodes.func.align_euler_to_vector(
         rotation=instance_rotation_a,
         vector=input_position,
         pivot_axis="Z",
+        factor=1.0,
     )
     instance_rotation = pf.nodes.func.switch(
         switch=align_leg_x_rot,
@@ -356,7 +381,7 @@ def create_legs_and_strechers(
         b=instance_rotation_b,
     )
     instance_scale_z = pf.nodes.math.vector_length(set_position_position_vector)
-    instance_scale = pf.nodes.func.combine_xyz(x=1.0, y=1.0, z=instance_scale_z)
+    instance_scale = pf.nodes.math.combine_xyz(x=1.0, y=1.0, z=instance_scale_z)
     instance_on_points_1 = pf.nodes.geo.instance_on_points(
         points=transform,
         instance=leg_instance,
@@ -383,9 +408,9 @@ def single_stand(
 ) -> t.ProcNode[pf.MeshObject]:
     radius_curve_result = pf.nodes.geo.curve_bezier(
         resolution=resolution,
-        start=pf.nodes.func.combine_xyz(x=top_radius, z=1.0),
-        middle=pf.nodes.func.combine_xyz(x=middle_radius, z=0.0),
-        end=pf.nodes.func.combine_xyz(x=bottom_radius, z=-1.0),
+        start=pf.nodes.math.combine_xyz(x=top_radius, z=1.0),
+        middle=pf.nodes.math.combine_xyz(x=middle_radius, z=0.0),
+        end=pf.nodes.math.combine_xyz(x=bottom_radius, z=-1.0),
     )
 
     n_gon_cylinder_result = n_gon_cylinder(
@@ -413,7 +438,7 @@ def leg_square(
     profile_fillet_ratio: t.SocketOrVal[float],
 ) -> t.ProcNode[pf.MeshObject]:
     curve_arc_resolution = has_bottom_connector.astype(dtype=float) + 4.0
-    curve_arc_sweep_angle = pf.nodes.func.map_range(
+    curve_arc_sweep_angle = pf.nodes.math.map_range(
         value=has_bottom_connector.astype(dtype=float),
         to_max=6.2832,
         to_min=4.7124,
@@ -426,7 +451,7 @@ def leg_square(
 
     merge_curve_result = merge_curve(curve=curve_arc)
 
-    set_curve_tilt_tilt = pf.nodes.func.map_range(
+    set_curve_tilt_tilt = pf.nodes.math.map_range(
         value=has_bottom_connector.astype(dtype=float),
         to_max=3.1416,
         to_min=1.5708,
@@ -436,24 +461,32 @@ def leg_square(
     )
 
     transform = pf.nodes.geo.transform(
-        geometry=set_curve_tilt, rotation=(0.0, 0.0, -0.7854)
+        geometry=set_curve_tilt,
+        rotation=(0.0, 0.0, -0.7854),
+        translation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
     transform_1 = pf.nodes.geo.transform(
         geometry=transform,
         translation=(0.0, 0.0, -0.5),
         rotation=(1.5708, 0.0, 0.0),
+        scale=(1, 1, 1),
     )
-    transform_2_scale = pf.nodes.func.combine_xyz(x=width, y=1.0, z=height)
-    transform_2 = pf.nodes.geo.transform(geometry=transform_1, scale=transform_2_scale)
+    transform_2_scale = pf.nodes.math.combine_xyz(x=width, y=1.0, z=height)
+    transform_2 = pf.nodes.geo.transform(
+        geometry=transform_1,
+        scale=transform_2_scale,
+        translation=(0, 0, 0),
+        rotation=(0, 0, 0),
+    )
 
     set_curve_radius = pf.nodes.geo.set_curve_radius(curve=transform_2, radius=1.0)
 
-    fillet_curve = pf.nodes.geo.fillet_curve(
+    fillet_curve = pf.nodes.geo.fillet_curve_poly(
         curve=set_curve_radius,
         radius=fillet_radius,
         limit_radius=True,
         count=8,
-        mode="POLY",
     )
 
     n_gon_profile_result = n_gon_profile(
@@ -469,7 +502,12 @@ def leg_square(
         fill_caps=True,
     )
 
-    transform_3 = pf.nodes.geo.transform(geometry=curve_to, rotation=(0.0, 0.0, 1.5708))
+    transform_3 = pf.nodes.geo.transform(
+        geometry=curve_to,
+        rotation=(0.0, 0.0, 1.5708),
+        translation=(0, 0, 0),
+        scale=(1, 1, 1),
+    )
 
     set_shade_smooth = pf.nodes.geo.set_shade_smooth(
         geometry=transform_3, shade_smooth=False
@@ -547,31 +585,45 @@ def table_top(
     curve_arc = pf.nodes.geo.curve_arc(resolution=4, radius=0.7071, sweep_angle=4.7124)
 
     transform_1 = pf.nodes.geo.transform(
-        geometry=curve_arc, rotation=(0.0, 0.0, -0.7854)
+        geometry=curve_arc,
+        rotation=(0.0, 0.0, -0.7854),
+        translation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
     transform_2 = pf.nodes.geo.transform(
-        geometry=transform_1, rotation=(0.0, 1.5708, 0.0)
+        geometry=transform_1,
+        rotation=(0.0, 1.5708, 0.0),
+        translation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
     transform_3 = pf.nodes.geo.transform(
-        geometry=transform_2, translation=(0.0, 0.5, 0.0)
+        geometry=transform_2,
+        translation=(0.0, 0.5, 0.0),
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
-    transform_4_scale = pf.nodes.func.combine_xyz(
+    transform_4_scale = pf.nodes.math.combine_xyz(
         x=1.0, y=fillet_radius_vertical, z=1.0
     )
-    transform_4 = pf.nodes.geo.transform(geometry=transform_3, scale=transform_4_scale)
+    transform_4 = pf.nodes.geo.transform(
+        geometry=transform_3,
+        scale=transform_4_scale,
+        translation=(0, 0, 0),
+        rotation=(0, 0, 0),
+    )
 
-    fillet_curve = pf.nodes.geo.fillet_curve(
+    fillet_curve = pf.nodes.geo.fillet_curve_poly(
         curve=transform_4,
         radius=fillet_radius_vertical,
         limit_radius=True,
         count=8,
-        mode="POLY",
     )
 
     transform_5 = pf.nodes.geo.transform(
         geometry=fillet_curve,
         rotation=(1.5708, 1.5708, 0.0),
         scale=thickness.astype(dtype=pf.Vector),
+        translation=(0, 0, 0),
     )
 
     curve_to = pf.nodes.geo.curve_to_mesh(
@@ -579,18 +631,26 @@ def table_top(
         profile_curve=transform_5,
     )
 
-    transform_6_translation = pf.nodes.func.combine_xyz(z=thickness * -0.5)
+    transform_6_translation = pf.nodes.math.combine_xyz(z=thickness * -0.5)
     transform_6 = pf.nodes.geo.transform(
-        geometry=curve_to, translation=transform_6_translation
+        geometry=curve_to,
+        translation=transform_6_translation,
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
 
     flip_edge = pf.nodes.geo.flip_faces(transform_6)
 
     join = pf.nodes.geo.join_geometry([store_named_attribute, flip_edge])
 
-    geometry_translation = pf.nodes.func.combine_xyz(z=thickness)
+    geometry_translation = pf.nodes.math.combine_xyz(z=thickness)
 
-    transform = pf.nodes.geo.transform(geometry=join, translation=geometry_translation)
+    transform = pf.nodes.geo.transform(
+        geometry=join,
+        translation=geometry_translation,
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
+    )
     return TableTopResult(
         geometry=transform,
         curve=n_gon_cylinder_result.profile_curve,
@@ -670,7 +730,7 @@ def base_square(
         profile_fillet_ratio=0.1,
     )
 
-    empty_stretcher = pf.nodes.geo.points()
+    empty_stretcher = pf.nodes.geo.points(position=(0, 0, 0))
 
     return create_legs_and_strechers(
         anchors=anchors,
@@ -717,7 +777,7 @@ def base_single_stand(
         bottom_radius=bottom_radius,
     )
 
-    empty_stretcher = pf.nodes.geo.points()
+    empty_stretcher = pf.nodes.geo.points(position=(0, 0, 0))
 
     return create_legs_and_strechers(
         anchors=anchors,
@@ -838,7 +898,12 @@ def dining_table_distribution(
         fillet_ratio=pf.random.uniform(rng, 0.0, 0.02),
         fillet_radius_vertical=pf.random.uniform(rng, 0.1, 0.3),
     )
-    top = pf.nodes.geo.transform(top.geometry, translation=(0, 0, top_height))
+    top = pf.nodes.geo.transform(
+        top.geometry,
+        translation=(0, 0, top_height),
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
+    )
     top = pf.nodes.to_mesh_object(top)
     pf.ops.object.set_material(
         top, surface=top_material.surface, displacement=top_material.displacement

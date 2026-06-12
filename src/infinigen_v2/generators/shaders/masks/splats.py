@@ -33,7 +33,7 @@ def splat_dots(
         phase=seed,
     )
 
-    voronoi = pf.nodes.shader.voronoi(
+    voronoi = pf.nodes.texture.voronoi(
         vector=coord_warp_result.vector,
         scale=100.0,
         detail=detail,
@@ -42,13 +42,13 @@ def splat_dots(
         w=seed,
     )
 
-    mask_0_a = pf.nodes.func.mix(
+    mask_0_a = pf.nodes.math.mix(
         a=1.0,
         b=voronoi.color.astype(dtype=pf.Vector).x,
         factor=opacity_variation,
     )
 
-    noise = pf.nodes.shader.noise(
+    noise = pf.nodes.texture.noise(
         vector=coord_warp_result.vector
         / noise_settings_noise_size.astype(dtype=pf.Vector),
         scale=100.0,
@@ -57,11 +57,11 @@ def splat_dots(
         w=voronoi.w,
     )
 
-    mask_b_1 = pf.nodes.func.map_range(value=noise.fac, from_max=0.75, from_min=0.25)
-    mask_a_0_b_1 = pf.nodes.func.mix(a=1.0, b=mask_b_1, factor=noise_settings_use_noise)
+    mask_b_1 = pf.nodes.math.map_range(value=noise.fac, from_max=0.75, from_min=0.25)
+    mask_a_0_b_1 = pf.nodes.math.mix(a=1.0, b=mask_b_1, factor=noise_settings_use_noise)
     mask_a_1 = opacity * mask_a_0_b_1
-    mask_from_min = pf.nodes.func.mix(a=spread - 0.0001, b=0.0, factor=smoothness)
-    mask_a_0_b_0 = pf.nodes.func.map_range(
+    mask_from_min = pf.nodes.math.mix(a=spread - 0.0001, b=0.0, factor=smoothness)
+    mask_a_0_b_0 = pf.nodes.math.map_range(
         value=voronoi.distance,
         from_max=spread,
         from_min=mask_from_min,
@@ -69,7 +69,7 @@ def splat_dots(
         to_min=1.0,
     )
     mask_a = pf.nodes.math.clamp(mask_a_1 * mask_a_0_b_0)
-    mask_value = pf.nodes.func.map_range(
+    mask_value = pf.nodes.math.map_range(
         value=mask_a_0_b_0,
         from_max=border_settings_border_thickness,
     )
@@ -106,6 +106,7 @@ def streaks(
     noise_vector_vector_1 = pf.nodes.math.vector_rotate_euler(
         vector=vector + (0.0, 0.0, 0.0),
         rotation=rotation,
+        center=(0, 0, 0),
     )
     noise_vector_vector_0 = size * 0.01
 
@@ -117,7 +118,7 @@ def streaks(
         phase=seed,
     )
 
-    voronoi = pf.nodes.shader.voronoi(
+    voronoi = pf.nodes.texture.voronoi(
         vector=coord_warp_result.vector,
         scale=0.5,
         normalize=True,
@@ -141,62 +142,62 @@ def streaks(
         space_warp_result.vector * (1.0, 1.0, 0.0)
     )
     mask_a_4 = pf.nodes.math.maximum(a=spread, b=0.0001)
-    mask_a_base = pf.nodes.func.map_range(
+    mask_a_base = pf.nodes.math.map_range(
         value=mask_a_base_value,
         from_max=mask_a_4 * 0.54,
         to_max=0.0,
         to_min=1.0,
     )
     mask_a_3 = mask_a_base**0.5
-    mask_a_a_vector = pf.nodes.func.combine_xyz(
+    mask_a_a_vector = pf.nodes.math.combine_xyz(
         x=voronoi.color.astype(dtype=pf.Vector).y, y=seed
     )
 
-    white_noise = pf.nodes.shader.white_noise(
+    white_noise = pf.nodes.texture.white_noise(
         vector=mask_a_a_vector, noise_dimensions="2D"
     )
 
     mask_a_2 = white_noise.fac - 0.5
-    mask_0_vector = pf.nodes.func.combine_xyz(
+    mask_0_vector = pf.nodes.math.combine_xyz(
         x=space_warp_result.vector.z, y=mask_a_2 * 49.899994
     )
 
-    voronoi_1 = pf.nodes.shader.voronoi(
+    voronoi_1 = pf.nodes.texture.voronoi(
         vector=mask_0_vector,
         scale=1.0 / vertical_length,
         voronoi_dimensions="2D",
     )
 
     mask_factor = pf.nodes.math.minimum(a=vertical_spacing, b=0.9999)
-    mask_b_base_from_min = pf.nodes.func.mix(a=0.0, b=0.89, factor=mask_factor)
-    mask_b_base = pf.nodes.func.map_range(
+    mask_b_base_from_min = pf.nodes.math.mix(a=0.0, b=0.89, factor=mask_factor)
+    mask_b_base = pf.nodes.math.map_range(
         value=voronoi_1.distance,
         from_max=mask_b_base_from_min + 0.25,
         from_min=mask_b_base_from_min,
     )
     mask_b_1 = mask_b_base**0.5
-    mask_base_value = pf.nodes.func.map_range(value=mask_a_3 * mask_b_1, from_min=0.28)
+    mask_base_value = pf.nodes.math.map_range(value=mask_a_3 * mask_b_1, from_min=0.28)
     mask_base_from_max = pf.nodes.math.maximum(a=smoothness, b=0.0001)
-    mask_base = pf.nodes.func.map_range(
+    mask_base = pf.nodes.math.map_range(
         value=mask_base_value, from_max=mask_base_from_max
     )
     mask_0_a_a = mask_base**2.0
 
-    noise = pf.nodes.shader.noise(
+    noise = pf.nodes.texture.noise(
         vector=coord_warp_result.vector,
         scale=1.0 / noise_settings_noise_size,
         detail=noise_settings_noise_detail,
         noise_dimensions="4D",
     )
 
-    mask_a_1 = pf.nodes.func.map_range(value=noise.fac, from_max=0.75, from_min=0.25)
-    mask_0_a_0 = pf.nodes.func.mix(
+    mask_a_1 = pf.nodes.math.map_range(value=noise.fac, from_max=0.75, from_min=0.25)
+    mask_0_a_0 = pf.nodes.math.mix(
         a=mask_0_a_a,
         b=mask_a_1 * mask_0_a_a,
         factor=noise_settings_use_noise,
     )
     mask_a_from_max = pf.nodes.math.maximum(a=border_settings_thickness, b=0.0001)
-    mask_a_0 = pf.nodes.func.map_range(value=mask_base_value, from_max=mask_a_from_max)
+    mask_a_0 = pf.nodes.math.map_range(value=mask_base_value, from_max=mask_a_from_max)
     mask_b_a = pf.nodes.math.absolute(mask_a_0 - 0.5)
     mask_b_0 = mask_b_a * 2.0
     mask_0_b_0 = pf.nodes.math.clamp(1.0 - mask_b_0)
@@ -209,14 +210,14 @@ def splats_metal_gradient(vector: t.SocketOrVal[pf.Vector]):
 
     coord = pf.nodes.shader.coord()
 
-    splat_dots_spread = pf.nodes.func.map_range(
+    splat_dots_spread = pf.nodes.math.map_range(
         value=coord.generated.z,
         from_max=0.7,
         from_min=0.3,
         to_max=0.18,
         to_min=0.55,
     )
-    splat_dots_opacity = pf.nodes.func.map_range(
+    splat_dots_opacity = pf.nodes.math.map_range(
         value=coord.generated.z,
         from_max=0.7,
         from_min=0.3,
@@ -242,14 +243,14 @@ def splats_metal_gradient(vector: t.SocketOrVal[pf.Vector]):
         border_settings_border_opacity=0.0,
     )
 
-    surface_factor_spread = pf.nodes.func.map_range(
+    surface_factor_spread = pf.nodes.math.map_range(
         value=coord.generated.z,
         from_max=0.7,
         from_min=0.3,
         to_max=0.2,
         to_min=0.39,
     )
-    surface_factor_opacity = pf.nodes.func.map_range(
+    surface_factor_opacity = pf.nodes.math.map_range(
         value=coord.generated.z,
         from_max=0.7,
         from_min=0.3,
@@ -901,7 +902,7 @@ def uv_gradient_distribution(
     if gradient_end is None:
         gradient_end = pf.random.uniform(rng, 0.0, 1.0)
 
-    return pf.nodes.func.map_range(
+    return pf.nodes.math.map_range(
         value=gradient_fac,
         from_min=gradient_start,
         from_max=gradient_end,

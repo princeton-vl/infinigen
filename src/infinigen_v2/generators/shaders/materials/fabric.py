@@ -37,22 +37,22 @@ def fabric(
 
     color_vector_2 = pf.nodes.math.vector_scale(vector=vector, scale=500.0 / size)
     color_x_1 = color_vector_2
-    color_x_vector = pf.nodes.func.combine_xyz(color_x_1.x)
-    color_x_scale = pf.nodes.func.constant(0.5)
-    color_x = pf.nodes.shader.noise(
+    color_x_vector = pf.nodes.math.combine_xyz(color_x_1.x)
+    color_x_scale = pf.nodes.math.constant(0.5)
+    color_x = pf.nodes.texture.noise(
         vector=color_x_vector,
         scale=color_x_scale,
         detail=0.0,
         noise_dimensions="2D",
     )
-    color_y_vector = pf.nodes.func.combine_xyz(x=color_x_1.y, y=100.0)
-    color_y = pf.nodes.shader.noise(
+    color_y_vector = pf.nodes.math.combine_xyz(x=color_x_1.y, y=100.0)
+    color_y = pf.nodes.texture.noise(
         vector=color_y_vector,
         scale=color_x_scale,
         detail=0.0,
         noise_dimensions="2D",
     )
-    color_vector_vector = pf.nodes.func.combine_xyz(x=color_x.fac, y=color_y.fac)
+    color_vector_vector = pf.nodes.math.combine_xyz(x=color_x.fac, y=color_y.fac)
     color_vector_1 = pf.nodes.math.vector_scale(
         vector=color_vector_vector - (0.5, 0.5, 0.0),
         scale=size_variation,
@@ -64,14 +64,14 @@ def fabric(
 
     thread_mask_value = pf.nodes.math.vector_scale(vector=mask_value_vector, scale=2.0)
 
-    mask_vector_color = pf.nodes.func.map_range(
+    mask_vector_color = pf.nodes.math.map_range(
         value=(1.0, 1.0, 0.0) - thread_mask_value,
         from_min=gab.astype(dtype=pf.Vector),
         from_max=(1.0, 1.0, 1.0),
         to_min=(0.0, 0.0, 0.0),
         to_max=(1.0, 1.0, 1.0),
     )
-    mask_vector_5 = pf.nodes.func.rgb_curve(
+    mask_vector_5 = pf.nodes.color.rgb_curve(
         color=mask_vector_color.astype(dtype=pf.Color),
         curves=[
             np.array([[0.0, 0.0], [1.0, 1.0]]),
@@ -79,6 +79,7 @@ def fabric(
             np.array([[0.0, 0.0], [1.0, 1.0]]),
             np.array([[0.0, 0.0], [0.1409, 0.375], [0.6091, 0.9], [1.0, 1.0]]),
         ],
+        fac=1.0,
     )
 
     vector_vector_3 = pf.nodes.math.vector_scale(
@@ -89,14 +90,14 @@ def fabric(
 
     vector_x_1 = mask_vector_4
 
-    mask_vector_3 = pf.nodes.func.combine_xyz(
+    mask_vector_3 = pf.nodes.math.combine_xyz(
         x=vector_x_1.x > 0.5, y=vector_x_1.y > 0.5
     )
 
     vector_vector_2 = pf.nodes.math.vector_scale(vector=mask_vector_3, scale=0.5)
 
     mask_vector_x = color_vector
-    mask_vector_2 = pf.nodes.func.combine_xyz(
+    mask_vector_2 = pf.nodes.math.combine_xyz(
         x=mask_vector_x.y, y=mask_vector_x.x + 0.5
     )
 
@@ -108,7 +109,7 @@ def fabric(
 
     thread_mask_color = (1.0, 1.0, 0.0) - mask_color_1
 
-    mask_vector_vector = pf.nodes.func.rgb_curve(
+    mask_vector_vector = pf.nodes.color.rgb_curve(
         color=thread_mask_color.astype(dtype=pf.Color),
         curves=[
             np.array([[0.0, 0.0], [1.0, 1.0]]),
@@ -116,6 +117,7 @@ def fabric(
             np.array([[0.0, 0.0], [1.0, 1.0]]),
             np.array([[0.0, 0.0], [0.25, 0.1], [0.75, 0.9], [1.0, 1.0]]),
         ],
+        fac=1.0,
     )
 
     thread_mask_vector = pf.nodes.math.vector_scale(
@@ -128,10 +130,10 @@ def fabric(
 
     color_w_vector = pf.nodes.math.vector_floor(color_vector + (0.0, 0.5, 0.0))
     color_w = color_w_vector
-    color_4 = pf.nodes.shader.white_noise(w=color_w.x, noise_dimensions="1D")
-    color_3 = pf.nodes.shader.white_noise(w=color_w.y + 4.6, noise_dimensions="1D")
-    color_2 = pf.nodes.func.mix(factor=thread_mask, a=color_4.fac, b=color_3.fac)
-    color_1 = pf.nodes.func.mix_rgb(
+    color_4 = pf.nodes.texture.white_noise(w=color_w.x, noise_dimensions="1D")
+    color_3 = pf.nodes.texture.white_noise(w=color_w.y + 4.6, noise_dimensions="1D")
+    color_2 = pf.nodes.math.mix(factor=thread_mask, a=color_4.fac, b=color_3.fac)
+    color_1 = pf.nodes.color.mix_rgb(
         factor=color_variation,
         a=color,
         b=color_2.astype(dtype=pf.Color),
@@ -154,7 +156,7 @@ def fabric(
         sheen_weight=sheen_weight,
         sheen_roughness=sheen_roughness,
     )
-    displacement_vector = pf.nodes.func.combine_xyz(x=color_4.fac, y=color_3.fac)
+    displacement_vector = pf.nodes.math.combine_xyz(x=color_4.fac, y=color_3.fac)
     displacement_height_vector = pf.nodes.math.vector_scale(
         vector=displacement_vector, scale=height_variation
     )

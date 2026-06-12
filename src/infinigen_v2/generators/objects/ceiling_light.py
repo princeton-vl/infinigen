@@ -46,7 +46,7 @@ def ceiling_light_geometry(
 ) -> CeilingLightGeometryResult:
     transform_translation_z = inner_height * -1.0
 
-    curve_line_end = pf.nodes.func.combine_xyz(z=transform_translation_z)
+    curve_line_end = pf.nodes.math.combine_xyz(z=transform_translation_z)
     curve_line = pf.nodes.geo.curve_line(start=(0.0, 0.0, -0.001), end=curve_line_end)
     curve_circle = pf.nodes.geo.curve_circle(radius=inner_radius)
     curve_to = pf.nodes.geo.curve_to_mesh(
@@ -73,12 +73,13 @@ def ceiling_light_geometry(
         selection=separate_selection.astype(dtype=bool),
     )
 
-    transform_translation = pf.nodes.func.combine_xyz(z=transform_translation_z)
-    transform_scale = pf.nodes.func.combine_xyz(x=1.0, y=1.0, z=curvature)
+    transform_translation = pf.nodes.math.combine_xyz(z=transform_translation_z)
+    transform_scale = pf.nodes.math.combine_xyz(x=1.0, y=1.0, z=curvature)
     transform = pf.nodes.geo.transform(
         geometry=separate.selection,
         translation=transform_translation,
         scale=transform_scale,
+        rotation=(0, 0, 0),
     )
 
     join_1 = pf.nodes.geo.join_geometry([curve_to, transform])
@@ -89,8 +90,8 @@ def ceiling_light_geometry(
 
     circle = pf.nodes.geo.mesh_circle(radius=radius, fill_type="NGON")
 
-    curve_line_1_end = pf.nodes.func.combine_xyz(z=height * -1.0)
-    curve_line_1 = pf.nodes.geo.curve_line(end=curve_line_1_end)
+    curve_line_1_end = pf.nodes.math.combine_xyz(z=height * -1.0)
+    curve_line_1 = pf.nodes.geo.curve_line(end=curve_line_1_end, start=(0, 0, 0))
     curve_circle_1 = pf.nodes.geo.curve_circle(resolution=512, radius=radius)
     curve_to_1 = pf.nodes.geo.curve_to_mesh(
         curve=curve_line_1, profile_curve=curve_circle_1

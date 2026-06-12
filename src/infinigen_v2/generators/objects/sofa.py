@@ -63,7 +63,7 @@ def corner_cube(
         vertices_z=vertices_z,
     )
 
-    transform_translation_a = pf.nodes.func.map_range(
+    transform_translation_a = pf.nodes.math.map_range(
         value=centering_loc,
         from_min=(0.0, 0.0, 0.0),
         from_max=(1.0, 1.0, 1.0),
@@ -76,7 +76,10 @@ def corner_cube(
         addend=location,
     )
     transform = pf.nodes.geo.transform(
-        geometry=cube.mesh, translation=transform_translation
+        geometry=cube.mesh,
+        translation=transform_translation,
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
 
     # store_named_attribute = pf.nodes.geo.store_named_attribute(
@@ -129,23 +132,23 @@ def sofa(
         addend=join_y_numerator_addend,
     )
 
-    base_board_2_dimensions = pf.nodes.func.combine_xyz(
+    base_board_2_dimensions = pf.nodes.math.combine_xyz(
         x=join_y_numerator.x,
         y=join_y_numerator.y,
         z=baseboard_height,
     )
 
     join_a_2 = base_board_2_dimensions * (0.0, -0.5, 1.0)
-    join_b_0 = pf.nodes.func.combine_xyz(x=backrest_width, z=seat_dimensions.z)
+    join_b_0 = pf.nodes.math.combine_xyz(x=backrest_width, z=seat_dimensions.z)
     join_a_1 = base_board_2_dimensions * (0.0, 0.5, 1.0)
     join_12 = pf.nodes.math.ceil(join_y_numerator.y / seat_dimensions.y)
     join_y = join_y_numerator.y / join_12
-    join_1_geometries_0_instance_dimensions = pf.nodes.func.combine_xyz(
+    join_1_geometries_0_instance_dimensions = pf.nodes.math.combine_xyz(
         x=seat_dimensions.x, y=join_y, z=seat_dimensions.z
     )
 
     seat_a = dimensions.z - seat_dimensions.z
-    seat_cushion_dimensions = pf.nodes.func.combine_xyz(
+    seat_cushion_dimensions = pf.nodes.math.combine_xyz(
         x=seat_a - baseboard_height, y=join_y, z=backrest_width
     )
     seat_cushion = corner_cube(
@@ -161,7 +164,10 @@ def sofa(
     extrude = pf.nodes.geo.extrude_mesh(mesh=seat_cushion, offset_scale=0.03)
 
     scale_elements = pf.nodes.geo.scale_elements(
-        geometry=extrude.mesh, selection=extrude.top, scale=0.6
+        geometry=extrude.mesh,
+        selection=extrude.top,
+        scale=0.6,
+        center=(0, 0, 0),
     )
 
     subdivision_surface = pf.nodes.geo.subdivision_surface(scale_elements)
@@ -174,11 +180,11 @@ def sofa(
 
     transform_translation_x_1 = backrest_width * -1.0
     transform_translation_x_0 = back_dimensions.x + 0.1
-    transform_translation = pf.nodes.func.combine_xyz(
+    transform_translation = pf.nodes.math.combine_xyz(
         transform_translation_x_1 + transform_translation_x_0
     )
-    transform_rotation = pf.nodes.func.combine_xyz(y=backrest_angle + -1.5708)
-    transform_scale = pf.nodes.func.combine_xyz(x=seat_margin, y=seat_margin, z=1.0)
+    transform_rotation = pf.nodes.math.combine_xyz(y=backrest_angle + -1.5708)
+    transform_scale = pf.nodes.math.combine_xyz(x=seat_margin, y=seat_margin, z=1.0)
     transform = pf.nodes.geo.transform(
         geometry=subdivision_surface,
         translation=transform_translation,
@@ -228,7 +234,7 @@ def sofa(
         value=True,
     )
 
-    transform_1_selection_0 = pf.nodes.func.constant(1.0)
+    transform_1_selection_0 = pf.nodes.math.constant(1.0)
 
     store_named_attribute_3 = pf.nodes.geo.store_named_attribute(
         domain="FACE",
@@ -239,7 +245,10 @@ def sofa(
     )
 
     transform_1 = pf.nodes.geo.transform(
-        geometry=store_named_attribute_3, scale=transform_scale
+        geometry=store_named_attribute_3,
+        scale=transform_scale,
+        translation=(0, 0, 0),
+        rotation=(0, 0, 0),
     )
 
     array_fill_line_result_1 = array_fill_line(
@@ -253,13 +262,18 @@ def sofa(
     join_geometries_1_b_switch = pf.nodes.func.equal(a=count, b=4)
     join_0_switch = pf.nodes.func.equal(a=count, b=4)
     join_11 = pf.nodes.func.switch(switch=join_0_switch, a=reflection, b=1)
-    join_line_end_b = pf.nodes.func.combine_xyz(
+    join_line_end_b = pf.nodes.math.combine_xyz(
         x=1.0, y=join_11.astype(dtype=float), z=1.1
     )
     join_line_end_1 = join_a_1 * join_line_end_b
 
-    transform_2_scale = pf.nodes.func.combine_xyz(x=scaling_footrest, y=1.0, z=1.1)
-    transform_2 = pf.nodes.geo.transform(geometry=transform_1, scale=transform_2_scale)
+    transform_2_scale = pf.nodes.math.combine_xyz(x=scaling_footrest, y=1.0, z=1.1)
+    transform_2 = pf.nodes.geo.transform(
+        geometry=transform_1,
+        scale=transform_2_scale,
+        translation=(0, 0, 0),
+        rotation=(0, 0, 0),
+    )
 
     array_fill_line_result_2 = array_fill_line(
         line_start=join_a_2,
@@ -269,10 +283,15 @@ def sofa(
         instance=transform_2,
     )
 
-    join_line_end_0 = pf.nodes.func.combine_xyz(z=join_line_end_1.z)
+    join_line_end_0 = pf.nodes.math.combine_xyz(z=join_line_end_1.z)
 
-    transform_3_scale = pf.nodes.func.combine_xyz(x=1.0, y=join_12, z=1.0)
-    transform_3 = pf.nodes.geo.transform(geometry=transform_2, scale=transform_3_scale)
+    transform_3_scale = pf.nodes.math.combine_xyz(x=1.0, y=join_12, z=1.0)
+    transform_3 = pf.nodes.geo.transform(
+        geometry=transform_2,
+        scale=transform_3_scale,
+        translation=(0, 0, 0),
+        rotation=(0, 0, 0),
+    )
 
     array_fill_line_result_3 = array_fill_line(
         line_start=(0.0, 0.0, 0.0),
@@ -302,6 +321,7 @@ def sofa(
         geometry=grid.mesh,
         translation=dimensions * (0.5, 0.0, 0.0),
         scale=transform_4_scale_1 - transform_4_scale_0,
+        rotation=(0, 0, 0),
     )
 
     cone = pf.nodes.geo.mesh_cone(
@@ -312,7 +332,7 @@ def sofa(
         depth=0.07,
     )
 
-    transform_5_scale = pf.nodes.func.combine_xyz(
+    transform_5_scale = pf.nodes.math.combine_xyz(
         x=leg_dimensions, y=leg_dimensions, z=leg_z
     )
     transform_5 = pf.nodes.geo.transform(
@@ -332,7 +352,12 @@ def sofa(
         vertices_z=4,
     )
 
-    transform_6 = pf.nodes.geo.transform(geometry=foot_cube, scale=(0.5, 0.8, 0.8))
+    transform_6 = pf.nodes.geo.transform(
+        geometry=foot_cube,
+        scale=(0.5, 0.8, 0.8),
+        translation=(0, 0, 0),
+        rotation=(0, 0, 0),
+    )
     foot = pf.nodes.func.switch(switch=leg_type, a=transform_5, b=transform_6)
     foot = pf.nodes.geo.set_material(foot, foot_material)
 
@@ -345,7 +370,7 @@ def sofa(
 
     transform_switch = pf.nodes.func.equal(a=count, b=4)
 
-    base_board_dimensions_b = pf.nodes.func.combine_xyz(x=1.0, y=join_12, z=1.0)
+    base_board_dimensions_b = pf.nodes.math.combine_xyz(x=1.0, y=join_12, z=1.0)
     base_board_dimensions = base_board_2_dimensions / base_board_dimensions_b
 
     transform_8_translation_a = pf.nodes.func.switch(
@@ -360,7 +385,7 @@ def sofa(
         vertices_y=2,
     )
 
-    transform_8_translation_b = pf.nodes.func.combine_xyz(
+    transform_8_translation_b = pf.nodes.math.combine_xyz(
         x=0.1,
         y=transform_8_translation_a.y,
         z=transform_8_translation_a.z,
@@ -371,6 +396,7 @@ def sofa(
         geometry=grid_1.mesh,
         translation=transform_8_translation_1 + transform_8_translation_0,
         scale=(1.0, 1.0, 0.9),
+        rotation=(0, 0, 0),
     )
 
     instance_on_points_1 = pf.nodes.geo.instance_on_points(
@@ -383,7 +409,7 @@ def sofa(
     base_a_y = pf.nodes.math.multiply_add(
         a=arm_dimensions.y, b=-2.0, addend=dimensions.y
     )
-    base_a = pf.nodes.func.combine_xyz(
+    base_a = pf.nodes.math.combine_xyz(
         x=back_dimensions.x, y=base_a_y, z=back_dimensions.z
     )
     base_board_2_location = base_a * (1.0, 0.0, 0.0)
@@ -400,15 +426,16 @@ def sofa(
     join_2 = pf.nodes.geo.join_geometry([footrest_feet, base_board])
     join_a_0 = base_board_dimensions_b - (1.0, 1.0, 1.0)
     join_a_translation_1 = base_board_dimensions * join_a_0 * (0.0, 0.5, 0.0)
-    join_a_translation_0 = pf.nodes.func.combine_xyz(
+    join_a_translation_0 = pf.nodes.math.combine_xyz(
         x=1.0, y=reflection.astype(dtype=float), z=1.0
     )
-    join_a_scale = pf.nodes.func.combine_xyz(x=scaling_footrest, y=1.0, z=1.0)
+    join_a_scale = pf.nodes.math.combine_xyz(x=scaling_footrest, y=1.0, z=1.0)
 
     transform_9 = pf.nodes.geo.transform(
         geometry=join_2,
         translation=join_a_translation_1 * join_a_translation_0,
         scale=join_a_scale,
+        rotation=(0, 0, 0),
     )
 
     join_7_geometries_0_a = pf.nodes.func.switch(switch=footrest, a=transform_9)
@@ -423,13 +450,19 @@ def sofa(
         vertices_z=3,
     )
 
-    transform_10_scale = pf.nodes.func.combine_xyz(x=scaling_footrest, y=1.0, z=1.0)
+    transform_10_scale = pf.nodes.math.combine_xyz(x=scaling_footrest, y=1.0, z=1.0)
     transform_10 = pf.nodes.geo.transform(
-        geometry=base_board_1, scale=transform_10_scale
+        geometry=base_board_1,
+        scale=transform_10_scale,
+        translation=(0, 0, 0),
+        rotation=(0, 0, 0),
     )
-    transform_11_scale = pf.nodes.func.combine_xyz(x=scaling_footrest, y=1.3, z=1.0)
+    transform_11_scale = pf.nodes.math.combine_xyz(x=scaling_footrest, y=1.3, z=1.0)
     transform_11 = pf.nodes.geo.transform(
-        geometry=footrest_feet, scale=transform_11_scale
+        geometry=footrest_feet,
+        scale=transform_11_scale,
+        translation=(0, 0, 0),
+        rotation=(0, 0, 0),
     )
 
     join_3 = pf.nodes.geo.join_geometry([transform_10, transform_11])
@@ -462,7 +495,7 @@ def sofa(
 
     is_arm_angular = pf.nodes.func.equal(a=arm_type, b=ARM_TYPE_ANGULAR)
     is_arm_square = pf.nodes.func.equal(a=arm_type, b=ARM_TYPE_SQUARE)
-    join_b_dimensions = pf.nodes.func.combine_xyz(
+    join_b_dimensions = pf.nodes.math.combine_xyz(
         x=arm_dimensions.x,
         y=arm_dimensions.y,
         z=(  # move down by radius to prevent taller-than-average arms when adding cylinder
@@ -487,7 +520,7 @@ def sofa(
 
     join_b_location = dimensions * (0.0, 0.5, 0.0)
 
-    transform_12_translation = pf.nodes.func.combine_xyz(
+    transform_12_translation = pf.nodes.math.combine_xyz(
         x=transform_numerator / 2.0,
         y=join_b_location.y,
         z=join_b_dimensions.z - join_b_dimensions.y,
@@ -496,6 +529,7 @@ def sofa(
         geometry=cylinder.mesh,
         translation=transform_12_translation,
         rotation=(0.0, 1.5708, 0.0),
+        scale=(1, 1, 1),
     )
 
     arm_cube = corner_cube(
@@ -523,14 +557,14 @@ def sofa(
 
     input_position = pf.nodes.geo.input_position()
 
-    set_y_value = pf.nodes.func.map_range(
+    set_y_value = pf.nodes.math.map_range(
         value=input_position.z,
         from_min=-0.1,
         from_max=arm_dimensions.z,
         to_min=-0.1,
         to_max=0.2,
     )
-    set_y_1 = pf.nodes.func.float_curve(
+    set_y_1 = pf.nodes.math.float_curve(
         factor=arm_width,
         value=set_y_value,
         curve=np.array(
@@ -547,26 +581,28 @@ def sofa(
 
     input_position_1 = pf.nodes.geo.input_position()
 
-    set_z_value = pf.nodes.func.map_range(
+    set_z_value = pf.nodes.math.map_range(
         value=input_position_1.x,
         from_min=-1.0,
         from_max=0.6,
         to_min=2.1,
         to_max=-1.1,
     )
-    set_z_1 = pf.nodes.func.float_curve(
+    set_z_1 = pf.nodes.math.float_curve(
         factor=arm_height,
         value=set_z_value,
         curve=np.array([[0.1341, 0.2094], [0.7386, 1.0], [0.9682, 0.0781], [1.0, 0.0]]),
     )
-    set_z_b = pf.nodes.func.constant((-2.9, 3.3, 0.0))
+    set_z_b = pf.nodes.math.constant((-2.9, 3.3, 0.0))
     set_z_0 = input_position_1.z - set_z_b.z
-    set_position_offset_vector = pf.nodes.func.combine_xyz(
+    set_position_offset_vector = pf.nodes.math.combine_xyz(
         y=set_y_1 * set_y_0, z=set_z_1 * set_z_0
     )
     set_position_offset = pf.nodes.math.vector_rotate_axis_angle(
         vector=set_position_offset_vector,
         axis=(1.0, 0.0, 0.0),
+        center=(0, 0, 0),
+        angle=0.0,
     )
     arm_angular = pf.nodes.geo.set_position(
         geometry=arm_cube_1, offset=set_position_offset
@@ -579,7 +615,12 @@ def sofa(
         b=arm_angular,
     )
 
-    arm_sym = pf.nodes.geo.transform(geometry=arm_switch, scale=(1.0, -1.0, 1.0))
+    arm_sym = pf.nodes.geo.transform(
+        geometry=arm_switch,
+        scale=(1.0, -1.0, 1.0),
+        translation=(0, 0, 0),
+        rotation=(0, 0, 0),
+    )
     arm_sym = pf.nodes.geo.flip_faces(arm_sym)
     arm_sym = pf.nodes.geo.join_geometry([arm_switch, arm_sym])
 
@@ -595,8 +636,10 @@ def sofa(
 
     # TODO: this messes up the overall `dimensions`
     bbox_min_z = pf.nodes.geo.bound_box(geometry).min.z
-    translation_for_legs = pf.nodes.func.combine_xyz(x=0, y=0, z=bbox_min_z * -1.0)
-    geometry = pf.nodes.geo.transform(geometry, translation=translation_for_legs)
+    translation_for_legs = pf.nodes.math.combine_xyz(x=0, y=0, z=bbox_min_z * -1.0)
+    geometry = pf.nodes.geo.transform(
+        geometry, translation=translation_for_legs, rotation=(0, 0, 0), scale=(1, 1, 1)
+    )
 
     return geometry
 

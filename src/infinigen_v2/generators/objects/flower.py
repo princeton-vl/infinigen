@@ -65,7 +65,7 @@ def petal_material_distribution(rng: pf.RNG) -> pf.Material:
 def center_material() -> pf.Material:
     ao = pf.nodes.shader.ambient_occlusion()
 
-    color = pf.nodes.shader.color_ramp(
+    color = pf.nodes.color.color_ramp(
         fac=ao.color,
         points=[
             (0.4841, (0.0127, 0.0075, 0.0026, 1.0)),
@@ -106,7 +106,7 @@ def _follow_curve(
         attribute=capture_attribute.attribute.z,
     )
 
-    result_0_position_length = pf.nodes.func.map_range(
+    result_0_position_length = pf.nodes.math.map_range(
         value=capture_attribute.attribute.z,
         from_max=attribute_statistic.max,
         from_min=attribute_statistic.min,
@@ -151,7 +151,7 @@ def _polar_to_cart(
 ) -> pf.ProcNode[pf.Vector]:
     result_0_b_y = pf.nodes.math.cos(value)
     result_0_b_z = pf.nodes.math.sin(value)
-    result_0_b = pf.nodes.func.combine_xyz(y=result_0_b_y, z=result_0_b_z)
+    result_0_b = pf.nodes.math.combine_xyz(y=result_0_b_y, z=result_0_b_z)
 
     vector_multiply_add = pf.nodes.math.vector_multiply_add(
         a=vector, b=result_0_b, addend=addend
@@ -186,11 +186,11 @@ def _flower_petal(
         geometry=grid.mesh, attribute=input_position
     )
 
-    noise_vector = pf.nodes.func.combine_xyz(
+    noise_vector = pf.nodes.math.combine_xyz(
         x=capture_attribute.attribute.x * 0.05,
         y=capture_attribute.attribute.y,
     )
-    noise = pf.nodes.shader.noise(
+    noise = pf.nodes.texture.noise(
         vector=noise_vector,
         scale=7.9,
         detail=0.0,
@@ -210,7 +210,7 @@ def _flower_petal(
     set_b_a_1 = set_b_a_a * point_height
     set_b_a_0 = pf.nodes.math.multiply_add(a=point_height, b=-1.0, addend=1.0)
     set_b_0 = (set_b_a_1 + set_b_a_0) * set_b_b_0
-    set_position_position = pf.nodes.func.combine_xyz(
+    set_position_position = pf.nodes.math.combine_xyz(
         x=set_a_1 * wrinkle,
         y=capture_attribute.attribute.y * set_b_1,
         z=set_a_0 * set_b_0,
@@ -221,7 +221,7 @@ def _flower_petal(
     )
 
     curve_bezier_middle_y = length * 0.5
-    curve_bezier_middle = pf.nodes.func.combine_xyz(y=curve_bezier_middle_y)
+    curve_bezier_middle = pf.nodes.math.combine_xyz(y=curve_bezier_middle_y)
 
     polar_to_cart_result = _polar_to_cart(
         addend=curve_bezier_middle,
@@ -240,7 +240,7 @@ def _flower_petal(
         geometry=set_position, curve=curve_bezier, curve_min=0.0, curve_max=1.0
     )
 
-    result_0_selection = pf.nodes.func.constant(1.0)
+    result_0_selection = pf.nodes.math.constant(1.0)
 
     store_named_attribute = pf.nodes.geo.store_named_attribute(
         geometry=follow_curve_result,
@@ -270,9 +270,11 @@ def _phyllo_points(
     clamp_z: t.SocketOrVal[float],
     yaw_offset: t.SocketOrVal[float],
 ) -> _PhylloPointsResult:
-    line = pf.nodes.geo.mesh_line(count=count)
+    line = pf.nodes.geo.mesh_line(
+        count=count, start_location=(0, 0, 0), offset=(0, 0, 1)
+    )
 
-    to_points = pf.nodes.geo.mesh_to_points(line)
+    to_points = pf.nodes.geo.mesh_to_points(line, position=(0, 0, 0))
 
     input_position = pf.nodes.geo.input_position()
 
@@ -284,23 +286,23 @@ def _phyllo_points(
 
     points_x = pf.nodes.math.cos(input_index.astype(dtype=float))
     points_y = pf.nodes.math.sin(input_index.astype(dtype=float))
-    points_position_x_a = pf.nodes.func.combine_xyz(x=points_x, y=points_y)
+    points_position_x_a = pf.nodes.math.combine_xyz(x=points_x, y=points_y)
 
     rotation_x_value = input_index.astype(dtype=float) / count.astype(dtype=float)
 
-    points_0 = pf.nodes.func.map_range(
+    points_0 = pf.nodes.math.map_range(
         value=rotation_x_value**radius_exp,
         to_max=max_radius,
         to_min=min_radius,
     )
     points_position_x = points_position_x_a * points_0.astype(dtype=pf.Vector)
-    points_position_z = pf.nodes.func.map_range(
+    points_position_z = pf.nodes.math.map_range(
         value=rotation_x_value,
         from_max=clamp_z,
         to_max=max_z,
         to_min=min_z,
     )
-    points_position = pf.nodes.func.combine_xyz(
+    points_position = pf.nodes.math.combine_xyz(
         x=points_position_x.x,
         y=points_position_x.y,
         z=points_position_z,
@@ -311,11 +313,11 @@ def _phyllo_points(
         position=points_position,
     )
 
-    rotation_x = pf.nodes.func.map_range(
+    rotation_x = pf.nodes.math.map_range(
         value=rotation_x_value, to_max=max_angle, to_min=min_angle
     )
     rotation_y = pf.nodes.func.random_value(min=-0.1, max=0.1)
-    rotation = pf.nodes.func.combine_xyz(
+    rotation = pf.nodes.math.combine_xyz(
         x=rotation_x,
         y=rotation_y,
         z=input_index.astype(dtype=float) + yaw_offset,
@@ -342,7 +344,7 @@ def _plant_seed(
     u: t.SocketOrVal[int],
     v: t.SocketOrVal[int],
 ) -> pf.ProcNode:
-    curve_bezier_end = pf.nodes.func.combine_xyz(dimensions.x)
+    curve_bezier_end = pf.nodes.math.combine_xyz(dimensions.x)
     curve_bezier_middle = pf.nodes.math.vector_multiply_add(
         a=curve_bezier_end,
         b=(0.5, 0.5, 0.5),
@@ -357,11 +359,12 @@ def _plant_seed(
 
     norm_index_result = _norm_index(count=u)
 
-    curve_value = pf.nodes.func.float_curve(
+    curve_value = pf.nodes.math.float_curve(
         value=norm_index_result,
         curve=np.array([[0.0, 0.0], [0.3159, 0.4469], [1.0, 0.0156]]),
+        factor=1.0,
     )
-    curve_to_curve_radius = pf.nodes.func.map_range(value=curve_value, to_max=3.0)
+    curve_to_curve_radius = pf.nodes.math.map_range(value=curve_value, to_max=3.0)
 
     set_curve_radius = pf.nodes.geo.set_curve_radius(
         curve=curve_bezier, radius=curve_to_curve_radius
@@ -374,7 +377,7 @@ def _plant_seed(
         fill_caps=True,
     )
 
-    result_0_selection = pf.nodes.func.constant(1.0)
+    result_0_selection = pf.nodes.math.constant(1.0)
 
     store_named_attribute = pf.nodes.geo.store_named_attribute(
         geometry=curve_to,
@@ -405,7 +408,10 @@ def flower(
     )
 
     center_transform = pf.nodes.geo.transform(
-        geometry=uv_sphere.mesh, scale=(1.0, 1.0, 0.05)
+        geometry=uv_sphere.mesh,
+        scale=(1.0, 1.0, 0.05),
+        translation=(0, 0, 0),
+        rotation=(0, 0, 0),
     )
 
     distribute_points = pf.nodes.geo.distribute_points_on_faces(
@@ -414,22 +420,22 @@ def flower(
     )
 
     seed_length = seed_size * 10.0
-    seed_dimensions = pf.nodes.func.combine_xyz(x=seed_length, y=seed_size)
+    seed_dimensions = pf.nodes.math.combine_xyz(x=seed_length, y=seed_size)
 
     plant_seed_result = _plant_seed(dimensions=seed_dimensions, u=6, v=6)
 
     input_position = pf.nodes.geo.input_position()
-    seed_noise = pf.nodes.shader.noise(
+    seed_noise = pf.nodes.texture.noise(
         vector=input_position,
         w=13.8,
         scale=2.41,
         noise_dimensions="4D",
     )
 
-    seed_scale_x = pf.nodes.func.map_range(
+    seed_scale_x = pf.nodes.math.map_range(
         value=seed_noise.fac, to_min=0.34, to_max=1.21
     )
-    seed_scale = pf.nodes.func.combine_xyz(x=seed_scale_x, y=1.0, z=1.0)
+    seed_scale = pf.nodes.math.combine_xyz(x=seed_scale_x, y=1.0, z=1.0)
 
     seeds_instance = pf.nodes.geo.instance_on_points(
         points=distribute_points.points,
@@ -486,7 +492,7 @@ def flower(
 
     petals_realized = pf.nodes.geo.realize_instances(petals_instance)
 
-    petal_noise = pf.nodes.shader.noise(scale=3.73, detail=5.41, distortion=-1.0)
+    petal_noise = pf.nodes.texture.noise(scale=3.73, detail=5.41, distortion=-1.0)
 
     petal_offset = pf.nodes.math.vector_scale(
         vector=pf.nodes.math.vector_subtract(

@@ -30,18 +30,20 @@ def attach_gadget(
     thickness_val = attach_thickness + 0.0
     depth_val = depth + 0.0
 
-    cube_size = pf.nodes.func.combine_xyz(x=width_val, y=top_len_val, z=thickness_val)
+    cube_size = pf.nodes.math.combine_xyz(x=width_val, y=top_len_val, z=thickness_val)
     cube = pf.nodes.geo.mesh_cube(
         size=cube_size, vertices_x=5, vertices_y=5, vertices_z=5
     )
 
     translate_y = (depth_val - top_len_val) * -0.5
     translate_z = height - division_thickness
-    translate = pf.nodes.func.combine_xyz(y=translate_y, z=translate_z)
-    attach1 = pf.nodes.geo.transform(geometry=cube.mesh, translation=translate)
+    translate = pf.nodes.math.combine_xyz(y=translate_y, z=translate_z)
+    attach1 = pf.nodes.geo.transform(
+        geometry=cube.mesh, translation=translate, rotation=(0, 0, 0), scale=(1, 1, 1)
+    )
 
     back_len_val = attach_back_len + 0.0
-    cube_1_size = pf.nodes.func.combine_xyz(
+    cube_1_size = pf.nodes.math.combine_xyz(
         x=width_val, y=thickness_val, z=back_len_val
     )
     cube_1 = pf.nodes.geo.mesh_cube(
@@ -50,8 +52,13 @@ def attach_gadget(
 
     translate_1_y = depth_val * -0.5
     translate_1_z = translate_z - (back_len_val * 0.5)
-    translate_1 = pf.nodes.func.combine_xyz(y=translate_1_y, z=translate_1_z)
-    attach2 = pf.nodes.geo.transform(geometry=cube_1.mesh, translation=translate_1)
+    translate_1 = pf.nodes.math.combine_xyz(y=translate_1_y, z=translate_1_z)
+    attach2 = pf.nodes.geo.transform(
+        geometry=cube_1.mesh,
+        translation=translate_1,
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
+    )
 
     return pf.nodes.geo.join_geometry([attach1, attach2])
 
@@ -71,7 +78,10 @@ def screw_head_bookcase(
         radius=screw_radius, depth=screw_depth, fill_type="TRIANGLE_FAN"
     )
     rotated = pf.nodes.geo.transform(
-        geometry=cylinder.mesh, rotation=(0.0, 1.5708, 0.0)
+        geometry=cylinder.mesh,
+        rotation=(0.0, 1.5708, 0.0),
+        translation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
 
     half_width = width * 0.5
@@ -85,23 +95,38 @@ def screw_head_bookcase(
     pos_y = half_depth - gap_val
     neg_y = pos_y * -1.0
 
-    pos1 = pf.nodes.func.combine_xyz(x=half_width, y=pos_y, z=top_z)
-    t1 = pf.nodes.geo.transform(geometry=rotated, translation=pos1)
+    pos1 = pf.nodes.math.combine_xyz(x=half_width, y=pos_y, z=top_z)
+    t1 = pf.nodes.geo.transform(
+        geometry=rotated, translation=pos1, rotation=(0, 0, 0), scale=(1, 1, 1)
+    )
 
-    pos2 = pf.nodes.func.combine_xyz(x=half_width, y=pos_y, z=bottom_z)
-    t2 = pf.nodes.geo.transform(geometry=rotated, translation=pos2)
+    pos2 = pf.nodes.math.combine_xyz(x=half_width, y=pos_y, z=bottom_z)
+    t2 = pf.nodes.geo.transform(
+        geometry=rotated, translation=pos2, rotation=(0, 0, 0), scale=(1, 1, 1)
+    )
 
-    pos3 = pf.nodes.func.combine_xyz(x=half_width, y=neg_y, z=top_z)
-    t3 = pf.nodes.geo.transform(geometry=rotated, translation=pos3)
+    pos3 = pf.nodes.math.combine_xyz(x=half_width, y=neg_y, z=top_z)
+    t3 = pf.nodes.geo.transform(
+        geometry=rotated, translation=pos3, rotation=(0, 0, 0), scale=(1, 1, 1)
+    )
 
-    pos4 = pf.nodes.func.combine_xyz(x=half_width, y=0.0, z=mid_z)
-    t4 = pf.nodes.geo.transform(geometry=rotated, translation=pos4)
+    pos4 = pf.nodes.math.combine_xyz(x=half_width, y=0.0, z=mid_z)
+    t4 = pf.nodes.geo.transform(
+        geometry=rotated, translation=pos4, rotation=(0, 0, 0), scale=(1, 1, 1)
+    )
 
-    pos5 = pf.nodes.func.combine_xyz(x=half_width, y=neg_y, z=bottom_z)
-    t5 = pf.nodes.geo.transform(geometry=rotated, translation=pos5)
+    pos5 = pf.nodes.math.combine_xyz(x=half_width, y=neg_y, z=bottom_z)
+    t5 = pf.nodes.geo.transform(
+        geometry=rotated, translation=pos5, rotation=(0, 0, 0), scale=(1, 1, 1)
+    )
 
     one_side = pf.nodes.geo.join_geometry([t1, t2, t3, t4, t5])
-    other_side = pf.nodes.geo.transform(geometry=one_side, scale=(-1.0, 1.0, 1.0))
+    other_side = pf.nodes.geo.transform(
+        geometry=one_side,
+        scale=(-1.0, 1.0, 1.0),
+        translation=(0, 0, 0),
+        rotation=(0, 0, 0),
+    )
     both_sides = pf.nodes.geo.join_geometry([one_side, other_side])
 
     return both_sides
@@ -118,7 +143,7 @@ def back_board(
     height_val = height + 0.0
     depth_val = depth + 0.0
 
-    cube_size = pf.nodes.func.combine_xyz(x=width, y=thickness_val, z=height_val)
+    cube_size = pf.nodes.math.combine_xyz(x=width, y=thickness_val, z=height_val)
     cube = pf.nodes.geo.mesh_cube(
         size=cube_size, vertices_x=10, vertices_y=10, vertices_z=10
     )
@@ -127,8 +152,10 @@ def back_board(
         a=depth_val, b=-0.5, addend=thickness_val * -0.5
     )
     translate_z = height_val * 0.5
-    translate = pf.nodes.func.combine_xyz(y=translate_y, z=translate_z)
-    result = pf.nodes.geo.transform(geometry=cube.mesh, translation=translate)
+    translate = pf.nodes.math.combine_xyz(y=translate_y, z=translate_z)
+    result = pf.nodes.geo.transform(
+        geometry=cube.mesh, translation=translate, rotation=(0, 0, 0), scale=(1, 1, 1)
+    )
 
     return result
 
@@ -145,23 +172,29 @@ def all_division_boards(
     inner_width = width - (side_thickness * 2.0)
     depth_val = depth + 0.0
 
-    cube_size = pf.nodes.func.combine_xyz(x=inner_width, y=depth_val, z=board_thickness)
+    cube_size = pf.nodes.math.combine_xyz(x=inner_width, y=depth_val, z=board_thickness)
     cube = pf.nodes.geo.mesh_cube(
         size=cube_size, vertices_x=10, vertices_y=10, vertices_z=10
     )
 
     half_thickness = board_thickness * 0.5
     bottom_z = gap + half_thickness
-    translate_1 = pf.nodes.func.combine_xyz(z=bottom_z)
-    board1 = pf.nodes.geo.transform(geometry=cube.mesh, translation=translate_1)
+    translate_1 = pf.nodes.math.combine_xyz(z=bottom_z)
+    board1 = pf.nodes.geo.transform(
+        geometry=cube.mesh, translation=translate_1, rotation=(0, 0, 0), scale=(1, 1, 1)
+    )
 
     top_z = height - half_thickness
     mid_z = (top_z + bottom_z) * 0.5
-    translate_2 = pf.nodes.func.combine_xyz(z=mid_z)
-    board2 = pf.nodes.geo.transform(geometry=cube.mesh, translation=translate_2)
+    translate_2 = pf.nodes.math.combine_xyz(z=mid_z)
+    board2 = pf.nodes.geo.transform(
+        geometry=cube.mesh, translation=translate_2, rotation=(0, 0, 0), scale=(1, 1, 1)
+    )
 
-    translate_3 = pf.nodes.func.combine_xyz(z=top_z)
-    board3 = pf.nodes.geo.transform(geometry=cube.mesh, translation=translate_3)
+    translate_3 = pf.nodes.math.combine_xyz(z=top_z)
+    board3 = pf.nodes.geo.transform(
+        geometry=cube.mesh, translation=translate_3, rotation=(0, 0, 0), scale=(1, 1, 1)
+    )
 
     return pf.nodes.geo.join_geometry([board1, board2, board3])
 
@@ -178,7 +211,7 @@ def side_board(
     height_val = height + 0.0
     width_val = width + 0.0
 
-    cube_size = pf.nodes.func.combine_xyz(x=thickness_val, y=depth_val, z=height_val)
+    cube_size = pf.nodes.math.combine_xyz(x=thickness_val, y=depth_val, z=height_val)
     cube = pf.nodes.geo.mesh_cube(
         size=cube_size, vertices_x=10, vertices_y=10, vertices_z=10
     )
@@ -186,11 +219,15 @@ def side_board(
     offset_x = (width_val - thickness_val) * -0.5
     offset_z = height_val * 0.5
 
-    translate_1 = pf.nodes.func.combine_xyz(x=offset_x, z=offset_z)
-    left = pf.nodes.geo.transform(geometry=cube.mesh, translation=translate_1)
+    translate_1 = pf.nodes.math.combine_xyz(x=offset_x, z=offset_z)
+    left = pf.nodes.geo.transform(
+        geometry=cube.mesh, translation=translate_1, rotation=(0, 0, 0), scale=(1, 1, 1)
+    )
 
-    translate_2 = pf.nodes.func.combine_xyz(x=offset_x * -1.0, z=offset_z)
-    right = pf.nodes.geo.transform(geometry=cube.mesh, translation=translate_2)
+    translate_2 = pf.nodes.math.combine_xyz(x=offset_x * -1.0, z=offset_z)
+    right = pf.nodes.geo.transform(
+        geometry=cube.mesh, translation=translate_2, rotation=(0, 0, 0), scale=(1, 1, 1)
+    )
 
     joined = pf.nodes.geo.join_geometry([left, right])
     return joined
@@ -279,7 +316,10 @@ def bookcase_geometry(
     final_realized = pf.nodes.geo.realize_instances(all_joined)
     triangulated = pf.nodes.geo.triangulate(final_realized)
     rotated = pf.nodes.geo.transform(
-        geometry=triangulated, rotation=(0.0, 0.0, -1.5708)
+        geometry=triangulated,
+        rotation=(0.0, 0.0, -1.5708),
+        translation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
 
     return rotated

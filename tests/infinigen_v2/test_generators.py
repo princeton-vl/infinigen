@@ -6,8 +6,8 @@ import numpy as np
 import procfunc as pf
 import pytest
 from procfunc import compute_graph as cg
+from procfunc.codegen import to_python
 from procfunc.tracer import TraceLevel
-from procfunc.transpiler import to_python
 from procfunc.util.manifest import import_item
 
 from infinigen_v2.generators import GENERATORS_MANIFEST

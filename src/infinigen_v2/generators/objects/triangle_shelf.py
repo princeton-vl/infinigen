@@ -21,34 +21,43 @@ def table_profile(
     profile_aspect_ratio: t.SocketOrVal[float],
     profile_fillet_ratio: t.SocketOrVal[float],
 ) -> pf.ProcNode:
-    curve_circle_radius = pf.nodes.func.constant(0.7071)
+    curve_circle_radius = pf.nodes.math.constant(0.7071)
     curve_circle = pf.nodes.geo.curve_circle(
         resolution=profile_n_gon, radius=curve_circle_radius
     )
 
-    transform_rotation = pf.nodes.func.combine_xyz(
+    transform_rotation = pf.nodes.math.combine_xyz(
         z=3.1416 / profile_n_gon.astype(dtype=float)
     )
     transform = pf.nodes.geo.transform(
         geometry=curve_circle,
         rotation=transform_rotation.astype(dtype=pf.Euler),
+        translation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
     transform_1 = pf.nodes.geo.transform(
-        geometry=transform, rotation=(0.0, 0.0, -1.5708)
+        geometry=transform,
+        rotation=(0.0, 0.0, -1.5708),
+        translation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
-    transform_2_scale = pf.nodes.func.combine_xyz(
+    transform_2_scale = pf.nodes.math.combine_xyz(
         x=profile_width,
         y=profile_aspect_ratio * profile_width,
         z=1.0,
     )
-    transform_2 = pf.nodes.geo.transform(geometry=transform_1, scale=transform_2_scale)
+    transform_2 = pf.nodes.geo.transform(
+        geometry=transform_1,
+        scale=transform_2_scale,
+        translation=(0, 0, 0),
+        rotation=(0, 0, 0),
+    )
 
-    fillet_curve = pf.nodes.geo.fillet_curve(
+    fillet_curve = pf.nodes.geo.fillet_curve_poly(
         curve=transform_2,
         radius=profile_width * profile_fillet_ratio,
         limit_radius=True,
         count=4,
-        mode="POLY",
     )
     return fillet_curve
 
@@ -69,8 +78,8 @@ def leg_straight(
 ) -> LegStraightResult:
     mesh_position_z_to_min = height * -1.0
 
-    curve_line_end = pf.nodes.func.combine_xyz(z=mesh_position_z_to_min)
-    curve_line = pf.nodes.geo.curve_line(end=curve_line_end)
+    curve_line_end = pf.nodes.math.combine_xyz(z=mesh_position_z_to_min)
+    curve_line = pf.nodes.geo.curve_line(end=curve_line_end, start=(0, 0, 0))
 
     set_curve_tilt = pf.nodes.geo.set_curve_tilt(curve=curve_line, tilt=3.1416)
 
@@ -108,7 +117,7 @@ def leg_straight(
         value=0.0,
     )
 
-    mesh_position_x_vector = pf.nodes.func.combine_xyz(
+    mesh_position_x_vector = pf.nodes.math.combine_xyz(
         x=sample_curve.position.x, y=sample_curve.position.y
     )
     mesh_position_x = pf.nodes.math.vector_length(mesh_position_x_vector)
@@ -120,14 +129,14 @@ def leg_straight(
         attribute=input_position_1.z,
     )
 
-    mesh_position_z = pf.nodes.func.map_range(
+    mesh_position_z = pf.nodes.math.map_range(
         value=sample_curve.position.z,
         from_max=attribute_statistic.max,
         from_min=attribute_statistic.min,
         to_max=0.0,
         to_min=mesh_position_z_to_min,
     )
-    mesh_position = pf.nodes.func.combine_xyz(
+    mesh_position = pf.nodes.math.combine_xyz(
         x=input_position.x * mesh_position_x,
         y=input_position.y * mesh_position_x,
         z=mesh_position_z,
@@ -150,54 +159,71 @@ def curve_board(
     curve_arc = pf.nodes.geo.curve_arc(resolution=4, radius=0.7071, sweep_angle=4.7124)
 
     transform_1 = pf.nodes.geo.transform(
-        geometry=curve_arc, rotation=(0.0, 0.0, -0.7854)
+        geometry=curve_arc,
+        rotation=(0.0, 0.0, -0.7854),
+        translation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
     transform_2 = pf.nodes.geo.transform(
-        geometry=transform_1, rotation=(0.0, 1.5708, 0.0)
+        geometry=transform_1,
+        rotation=(0.0, 1.5708, 0.0),
+        translation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
     transform_3 = pf.nodes.geo.transform(
-        geometry=transform_2, translation=(0.0, 0.5, 0.0)
+        geometry=transform_2,
+        translation=(0.0, 0.5, 0.0),
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
-    transform_4_scale = pf.nodes.func.combine_xyz(x=1.0, y=thickness, z=1.0)
-    transform_4 = pf.nodes.geo.transform(geometry=transform_3, scale=transform_4_scale)
+    transform_4_scale = pf.nodes.math.combine_xyz(x=1.0, y=thickness, z=1.0)
+    transform_4 = pf.nodes.geo.transform(
+        geometry=transform_3,
+        scale=transform_4_scale,
+        translation=(0, 0, 0),
+        rotation=(0, 0, 0),
+    )
 
-    fillet_curve = pf.nodes.geo.fillet_curve(
+    fillet_curve = pf.nodes.geo.fillet_curve_poly(
         curve=transform_4,
         radius=thickness,
         limit_radius=True,
         count=8,
-        mode="POLY",
     )
 
     transform_5 = pf.nodes.geo.transform(
         geometry=fillet_curve,
         rotation=(1.5708, 1.5708, 0.0),
         scale=thickness.astype(dtype=pf.Vector),
+        translation=(0, 0, 0),
     )
 
     curve_to = pf.nodes.geo.curve_to_mesh(curve=transform_5)
 
-    transform_6_translation = pf.nodes.func.combine_xyz(z=thickness * -0.5)
+    transform_6_translation = pf.nodes.math.combine_xyz(z=thickness * -0.5)
     transform_6 = pf.nodes.geo.transform(
-        geometry=curve_to, translation=transform_6_translation
+        geometry=curve_to,
+        translation=transform_6_translation,
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
 
     curve_line = pf.nodes.geo.curve_line(start=(1.0, 0.0, -1.0), end=(1.0, 0.0, 1.0))
-    curve_line_1_start = pf.nodes.func.combine_xyz(x=width, y=extrude_length)
-    curve_line_1_end = pf.nodes.func.combine_xyz(x=extrude_length, y=width)
+    curve_line_1_start = pf.nodes.math.combine_xyz(x=width, y=extrude_length)
+    curve_line_1_end = pf.nodes.math.combine_xyz(x=extrude_length, y=width)
     curve_line_1 = pf.nodes.geo.curve_line(
         start=curve_line_1_start, end=curve_line_1_end
     )
-    curve_line_2_start = pf.nodes.func.combine_xyz(y=width)
+    curve_line_2_start = pf.nodes.math.combine_xyz(y=width)
     curve_line_2 = pf.nodes.geo.curve_line(
         start=curve_line_2_start, end=curve_line_1_end
     )
-    curve_line_3_start = pf.nodes.func.combine_xyz(width)
+    curve_line_3_start = pf.nodes.math.combine_xyz(width)
     curve_line_3 = pf.nodes.geo.curve_line(
         start=curve_line_3_start, end=curve_line_1_start
     )
-    curve_line_4 = pf.nodes.geo.curve_line(end=curve_line_2_start)
-    curve_line_5 = pf.nodes.geo.curve_line(end=curve_line_3_start)
+    curve_line_4 = pf.nodes.geo.curve_line(end=curve_line_2_start, start=(0, 0, 0))
+    curve_line_5 = pf.nodes.geo.curve_line(end=curve_line_3_start, start=(0, 0, 0))
 
     join = pf.nodes.geo.join_geometry(
         [curve_line_1, curve_line_2, curve_line_3, curve_line_4, curve_line_5]
@@ -211,8 +237,8 @@ def curve_board(
 
     # Inlined curve_to_board logic
     ctb_z_to_min = thickness * -1.0
-    ctb_line_end = pf.nodes.func.combine_xyz(z=ctb_z_to_min)
-    ctb_line = pf.nodes.geo.curve_line(end=ctb_line_end)
+    ctb_line_end = pf.nodes.math.combine_xyz(z=ctb_z_to_min)
+    ctb_line = pf.nodes.geo.curve_line(end=ctb_line_end, start=(0, 0, 0))
     ctb_tilt = pf.nodes.geo.set_curve_tilt(curve=ctb_line, tilt=3.1416)
     ctb_resample = pf.nodes.geo.resample_curve_count(curve=ctb_tilt, count=128)
     ctb_spline_param = pf.nodes.geo.spline_parameter()
@@ -231,7 +257,7 @@ def curve_board(
         factor=ctb_capture.attribute,
         value=0.0,
     )
-    ctb_x_vec = pf.nodes.func.combine_xyz(
+    ctb_x_vec = pf.nodes.math.combine_xyz(
         x=ctb_sample.position.x, y=ctb_sample.position.y
     )
     ctb_x = pf.nodes.math.vector_length(ctb_x_vec)
@@ -240,14 +266,14 @@ def curve_board(
         geometry=curve_line,
         attribute=ctb_input_pos_1.z,
     )
-    ctb_z = pf.nodes.func.map_range(
+    ctb_z = pf.nodes.math.map_range(
         value=ctb_sample.position.z,
         from_max=ctb_attr_stat.max,
         from_min=ctb_attr_stat.min,
         to_max=0.0,
         to_min=ctb_z_to_min,
     )
-    ctb_pos = pf.nodes.func.combine_xyz(
+    ctb_pos = pf.nodes.math.combine_xyz(
         x=ctb_input_pos.x * ctb_x,
         y=ctb_input_pos.y * ctb_x,
         z=ctb_z,
@@ -260,11 +286,13 @@ def curve_board(
 
     merge_by_distance_1 = pf.nodes.geo.merge_by_distance(join_1)
 
-    result_0_translation = pf.nodes.func.combine_xyz(z=thickness)
+    result_0_translation = pf.nodes.math.combine_xyz(z=thickness)
 
     transform = pf.nodes.geo.transform(
         geometry=merge_by_distance_1,
         translation=result_0_translation,
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
     return transform
 
@@ -290,29 +318,43 @@ def side_leg(
     curve_arc = pf.nodes.geo.curve_arc(resolution=4, radius=0.7071, sweep_angle=4.7124)
 
     transform_1 = pf.nodes.geo.transform(
-        geometry=curve_arc, rotation=(0.0, 0.0, -0.7854)
+        geometry=curve_arc,
+        rotation=(0.0, 0.0, -0.7854),
+        translation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
     transform_2 = pf.nodes.geo.transform(
-        geometry=transform_1, rotation=(0.0, 1.5708, 0.0)
+        geometry=transform_1,
+        rotation=(0.0, 1.5708, 0.0),
+        translation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
     transform_3 = pf.nodes.geo.transform(
-        geometry=transform_2, translation=(0.0, 0.5, 0.0)
+        geometry=transform_2,
+        translation=(0.0, 0.5, 0.0),
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
-    transform_4_scale = pf.nodes.func.combine_xyz(x=1.0, y=thickness, z=1.0)
-    transform_4 = pf.nodes.geo.transform(geometry=transform_3, scale=transform_4_scale)
+    transform_4_scale = pf.nodes.math.combine_xyz(x=1.0, y=thickness, z=1.0)
+    transform_4 = pf.nodes.geo.transform(
+        geometry=transform_3,
+        scale=transform_4_scale,
+        translation=(0, 0, 0),
+        rotation=(0, 0, 0),
+    )
 
-    fillet_curve = pf.nodes.geo.fillet_curve(
+    fillet_curve = pf.nodes.geo.fillet_curve_poly(
         curve=transform_4,
         radius=thickness,
         limit_radius=True,
         count=8,
-        mode="POLY",
     )
 
     transform_5 = pf.nodes.geo.transform(
         geometry=fillet_curve,
         rotation=(1.5708, 1.5708, 0.0),
         scale=thickness.astype(dtype=pf.Vector),
+        translation=(0, 0, 0),
     )
 
     curve_to = pf.nodes.geo.curve_to_mesh(
@@ -320,19 +362,25 @@ def side_leg(
         profile_curve=transform_5,
     )
 
-    transform_6_translation = pf.nodes.func.combine_xyz(z=thickness * -0.5)
+    transform_6_translation = pf.nodes.math.combine_xyz(z=thickness * -0.5)
     transform_6 = pf.nodes.geo.transform(
-        geometry=curve_to, translation=transform_6_translation
+        geometry=curve_to,
+        translation=transform_6_translation,
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
 
     join = pf.nodes.geo.join_geometry([leg_straight_result.mesh, transform_6])
 
     merge_by_distance = pf.nodes.geo.merge_by_distance(join)
 
-    result_0_translation = pf.nodes.func.combine_xyz(z=thickness)
+    result_0_translation = pf.nodes.math.combine_xyz(z=thickness)
 
     transform = pf.nodes.geo.transform(
-        geometry=merge_by_distance, translation=result_0_translation
+        geometry=merge_by_distance,
+        translation=result_0_translation,
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
     return transform
 
@@ -358,23 +406,32 @@ def shelf_legs(
         fillet_radius_vertical=side_leg_fillet_ratio,
     )
 
-    transform_translation = pf.nodes.func.combine_xyz(z=side_leg_profile_width * 0.5)
+    transform_translation = pf.nodes.math.combine_xyz(z=side_leg_profile_width * 0.5)
     transform = pf.nodes.geo.transform(
         geometry=side_leg_result,
         translation=transform_translation,
         rotation=(0.0, 1.5708, 0.0),
+        scale=(1, 1, 1),
     )
-    transform_1 = pf.nodes.geo.transform(transform)
+    transform_1 = pf.nodes.geo.transform(
+        transform, rotation=(0, 0, 0), scale=(1, 1, 1), translation=(0, 0, 0)
+    )
     transform_2_translation_y = board_width + 0.0
-    transform_2_translation = pf.nodes.func.combine_xyz(y=transform_2_translation_y)
+    transform_2_translation = pf.nodes.math.combine_xyz(y=transform_2_translation_y)
     transform_2 = pf.nodes.geo.transform(
-        geometry=transform, translation=transform_2_translation
+        geometry=transform,
+        translation=transform_2_translation,
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
     transform_a_0 = transform_2_translation_y - side_leg_thickness
     transform_b = leg_gap * 2.0
-    transform_3_translation = pf.nodes.func.combine_xyz(transform_a_0 + transform_b)
+    transform_3_translation = pf.nodes.math.combine_xyz(transform_a_0 + transform_b)
     transform_3 = pf.nodes.geo.transform(
-        geometry=transform, translation=transform_3_translation
+        geometry=transform,
+        translation=transform_3_translation,
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
 
     join = pf.nodes.geo.join_geometry([transform_1, transform_2, transform_3])
@@ -393,37 +450,49 @@ def screw_head(
     cylinder = pf.nodes.geo.mesh_cylinder(radius=0.004, depth=0.003)
 
     transform = pf.nodes.geo.transform(
-        geometry=cylinder.mesh, rotation=(1.5708, 0.0, 0.0)
+        geometry=cylinder.mesh,
+        rotation=(1.5708, 0.0, 0.0),
+        translation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
     transform_a_1 = board_width + 0.0
     transform_a_0 = transform_a_1 + (leg_gap * 2.0)
     transform_2_translation_x = leg_width * 0.5
     transform_1_translation_y = 0.0 - (leg_depth * 0.5)
     transform_1_translation_z = board_height + (board_thickness * 0.5)
-    transform_1_translation = pf.nodes.func.combine_xyz(
+    transform_1_translation = pf.nodes.math.combine_xyz(
         x=transform_a_0 - transform_2_translation_x,
         y=transform_1_translation_y,
         z=transform_1_translation_z,
     )
     transform_1 = pf.nodes.geo.transform(
-        geometry=transform, translation=transform_1_translation
+        geometry=transform,
+        translation=transform_1_translation,
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
     transform_b_0 = leg_depth * 0.5
-    transform_2_translation = pf.nodes.func.combine_xyz(
+    transform_2_translation = pf.nodes.math.combine_xyz(
         x=transform_2_translation_x,
         y=transform_a_1 + transform_b_0,
         z=transform_1_translation_z,
     )
     transform_2 = pf.nodes.geo.transform(
-        geometry=transform, translation=transform_2_translation
+        geometry=transform,
+        translation=transform_2_translation,
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
-    transform_3_translation = pf.nodes.func.combine_xyz(
+    transform_3_translation = pf.nodes.math.combine_xyz(
         x=transform_2_translation_x,
         y=transform_1_translation_y,
         z=transform_1_translation_z,
     )
     transform_3 = pf.nodes.geo.transform(
-        geometry=transform, translation=transform_3_translation
+        geometry=transform,
+        translation=transform_3_translation,
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
 
     join = pf.nodes.geo.join_geometry([transform_1, transform_2, transform_3])
@@ -448,29 +517,32 @@ def shelf_boards(
     )
 
     transform_translation_x = leg_gap + 0.0
-    transform_translation = pf.nodes.func.combine_xyz(
+    transform_translation = pf.nodes.math.combine_xyz(
         x=transform_translation_x, z=top_z
     )
     transform = pf.nodes.geo.transform(
         geometry=curve_board_result,
         translation=transform_translation,
         rotation=(0.0, 0.0, -1.5708),
+        scale=(1, 1, 1),
     )
-    transform_1_translation = pf.nodes.func.combine_xyz(
+    transform_1_translation = pf.nodes.math.combine_xyz(
         x=transform_translation_x, z=mid_z
     )
     transform_1 = pf.nodes.geo.transform(
         geometry=curve_board_result,
         translation=transform_1_translation,
         rotation=(0.0, 0.0, -1.5708),
+        scale=(1, 1, 1),
     )
-    transform_2_translation = pf.nodes.func.combine_xyz(
+    transform_2_translation = pf.nodes.math.combine_xyz(
         x=transform_translation_x, z=bottom_z
     )
     transform_2 = pf.nodes.geo.transform(
         geometry=curve_board_result,
         translation=transform_2_translation,
         rotation=(0.0, 0.0, -1.5708),
+        scale=(1, 1, 1),
     )
 
     join = pf.nodes.geo.join_geometry([transform, transform_1, transform_2])
@@ -488,26 +560,32 @@ def side_boards(
     x5: t.SocketOrVal[float],
 ) -> pf.ProcNode:
     cube_size_x = x5 + 0.0
-    cube_size = pf.nodes.func.combine_xyz(x=cube_size_x, y=y, z=z)
+    cube_size = pf.nodes.math.combine_xyz(x=cube_size_x, y=y, z=z)
     cube = pf.nodes.geo.mesh_cube(
         size=cube_size, vertices_x=5, vertices_y=5, vertices_z=5
     )
 
     transform_translation_x = (cube_size_x * 0.5) + x3
     transform_translation_z_0 = x1 * 0.5
-    transform_translation = pf.nodes.func.combine_xyz(
+    transform_translation = pf.nodes.math.combine_xyz(
         x=transform_translation_x,
         z=x4 - transform_translation_z_0,
     )
     transform = pf.nodes.geo.transform(
-        geometry=cube.mesh, translation=transform_translation
+        geometry=cube.mesh,
+        translation=transform_translation,
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
-    transform_1_translation = pf.nodes.func.combine_xyz(
+    transform_1_translation = pf.nodes.math.combine_xyz(
         x=transform_translation_x,
         z=x2 - transform_translation_z_0,
     )
     transform_1 = pf.nodes.geo.transform(
-        geometry=cube.mesh, translation=transform_1_translation
+        geometry=cube.mesh,
+        translation=transform_1_translation,
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
 
     join = pf.nodes.geo.join_geometry([transform, transform_1])
@@ -602,10 +680,18 @@ def triangle_shelf_geometry(
         [legs_with_mat, screws_with_mat, boards_with_mat, side_bds_with_mat]
     )
     realized = pf.nodes.geo.realize_instances(joined)
-    flipped = pf.nodes.geo.transform(geometry=realized, scale=(-1.0, 1.0, 1.0))
+    flipped = pf.nodes.geo.transform(
+        geometry=realized,
+        scale=(-1.0, 1.0, 1.0),
+        translation=(0, 0, 0),
+        rotation=(0, 0, 0),
+    )
     triangulated = pf.nodes.geo.triangulate(flipped)
     rotated = pf.nodes.geo.transform(
-        geometry=triangulated, rotation=(0.0, 0.0, -1.5708)
+        geometry=triangulated,
+        rotation=(0.0, 0.0, -1.5708),
+        translation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
     return rotated
 

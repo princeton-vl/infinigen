@@ -43,7 +43,7 @@ def art_frame(
         vertices_y=2,
     )
 
-    extrude_value = pf.nodes.func.combine_xyz(x=grid_size_x, y=grid_size_y)
+    extrude_value = pf.nodes.math.combine_xyz(x=grid_size_x, y=grid_size_y)
 
     store_named_attribute = pf.nodes.geo.store_named_attribute(
         geometry=grid.mesh,
@@ -68,7 +68,7 @@ def art_frame(
     curve_quadrilateral = pf.nodes.geo.curve_quadrilateral(
         width=grid_size_x, height=grid_size_y
     )
-    curve_line_start = pf.nodes.func.combine_xyz(frame_width)
+    curve_line_start = pf.nodes.math.combine_xyz(frame_width)
     curve_line = pf.nodes.geo.curve_line(start=curve_line_start, end=(0.0, 0.0, 0.0))
     curve_to = pf.nodes.geo.curve_to_mesh(
         curve=curve_quadrilateral, profile_curve=curve_line
@@ -96,7 +96,10 @@ def art_frame(
     set_shade_smooth = pf.nodes.geo.set_shade_smooth(geometry=join, shade_smooth=False)
 
     transform = pf.nodes.geo.transform(
-        geometry=set_shade_smooth, rotation=(1.5708, 0.0, 1.5708)
+        geometry=set_shade_smooth,
+        rotation=(1.5708, 0.0, 1.5708),
+        translation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
     return transform
 

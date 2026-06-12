@@ -41,12 +41,12 @@ def wood_planks_deck(
         grout_bevel_concavity=1.0,
     )
 
-    displacement_grains_color_1 = pf.nodes.func.mix_rgb(
+    displacement_grains_color_1 = pf.nodes.color.mix_rgb(
         blend_type="SOFT_LIGHT",
         a=pf.Color((0.142, 0.119, 0.086)),
         b=brick_cutter_result.random.astype(dtype=pf.Vector).x.astype(dtype=pf.Color),
     )
-    displacement_grains_color = pf.nodes.func.mix_rgb(
+    displacement_grains_color = pf.nodes.color.mix_rgb(
         blend_type="SOFT_LIGHT",
         a=pf.Color((0.387, 0.321, 0.229)),
         b=brick_cutter_result.random.astype(dtype=pf.Vector).y.astype(dtype=pf.Color),
@@ -97,12 +97,12 @@ def wood_planks_brown(
         grout_bevel_concavity=1.0,
     )
 
-    displacement_grains_color_1 = pf.nodes.func.mix_rgb(
+    displacement_grains_color_1 = pf.nodes.color.mix_rgb(
         blend_type="SOFT_LIGHT",
         a=pf.Color((0.021, 0.014, 0.005)),
         b=brick_cutter_result.random.astype(dtype=pf.Vector).x.astype(dtype=pf.Color),
     )
-    displacement_grains_color = pf.nodes.func.mix_rgb(
+    displacement_grains_color = pf.nodes.color.mix_rgb(
         blend_type="SOFT_LIGHT",
         a=pf.Color((0.249, 0.103, 0.035)),
         b=brick_cutter_result.random.astype(dtype=pf.Vector).y.astype(dtype=pf.Color),
@@ -153,12 +153,12 @@ def wood_planks_blonde(
         grout_bevel_concavity=1.0,
     )
 
-    surface_b_grains_color_1 = pf.nodes.func.mix_rgb(
+    surface_b_grains_color_1 = pf.nodes.color.mix_rgb(
         blend_type="SOFT_LIGHT",
         a=pf.Color((0.432, 0.254, 0.069)),
         b=brick_cutter_result.random.astype(dtype=pf.Vector).x.astype(dtype=pf.Color),
     )
-    surface_b_grains_color = pf.nodes.func.mix_rgb(
+    surface_b_grains_color = pf.nodes.color.mix_rgb(
         blend_type="SOFT_LIGHT",
         a=pf.Color((0.549, 0.359, 0.122)),
         b=brick_cutter_result.random.astype(dtype=pf.Vector).y.astype(dtype=pf.Color),
@@ -236,12 +236,12 @@ def wood_planks_flaky(
         grout_bevel_concavity=1.0,
     )
 
-    wood_shader_grains_color_1 = pf.nodes.func.mix_rgb(
+    wood_shader_grains_color_1 = pf.nodes.color.mix_rgb(
         a=pf.Color((0.142, 0.119, 0.086)),
         b=brick_cutter_result.random.astype(dtype=pf.Vector).x.astype(dtype=pf.Color),
         blend_type="SOFT_LIGHT",
     )
-    wood_shader_grains_color = pf.nodes.func.mix_rgb(
+    wood_shader_grains_color = pf.nodes.color.mix_rgb(
         a=pf.Color((0.387, 0.321, 0.229)),
         b=brick_cutter_result.random.astype(dtype=pf.Vector).y.astype(dtype=pf.Color),
         blend_type="SOFT_LIGHT",
@@ -328,12 +328,12 @@ def wood_planks_distribution(
         rng
     )
 
-    grains_color_1 = pf.nodes.func.mix_rgb(
+    grains_color_1 = pf.nodes.color.mix_rgb(
         blend_type="SOFT_LIGHT",
         a=color_1,
         b=brick_cutter_result.random.astype(dtype=pf.Vector).x.astype(dtype=pf.Color),
     )
-    grains_color_2 = pf.nodes.func.mix_rgb(
+    grains_color_2 = pf.nodes.color.mix_rgb(
         blend_type="SOFT_LIGHT",
         a=color_2,
         b=brick_cutter_result.random.astype(dtype=pf.Vector).y.astype(dtype=pf.Color),

@@ -21,7 +21,7 @@ def drawer_door_board(
     result_0_translation_y_a = thickness + 0.0
     result_0_translation_z_a = height + 0.0
 
-    cube_size = pf.nodes.func.combine_xyz(
+    cube_size = pf.nodes.math.combine_xyz(
         x=width + 0.0,
         y=result_0_translation_y_a,
         z=result_0_translation_z_a,
@@ -37,7 +37,7 @@ def drawer_door_board(
         domain="CORNER",
     )
 
-    result_0_translation = pf.nodes.func.combine_xyz(
+    result_0_translation = pf.nodes.math.combine_xyz(
         y=result_0_translation_y_a * -0.5,
         z=result_0_translation_z_a * 0.5,
     )
@@ -45,6 +45,8 @@ def drawer_door_board(
     transform = pf.nodes.geo.transform(
         geometry=store_named_attribute,
         translation=result_0_translation,
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
     return transform
 
@@ -69,7 +71,7 @@ def door_knob(
 
     result_0_translation_y = cylinder_depth * 0.5
     result_0_translation_z = z + 0.0
-    result_0_translation = pf.nodes.func.combine_xyz(
+    result_0_translation = pf.nodes.math.combine_xyz(
         y=result_0_translation_y + 0.0001,
         z=result_0_translation_z * 0.5,
     )
@@ -78,6 +80,7 @@ def door_knob(
         geometry=store_named_attribute,
         translation=result_0_translation,
         rotation=(1.5708, 0.0, 0.0),
+        scale=(1, 1, 1),
     )
     return transform
 
@@ -93,7 +96,7 @@ def kallax_drawer_frame(
     transform_a_1 = thickness + 0.0
     transform_translation_z_a = height + 0.0
 
-    cube_size = pf.nodes.func.combine_xyz(
+    cube_size = pf.nodes.math.combine_xyz(
         x=transform_a_2,
         y=transform_a_1,
         z=transform_translation_z_a,
@@ -118,16 +121,18 @@ def kallax_drawer_frame(
     transform_translation_z = pf.nodes.math.multiply_add(
         a=transform_translation_z_a, b=0.5, addend=0.01
     )
-    transform_translation = pf.nodes.func.combine_xyz(
+    transform_translation = pf.nodes.math.combine_xyz(
         y=transform_translation_y, z=transform_translation_z
     )
     transform = pf.nodes.geo.transform(
         geometry=store_named_attribute,
         translation=transform_translation,
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
 
     cube_b = transform_a_1 + -0.0001
-    cube_1_size = pf.nodes.func.combine_xyz(
+    cube_1_size = pf.nodes.math.combine_xyz(
         x=transform_a_2 + cube_b,
         y=transform_translation_y_a,
         z=transform_a_1,
@@ -146,15 +151,17 @@ def kallax_drawer_frame(
     transform_1_translation_y = pf.nodes.math.multiply_add(
         a=transform_translation_y_a, b=-0.5, addend=-0.0001
     )
-    transform_1_translation = pf.nodes.func.combine_xyz(
+    transform_1_translation = pf.nodes.math.combine_xyz(
         y=transform_1_translation_y, z=0.01
     )
     transform_1 = pf.nodes.geo.transform(
         geometry=store_named_attribute_1,
         translation=transform_1_translation,
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
 
-    cube_2_size = pf.nodes.func.combine_xyz(
+    cube_2_size = pf.nodes.math.combine_xyz(
         x=transform_a_1,
         y=transform_translation_y_a,
         z=transform_translation_z_a,
@@ -174,7 +181,7 @@ def kallax_drawer_frame(
     transform_2_translation_z = pf.nodes.math.multiply_add(
         a=transform_translation_z_a, b=0.5, addend=0.01
     )
-    transform_2_translation = pf.nodes.func.combine_xyz(
+    transform_2_translation = pf.nodes.math.combine_xyz(
         x=transform_a_2 * 0.5,
         y=transform_a_0 + -0.0001,
         z=transform_2_translation_z,
@@ -182,8 +189,15 @@ def kallax_drawer_frame(
     transform_2 = pf.nodes.geo.transform(
         geometry=store_named_attribute_2,
         translation=transform_2_translation,
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
-    transform_3 = pf.nodes.geo.transform(geometry=transform_2, scale=(-1.0, 1.0, 1.0))
+    transform_3 = pf.nodes.geo.transform(
+        geometry=transform_2,
+        scale=(-1.0, 1.0, 1.0),
+        translation=(0, 0, 0),
+        rotation=(0, 0, 0),
+    )
 
     join = pf.nodes.geo.join_geometry(
         [transform, transform_1, transform_2, transform_3]
@@ -212,17 +226,23 @@ def board_rail(
     )
 
     transform_a_2 = width * 0.5
-    transform_translation = pf.nodes.func.combine_xyz(z=transform_a_2)
+    transform_translation = pf.nodes.math.combine_xyz(z=transform_a_2)
     transform = pf.nodes.geo.transform(
         geometry=store_named_attribute,
         translation=transform_translation,
         rotation=(1.5708, 0.0, 0.0),
+        scale=(1, 1, 1),
     )
-    transform_1 = pf.nodes.geo.transform(geometry=transform, scale=(1.0, 1.0, -1.0))
+    transform_1 = pf.nodes.geo.transform(
+        geometry=transform,
+        scale=(1.0, 1.0, -1.0),
+        translation=(0, 0, 0),
+        rotation=(0, 0, 0),
+    )
 
     join_1 = pf.nodes.geo.join_geometry([transform, transform_1])
 
-    cube_size = pf.nodes.func.combine_xyz(x=0.002, y=cylinder_depth, z=width)
+    cube_size = pf.nodes.math.combine_xyz(x=0.002, y=cylinder_depth, z=width)
     cube = pf.nodes.geo.mesh_cube(cube_size)
 
     store_named_attribute_1 = pf.nodes.geo.store_named_attribute(
@@ -232,7 +252,12 @@ def board_rail(
         domain="CORNER",
     )
 
-    transform_2 = pf.nodes.geo.transform(store_named_attribute_1)
+    transform_2 = pf.nodes.geo.transform(
+        store_named_attribute_1,
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
+        translation=(0, 0, 0),
+    )
 
     cylinder_1 = pf.nodes.geo.mesh_cylinder(vertices=64, radius=0.004, depth=0.005)
 
@@ -244,25 +269,34 @@ def board_rail(
     )
 
     transform_a_1 = transform_a_3 * -0.5
-    transform_3_translation = pf.nodes.func.combine_xyz(y=transform_a_1 + 0.02)
+    transform_3_translation = pf.nodes.math.combine_xyz(y=transform_a_1 + 0.02)
     transform_3 = pf.nodes.geo.transform(
         geometry=store_named_attribute_2,
         translation=transform_3_translation,
         rotation=(0.0, 1.5708, 0.0),
+        scale=(1, 1, 1),
     )
 
     join_2 = pf.nodes.geo.join_geometry([join_1, transform_2, transform_3])
 
     transform_a_0 = thickness * 0.5
-    transform_4_translation = pf.nodes.func.combine_xyz(
+    transform_4_translation = pf.nodes.math.combine_xyz(
         x=transform_a_0 + 0.003,
         y=transform_a_3 * -0.5,
         z=transform_a_2 + 0.02,
     )
     transform_4 = pf.nodes.geo.transform(
-        geometry=join_2, translation=transform_4_translation
+        geometry=join_2,
+        translation=transform_4_translation,
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
-    transform_5 = pf.nodes.geo.transform(geometry=transform_4, scale=(-1.0, 1.0, 1.0))
+    transform_5 = pf.nodes.geo.transform(
+        geometry=transform_4,
+        scale=(-1.0, 1.0, 1.0),
+        translation=(0, 0, 0),
+        rotation=(0, 0, 0),
+    )
 
     join = pf.nodes.geo.join_geometry([transform_4, transform_5])
     return join
@@ -309,7 +343,10 @@ def drawers_geometry(
     realized = pf.nodes.geo.realize_instances(with_mat)
     triangulated = pf.nodes.geo.triangulate(realized)
     rotated = pf.nodes.geo.transform(
-        geometry=triangulated, rotation=(0.0, 0.0, -1.5708)
+        geometry=triangulated,
+        rotation=(0.0, 0.0, -1.5708),
+        translation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
     return rotated
 

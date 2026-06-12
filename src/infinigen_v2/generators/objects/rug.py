@@ -24,12 +24,11 @@ def rug_geometry(
 ) -> t.ProcNode[pf.MeshObject]:
     quad = pf.nodes.geo.curve_quadrilateral(width=length, height=width)
 
-    filleted = pf.nodes.geo.fillet_curve(
+    filleted = pf.nodes.geo.fillet_curve_poly(
         curve=quad,
         radius=fillet_radius,
         limit_radius=True,
         count=16,
-        mode="POLY",
     )
 
     filled = pf.nodes.geo.fill_curve(curve=filleted)

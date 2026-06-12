@@ -48,19 +48,23 @@ def generate_iceberg(
     geo = pf.nodes.geo.object_info(heightmap).geometry
 
     bbox = pf.nodes.geo.bound_box(geo)
-    zcoord = pf.nodes.func.separate_xyz(pf.nodes.geo.input_position()).z
+    zcoord = pf.nodes.math.separate_xyz(pf.nodes.geo.input_position()).z
 
-    zplane = pf.nodes.shader.vector_math(
-        bbox.max, (0, 0, mirror_cutoff_thresh), bbox.min, "MULTIPLY_ADD"
+    zplane = pf.nodes.math.vector_multiply_add(
+        bbox.max, (0, 0, mirror_cutoff_thresh), bbox.min
     )
-    zthresh = pf.nodes.func.separate_xyz(zplane).z
+    zthresh = pf.nodes.math.separate_xyz(zplane).z
     selection = pf.nodes.func.greater_than(zcoord, zthresh)
     geo = pf.nodes.geo.separate_geometry(geo, selection, domain="FACE")
 
-    toff = pf.nodes.shader.vector_math(zplane, (0, 0, -1), operation="MULTIPLY")
-    geo = pf.nodes.geo.transform(geo, translation=toff)
+    toff = pf.nodes.math.vector_multiply(zplane, (0, 0, -1))
+    geo = pf.nodes.geo.transform(
+        geo, translation=toff, rotation=(0, 0, 0), scale=(1, 1, 1)
+    )
 
-    mirror = pf.nodes.geo.transform(geo, scale=(1, 1, -1))
+    mirror = pf.nodes.geo.transform(
+        geo, scale=(1, 1, -1), rotation=(0, 0, 0), translation=(0, 0, 0)
+    )
     mirror = pf.nodes.geo.flip_faces(mirror)
     geo = pf.nodes.geo.join_geometry([geo, mirror])
 

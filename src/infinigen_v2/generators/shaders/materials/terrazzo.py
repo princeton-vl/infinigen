@@ -70,14 +70,14 @@ def terrazzo_multicolor_node(
             (1.0, (0.624, 0.33, 0.113, 1.0)),
         ]
 
-    result_0_factor_fac_2 = pf.nodes.shader.voronoi_distance(
+    result_0_factor_fac_2 = pf.nodes.texture.voronoi_distance(
         vector=vector,
         scale=large_chip_scale,
         detail=big_chip_detail,
         roughness=big_chip_roughness,
         lacunarity=large_chip_lacunarity,
     )
-    result_0_factor_4 = pf.nodes.shader.color_ramp(
+    result_0_factor_4 = pf.nodes.color.color_ramp(
         fac=result_0_factor_fac_2,
         interpolation="CONSTANT",
         points=[
@@ -85,13 +85,13 @@ def terrazzo_multicolor_node(
             (large_chip_frequency_cutoff, (1.0, 1.0, 1.0, 1.0)),
         ],
     )
-    result_0_factor_fac_1 = pf.nodes.shader.voronoi_distance(
+    result_0_factor_fac_1 = pf.nodes.texture.voronoi_distance(
         vector=vector,
         scale=medium_chip_scale,
         detail=medium_chip_detail,
         roughness=medium_chip_roughness,
     )
-    result_0_factor_3 = pf.nodes.shader.color_ramp(
+    result_0_factor_3 = pf.nodes.color.color_ramp(
         fac=result_0_factor_fac_1,
         interpolation="CONSTANT",
         points=[
@@ -99,19 +99,19 @@ def terrazzo_multicolor_node(
             (medium_chip_frequency_cutoff, (1.0, 1.0, 1.0, 1.0)),
         ],
     )
-    result_0_factor_2 = pf.nodes.func.mix_rgb(
+    result_0_factor_2 = pf.nodes.color.mix_rgb(
         factor=1.0,
         a=result_0_factor_4.color,
         b=result_0_factor_3.color,
         blend_type="LIGHTEN",
     )
-    result_0_factor_fac = pf.nodes.shader.voronoi_distance(
+    result_0_factor_fac = pf.nodes.texture.voronoi_distance(
         vector=vector,
         scale=small_chip_scale,
         detail=small_chip_detail,
         roughness=small_chip_roughness,
     )
-    result_0_factor_1 = pf.nodes.shader.color_ramp(
+    result_0_factor_1 = pf.nodes.color.color_ramp(
         fac=result_0_factor_fac,
         interpolation="CONSTANT",
         points=[
@@ -119,20 +119,20 @@ def terrazzo_multicolor_node(
             (small_chip_frequency_cutoff, (1.0, 1.0, 1.0, 1.0)),
         ],
     )
-    result_0_factor = pf.nodes.func.mix_rgb(
+    result_0_factor = pf.nodes.color.mix_rgb(
         factor=1.0,
         a=result_0_factor_2,
         b=result_0_factor_1.color,
         blend_type="LIGHTEN",
     )
-    result_0_base_color_fac_3 = pf.nodes.shader.noise(
+    result_0_base_color_fac_3 = pf.nodes.texture.noise(
         vector=vector,
         scale=concrete_noise_scale,
         detail=concrete_noise_detail,
         roughness=concrete_noise_roughness,
         distortion=3.2,
     )
-    result_0_base_color_9 = pf.nodes.shader.color_ramp(
+    result_0_base_color_9 = pf.nodes.color.color_ramp(
         fac=result_0_base_color_fac_3.fac,
         interpolation="LINEAR",
         points=[
@@ -143,7 +143,7 @@ def terrazzo_multicolor_node(
     if len(concrete_base_color) == 3:
         concrete_base_color = (*concrete_base_color, 1.0)
     result_0_base_color_8 = concrete_base_color
-    result_0_base_color_7 = pf.nodes.func.mix_rgb(
+    result_0_base_color_7 = pf.nodes.color.mix_rgb(
         factor=concrete_color_mix_factor,
         a=result_0_base_color_9.color,
         b=result_0_base_color_8,
@@ -154,7 +154,7 @@ def terrazzo_multicolor_node(
         roughness=0.7591,
         subsurface_anisotropy=0.0,
     )
-    result_0_fac = pf.nodes.shader.noise(
+    result_0_fac = pf.nodes.texture.noise(
         vector=vector,
         scale=chip_noise_scale,
         detail=chip_noise_detail,
@@ -162,55 +162,55 @@ def terrazzo_multicolor_node(
         lacunarity=5.0,
         distortion=4.2,
     )
-    result_0_base_color_factor = pf.nodes.shader.color_ramp(
+    result_0_base_color_factor = pf.nodes.color.color_ramp(
         fac=result_0_fac.fac,
         interpolation="EASE",
         points=[(0.432, (0.0, 0.0, 0.0, 1.0)), (0.586, (1.0, 1.0, 1.0, 1.0))],
     )
-    result_0_base_color_fac_2 = pf.nodes.shader.voronoi(
+    result_0_base_color_fac_2 = pf.nodes.texture.voronoi(
         vector=vector,
         scale=small_chip_scale,
         roughness=small_chip_roughness,
     )
-    result_0_base_color_6 = pf.nodes.shader.color_ramp(
+    result_0_base_color_6 = pf.nodes.color.color_ramp(
         fac=result_0_base_color_fac_2.color.astype(dtype=float),
         interpolation="CONSTANT",
         points=small_chip_colors,
     )
-    result_0_base_color_fac_1 = pf.nodes.shader.voronoi(
+    result_0_base_color_fac_1 = pf.nodes.texture.voronoi(
         vector=vector,
         scale=medium_chip_scale,
         roughness=medium_chip_roughness,
     )
-    result_0_base_color_5 = pf.nodes.shader.color_ramp(
+    result_0_base_color_5 = pf.nodes.color.color_ramp(
         fac=result_0_base_color_fac_1.color.astype(dtype=float),
         interpolation="CONSTANT",
         points=medium_chip_colors,
     )
-    result_0_base_color_fac = pf.nodes.shader.voronoi(
+    result_0_base_color_fac = pf.nodes.texture.voronoi(
         vector=vector,
         scale=large_chip_scale,
         roughness=big_chip_roughness,
     )
-    result_0_base_color_4 = pf.nodes.shader.color_ramp(
+    result_0_base_color_4 = pf.nodes.color.color_ramp(
         fac=result_0_base_color_fac.color.astype(dtype=float),
         interpolation="CONSTANT",
         points=large_chip_colors,
     )
-    result_0_base_color_3 = pf.nodes.func.mix_rgb(
+    result_0_base_color_3 = pf.nodes.color.mix_rgb(
         factor=result_0_factor_4.color.astype(dtype=float),
         a=result_0_base_color_5.color,
         b=result_0_base_color_4.color,
     )
-    result_0_base_color_2 = pf.nodes.func.mix_rgb(
+    result_0_base_color_2 = pf.nodes.color.mix_rgb(
         factor=result_0_factor_2.astype(dtype=float),
         a=result_0_base_color_6.color,
         b=result_0_base_color_3,
     )
-    result_0_base_color_1 = pf.nodes.shader.hue_saturation(
+    result_0_base_color_1 = pf.nodes.color.hue_saturation(
         value=2.0, color=result_0_base_color_2
     )
-    result_0_base_color = pf.nodes.func.mix_rgb(
+    result_0_base_color = pf.nodes.color.mix_rgb(
         factor=result_0_base_color_factor.color.astype(dtype=float),
         a=result_0_base_color_2,
         b=result_0_base_color_1,
@@ -270,13 +270,13 @@ def terrazzo_monocolor_node(
     if large_chip_color is None:
         large_chip_color = (0.151, 0.042, 0.018)
 
-    result_0_factor_fac_2 = pf.nodes.shader.voronoi_distance(
+    result_0_factor_fac_2 = pf.nodes.texture.voronoi_distance(
         vector=vector,
         scale=large_chip_scale,
         detail=big_chip_detail,
         roughness=big_chip_roughness,
     )
-    result_0_factor_4 = pf.nodes.shader.color_ramp(
+    result_0_factor_4 = pf.nodes.color.color_ramp(
         fac=result_0_factor_fac_2,
         interpolation="CONSTANT",
         points=[
@@ -284,13 +284,13 @@ def terrazzo_monocolor_node(
             (large_chip_frequency_cutoff, (1.0, 1.0, 1.0, 1.0)),
         ],
     )
-    result_0_factor_fac_1 = pf.nodes.shader.voronoi_distance(
+    result_0_factor_fac_1 = pf.nodes.texture.voronoi_distance(
         vector=vector,
         scale=medium_chip_scale,
         detail=medium_chip_detail,
         roughness=medium_chip_roughness,
     )
-    result_0_factor_3 = pf.nodes.shader.color_ramp(
+    result_0_factor_3 = pf.nodes.color.color_ramp(
         fac=result_0_factor_fac_1,
         interpolation="CONSTANT",
         points=[
@@ -298,19 +298,19 @@ def terrazzo_monocolor_node(
             (medium_chip_frequency_cutoff, (1.0, 1.0, 1.0, 1.0)),
         ],
     )
-    result_0_factor_2 = pf.nodes.func.mix_rgb(
+    result_0_factor_2 = pf.nodes.color.mix_rgb(
         factor=1.0,
         a=result_0_factor_4.color,
         b=result_0_factor_3.color,
         blend_type="LIGHTEN",
     )
-    result_0_factor_fac = pf.nodes.shader.voronoi_distance(
+    result_0_factor_fac = pf.nodes.texture.voronoi_distance(
         vector=vector,
         scale=small_chip_scale,
         detail=small_chip_detail,
         roughness=small_chip_roughness,
     )
-    result_0_factor_1 = pf.nodes.shader.color_ramp(
+    result_0_factor_1 = pf.nodes.color.color_ramp(
         fac=result_0_factor_fac,
         interpolation="CONSTANT",
         points=[
@@ -318,20 +318,20 @@ def terrazzo_monocolor_node(
             (small_chip_frequency_cutoff, (1.0, 1.0, 1.0, 1.0)),
         ],
     )
-    result_0_factor = pf.nodes.func.mix_rgb(
+    result_0_factor = pf.nodes.color.mix_rgb(
         factor=1.0,
         a=result_0_factor_2,
         b=result_0_factor_1.color,
         blend_type="LIGHTEN",
     )
-    result_0_base_color_fac = pf.nodes.shader.noise(
+    result_0_base_color_fac = pf.nodes.texture.noise(
         vector=vector,
         scale=concrete_noise_scale,
         detail=concrete_noise_detail,
         roughness=roughness,
         distortion=3.2,
     )
-    result_0_base_color_9 = pf.nodes.shader.color_ramp(
+    result_0_base_color_9 = pf.nodes.color.color_ramp(
         fac=result_0_base_color_fac.fac,
         interpolation="LINEAR",
         points=[
@@ -340,7 +340,7 @@ def terrazzo_monocolor_node(
         ],
     )
     result_0_base_color_8 = concrete_base_color
-    result_0_base_color_7 = pf.nodes.func.mix_rgb(
+    result_0_base_color_7 = pf.nodes.color.mix_rgb(
         factor=concrete_color_mix_factor,
         a=result_0_base_color_9.color,
         b=result_0_base_color_8,
@@ -351,7 +351,7 @@ def terrazzo_monocolor_node(
         roughness=0.7591,
         subsurface_anisotropy=0.0,
     )
-    result_0_fac = pf.nodes.shader.noise(
+    result_0_fac = pf.nodes.texture.noise(
         vector=vector,
         scale=chip_noise_scale,
         detail=chip_noise_detail,
@@ -359,7 +359,7 @@ def terrazzo_monocolor_node(
         lacunarity=5.0,
         distortion=4.2,
     )
-    result_0_base_color_factor = pf.nodes.shader.color_ramp(
+    result_0_base_color_factor = pf.nodes.color.color_ramp(
         fac=result_0_fac.fac,
         interpolation="EASE",
         points=[(0.432, (0.0, 0.0, 0.0, 1.0)), (0.586, (1.0, 1.0, 1.0, 1.0))],
@@ -367,20 +367,20 @@ def terrazzo_monocolor_node(
     result_0_base_color_6 = small_chip_color
     result_0_base_color_5 = medium_chip_color
     result_0_base_color_4 = large_chip_color
-    result_0_base_color_3 = pf.nodes.func.mix_rgb(
+    result_0_base_color_3 = pf.nodes.color.mix_rgb(
         factor=result_0_factor_4.color.astype(dtype=float),
         a=result_0_base_color_5,
         b=result_0_base_color_4,
     )
-    result_0_base_color_2 = pf.nodes.func.mix_rgb(
+    result_0_base_color_2 = pf.nodes.color.mix_rgb(
         factor=result_0_factor_2.astype(dtype=float),
         a=result_0_base_color_6,
         b=result_0_base_color_3,
     )
-    result_0_base_color_1 = pf.nodes.shader.hue_saturation(
+    result_0_base_color_1 = pf.nodes.color.hue_saturation(
         value=2.0, color=result_0_base_color_2
     )
-    result_0_base_color = pf.nodes.func.mix_rgb(
+    result_0_base_color = pf.nodes.color.mix_rgb(
         factor=result_0_base_color_factor.color.astype(dtype=float),
         a=result_0_base_color_2,
         b=result_0_base_color_1,

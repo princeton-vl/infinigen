@@ -143,18 +143,20 @@ def _make_compositor_slot(
 
     match render_pass.type:
         case ExportType.OPTICAL_FLOW:
-            separate_color = pf.nodes.func.separate_color(render_socket)
+            separate_color = pf.nodes.color.separate_rgb(render_socket)
             # Based on debug: blue channel has X data, alpha has Y data
-            processed_output = pf.nodes.compositor.combine_color(
+            combined = pf.nodes.color.combine_rgb(
                 red=separate_color.blue,  # X velocity from blue
                 green=separate_color.alpha,  # Y velocity from alpha
                 blue=0.0,
-                alpha=0.0,
+            )
+            processed_output = pf.nodes.compositor.set_alpha(
+                image=combined, alpha=0.0, mode="REPLACE_ALPHA"
             )
         case ExportType.SURFACE_NORMAL | ExportType.SURFACE_NORMAL_WORLD:
             processed_output = pf.nodes.compositor.mix_rgb(
-                image_0=render_socket,
-                image_1=(0.0, 0.0, 0.0, 0.0),
+                a=render_socket,
+                b=(0.0, 0.0, 0.0, 0.0),
                 blend_type="ADD",
             )
         case _:

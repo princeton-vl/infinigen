@@ -43,7 +43,7 @@ def brick_cutter(
         vector=vector, scale=1.0 / brick_scaling
     )
 
-    coord_vector_b_b = pf.nodes.func.combine_xyz(x=brick_width, y=brick_height)
+    coord_vector_b_b = pf.nodes.math.combine_xyz(x=brick_width, y=brick_height)
 
     brick_id_y_value = brick_id_y_value_a / coord_vector_b_b
     brick_id_a_a = pf.nodes.math.fraction(brick_id_y_value.y / 2.0)
@@ -54,9 +54,9 @@ def brick_cutter(
     brick_id_x_a_b = brick_id_a_0 > irregularity
     brick_id_x_0 = (1.0 - brick_id_x_a_b) * 0.5
     brick_id_y = pf.nodes.math.floor(brick_id_y_value.y)
-    brick_id = pf.nodes.func.combine_xyz(x=brick_id_x_1 - brick_id_x_0, y=brick_id_y)
+    brick_id = pf.nodes.math.combine_xyz(x=brick_id_x_1 - brick_id_x_0, y=brick_id_y)
 
-    white_noise = pf.nodes.shader.white_noise(
+    white_noise = pf.nodes.texture.white_noise(
         vector=brick_id, noise_dimensions="4D", w=seed
     )
 
@@ -66,17 +66,17 @@ def brick_cutter(
     )
     coord_x_0 = brick_id_a_0 - (irregularity * brick_id_x_a_b)
     coord_b_0 = 1.0 - irregularity
-    coord_x_b_numerator = pf.nodes.func.mix(
+    coord_x_b_numerator = pf.nodes.math.mix(
         a=irregularity, b=coord_b_0, factor=brick_id_x_a_b
     )
     coord_x_b = coord_x_b_numerator / 2.0
     coord_y_0 = pf.nodes.math.fraction(brick_id_y_value.y)
-    coord_vector_b_a = pf.nodes.func.combine_xyz(
+    coord_vector_b_a = pf.nodes.math.combine_xyz(
         x=coord_x_0 - coord_x_b, y=coord_y_0 - 0.5
     )
     coord_vector = coord_vector_a + (coord_vector_b_a * coord_vector_b_b)
 
-    noise = pf.nodes.shader.noise(
+    noise = pf.nodes.texture.noise(
         vector=coord_vector, scale=50.0 / warp_size, detail=6.0
     )
 
@@ -85,7 +85,7 @@ def brick_cutter(
         scale=warp_strength * 0.4,
     )
 
-    noise_1 = pf.nodes.shader.noise(
+    noise_1 = pf.nodes.texture.noise(
         vector=coord_vector, scale=200.0 / warp_size, detail=4.0
     )
 
@@ -93,7 +93,7 @@ def brick_cutter(
         vector=noise_1.color.astype(dtype=pf.Vector) - (0.5, 0.5, 0.5),
         scale=warp_strength * 0.1,
     )
-    distance_from_edge_b_vector_a = pf.nodes.func.combine_xyz(x=coord_x_b, y=0.5)
+    distance_from_edge_b_vector_a = pf.nodes.math.combine_xyz(x=coord_x_b, y=0.5)
     distance_from_edge_b_vector_b = pf.nodes.math.vector_absolute(coord_vector_b_a)
     distance_from_edge_b_vector_1 = (
         distance_from_edge_b_vector_a - distance_from_edge_b_vector_b
@@ -110,7 +110,7 @@ def brick_cutter(
     distance_from_edge_a_a_value = (
         distance_from_edge_a_3 + distance_from_edge_a_2
     ) + distance_from_edge_b_1
-    distance_from_edge_a_a = pf.nodes.func.map_range(
+    distance_from_edge_a_a = pf.nodes.math.map_range(
         value=distance_from_edge_a_a_value,
         from_max=(1.0, 1.0, 1.0),
         from_min=gab.astype(dtype=pf.Vector),
@@ -122,23 +122,23 @@ def brick_cutter(
     distance_from_edge_a_0 = pf.nodes.math.minimum(
         a=distance_from_edge_a_a.x, b=distance_from_edge_a_a.y
     )
-    distance_from_edge_b_vector_0 = pf.nodes.func.combine_xyz(
+    distance_from_edge_b_vector_0 = pf.nodes.math.combine_xyz(
         x=round_corner, y=round_corner
     )
     distance_from_edge_b_0 = pf.nodes.math.vector_length(
         distance_from_edge_a_a - distance_from_edge_b_vector_0
     )
-    distance_from_edge = pf.nodes.func.mix(
+    distance_from_edge = pf.nodes.math.mix(
         a=distance_from_edge_a_0,
         b=round_corner - distance_from_edge_b_0,
         factor=distance_from_edge_factor_1 * distance_from_edge_factor_0,
     )
 
     mask_a_from_max = pf.nodes.math.maximum(a=brick_bevel, b=0.0001)
-    mask_a = pf.nodes.func.map_range(value=distance_from_edge, from_max=mask_a_from_max)
+    mask_a = pf.nodes.math.map_range(value=distance_from_edge, from_max=mask_a_from_max)
     mask = mask_a > 0.0
 
-    coord_scale = pf.nodes.func.mix(a=1.0, b=mask, factor=masked_coord)
+    coord_scale = pf.nodes.math.mix(a=1.0, b=mask, factor=masked_coord)
     coord_1 = pf.nodes.math.vector_scale(vector=coord_vector, scale=coord_scale)
 
     height_a_a_1 = brick_extrusion_variation * 0.01
@@ -146,12 +146,12 @@ def brick_cutter(
     height_a_a_factor = pf.nodes.math.clamp(brick_bevel_concavity + 1.0)
     height_value_2 = pf.nodes.math.acos(1.0 - mask_a)
     height_a_a_a_0 = pf.nodes.math.sin(height_value_2)
-    height_a_a_0 = pf.nodes.func.mix(
+    height_a_a_0 = pf.nodes.math.mix(
         a=height_a_a_a_0, b=mask_a, factor=height_a_a_factor
     )
     height_a_b_value = pf.nodes.math.acos(mask_a)
     height_a_b_0 = pf.nodes.math.sin(height_a_b_value)
-    height_a_2 = pf.nodes.func.mix(
+    height_a_2 = pf.nodes.math.mix(
         a=height_a_a_0,
         b=1.0 - height_a_b_0,
         factor=brick_bevel_concavity,
@@ -168,8 +168,8 @@ def brick_cutter(
         a=distance_from_edge_a_a_value.x,
         b=distance_from_edge_a_a_value.y,
     )
-    height_b_value_a = pf.nodes.func.map_range(value=height_value_1, from_max=gab)
-    height_value_vector = pf.nodes.func.combine_xyz(x=height_b_3, y=height_b_3)
+    height_b_value_a = pf.nodes.math.map_range(value=height_value_1, from_max=gab)
+    height_value_vector = pf.nodes.math.combine_xyz(x=height_b_3, y=height_b_3)
     height_value_0 = pf.nodes.math.vector_length(
         distance_from_edge_a_a_value - height_value_vector
     )
@@ -178,28 +178,28 @@ def brick_cutter(
     height_from_max = pf.nodes.math.sqrt(
         height_from_max_value_1 + height_from_max_value_0
     )
-    height_b_value_b = pf.nodes.func.map_range(
+    height_b_value_b = pf.nodes.math.map_range(
         value=height_value_0,
         from_max=height_from_max,
         from_min=round_corner - height_b_b_1,
         to_max=0.0,
         to_min=1.0,
     )
-    height_b_value_1 = pf.nodes.func.mix(
+    height_b_value_1 = pf.nodes.math.mix(
         a=height_b_value_a,
         b=height_b_value_b,
         factor=height_a_1 < height_b_3,
     )
     height_b_from_min = pf.nodes.math.maximum(a=grout_bevel, b=0.0001)
-    height_b_2 = pf.nodes.func.map_range(
+    height_b_2 = pf.nodes.math.map_range(
         value=height_b_value_1, from_min=1.0 - height_b_from_min
     )
     height_a_value = pf.nodes.math.acos(1.0 - height_b_2)
     height_a_0 = pf.nodes.math.sin(height_a_value)
-    height_b_b_a = pf.nodes.func.mix(a=height_a_0, b=height_b_2, factor=height_factor)
+    height_b_b_a = pf.nodes.math.mix(a=height_a_0, b=height_b_2, factor=height_factor)
     height_b_value_0 = pf.nodes.math.acos(height_b_2)
     height_b_1 = pf.nodes.math.sin(height_b_value_0)
-    height_b_b_0 = pf.nodes.func.mix(
+    height_b_b_0 = pf.nodes.math.mix(
         a=height_b_b_a,
         b=1.0 - height_b_1,
         factor=grout_bevel_concavity,
@@ -248,7 +248,7 @@ def brick_dimensions_distribution(
         rng, brick_aspect_mean, brick_aspect_std, 0.2, 1.0
     )
     brick_height = brick_width * brick_aspect
-    return pf.nodes.func.combine_xyz(x=brick_width, y=brick_height)
+    return pf.nodes.math.combine_xyz(x=brick_width, y=brick_height)
 
 
 def brick_cutter_distribution(
@@ -267,7 +267,7 @@ def brick_cutter_distribution(
 
     if brick_dimensions is None:
         brick_dimensions = brick_dimensions_distribution(r1)
-    brick_dim_sep = pf.nodes.func.separate_xyz(vector=brick_dimensions)
+    brick_dim_sep = pf.nodes.math.separate_xyz(vector=brick_dimensions)
 
     # irregularity adds or subtracts from the absolute width of the brick, so needs to be relative
     if irregularity is None:

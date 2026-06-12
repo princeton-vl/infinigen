@@ -46,9 +46,9 @@ def edgewear_mask(
 
     mapping = pf.nodes.shader.mapping(vector)
 
-    noise = pf.nodes.shader.noise(vector=mapping, scale=noise_scale, detail=1.0)
+    noise = pf.nodes.texture.noise(vector=mapping, scale=noise_scale, detail=1.0)
 
-    color_ramp = pf.nodes.shader.color_ramp(
+    color_ramp = pf.nodes.color.color_ramp(
         fac=noise.fac,
         interpolation="LINEAR",
         points=[
@@ -65,7 +65,7 @@ def edgewear_mask(
     surface = bevel - surface_0_b.normal
     surface_b_fac = pf.nodes.math.absolute(surface.astype(dtype=float))
 
-    color_ramp_1 = pf.nodes.shader.color_ramp(
+    color_ramp_1 = pf.nodes.color.color_ramp(
         fac=surface_b_fac,
         interpolation="LINEAR",
         points=[
@@ -81,7 +81,7 @@ def edgewear_mask(
 
     mapping_1 = pf.nodes.shader.mapping(vector=vector, scale=(10.0, 1.0, 1.0))
 
-    voronoi_distance = pf.nodes.shader.voronoi_distance(
+    voronoi_distance = pf.nodes.texture.voronoi_distance(
         vector=mapping_1, scale=color_0_scale_1
     )
 
@@ -92,13 +92,13 @@ def edgewear_mask(
         scale=2.0,
     )
 
-    voronoi_distance_1 = pf.nodes.shader.voronoi_distance(
+    voronoi_distance_1 = pf.nodes.texture.voronoi_distance(
         vector=mapping_2,
         scale=color_0_scale_0.astype(dtype=float),
     )
 
     color_ramp_4_fac = pf.nodes.math.clamp(voronoi_distance * voronoi_distance_1)
-    color_ramp_4 = pf.nodes.shader.color_ramp(
+    color_ramp_4 = pf.nodes.color.color_ramp(
         fac=color_ramp_4_fac,
         interpolation="LINEAR",
         points=[

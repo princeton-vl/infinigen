@@ -16,7 +16,7 @@ def developer_grid(
 
     vec_mapped = pf.nodes.shader.mapping(vector=vector, scale=t.Vector((1, 1, 1)))
 
-    image_node = pf.nodes.shader.image(
+    image_node = pf.nodes.texture.image(
         vector=vec_mapped,
         image=image,
         extension="REPEAT",

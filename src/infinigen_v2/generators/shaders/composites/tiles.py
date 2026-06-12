@@ -191,7 +191,7 @@ def tile_generate(
     """
     mask = tile_mask.result.astype(dtype=float) > 0.1
     shader = pf.nodes.shader.mix_shader(factor=mask, b=tile.surface, a=grout.surface)
-    displacement = pf.nodes.func.mix(
+    displacement = pf.nodes.math.mix(
         factor=mask, b=tile.displacement, a=grout.displacement
     )
     return pf.Material(

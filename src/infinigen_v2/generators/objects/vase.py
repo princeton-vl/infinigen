@@ -104,7 +104,7 @@ def lofting(
     input_index = pf.nodes.geo.input_index()
     field_on_domain = pf.nodes.geo.field_on_domain(value=input_index, domain="CURVE")
     instance_on_points_selection = pf.nodes.func.equal(a=field_on_domain, b=0)
-    curve_line = pf.nodes.geo.curve_line()
+    curve_line = pf.nodes.geo.curve_line(start=(0, 0, 0), end=(0, 0, 1))
     attribute_domain_size = pf.nodes.geo.attribute_domain_size(
         geometry=profile_curves, component="CURVE"
     )
@@ -178,12 +178,13 @@ def vase_profile(
     foot_scale: t.SocketOrVal[float],
     foot_height: t.SocketOrVal[float],
 ) -> t.ProcNode[pf.CurveObject]:
-    transform_translation = pf.nodes.func.combine_xyz(z=height)
+    transform_translation = pf.nodes.math.combine_xyz(z=height)
     transform_scale = top_scale * diameter
     transform = pf.nodes.geo.transform(
         geometry=profile_curve,
         translation=transform_translation,
         scale=transform_scale.astype(dtype=pf.Vector),
+        rotation=(0, 0, 0),
     )
     transform_a_a_2 = pf.nodes.math.clamp(1.0 - neck_position)
     transform_a_2 = pf.nodes.math.multiply_add(
@@ -191,25 +192,27 @@ def vase_profile(
         b=neck_mid_position,
         addend=neck_position,
     )
-    transform_1_translation = pf.nodes.func.combine_xyz(z=transform_a_2 * height)
+    transform_1_translation = pf.nodes.math.combine_xyz(z=transform_a_2 * height)
     transform_numerator = neck_scale + top_scale
     transform_1_scale = diameter * (transform_numerator / 2.0)
     transform_1 = pf.nodes.geo.transform(
         geometry=profile_curve,
         translation=transform_1_translation,
         scale=transform_1_scale.astype(dtype=pf.Vector),
+        rotation=(0, 0, 0),
     )
-    transform_2_translation = pf.nodes.func.combine_xyz(z=height * neck_position)
+    transform_2_translation = pf.nodes.math.combine_xyz(z=height * neck_position)
     transform_2_scale = diameter * neck_scale
     transform_2 = pf.nodes.geo.transform(
         geometry=profile_curve,
         translation=transform_2_translation,
         scale=transform_2_scale.astype(dtype=pf.Vector),
+        rotation=(0, 0, 0),
     )
 
     join_1 = pf.nodes.geo.join_geometry([transform, transform_1, transform_2])
 
-    transform_a_a_1 = pf.nodes.func.map_range(
+    transform_a_a_1 = pf.nodes.math.map_range(
         value=shoulder_position,
         to_max=neck_position,
         to_min=foot_height,
@@ -218,34 +221,39 @@ def vase_profile(
     transform_a_1 = pf.nodes.math.minimum(
         a=transform_a_a_1 + transform_a_a_0, b=neck_position
     )
-    transform_3_translation = pf.nodes.func.combine_xyz(z=transform_a_1 * height)
+    transform_3_translation = pf.nodes.math.combine_xyz(z=transform_a_1 * height)
     transform_3 = pf.nodes.geo.transform(
         geometry=profile_curve,
         translation=transform_3_translation,
         scale=diameter.astype(dtype=pf.Vector),
+        rotation=(0, 0, 0),
     )
     transform_a_0 = pf.nodes.math.maximum(
         a=transform_a_a_1 - transform_a_a_0, b=foot_height
     )
-    transform_4_translation = pf.nodes.func.combine_xyz(z=transform_a_0 * height)
+    transform_4_translation = pf.nodes.math.combine_xyz(z=transform_a_0 * height)
     transform_4 = pf.nodes.geo.transform(
         geometry=profile_curve,
         translation=transform_4_translation,
         scale=diameter.astype(dtype=pf.Vector),
+        rotation=(0, 0, 0),
     )
 
     join_2 = pf.nodes.geo.join_geometry([transform_3, transform_4])
 
-    transform_5_translation = pf.nodes.func.combine_xyz(z=foot_height * height)
+    transform_5_translation = pf.nodes.math.combine_xyz(z=foot_height * height)
     transform_5_scale = diameter * foot_scale
     transform_5 = pf.nodes.geo.transform(
         geometry=profile_curve,
         translation=transform_5_translation,
         scale=transform_5_scale.astype(dtype=pf.Vector),
+        rotation=(0, 0, 0),
     )
     transform_6 = pf.nodes.geo.transform(
         geometry=profile_curve,
         scale=transform_5_scale.astype(dtype=pf.Vector),
+        translation=(0, 0, 0),
+        rotation=(0, 0, 0),
     )
 
     join_3 = pf.nodes.geo.join_geometry([transform_5, transform_6])

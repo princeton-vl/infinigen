@@ -56,7 +56,7 @@ def scratches_mask(
     noise_detail = scratch_detail
     noise_2_detail = scratch_mask_detail
 
-    mapping_rotation = pf.nodes.func.combine_xyz(y=mapping_rotation_y)
+    mapping_rotation = pf.nodes.math.combine_xyz(y=mapping_rotation_y)
     mapping = pf.nodes.shader.mapping(
         vector_type="TEXTURE",
         vector=vector,
@@ -64,7 +64,7 @@ def scratches_mask(
         scale=(1.0, 500.0, 1.0),
     )
 
-    noise = pf.nodes.shader.noise(
+    noise = pf.nodes.texture.noise(
         vector=mapping,
         scale=noise_scale,
         detail=noise_detail,
@@ -76,7 +76,7 @@ def scratches_mask(
         distortion=98.10,
     )
 
-    mapping_1_rotation = pf.nodes.func.combine_xyz(y=mapping_1_rotation_y)
+    mapping_1_rotation = pf.nodes.math.combine_xyz(y=mapping_1_rotation_y)
     mapping_1 = pf.nodes.shader.mapping(
         vector_type="TEXTURE",
         vector=vector,
@@ -84,7 +84,7 @@ def scratches_mask(
         scale=(500.0, 1.0, 1.0),
     )
 
-    noise_1 = pf.nodes.shader.noise(
+    noise_1 = pf.nodes.texture.noise(
         vector=mapping_1,
         scale=noise_scale,
         detail=noise_detail,
@@ -96,7 +96,7 @@ def scratches_mask(
         distortion=98.10,
     )
 
-    ramp_1 = pf.nodes.shader.color_ramp(
+    ramp_1 = pf.nodes.color.color_ramp(
         fac=noise.fac,
         interpolation="LINEAR",
         points=[
@@ -105,7 +105,7 @@ def scratches_mask(
         ],
     )
 
-    ramp_2 = pf.nodes.shader.color_ramp(
+    ramp_2 = pf.nodes.color.color_ramp(
         fac=noise_1.fac,
         interpolation="LINEAR",
         points=[
@@ -122,7 +122,7 @@ def scratches_mask(
         rotation=(0.1588, -0.5742, 0.192),
     )
 
-    noise_2 = pf.nodes.shader.voronoi(
+    noise_2 = pf.nodes.texture.voronoi(
         vector=mapping_2,
         scale=noise_2_scale,
         detail=noise_2_detail,
@@ -131,7 +131,7 @@ def scratches_mask(
         feature="F1",
         voronoi_dimensions="2D",
     )
-    color_ramp = pf.nodes.shader.color_ramp(
+    color_ramp = pf.nodes.color.color_ramp(
         fac=noise_2.color,
         interpolation="LINEAR",
         points=[

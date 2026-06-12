@@ -44,15 +44,15 @@ def patterned_color_distribution(
         rng,
         [
             (color1, 1),
-            (pf.nodes.func.mix_rgb(factor=mask1, a=color1, b=color2), 1),
-            (pf.nodes.func.mix_rgb(factor=mask, a=color1, b=color3), 1),
+            (pf.nodes.color.mix_rgb(factor=mask1, a=color1, b=color2), 1),
+            (pf.nodes.color.mix_rgb(factor=mask, a=color1, b=color3), 1),
         ],
     )
     color = pf.control.choice(
         rng,
         [
             (color_mixed1, 1),
-            (pf.nodes.func.mix_rgb(factor=mask2, a=color_mixed1, b=color3), 1),
+            (pf.nodes.color.mix_rgb(factor=mask2, a=color_mixed1, b=color3), 1),
         ],
     )
     return color

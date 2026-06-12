@@ -32,7 +32,7 @@ def point_light_indoor_distribution(
         energy=energy,
         shadow_soft_size=shadow_soft_size,
     )
-    blackbody = pf.nodes.shader.blackbody(temperature=temperature)
+    blackbody = pf.nodes.color.blackbody(temperature=temperature)
     emission = pf.nodes.shader.emission(color=blackbody, strength=energy)
     pf.nodes.to_light(light, surface=emission)
 
@@ -44,7 +44,7 @@ def bulb(
     lampshade_material: t.SocketOrVal[pf.Material],
     metal_material: t.SocketOrVal[pf.Material],
 ) -> pf.ProcNode:
-    curve_line = pf.nodes.geo.curve_line()
+    curve_line = pf.nodes.geo.curve_line(start=(0, 0, 0), end=(0, 0, 1))
 
     resample_curve_count = pf.nodes.geo.resample_curve_count(
         curve=curve_line, count=100
@@ -52,7 +52,7 @@ def bulb(
 
     spline_parameter = pf.nodes.geo.spline_parameter()
 
-    curve_to_curve_radius = pf.nodes.func.float_curve(
+    curve_to_curve_radius = pf.nodes.math.float_curve(
         value=spline_parameter.factor,
         curve=np.array(
             [
@@ -65,6 +65,7 @@ def bulb(
                 [1.0, 0.0],
             ]
         ),
+        factor=1.0,
     )
 
     set_curve_radius = pf.nodes.geo.set_curve_radius(
@@ -91,9 +92,10 @@ def bulb(
 
     spline_parameter_1 = pf.nodes.geo.spline_parameter()
 
-    curve_radius = pf.nodes.func.float_curve(
+    curve_radius = pf.nodes.math.float_curve(
         value=spline_parameter_1.factor,
         curve=np.array([[0.0, 1.0], [0.4432, 0.55], [1.0, 0.275]]),
+        factor=1.0,
     )
 
     set_curve_radius_1 = pf.nodes.geo.set_curve_radius(
@@ -111,7 +113,10 @@ def bulb(
     )
 
     transform_1 = pf.nodes.geo.transform(
-        geometry=curve_spiral, translation=(0.0, 0.0, -0.2)
+        geometry=curve_spiral,
+        translation=(0.0, 0.0, -0.2),
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
 
     curve_circle_2 = pf.nodes.geo.curve_circle(resolution=100, radius=0.015)
@@ -136,7 +141,12 @@ def bulb(
 
     join_1 = pf.nodes.geo.join_geometry([set_material, set_material_1])
 
-    transform = pf.nodes.geo.transform(geometry=join_1, translation=(0.0, 0.0, 0.3))
+    transform = pf.nodes.geo.transform(
+        geometry=join_1,
+        translation=(0.0, 0.0, 0.3),
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
+    )
     return transform
 
 
@@ -154,9 +164,12 @@ def bulb_rack(
     )
     curve_circle = pf.nodes.geo.curve_circle(resolution=100, radius=curve_circle_radius)
 
-    transform_translation = pf.nodes.func.combine_xyz(z=inner_height)
+    transform_translation = pf.nodes.math.combine_xyz(z=inner_height)
     transform = pf.nodes.geo.transform(
-        geometry=curve_circle, translation=transform_translation
+        geometry=curve_circle,
+        translation=transform_translation,
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
 
     curve_line = pf.nodes.geo.curve_line(start=(-1.0, 0.0, 0.0), end=(1.0, 0.0, 0.0))
@@ -174,9 +187,12 @@ def bulb_rack(
     curve_endpoint_selection = pf.nodes.geo.curve_endpoint_selection(0)
     curve_circle_1 = pf.nodes.geo.curve_circle(resolution=100, radius=outer_radius)
 
-    transform_1_translation = pf.nodes.func.combine_xyz(z=outer_height)
+    transform_1_translation = pf.nodes.math.combine_xyz(z=outer_height)
     transform_1 = pf.nodes.geo.transform(
-        geometry=curve_circle_1, translation=transform_1_translation
+        geometry=curve_circle_1,
+        translation=transform_1_translation,
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
 
     set_0_factor = (
@@ -237,18 +253,24 @@ def reversiable_bulb(
         lampshade_material=lampshade_material, metal_material=metal_material
     )
 
-    transform_scale = pf.nodes.func.combine_xyz(x=scale, y=scale, z=scale)
-    transform = pf.nodes.geo.transform(geometry=bulb_result, scale=transform_scale)
+    transform_scale = pf.nodes.math.combine_xyz(x=scale, y=scale, z=scale)
+    transform = pf.nodes.geo.transform(
+        geometry=bulb_result,
+        scale=transform_scale,
+        translation=(0, 0, 0),
+        rotation=(0, 0, 0),
+    )
 
     to_instance = pf.nodes.geo.geometry_to_instance(transform)
 
-    geometry_rotation = pf.nodes.func.combine_xyz(
+    geometry_rotation = pf.nodes.math.combine_xyz(
         y=reverse.astype(dtype=float) * 3.1415
     )
 
     rotate_instances = pf.nodes.geo.rotate_instances(
         instances=to_instance,
         rotation=geometry_rotation.astype(dtype=pf.Euler),
+        pivot_point=(0, 0, 0),
     )
 
     rack_support_b = pf.nodes.math.multiply_add(
@@ -278,15 +300,15 @@ def lamp_head(
     )
     bulb_rack_outer_height = rack_height * bulb_rack_outer_height_b
 
-    curve_line_start = pf.nodes.func.combine_xyz(z=bulb_rack_outer_height)
+    curve_line_start = pf.nodes.math.combine_xyz(z=bulb_rack_outer_height)
     curve_a = shade_height - rack_height
     curve_b = bulb_rack_outer_height_b * -1.0
-    curve_line_end = pf.nodes.func.combine_xyz(z=curve_a * curve_b)
+    curve_line_end = pf.nodes.math.combine_xyz(z=curve_a * curve_b)
     curve_line = pf.nodes.geo.curve_line(start=curve_line_start, end=curve_line_end)
 
     spline_parameter = pf.nodes.geo.spline_parameter()
 
-    curve_to_curve_radius = pf.nodes.func.map_range(
+    curve_to_curve_radius = pf.nodes.math.map_range(
         value=spline_parameter.factor,
         to_max=bot_radius,
         to_min=top_radius,
@@ -392,7 +414,7 @@ def lamp_geometry(
         metal_material=metal_material,
     )
 
-    sample_curve_curves_start = pf.nodes.func.combine_xyz(z=base_height)
+    sample_curve_curves_start = pf.nodes.math.combine_xyz(z=base_height)
 
     curve_bezier_segment = pf.nodes.geo.curve_bezier_segment(
         resolution=100,
@@ -409,15 +431,19 @@ def lamp_geometry(
     )
 
     transform_rotation = pf.nodes.func.align_euler_to_vector(
-        vector=sample_curve.tangent, axis="Z"
+        vector=sample_curve.tangent,
+        axis="Z",
+        rotation=(0, 0, 0),
+        factor=1.0,
     )
     transform = pf.nodes.geo.transform(
         geometry=lamp_head_result,
         translation=sample_curve.position,
         rotation=transform_rotation.astype(dtype=pf.Euler),
+        scale=(1, 1, 1),
     )
 
-    curve_line = pf.nodes.geo.curve_line(end=sample_curve_curves_start)
+    curve_line = pf.nodes.geo.curve_line(end=sample_curve_curves_start, start=(0, 0, 0))
 
     join_1 = pf.nodes.geo.join_geometry([curve_line, curve_bezier_segment])
 
@@ -425,8 +451,8 @@ def lamp_geometry(
     curve_to = pf.nodes.geo.curve_to_mesh(
         curve=join_1, profile_curve=curve_circle, fill_caps=True
     )
-    curve_line_1_end = pf.nodes.func.combine_xyz(z=base_height)
-    curve_line_1 = pf.nodes.geo.curve_line(end=curve_line_1_end)
+    curve_line_1_end = pf.nodes.math.combine_xyz(z=base_height)
+    curve_line_1 = pf.nodes.geo.curve_line(end=curve_line_1_end, start=(0, 0, 0))
     curve_circle_1 = pf.nodes.geo.curve_circle(resolution=100, radius=base_radius)
     curve_to_1 = pf.nodes.geo.curve_to_mesh(
         curve=curve_line_1,
@@ -444,12 +470,13 @@ def lamp_geometry(
 
     bound_box = pf.nodes.geo.bound_box(join)
 
-    curve_line_2 = pf.nodes.geo.curve_line(end=(0.0, 0.0, 0.1))
+    curve_line_2 = pf.nodes.geo.curve_line(end=(0.0, 0.0, 0.1), start=(0, 0, 0))
 
     transform_1 = pf.nodes.geo.transform(
         geometry=curve_line_2,
         translation=sample_curve.position,
         rotation=transform_rotation.astype(dtype=pf.Euler),
+        scale=(1, 1, 1),
     )
 
     sample_curve_1 = pf.nodes.geo.sample_curve(

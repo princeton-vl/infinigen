@@ -29,98 +29,98 @@ def fractal_crack(
     value_factor_1 = (value_factor_7 * value_factor_2) / lacunarity
     value_factor = (value_factor_8 * value_factor_1) / lacunarity
     value_scale_4 = 1.0 / size
-    value_21 = pf.nodes.shader.voronoi_distance(
+    value_21 = pf.nodes.texture.voronoi_distance(
         vector=vector,
         w=w,
         scale=value_scale_4,
         voronoi_dimensions="4D",
     )
     value_w_4 = 10.0 * size
-    value_20 = pf.nodes.shader.voronoi_distance(
+    value_20 = pf.nodes.texture.voronoi_distance(
         vector=vector,
         w=w + value_w_4,
         scale=value_scale_4 * lacunarity,
         voronoi_dimensions="4D",
     )
     value_19 = pf.nodes.math.minimum(a=value_21, b=value_20)
-    value_18 = pf.nodes.func.mix(factor=value_21, a=value_19, b=value_21)
-    value_17 = pf.nodes.func.mix(
+    value_18 = pf.nodes.math.mix(factor=value_21, a=value_19, b=value_21)
+    value_17 = pf.nodes.math.mix(
         factor=value_factor_5 * value_factor_4,
         a=value_21,
         b=value_18,
     )
     value_w_3 = 20.0 * size
     value_scale_3 = lacunarity**2.0
-    value_16 = pf.nodes.shader.voronoi_distance(
+    value_16 = pf.nodes.texture.voronoi_distance(
         vector=vector,
         w=w + value_w_3,
         scale=value_scale_4 * value_scale_3,
         voronoi_dimensions="4D",
     )
     value_15 = pf.nodes.math.minimum(a=value_17, b=value_16)
-    value_14 = pf.nodes.func.mix(factor=value_17, a=value_15, b=value_17)
-    value_13 = pf.nodes.func.mix(
+    value_14 = pf.nodes.math.mix(factor=value_17, a=value_15, b=value_17)
+    value_13 = pf.nodes.math.mix(
         factor=value_factor_6 * value_factor_3,
         a=value_17,
         b=value_14,
     )
     value_w_2 = 30.0 * size
     value_scale_2 = value_scale_3 * lacunarity
-    value_12 = pf.nodes.shader.voronoi_distance(
+    value_12 = pf.nodes.texture.voronoi_distance(
         vector=vector,
         w=w + value_w_2,
         scale=value_scale_4 * value_scale_2,
         voronoi_dimensions="4D",
     )
     value_11 = pf.nodes.math.minimum(a=value_13, b=value_12)
-    value_10 = pf.nodes.func.mix(factor=value_13, a=value_11, b=value_13)
-    value_9 = pf.nodes.func.mix(
+    value_10 = pf.nodes.math.mix(factor=value_13, a=value_11, b=value_13)
+    value_9 = pf.nodes.math.mix(
         factor=value_factor_7 * value_factor_2,
         a=value_13,
         b=value_10,
     )
     value_w_1 = 40.0 * size
     value_scale_1 = value_scale_2 * lacunarity
-    value_8 = pf.nodes.shader.voronoi_distance(
+    value_8 = pf.nodes.texture.voronoi_distance(
         vector=vector,
         w=w + value_w_1,
         scale=value_scale_4 * value_scale_1,
         voronoi_dimensions="4D",
     )
     value_7 = pf.nodes.math.minimum(a=value_9, b=value_8)
-    value_6 = pf.nodes.func.mix(factor=value_9, a=value_7, b=value_9)
-    value_5 = pf.nodes.func.mix(
+    value_6 = pf.nodes.math.mix(factor=value_9, a=value_7, b=value_9)
+    value_5 = pf.nodes.math.mix(
         factor=value_factor_8 * value_factor_1,
         a=value_9,
         b=value_6,
     )
     value_w = 50.0 * size
     value_scale = value_scale_1 * lacunarity
-    value_4 = pf.nodes.shader.voronoi_distance(
+    value_4 = pf.nodes.texture.voronoi_distance(
         vector=vector,
         w=w + value_w,
         scale=value_scale_4 * value_scale,
         voronoi_dimensions="4D",
     )
     value_3 = pf.nodes.math.minimum(a=value_5, b=value_4)
-    value_2 = pf.nodes.func.mix(factor=value_5, a=value_3, b=value_5)
-    value_1 = pf.nodes.func.mix(
+    value_2 = pf.nodes.math.mix(factor=value_5, a=value_3, b=value_5)
+    value_1 = pf.nodes.math.mix(
         factor=value_factor_9 * value_factor,
         a=value_5,
         b=value_2,
     )
-    value_value = pf.nodes.shader.noise(vector=vector, scale=1.0 / size, detail=4.0)
-    value = pf.nodes.func.map_range(value=value_value.fac, from_min=0.2, from_max=0.8)
-    from_min = pf.nodes.func.map_range(value=spread_y, from_min=0.5, to_max=0.999)
-    from_max_1 = pf.nodes.func.map_range(value=spread_y, from_max=0.5, to_min=0.0001)
-    from_max_factor = pf.nodes.func.map_range(
+    value_value = pf.nodes.texture.noise(vector=vector, scale=1.0 / size, detail=4.0)
+    value = pf.nodes.math.map_range(value=value_value.fac, from_min=0.2, from_max=0.8)
+    from_min = pf.nodes.math.map_range(value=spread_y, from_min=0.5, to_max=0.999)
+    from_max_1 = pf.nodes.math.map_range(value=spread_y, from_max=0.5, to_min=0.0001)
+    from_max_factor = pf.nodes.math.map_range(
         value=value,
         from_min=from_min,
         from_max=from_max_1,
     )
-    from_max = pf.nodes.func.mix(factor=from_max_factor, a=spread_x, b=0.0)
+    from_max = pf.nodes.math.mix(factor=from_max_factor, a=spread_x, b=0.0)
 
-    map_range = pf.nodes.func.map_range(
+    map_range = pf.nodes.math.map_range(
         value=value_1 / 0.5,
         from_max=from_max * spread_multiplier,
         to_min=1.0,
@@ -171,7 +171,7 @@ def cracks_mask(
         phase=w,
     )
 
-    spread_multiplier_value_2 = pf.nodes.shader.voronoi(
+    spread_multiplier_value_2 = pf.nodes.texture.voronoi(
         vector=coord_warp_result_1.vector,
         w=w + 100.0,
         scale=1.0 / group_size,
@@ -180,15 +180,15 @@ def cracks_mask(
         normalize=True,
         voronoi_dimensions="4D",
     )
-    spread_multiplier_4 = pf.nodes.func.map_range(
+    spread_multiplier_4 = pf.nodes.math.map_range(
         value=spread_multiplier_value_2.distance,
         from_min=0.12,
         from_max=0.63,
     )
-    spread_multiplier_3 = pf.nodes.func.map_range(
+    spread_multiplier_3 = pf.nodes.math.map_range(
         value=group_spread, from_min=0.5, to_max=0.999
     )
-    spread_multiplier_2 = pf.nodes.func.map_range(
+    spread_multiplier_2 = pf.nodes.math.map_range(
         value=group_spread, from_max=0.5, to_min=0.0001
     )
     factor_1 = pf.nodes.shader.geometry()
@@ -199,18 +199,18 @@ def cracks_mask(
     spread_multiplier_value_1 = pf.nodes.math.vector_length(
         displacement_a + displacement_b
     )
-    spread_multiplier_value = pf.nodes.func.mix(
+    spread_multiplier_value = pf.nodes.math.mix(
         factor=factor > 0.0,
         a=spread_multiplier_value_1 * -1.0,
         b=spread_multiplier_value_1,
     )
     spread_multiplier_from_min = blend_distance / 2.0
-    spread_multiplier_1 = pf.nodes.func.map_range(
+    spread_multiplier_1 = pf.nodes.math.map_range(
         value=spread_multiplier_value,
         from_min=height_threshold - spread_multiplier_from_min,
         from_max=height_threshold + spread_multiplier_from_min,
     )
-    spread_multiplier = pf.nodes.func.map_range(
+    spread_multiplier = pf.nodes.math.map_range(
         value=spread_multiplier_4,
         from_min=spread_multiplier_3,
         from_max=spread_multiplier_2,
@@ -237,7 +237,7 @@ def cracks_mask(
         phase=random_seed + 100.0,
     )
 
-    value = pf.nodes.shader.voronoi(
+    value = pf.nodes.texture.voronoi(
         vector=coord_warp_result_2.vector,
         w=random_seed + 35.0,
         scale=1.0 / hole_size,
@@ -247,12 +247,13 @@ def cracks_mask(
         voronoi_dimensions="4D",
     )
     from_max_2 = hole_spread * 0.46
-    from_max_1 = pf.nodes.func.float_curve(
+    from_max_1 = pf.nodes.math.float_curve(
         value=spread_multiplier,
         curve=np.array([[0.0, 0.0], [0.3364, 0.7563], [1.0, 1.0]]),
+        factor=1.0,
     )
     from_max = from_max_1 * spread_multiplier_1
-    result_1 = pf.nodes.func.map_range(
+    result_1 = pf.nodes.math.map_range(
         value=value.distance,
         from_max=from_max_2 * from_max,
         to_min=1.0,

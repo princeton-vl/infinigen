@@ -15,7 +15,7 @@ def nishita_sky(
     strength: float = 0.4,
     sun_disc: bool = True,
 ) -> pf.World:
-    sky_texture = pf.nodes.shader.sky(
+    sky_texture = pf.nodes.texture.sky(
         sky_type="NISHITA",
         sun_size=np.deg2rad(sun_size_deg),
         sun_intensity=sun_intensity,
@@ -73,7 +73,7 @@ def hosek_wilkie_sky(
     )
     sun_direction = euler.to_matrix() @ pf.Vector((0, 0, 1))
 
-    sky_texture = pf.nodes.shader.sky(
+    sky_texture = pf.nodes.texture.sky(
         sky_type="HOSEK_WILKIE",
         sun_direction=sun_direction,
         turbidity=turbidity,

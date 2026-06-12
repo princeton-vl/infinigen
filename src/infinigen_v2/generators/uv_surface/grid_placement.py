@@ -79,7 +79,7 @@ def grid_with_indices(
     vertices_x: t.SocketOrVal[int],
     vertices_y: t.SocketOrVal[int],
 ) -> GridWithIndicesResult:
-    curve_line = pf.nodes.geo.curve_line(end=(1.0, 0.0, 0.0))
+    curve_line = pf.nodes.geo.curve_line(end=(1.0, 0.0, 0.0), start=(0, 0, 0))
 
     resample_curve_count = pf.nodes.geo.resample_curve_count(
         curve=curve_line, count=vertices_x
@@ -99,7 +99,7 @@ def grid_with_indices(
         index=input_index,
     )
 
-    curve_line_1 = pf.nodes.geo.curve_line(end=(-1.0, 0.0, 0.0))
+    curve_line_1 = pf.nodes.geo.curve_line(end=(-1.0, 0.0, 0.0), start=(0, 0, 0))
 
     resample_curve_count_1 = pf.nodes.geo.resample_curve_count(
         curve=curve_line_1, count=vertices_y
@@ -122,11 +122,11 @@ def grid_with_indices(
         profile_curve=capture_attribute_3.geometry,
     )
 
-    uv_integer = pf.nodes.func.combine_xyz(
+    uv_integer = pf.nodes.math.combine_xyz(
         x=capture_attribute_1.index.astype(dtype=float),
         y=capture_attribute_3.index.astype(dtype=float),
     )
-    uv_factor = pf.nodes.func.combine_xyz(
+    uv_factor = pf.nodes.math.combine_xyz(
         x=capture_attribute.factor, y=capture_attribute_2.factor
     )
     return GridWithIndicesResult(
@@ -159,7 +159,7 @@ def normed_uv_to_bounds_uv(
     lower = attribute_statistic.min + margin_low
     upper = attribute_statistic.max - margin_high
 
-    uv_out = pf.nodes.func.map_range(
+    uv_out = pf.nodes.math.map_range(
         value=query_uv,
         from_min=(0.0, 0.0, 0.0),
         from_max=(1.0, 1.0, 1.0),
@@ -204,7 +204,7 @@ def grid_from_spacing(
 
     vertices_vec = pf.nodes.math.vector_ceil(uv_range_margined / dims_with_spacing)
 
-    clip_b = pf.nodes.func.combine_xyz(
+    clip_b = pf.nodes.math.combine_xyz(
         x=x_instances_max.astype(dtype=float),
         y=y_instances_max.astype(dtype=float),
     )
@@ -218,7 +218,7 @@ def grid_from_spacing(
     min_final = surface_minmax.min + min_center_uv
     max_final = surface_minmax.max - max_center_uv
 
-    query_uv = pf.nodes.func.map_range(
+    query_uv = pf.nodes.math.map_range(
         value=grid_with_indices_result.uv_factor,
         from_min=(0.0, 0.0, 0.0),
         from_max=(1.0, 1.0, 1.0),
@@ -292,7 +292,7 @@ def faces_for_instance_grid_bboxes(
         margin_verts_y=margin_verts_y,
     )
 
-    mix_value = pf.nodes.func.combine_xyz(
+    mix_value = pf.nodes.math.combine_xyz(
         x=subgrid_result.is_boundary_x.astype(dtype=float),
         y=subgrid_result.is_boundary_y.astype(dtype=float),
     )
@@ -309,7 +309,7 @@ def faces_for_instance_grid_bboxes(
     )
     corner_idx_y = pf.nodes.func.equal(a=corner_idx_y_a, b=1.0, epsilon=0.001)
 
-    take_which_corner_value = pf.nodes.func.combine_xyz(
+    take_which_corner_value = pf.nodes.math.combine_xyz(
         x=corner_idx_x.astype(dtype=float),
         y=corner_idx_y.astype(dtype=float),
     )
@@ -337,7 +337,7 @@ def faces_for_instance_grid_bboxes(
         value=instance_uvs,
     )
 
-    take_which_corner = pf.nodes.func.map_range(
+    take_which_corner = pf.nodes.math.map_range(
         value=take_which_corner_value,
         from_min=(0.0, 0.0, 0.0),
         from_max=(1.0, 1.0, 1.0),
@@ -353,7 +353,7 @@ def faces_for_instance_grid_bboxes(
         margin_high=(0.0, 0.0, -0.1),
     )
 
-    mix_for_corners_vs_boundaries = pf.nodes.func.map_range(
+    mix_for_corners_vs_boundaries = pf.nodes.math.map_range(
         value=mix_value,
         from_min=(0.0, 0.0, 0.0),
         from_max=(1.0, 1.0, 1.0),

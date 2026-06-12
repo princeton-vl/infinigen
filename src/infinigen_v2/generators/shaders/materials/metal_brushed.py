@@ -23,31 +23,34 @@ def metal_brushed(
     a_vector_2 = pf.nodes.math.vector_scale(vector=vector, scale=1.0 / brush_size)
 
     displacement_a_5 = pf.nodes.math.vector_rotate_euler(
-        vector=a_vector_2, rotation=brush_rotation
+        vector=a_vector_2,
+        rotation=brush_rotation,
+        center=(0, 0, 0),
     )
 
-    displacement_denominator = pf.nodes.func.float_curve(
+    displacement_denominator = pf.nodes.math.float_curve(
         value=1.0 - stretch_factor,
         curve=np.array([[0.0, 0.0], [0.4636, 0.1313], [0.8136, 0.4688], [1.0, 1.0]]),
+        factor=1.0,
     )
 
-    displacement_b_1 = pf.nodes.func.combine_xyz(
+    displacement_b_1 = pf.nodes.math.combine_xyz(
         x=1.0, y=1.0, z=1.0 / displacement_denominator
     )
 
-    displacement_a_4 = pf.nodes.shader.noise(
+    displacement_a_4 = pf.nodes.texture.noise(
         vector=displacement_a_5 / displacement_b_1,
         scale=1000.0,
         roughness=0.825,
     )
 
-    displacement_a_3 = pf.nodes.shader.gradient(
+    displacement_a_3 = pf.nodes.texture.gradient(
         vector=displacement_a_5, gradient_type="RADIAL"
     )
 
-    displacement_a_2 = pf.nodes.func.map_range(value=displacement_a_3.fac, from_max=0.5)
+    displacement_a_2 = pf.nodes.math.map_range(value=displacement_a_3.fac, from_max=0.5)
 
-    displacement_b = pf.nodes.func.map_range(
+    displacement_b = pf.nodes.math.map_range(
         value=displacement_a_3.fac,
         from_min=0.5,
         to_min=1.0,
@@ -62,11 +65,12 @@ def metal_brushed(
     # scaled by angle_range (which is stretch_factor remapped to [0, -2pi]).
     # The two noise vectors get different angles: grad_fac * range and fract(2*grad_fac) * range.
     # This creates coherent radial streaks. The original code used angle=0 for both (transpiler bug).
-    angle_scale = pf.nodes.func.float_curve(
+    angle_scale = pf.nodes.math.float_curve(
         value=stretch_factor,
         curve=np.array([[0.0, 0.0], [0.4, 0.8063], [1.0, 1.0]]),
+        factor=1.0,
     )
-    angle_range = pf.nodes.func.mix(a=0.0, b=-2.0 * np.pi, factor=angle_scale)
+    angle_range = pf.nodes.math.mix(a=0.0, b=-2.0 * np.pi, factor=angle_scale)
 
     angle_1 = pf.nodes.math.multiply(a=displacement_a_3.fac, b=angle_range)
     angle_2 = pf.nodes.math.multiply(
@@ -77,38 +81,44 @@ def metal_brushed(
     )
 
     a_vector_1 = pf.nodes.math.vector_rotate_axis_angle(
-        displacement_a_5, axis=(0, 0, 1), angle=angle_1
+        displacement_a_5,
+        axis=(0, 0, 1),
+        angle=angle_1,
+        center=(0, 0, 0),
     )
 
     displacement_a_scale = 1000.0
 
-    displacement_a_1 = pf.nodes.shader.noise(
+    displacement_a_1 = pf.nodes.texture.noise(
         vector=a_vector_1, scale=displacement_a_scale
     )
 
     displacement_a_vector = pf.nodes.math.vector_rotate_axis_angle(
-        displacement_a_5, axis=(0, 0, 1), angle=angle_2
+        displacement_a_5,
+        axis=(0, 0, 1),
+        angle=angle_2,
+        center=(0, 0, 0),
     )
 
-    displacement_a = pf.nodes.shader.noise(
+    displacement_a = pf.nodes.texture.noise(
         vector=displacement_a_vector, scale=displacement_a_scale
     )
 
-    displacement_height_1 = pf.nodes.func.mix(
+    displacement_height_1 = pf.nodes.math.mix(
         factor=displacement_height_factor,
         a=displacement_a.fac,
         b=displacement_a_1.fac,
     )
 
-    displacement_height = pf.nodes.func.mix(
+    displacement_height = pf.nodes.math.mix(
         factor=brush_type, a=displacement_a_4.fac, b=displacement_height_1
     )
 
-    surface_a = pf.nodes.func.map_range(
+    surface_a = pf.nodes.math.map_range(
         value=displacement_height, from_min=0.2, from_max=0.8
     )
 
-    surface_color = pf.nodes.func.mix_rgb(
+    surface_color = pf.nodes.color.mix_rgb(
         factor=color_variation,
         a=color,
         b=surface_a.astype(dtype=pf.Color),

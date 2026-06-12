@@ -20,7 +20,7 @@ def ceramic(
         coat_roughness=roughness,
     )
 
-    displacement_noise = pf.nodes.shader.noise(
+    displacement_noise = pf.nodes.texture.noise(
         vector=vector,
         scale=displacement_scale,
     )
@@ -72,7 +72,7 @@ def shader_vase_ceramic():
 
     base_color_value = pf.color.hsv_to_rgba((0.0, 0.0, 0.067))
 
-    surface_base_color = pf.nodes.func.constant(base_color_value)
+    surface_base_color = pf.nodes.math.constant(base_color_value)
     surface = pf.nodes.shader.principled_bsdf(
         base_color=surface_base_color,
         roughness=0.05,

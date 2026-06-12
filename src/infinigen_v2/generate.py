@@ -35,7 +35,7 @@ import procfunc.compute_graph as cg
 from procfunc.compute_graph.operators_info import OPERATORS_TO_FUNCTIONS
 from procfunc.nodes import NODE_OPERATOR_TABLE
 from procfunc.tracer import TraceLevel
-from procfunc.transpiler import codegen
+from procfunc import codegen
 
 from infinigen_v2.exporters.util.format import (
     ExportType,

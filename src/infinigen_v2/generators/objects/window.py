@@ -37,8 +37,8 @@ def line_seq(
     amount: t.SocketOrVal[float],
 ) -> pf.ProcNode[t.Instances]:
     curve_line_start_y = height * -0.5
-    curve_line_start = pf.nodes.func.combine_xyz(x=width * 0.5, y=curve_line_start_y)
-    curve_line_end = pf.nodes.func.combine_xyz(x=width * -0.5, y=curve_line_start_y)
+    curve_line_start = pf.nodes.math.combine_xyz(x=width * 0.5, y=curve_line_start_y)
+    curve_line_end = pf.nodes.math.combine_xyz(x=width * -0.5, y=curve_line_start_y)
     curve_line = pf.nodes.geo.curve_line(start=curve_line_start, end=curve_line_end)
 
     to_instance = pf.nodes.geo.geometry_to_instance(curve_line)
@@ -51,7 +51,7 @@ def line_seq(
 
     result_0_offset_y_1 = duplicate_elements.duplicate_index.astype(dtype=float) + 1.0
     result_0_offset_y_0 = height / (amount + 1.0)
-    result_0_offset = pf.nodes.func.combine_xyz(
+    result_0_offset = pf.nodes.math.combine_xyz(
         y=result_0_offset_y_1 * result_0_offset_y_0
     )
 
@@ -77,16 +77,16 @@ def curtain(
     curtain_frame_material: t.SocketOrVal[pf.Material],
     curtain_material: t.SocketOrVal[pf.Material],
 ) -> pf.ProcNode[pf.MeshObject]:
-    curve_line_start = pf.nodes.func.combine_xyz(l2)
-    curve_line_end = pf.nodes.func.combine_xyz(r2)
+    curve_line_start = pf.nodes.math.combine_xyz(l2)
+    curve_line_end = pf.nodes.math.combine_xyz(r2)
     curve_line = pf.nodes.geo.curve_line(start=curve_line_start, end=curve_line_end)
 
     resample_curve_count = pf.nodes.geo.resample_curve_count(
         curve=curve_line, count=200
     )
 
-    curve_line_1_start = pf.nodes.func.combine_xyz(l1)
-    curve_line_1_end = pf.nodes.func.combine_xyz(r1)
+    curve_line_1_start = pf.nodes.math.combine_xyz(l1)
+    curve_line_1_end = pf.nodes.math.combine_xyz(r1)
     curve_line_1 = pf.nodes.geo.curve_line(
         start=curve_line_1_start, end=curve_line_1_end
     )
@@ -104,7 +104,7 @@ def curtain(
     set_numerator = interval_number * 6.28
     set_a_value = spline_parameter.length * (set_numerator / width)
     set_a = pf.nodes.math.sin(set_a_value + 1.68)
-    set_position_offset = pf.nodes.func.combine_xyz(z=set_a * depth)
+    set_position_offset = pf.nodes.math.combine_xyz(z=set_a * depth)
     set_position = pf.nodes.geo.set_position(
         geometry=join,
         offset=set_position_offset,
@@ -125,8 +125,8 @@ def curtain(
 
     curve_x_1 = width * 0.5
     curve_x_0 = curve_x_1 * -1.0
-    curve_line_2_start = pf.nodes.func.combine_xyz(curve_x_0)
-    curve_line_2_end = pf.nodes.func.combine_xyz(curve_x_1)
+    curve_line_2_start = pf.nodes.math.combine_xyz(curve_x_0)
+    curve_line_2_end = pf.nodes.math.combine_xyz(curve_x_1)
     curve_line_2 = pf.nodes.geo.curve_line(
         start=curve_line_2_start, end=curve_line_2_end
     )
@@ -136,27 +136,27 @@ def curtain(
     )
 
     set_y = height * 0.47
-    set_position_1_offset = pf.nodes.func.combine_xyz(y=set_y + radius)
+    set_position_1_offset = pf.nodes.math.combine_xyz(y=set_y + radius)
     set_position_1 = pf.nodes.geo.set_position(
         geometry=curve_to_1, offset=set_position_1_offset
     )
 
-    boolean = pf.nodes.geo.mesh_boolean(mesh_1=set_material, mesh_2=set_position_1)
+    boolean = pf.nodes.geo.mesh_boolean(a=set_material, b=set_position_1)
 
     icosphere_radius = radius * 2.0
     icosphere = pf.nodes.geo.mesh_icosphere(radius=icosphere_radius, subdivisions=4)
 
-    sample_curve = pf.nodes.geo.sample_curve(curves=curve_line_2, value=0.0)
+    sample_curve = pf.nodes.geo.sample_curve(curves=curve_line_2, value=0.0, factor=0.0)
 
     set_position_2 = pf.nodes.geo.set_position(
         geometry=icosphere.mesh, offset=sample_curve.position
     )
 
-    curve_line_3_end = pf.nodes.func.combine_xyz(x=curve_x_0, z=frame_depth)
+    curve_line_3_end = pf.nodes.math.combine_xyz(x=curve_x_0, z=frame_depth)
     curve_line_3 = pf.nodes.geo.curve_line(
         start=curve_line_2_start, end=curve_line_3_end
     )
-    curve_line_4_end = pf.nodes.func.combine_xyz(x=curve_x_1, z=frame_depth)
+    curve_line_4_end = pf.nodes.math.combine_xyz(x=curve_x_1, z=frame_depth)
     curve_line_4 = pf.nodes.geo.curve_line(start=curve_line_2_end, end=curve_line_4_end)
 
     join_1 = pf.nodes.geo.join_geometry([curve_line_3, curve_line_4, curve_line_2])
@@ -178,7 +178,7 @@ def curtain(
 
     join_2 = pf.nodes.geo.join_geometry([set_position_2, curve_to_2, set_position_3])
 
-    set_position_4_offset = pf.nodes.func.combine_xyz(y=set_y)
+    set_position_4_offset = pf.nodes.math.combine_xyz(y=set_y)
     set_position_4 = pf.nodes.geo.set_position(
         geometry=join_2, offset=set_position_4_offset
     )
@@ -337,22 +337,23 @@ def window_shutter(
     shutter_true_interval = cube_size_y_a / set_0_a
 
     cube_size_y = shutter_true_interval * 2.0
-    cube_size = pf.nodes.func.combine_xyz(
+    cube_size = pf.nodes.math.combine_xyz(
         x=panel_width,
         y=cube_size_y_a - cube_size_y,
         z=panel_thickness,
     )
     cube = pf.nodes.geo.mesh_cube(cube_size)
 
-    curve_line_end = pf.nodes.func.combine_xyz(y=shutter_width * 0.5)
-    curve_line = pf.nodes.geo.curve_line(end=curve_line_end)
+    curve_line_end = pf.nodes.math.combine_xyz(y=shutter_width * 0.5)
+    curve_line = pf.nodes.geo.curve_line(end=curve_line_end, start=(0, 0, 0))
 
     to_instance = pf.nodes.geo.geometry_to_instance(curve_line)
 
-    rotate_instances_rotation = pf.nodes.func.combine_xyz(shutter_rotation)
+    rotate_instances_rotation = pf.nodes.math.combine_xyz(shutter_rotation)
     rotate_instances = pf.nodes.geo.rotate_instances(
         instances=to_instance,
         rotation=rotate_instances_rotation.astype(dtype=pf.Euler),
+        pivot_point=(0, 0, 0),
     )
 
     realize_instances_1 = pf.nodes.geo.realize_instances(rotate_instances)
@@ -365,7 +366,7 @@ def window_shutter(
         geometry=cube.mesh, offset=sample_curve.position
     )
 
-    cube_1_size = pf.nodes.func.combine_xyz(
+    cube_1_size = pf.nodes.math.combine_xyz(
         x=width - frame_width, y=shutter_width, z=shutter_thickness
     )
     cube_1 = pf.nodes.geo.mesh_cube(cube_1_size)
@@ -384,16 +385,17 @@ def window_shutter(
         duplicate_elements.duplicate_index.astype(dtype=float) * shutter_true_interval
     )
     set_y_0 = (cube_size_y_a * -0.5) + shutter_true_interval
-    set_position_1_offset = pf.nodes.func.combine_xyz(y=set_y_1 + set_y_0)
+    set_position_1_offset = pf.nodes.math.combine_xyz(y=set_y_1 + set_y_0)
     set_position_1 = pf.nodes.geo.set_position(
         geometry=duplicate_elements.geometry,
         offset=set_position_1_offset,
     )
 
-    rotate = pf.nodes.func.combine_xyz(shutter_rotation)
+    rotate = pf.nodes.math.combine_xyz(shutter_rotation)
     rotate_instances_1 = pf.nodes.geo.rotate_instances(
         instances=set_position_1,
         rotation=rotate.astype(dtype=pf.Euler),
+        pivot_point=(0, 0, 0),
     )
 
     curve_quadrilateral = pf.nodes.geo.curve_quadrilateral(width=width, height=height)
@@ -437,7 +439,10 @@ def window_panel(
     )
 
     transform = pf.nodes.geo.transform(
-        geometry=line_seq_result, rotation=(0.0, 0.0, 1.5708)
+        geometry=line_seq_result,
+        rotation=(0.0, 0.0, 1.5708),
+        translation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
 
     curve_quadrilateral_1_height = panel_thickness - 0.001
@@ -567,13 +572,15 @@ def window_geometry(
     rotate_a_0 = height * -0.5
 
     transform_translation_y = height / panel_h_amount.astype(dtype=float) * 0.5
-    transform_translation = pf.nodes.func.combine_xyz(
+    transform_translation = pf.nodes.math.combine_xyz(
         x=rotate_a_1 + transform_translation_x,
         y=rotate_a_0 + transform_translation_y,
     )
     transform = pf.nodes.geo.transform(
         geometry=transform_geometry,
         translation=transform_translation,
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
 
     to_instance = pf.nodes.geo.geometry_to_instance(transform)
@@ -601,7 +608,7 @@ def window_geometry(
         * rotate_y_a
     )
     set_a = pf.nodes.math.power(base=-1.0, exponent=set_x_exponent)
-    set_position_offset = pf.nodes.func.combine_xyz(
+    set_position_offset = pf.nodes.math.combine_xyz(
         x=set_x_exponent * set_b_0,
         y=set_position_offset_y,
         z=set_a * oe_offset,
@@ -612,10 +619,10 @@ def window_geometry(
     )
 
     rotate_b_2 = pf.nodes.math.power(base=-1.0, exponent=set_x_exponent)
-    rotate_instances_rotation = pf.nodes.func.combine_xyz(y=open_v_angle * rotate_b_2)
+    rotate_instances_rotation = pf.nodes.math.combine_xyz(y=open_v_angle * rotate_b_2)
     rotate_b_1 = rotate_b_a * (set_x_exponent % 2.0)
     rotate_b_0 = rotate_y_a_a * (set_position_offset_y % 2.0)
-    rotate_instances_pivot_point = pf.nodes.func.combine_xyz(
+    rotate_instances_pivot_point = pf.nodes.math.combine_xyz(
         x=rotate_a_1 + rotate_b_1, y=rotate_a_0 + rotate_b_0
     )
     rotate_instances = pf.nodes.geo.rotate_instances(
@@ -623,8 +630,8 @@ def window_geometry(
         rotation=rotate_instances_rotation.astype(dtype=pf.Euler),
         pivot_point=rotate_instances_pivot_point,
     )
-    rotate = pf.nodes.func.combine_xyz(open_h_angle * 0.5)
-    rotate_instances_1_pivot_point = pf.nodes.func.combine_xyz(y=rotate_y_a * -1.0)
+    rotate = pf.nodes.math.combine_xyz(open_h_angle * 0.5)
+    rotate_instances_1_pivot_point = pf.nodes.math.combine_xyz(y=rotate_y_a * -1.0)
     rotate_instances_1 = pf.nodes.geo.rotate_instances(
         instances=rotate_instances,
         rotation=rotate.astype(dtype=pf.Euler),
@@ -632,7 +639,7 @@ def window_geometry(
     )
 
     set_x_0 = pf.nodes.math.power(base=-1.0, exponent=set_x_exponent)
-    set_position_1_offset = pf.nodes.func.combine_xyz(set_x_0 * open_offset)
+    set_position_1_offset = pf.nodes.math.combine_xyz(set_x_0 * open_offset)
     set_position_1 = pf.nodes.geo.set_position(
         geometry=rotate_instances_1, offset=set_position_1_offset
     )
@@ -667,12 +674,12 @@ def glass_pane(
     material: t.SocketOrVal[pf.Material],
 ) -> pf.ProcNode[pf.MeshObject]:
     curve = pf.nodes.geo.curve_line(
-        start=pf.nodes.func.combine_xyz(y=height * -0.5),
-        end=pf.nodes.func.combine_xyz(y=height * 0.5),
+        start=pf.nodes.math.combine_xyz(y=height * -0.5),
+        end=pf.nodes.math.combine_xyz(y=height * 0.5),
     )
     profile = pf.nodes.geo.curve_line(
-        start=pf.nodes.func.combine_xyz(x=width * -0.5),
-        end=pf.nodes.func.combine_xyz(x=width * 0.5),
+        start=pf.nodes.math.combine_xyz(x=width * -0.5),
+        end=pf.nodes.math.combine_xyz(x=width * 0.5),
     )
     mesh = curve_to_mesh_with_uv(curve=curve, profile=profile)
     return pf.nodes.geo.set_material(

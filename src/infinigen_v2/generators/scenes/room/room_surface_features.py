@@ -42,7 +42,9 @@ class WallFeatureResult(NamedTuple):
 
 def extrude_for_thickness(obj: pf.MeshObject, thickness: float) -> pf.MeshObject:
     geo = pf.nodes.geo.object_info(obj).geometry
-    geo = pf.nodes.geo.transform(geo, translation=(0, 0, thickness * 0.5))
+    geo = pf.nodes.geo.transform(
+        geo, translation=(0, 0, thickness * 0.5), rotation=(0, 0, 0), scale=(1, 1, 1)
+    )
 
     # scale to give margin above/below the wall to avoid light leakage
     extruded = pf.nodes.geo.extrude_mesh(geo, offset_scale=-thickness, individual=False)
@@ -534,6 +536,8 @@ def skirting_on_walls_distribution(
     ceiling_curve_node = pf.nodes.geo.transform(
         geometry=floor_curve_node,
         translation=(0, 0, room_height),
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
     ceiling_curve_node = pf.nodes.geo.reverse_curve(ceiling_curve_node)
     ceiling_curve_node = pf.nodes.geo.set_curve_tilt(ceiling_curve_node, tilt=np.pi)

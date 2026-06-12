@@ -41,17 +41,19 @@ def table_top(
     thickness: t.SocketOrVal[float],
 ) -> pf.ProcNode:
     tagged_cube_size_z = thickness + 0.0
-    tagged_cube_size = pf.nodes.func.combine_xyz(x=width, y=depth, z=tagged_cube_size_z)
+    tagged_cube_size = pf.nodes.math.combine_xyz(x=width, y=depth, z=tagged_cube_size_z)
     tagged_cube_result = tagged_cube(size=tagged_cube_size)
 
     result_0_translation_z_0 = tagged_cube_size_z * 0.5
-    result_0_translation = pf.nodes.func.combine_xyz(
+    result_0_translation = pf.nodes.math.combine_xyz(
         z=height - result_0_translation_z_0
     )
 
     transform = pf.nodes.geo.transform(
         geometry=tagged_cube_result,
         translation=result_0_translation,
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
     return transform
 
@@ -76,37 +78,49 @@ def table_legs(
     transform_2_translation_y = (0.5 * depth) - transform_b
     transform_translation_y = transform_2_translation_y * -1.0
     transform_translation_z = cylinder_depth * 0.5
-    transform_translation = pf.nodes.func.combine_xyz(
+    transform_translation = pf.nodes.math.combine_xyz(
         x=transform_translation_x,
         y=transform_translation_y,
         z=transform_translation_z,
     )
     transform = pf.nodes.geo.transform(
-        geometry=cylinder.mesh, translation=transform_translation
+        geometry=cylinder.mesh,
+        translation=transform_translation,
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
-    transform_1_translation = pf.nodes.func.combine_xyz(
+    transform_1_translation = pf.nodes.math.combine_xyz(
         x=transform_1_translation_x,
         y=transform_translation_y,
         z=transform_translation_z,
     )
     transform_1 = pf.nodes.geo.transform(
-        geometry=cylinder.mesh, translation=transform_1_translation
+        geometry=cylinder.mesh,
+        translation=transform_1_translation,
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
-    transform_2_translation = pf.nodes.func.combine_xyz(
+    transform_2_translation = pf.nodes.math.combine_xyz(
         x=transform_translation_x,
         y=transform_2_translation_y,
         z=transform_translation_z,
     )
     transform_2 = pf.nodes.geo.transform(
-        geometry=cylinder.mesh, translation=transform_2_translation
+        geometry=cylinder.mesh,
+        translation=transform_2_translation,
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
-    transform_3_translation = pf.nodes.func.combine_xyz(
+    transform_3_translation = pf.nodes.math.combine_xyz(
         x=transform_1_translation_x,
         y=transform_2_translation_y,
         z=transform_translation_z,
     )
     transform_3 = pf.nodes.geo.transform(
-        geometry=cylinder.mesh, translation=transform_3_translation
+        geometry=cylinder.mesh,
+        translation=transform_3_translation,
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
 
     join = pf.nodes.geo.join_geometry(
@@ -144,7 +158,12 @@ def desk_geometry(
     joined = pf.nodes.geo.join_geometry([top_with_mat, legs_with_mat])
     realized = pf.nodes.geo.realize_instances(joined)
     triangulated = pf.nodes.geo.triangulate(realized)
-    rotated = pf.nodes.geo.transform(geometry=triangulated, rotation=(0.0, 0.0, 1.5708))
+    rotated = pf.nodes.geo.transform(
+        geometry=triangulated,
+        rotation=(0.0, 0.0, 1.5708),
+        translation=(0, 0, 0),
+        scale=(1, 1, 1),
+    )
     return rotated
 
 

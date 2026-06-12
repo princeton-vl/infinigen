@@ -7,20 +7,22 @@ def instance(
     child: pf.ProcNode[pf.Collection],
     seed: pf.ProcNode[int] = 0,
     density: pf.ProcNode[float] = 2.0,
+    distance_min: pf.ProcNode[float] = 0.0,
     offset: pf.ProcNode[pf.Vector] = (0, 0, 0.002),
 ) -> pf.ProcNode:
     input_normal = pf.nodes.geo.input_normal()
 
     instance_0_selection = pf.nodes.func.greater_than(a=input_normal.z, b=0.9)
 
-    distribute_points_on_faces = pf.nodes.geo.distribute_points_on_faces(
+    distribute_points_on_faces = pf.nodes.geo.distribute_points_on_faces_poisson(
         mesh=parent,
         selection=instance_0_selection,
         seed=seed,
-        density=density,
+        density_factor=density,
+        distance_min=distance_min,
     )
     instance_0_z = pf.nodes.func.random_value(max=6.283185)
-    instance_1 = pf.nodes.func.combine_xyz(z=instance_0_z)
+    instance_1 = pf.nodes.math.combine_xyz(z=instance_0_z)
 
     child_options = pf.nodes.geo.collection_info(child, separate_children=True)
 
@@ -31,7 +33,9 @@ def instance(
         rotation=instance_1.astype(dtype=pf.Euler),
     )
 
-    lifted = pf.nodes.geo.transform(instance_on_points, translation=offset)
+    lifted = pf.nodes.geo.transform(
+        instance_on_points, translation=offset, rotation=(0, 0, 0), scale=(1, 1, 1)
+    )
 
     return lifted
 
@@ -41,6 +45,7 @@ def instanced_objects(
     parent: pf.MeshObject,
     child: pf.Collection,
     density: float = 2.0,
+    distance_min: float = 0.0,
     offset: tuple[float, float, float] = (0, 0, 0.002),
 ) -> list[pf.MeshObject]:
     instanced_geometry = instance(
@@ -48,6 +53,7 @@ def instanced_objects(
         child=child,
         seed=int(pf.random.randint(rng, 0, 2**31 - 1)),
         density=density,
+        distance_min=distance_min,
         offset=offset,
     )
     aliases = pf.nodes.to_aliases(instanced_geometry)

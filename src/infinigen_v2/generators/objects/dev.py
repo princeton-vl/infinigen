@@ -12,14 +12,15 @@ def banana() -> pf.MeshObject:
     )
     curve = pf.nodes.geo.resample_curve_count(curve_curve)
     radius_value = pf.nodes.geo.spline_parameter()
-    radius = pf.nodes.func.float_curve(
+    radius = pf.nodes.math.float_curve(
         value=radius_value.factor,
         curve=np.array([[0.0, 0.0], [0.5114, 0.975], [0.9886, 0.0]]),
+        factor=1.0,
     )
     mesh_curve = pf.nodes.geo.set_curve_radius(curve=curve, radius=radius * 0.015)
     geometry = pf.nodes.geo.curve_circle(20)
-    offset_value = pf.nodes.shader.noise(scale=100.0)
-    offset = pf.nodes.func.map_range(
+    offset_value = pf.nodes.texture.noise(scale=100.0)
+    offset = pf.nodes.math.map_range(
         value=offset_value.color.astype(dtype=pf.Vector),
         from_min=(0.0, 0.0, 0.0),
         from_max=(1.0, 1.0, 1.0),

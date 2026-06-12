@@ -80,7 +80,7 @@ def plastic_opaque(
         distortion=0.0,
     )
 
-    noise = pf.nodes.shader.noise(
+    noise = pf.nodes.texture.noise(
         vector=space_warp_result.vector,
         scale=1.0 / noise_size,
         detail=noise_detail,
@@ -88,11 +88,11 @@ def plastic_opaque(
         w=seed + 50.0,
     )
 
-    fac = pf.nodes.func.map_range(value=noise.fac, from_max=0.8, from_min=0.2)
+    fac = pf.nodes.math.map_range(value=noise.fac, from_max=0.8, from_min=0.2)
 
-    surface_base_color = pf.nodes.func.mix_rgb(factor=fac, a=color_1, b=color_2)
-    surface_roughness = pf.nodes.func.mix(a=roughness_min, b=roughness_max, factor=fac)
-    surface_specular = pf.nodes.func.mix(a=specular_max, b=specular_min, factor=fac)
+    surface_base_color = pf.nodes.color.mix_rgb(factor=fac, a=color_1, b=color_2)
+    surface_roughness = pf.nodes.math.mix(a=roughness_min, b=roughness_max, factor=fac)
+    surface_specular = pf.nodes.math.mix(a=specular_max, b=specular_min, factor=fac)
 
     surface = pf.nodes.shader.principled_bsdf(
         base_color=surface_base_color,
@@ -101,12 +101,12 @@ def plastic_opaque(
         specular_ior_level=surface_specular,
     )
 
-    voronoi_1 = pf.nodes.shader.voronoi_n_spheres_distance(
+    voronoi_1 = pf.nodes.texture.voronoi_n_spheres_distance(
         vector=scaled_vector,
         scale=2.0,
         randomness=0.0,
     )
-    edge_mask = pf.nodes.func.map_range(
+    edge_mask = pf.nodes.math.map_range(
         value=voronoi_1,
         from_min=0.0,
         from_max=0.03,
@@ -114,21 +114,21 @@ def plastic_opaque(
         to_max=0.0,
     )
 
-    noise_2 = pf.nodes.shader.noise(
+    noise_2 = pf.nodes.texture.noise(
         vector=scaled_vector,
         w=seed,
         scale=2.5,
         detail=6.0,
         noise_dimensions="4D",
     )
-    edge_modulation = pf.nodes.func.map_range(
+    edge_modulation = pf.nodes.math.map_range(
         value=noise_2.fac,
         from_min=0.55,
         from_max=0.57,
     )
     displacement_1 = edge_mask * edge_modulation * -0.5
 
-    noise_3 = pf.nodes.shader.noise(
+    noise_3 = pf.nodes.texture.noise(
         vector=scaled_vector,
         w=seed,
         scale=10.0,
@@ -136,31 +136,31 @@ def plastic_opaque(
         distortion=0.1,
         noise_dimensions="4D",
     )
-    disp_2 = pf.nodes.func.map_range(
+    disp_2 = pf.nodes.math.map_range(
         value=noise_3.fac,
         from_min=0.63,
         from_max=0.68,
     )
     displacement_2 = disp_2 * -1.0
 
-    noise_4 = pf.nodes.shader.noise(
+    noise_4 = pf.nodes.texture.noise(
         vector=scaled_vector,
         w=seed,
         scale=200.0,
         noise_dimensions="4D",
     )
-    voronoi_2 = pf.nodes.shader.voronoi(
+    voronoi_2 = pf.nodes.texture.voronoi(
         vector=scaled_vector,
         scale=200.0,
     )
-    fine_detail = pf.nodes.func.mix(
+    fine_detail = pf.nodes.math.mix(
         factor=0.4,
         a=noise_4.fac,
         b=voronoi_2.distance,
     )
     displacement_3 = fine_detail * 0.1
 
-    noise_5 = pf.nodes.shader.noise(
+    noise_5 = pf.nodes.texture.noise(
         vector=scaled_vector,
         w=seed,
         scale=4.0,
@@ -170,7 +170,7 @@ def plastic_opaque(
     )
     displacement_4 = (noise_5.fac - 0.5) * 3.0
 
-    noise_6 = pf.nodes.shader.noise(
+    noise_6 = pf.nodes.texture.noise(
         vector=scaled_vector,
         w=seed,
         scale=40.0,
@@ -178,28 +178,28 @@ def plastic_opaque(
         distortion=0.1,
         noise_dimensions="4D",
     )
-    disp_5_mask = pf.nodes.func.map_range(
+    disp_5_mask = pf.nodes.math.map_range(
         value=noise_6.fac,
         from_min=0.65,
         from_max=0.64,
         to_min=1.0,
         to_max=0.0,
     )
-    noise_7 = pf.nodes.shader.noise(
+    noise_7 = pf.nodes.texture.noise(
         vector=scaled_vector,
         w=seed,
         scale=12.0,
         detail=6.0,
         noise_dimensions="4D",
     )
-    disp_5_mod = pf.nodes.func.map_range(
+    disp_5_mod = pf.nodes.math.map_range(
         value=noise_7.fac,
         from_min=0.55,
         from_max=0.57,
     )
     displacement_5 = (disp_5_mask * disp_5_mod - 0.5) * -0.5
 
-    noise_8 = pf.nodes.shader.noise(
+    noise_8 = pf.nodes.texture.noise(
         vector=scaled_vector,
         w=seed,
         scale=30.0,
@@ -209,7 +209,7 @@ def plastic_opaque(
     )
     displacement_6 = (noise_8.fac - 0.5) * 1.0
 
-    noise_9 = pf.nodes.shader.noise(
+    noise_9 = pf.nodes.texture.noise(
         vector=scaled_vector,
         w=seed,
         scale=20.0,
@@ -217,7 +217,7 @@ def plastic_opaque(
         roughness=0.45,
         noise_dimensions="4D",
     )
-    disp_7 = pf.nodes.func.map_range(
+    disp_7 = pf.nodes.math.map_range(
         value=noise_9.fac,
         from_min=0.55,
         from_max=0.51,
@@ -285,12 +285,12 @@ def plastic_opaque_distribution(
     specular_min = specular * (specular_variation * 0.25 + 0.75)
 
     color_1_value = pf.random.uniform(rng, 0.5, 1.0)
-    color_1 = pf.nodes.shader.hue_saturation(
+    color_1 = pf.nodes.color.hue_saturation(
         color=color,
         value=color_1_value,
     )
     color_2_value = pf.random.uniform(rng, 0.9, 1.3)
-    color_2 = pf.nodes.shader.hue_saturation(
+    color_2 = pf.nodes.color.hue_saturation(
         color=color,
         value=color_2_value,
     )
@@ -326,7 +326,7 @@ def bumpy_rubber(
 ) -> pf.Material:
     scaled_vector = pf.nodes.math.vector_scale(vector=vector, scale=scale)
 
-    noise_color = pf.nodes.shader.noise(
+    noise_color = pf.nodes.texture.noise(
         vector=scaled_vector,
         w=seed,
         scale=18.0,
@@ -334,14 +334,14 @@ def bumpy_rubber(
         roughness=0.45,
         noise_dimensions="4D",
     )
-    color_variation = pf.nodes.func.map_range(
+    color_variation = pf.nodes.math.map_range(
         value=noise_color.fac,
         from_min=0.0,
         from_max=1.0,
         to_min=0.6,
         to_max=1.4,
     )
-    varied_color = pf.nodes.shader.hue_saturation(
+    varied_color = pf.nodes.color.hue_saturation(
         color=base_color,
         value=color_variation,
     )
@@ -352,12 +352,12 @@ def bumpy_rubber(
         roughness=roughness,
     )
 
-    voronoi_1 = pf.nodes.shader.voronoi_n_spheres_distance(
+    voronoi_1 = pf.nodes.texture.voronoi_n_spheres_distance(
         vector=scaled_vector,
         scale=2.0,
         randomness=0.0,
     )
-    edge_mask = pf.nodes.func.map_range(
+    edge_mask = pf.nodes.math.map_range(
         value=voronoi_1,
         from_min=0.0,
         from_max=0.03,
@@ -365,14 +365,14 @@ def bumpy_rubber(
         to_max=0.0,
     )
 
-    noise_2 = pf.nodes.shader.noise(
+    noise_2 = pf.nodes.texture.noise(
         vector=scaled_vector,
         w=seed,
         scale=2.5,
         detail=6.0,
         noise_dimensions="4D",
     )
-    edge_modulation = pf.nodes.func.map_range(
+    edge_modulation = pf.nodes.math.map_range(
         value=noise_2.fac,
         from_min=0.55,
         from_max=0.57,
@@ -380,7 +380,7 @@ def bumpy_rubber(
 
     displacement_1 = edge_mask * edge_modulation * -0.5
 
-    noise_3 = pf.nodes.shader.noise(
+    noise_3 = pf.nodes.texture.noise(
         vector=scaled_vector,
         w=seed,
         scale=10.0,
@@ -388,31 +388,31 @@ def bumpy_rubber(
         distortion=0.1,
         noise_dimensions="4D",
     )
-    disp_2 = pf.nodes.func.map_range(
+    disp_2 = pf.nodes.math.map_range(
         value=noise_3.fac,
         from_min=0.63,
         from_max=0.68,
     )
     displacement_2 = disp_2 * -1.0
 
-    noise_4 = pf.nodes.shader.noise(
+    noise_4 = pf.nodes.texture.noise(
         vector=scaled_vector,
         w=seed,
         scale=200.0,
         noise_dimensions="4D",
     )
-    voronoi_2 = pf.nodes.shader.voronoi(
+    voronoi_2 = pf.nodes.texture.voronoi(
         vector=scaled_vector,
         scale=200.0,
     )
-    fine_detail = pf.nodes.func.mix(
+    fine_detail = pf.nodes.math.mix(
         factor=0.4,
         a=noise_4.fac,
         b=voronoi_2.distance,
     )
     displacement_3 = fine_detail * 0.1
 
-    noise_5 = pf.nodes.shader.noise(
+    noise_5 = pf.nodes.texture.noise(
         vector=scaled_vector,
         w=seed,
         scale=4.0,
@@ -422,7 +422,7 @@ def bumpy_rubber(
     )
     displacement_4 = (noise_5.fac - 0.5) * 3.0
 
-    noise_6 = pf.nodes.shader.noise(
+    noise_6 = pf.nodes.texture.noise(
         vector=scaled_vector,
         w=seed,
         scale=40.0,
@@ -430,28 +430,28 @@ def bumpy_rubber(
         distortion=0.1,
         noise_dimensions="4D",
     )
-    disp_5_mask = pf.nodes.func.map_range(
+    disp_5_mask = pf.nodes.math.map_range(
         value=noise_6.fac,
         from_min=0.65,
         from_max=0.64,
         to_min=1.0,
         to_max=0.0,
     )
-    noise_7 = pf.nodes.shader.noise(
+    noise_7 = pf.nodes.texture.noise(
         vector=scaled_vector,
         w=seed,
         scale=12.0,
         detail=6.0,
         noise_dimensions="4D",
     )
-    disp_5_mod = pf.nodes.func.map_range(
+    disp_5_mod = pf.nodes.math.map_range(
         value=noise_7.fac,
         from_min=0.55,
         from_max=0.57,
     )
     displacement_5 = (disp_5_mask * disp_5_mod - 0.5) * -0.5
 
-    noise_8 = pf.nodes.shader.noise(
+    noise_8 = pf.nodes.texture.noise(
         vector=scaled_vector,
         w=seed,
         scale=30.0,
@@ -461,7 +461,7 @@ def bumpy_rubber(
     )
     displacement_6 = (noise_8.fac - 0.5) * 1.0
 
-    noise_9 = pf.nodes.shader.noise(
+    noise_9 = pf.nodes.texture.noise(
         vector=scaled_vector,
         w=seed,
         scale=20.0,
@@ -469,7 +469,7 @@ def bumpy_rubber(
         roughness=0.45,
         noise_dimensions="4D",
     )
-    disp_7 = pf.nodes.func.map_range(
+    disp_7 = pf.nodes.math.map_range(
         value=noise_9.fac,
         from_min=0.55,
         from_max=0.51,
@@ -516,7 +516,7 @@ def _bumpy_rubber_distribution(
         h_offset = pf.random.uniform(rng, -0.05, 0.05)
         s_offset = pf.random.uniform(rng, -0.1, 0.1)
         v_offset = pf.random.uniform(rng, -0.15, 0.15)
-        base_color = pf.nodes.shader.hue_saturation(
+        base_color = pf.nodes.color.hue_saturation(
             color=base_color,
             hue=h_offset + 0.5,
             saturation=s_offset + 1.0,
@@ -571,7 +571,7 @@ def _plastic(
         distortion=0.0,
     )
 
-    noise = pf.nodes.shader.noise(
+    noise = pf.nodes.texture.noise(
         vector=space_warp_result.vector,
         scale=1.0 / noise_size,
         detail=noise_detail,
@@ -579,15 +579,15 @@ def _plastic(
         w=noise_seed + 50.0,
     )
 
-    fac = pf.nodes.func.map_range(value=noise.fac, from_max=0.8, from_min=0.2)
+    fac = pf.nodes.math.map_range(value=noise.fac, from_max=0.8, from_min=0.2)
 
-    surface_base_color = pf.nodes.func.mix_rgb(
+    surface_base_color = pf.nodes.color.mix_rgb(
         factor=fac, a=surface_color_1, b=surface_color_2
     )
-    surface_roughness = pf.nodes.func.mix(
+    surface_roughness = pf.nodes.math.mix(
         a=surface_min_roughness, b=surface_max_roughness, factor=fac
     )
-    surface_specular_ior_level = pf.nodes.func.mix(
+    surface_specular_ior_level = pf.nodes.math.mix(
         a=surface_max_specular, b=surface_min_specular, factor=fac
     )
 
@@ -678,7 +678,7 @@ def _plastic_black_rubberized_distribution(
             h_offset = pf.random.uniform(rng, -0.02, 0.02)
             s_offset = pf.random.uniform(rng, -0.03, 0.03)
             v_offset = pf.random.uniform(rng, -0.05, 0.05)
-            color_1 = pf.nodes.shader.hue_saturation(
+            color_1 = pf.nodes.color.hue_saturation(
                 color=color_1,
                 hue=h_offset + 0.5,
                 saturation=s_offset + 1.0,
@@ -691,7 +691,7 @@ def _plastic_black_rubberized_distribution(
             h_offset = pf.random.uniform(rng, -0.02, 0.02)
             s_offset = pf.random.uniform(rng, -0.03, 0.03)
             v_offset = pf.random.uniform(rng, -0.05, 0.05)
-            color_2 = pf.nodes.shader.hue_saturation(
+            color_2 = pf.nodes.color.hue_saturation(
                 color=color_2,
                 hue=h_offset + 0.5,
                 saturation=s_offset + 1.0,
@@ -784,7 +784,7 @@ def _plastic_black_translucent_distribution(
         h_offset = pf.random.uniform(rng, -0.03, 0.03)
         s_offset = pf.random.uniform(rng, -0.05, 0.05)
         v_offset = pf.random.uniform(rng, -0.05, 0.05)
-        color = pf.nodes.shader.hue_saturation(
+        color = pf.nodes.color.hue_saturation(
             color=color,
             hue=h_offset + 0.5,
             saturation=s_offset + 1.0,
@@ -866,7 +866,7 @@ def _plastic_soft_touch_distribution(
         h_offset = pf.random.uniform(rng, -0.05, 0.05)
         s_offset = pf.random.uniform(rng, -0.1, 0.1)
         v_offset = pf.random.uniform(rng, -0.15, 0.15)
-        color = pf.nodes.shader.hue_saturation(
+        color = pf.nodes.color.hue_saturation(
             color=color,
             hue=h_offset + 0.5,
             saturation=s_offset + 1.0,
@@ -951,7 +951,7 @@ def _plastic_sandblasted_distribution(
         h_offset = pf.random.uniform(rng, -0.05, 0.05)
         s_offset = pf.random.uniform(rng, -0.1, 0.1)
         v_offset = pf.random.uniform(rng, -0.15, 0.15)
-        color = pf.nodes.shader.hue_saturation(
+        color = pf.nodes.color.hue_saturation(
             color=color,
             hue=h_offset + 0.5,
             saturation=s_offset + 1.0,
@@ -1038,7 +1038,7 @@ def _plastic_high_gloss_distribution(
         h_offset = pf.random.uniform(rng, -0.05, 0.05)
         s_offset = pf.random.uniform(rng, -0.1, 0.1)
         v_offset = pf.random.uniform(rng, -0.15, 0.15)
-        color = pf.nodes.shader.hue_saturation(
+        color = pf.nodes.color.hue_saturation(
             color=color,
             hue=h_offset + 0.5,
             saturation=s_offset + 1.0,
@@ -1124,7 +1124,7 @@ def _plastic_translucent_bumps_distribution(
         h_offset = pf.random.uniform(rng, -0.05, 0.05)
         s_offset = pf.random.uniform(rng, -0.1, 0.1)
         v_offset = pf.random.uniform(rng, -0.15, 0.15)
-        color = pf.nodes.shader.hue_saturation(
+        color = pf.nodes.color.hue_saturation(
             color=color,
             hue=h_offset + 0.5,
             saturation=s_offset + 1.0,
@@ -1212,7 +1212,7 @@ def _plastic_white_textured_distribution(
         h_offset = pf.random.uniform(rng, -0.05, 0.05)
         s_offset = pf.random.uniform(rng, -0.1, 0.1)
         v_offset = pf.random.uniform(rng, -0.1, 0.1)
-        color = pf.nodes.shader.hue_saturation(
+        color = pf.nodes.color.hue_saturation(
             color=color,
             hue=h_offset + 0.5,
             saturation=s_offset + 1.0,

@@ -25,7 +25,7 @@ def metal_hammered(
         specular_ior_level=0.0,
     )
 
-    noise = pf.nodes.shader.noise(
+    noise = pf.nodes.texture.noise(
         vector=vector,
         w=seed,
         scale=scale * 20.0,
@@ -34,13 +34,13 @@ def metal_hammered(
         distortion=0.2,
         noise_dimensions="4D",
     )
-    perturbed_vector = pf.nodes.func.mix_rgb(
+    perturbed_vector = pf.nodes.color.mix_rgb(
         factor=0.01,
         a=vector.astype(dtype=pf.Color),
         b=noise.color,
         clamp_factor=False,
     )
-    voronoi = pf.nodes.shader.voronoi_smooth_f1(
+    voronoi = pf.nodes.texture.voronoi_smooth_f1(
         vector=perturbed_vector.astype(dtype=pf.Vector),
         w=seed,
         scale=scale * 300.0,

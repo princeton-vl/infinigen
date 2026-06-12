@@ -51,16 +51,16 @@ def small_gravel(
         phase=shape_w,
     )
 
-    voronoi = pf.nodes.shader.voronoi(
+    voronoi = pf.nodes.texture.voronoi(
         normalize=True,
         vector=coord_warp_result.vector,
         scale=1.0 / voronoi_scale_denominator,
     )
 
-    color_from_min = pf.nodes.func.mix(
+    color_from_min = pf.nodes.math.mix(
         factor=shape_bevel, a=shape_spread - 0.0001, b=0.0
     )
-    color_factor_b_a = pf.nodes.func.map_range(
+    color_factor_b_a = pf.nodes.math.map_range(
         value=voronoi.distance,
         from_min=color_from_min,
         from_max=shape_spread,
@@ -70,13 +70,13 @@ def small_gravel(
     color_factor_b = color_factor_b_a > 0.0
     color_factor = mask * color_factor_b
     color_x = surface_hue_variation / 2.0
-    color_b_hue_to_min = pf.nodes.func.combine_xyz(
+    color_b_hue_to_min = pf.nodes.math.combine_xyz(
         x=0.5 - color_x,
         y=1.0 - surface_sat_variation,
         z=1.0 - surface_value_variation,
     )
-    color_b_hue_to_max = pf.nodes.func.combine_xyz(x=0.5 + color_x, y=1.0, z=1.0)
-    color_b_hue = pf.nodes.func.map_range(
+    color_b_hue_to_max = pf.nodes.math.combine_xyz(x=0.5 + color_x, y=1.0, z=1.0)
+    color_b_hue = pf.nodes.math.map_range(
         value=voronoi.color.astype(dtype=pf.Vector),
         from_min=(0.0, 0.0, 0.0),
         from_max=(1.0, 1.0, 1.0),
@@ -84,42 +84,42 @@ def small_gravel(
         to_max=color_b_hue_to_max,
     )
 
-    hue_saturation = pf.nodes.shader.hue_saturation(
+    hue_saturation = pf.nodes.color.hue_saturation(
         hue=color_b_hue.x,
         saturation=color_b_hue.y,
         value=color_b_hue.z,
         color=surface_gravel_color,
     )
 
-    color = pf.nodes.func.mix_rgb(factor=color_factor, a=base_color, b=hue_saturation)
+    color = pf.nodes.color.mix_rgb(factor=color_factor, a=base_color, b=hue_saturation)
 
-    white_noise = pf.nodes.shader.white_noise(
+    white_noise = pf.nodes.texture.white_noise(
         noise_dimensions="1D",
         w=voronoi.color.astype(dtype=pf.Vector).x,
     )
 
-    spec_b = pf.nodes.func.map_range(
+    spec_b = pf.nodes.math.map_range(
         value=white_noise.color.astype(dtype=pf.Vector).y,
         from_min=0.1,
         from_max=0.2,
         to_min=surface_min_spec,
         to_max=surface_max_spec,
     )
-    spec = pf.nodes.func.mix(factor=color_factor, a=base_spec, b=spec_b)
+    spec = pf.nodes.math.mix(factor=color_factor, a=base_spec, b=spec_b)
 
-    roughness_b = pf.nodes.func.map_range(
+    roughness_b = pf.nodes.math.map_range(
         value=white_noise.color.astype(dtype=pf.Vector).z,
         from_min=0.5,
         from_max=0.7,
         to_min=surface_min_roughness,
         to_max=surface_max_roughness,
     )
-    roughness = pf.nodes.func.mix(factor=color_factor, a=base_rough, b=roughness_b)
+    roughness = pf.nodes.math.mix(factor=color_factor, a=base_rough, b=roughness_b)
 
     height_b_0 = 1.0 - shape_up_down
     height_a_1 = (shape_size * shape_height) * 0.1
     height_a_a_0 = (color_factor_b_a - height_b_0) * (height_a_1 * mask)
-    height_a_0 = pf.nodes.func.mix(
+    height_a_0 = pf.nodes.math.mix(
         factor=shape_height_variation,
         a=height_a_a_0,
         b=height_a_a_0 * white_noise.fac,
@@ -177,14 +177,14 @@ def large_gravel(
 
     color_0_scale = 1.0 / color_0_scale_denominator
 
-    voronoi = pf.nodes.shader.voronoi(
+    voronoi = pf.nodes.texture.voronoi(
         normalize=True,
         voronoi_dimensions="4D",
         vector=coord_warp_result.vector,
         w=shape_w,
         scale=color_0_scale,
     )
-    voronoi_smooth_f1 = pf.nodes.shader.voronoi_smooth_f1(
+    voronoi_smooth_f1 = pf.nodes.texture.voronoi_smooth_f1(
         normalize=True,
         voronoi_dimensions="4D",
         vector=coord_warp_result.vector,
@@ -196,14 +196,14 @@ def large_gravel(
     height_value_a_value = pf.nodes.math.clamp(
         voronoi.distance - voronoi_smooth_f1.distance
     )
-    height_value_a = pf.nodes.func.map_range(
+    height_value_a = pf.nodes.math.map_range(
         value=height_value_a_value,
         from_max=0.16,
         to_min=1.0,
         to_max=0.0,
     )
 
-    voronoi_distance = pf.nodes.shader.voronoi_distance(
+    voronoi_distance = pf.nodes.texture.voronoi_distance(
         normalize=True,
         voronoi_dimensions="4D",
         vector=coord_warp_result.vector,
@@ -211,36 +211,36 @@ def large_gravel(
         scale=color_0_scale,
     )
 
-    height_value = pf.nodes.func.mix(
+    height_value = pf.nodes.math.mix(
         factor=shape_rounded_sharp,
         a=height_value_a,
         b=voronoi_distance * 2.0,
     )
     height_from_min = 1.0 - shape_gravel_size
-    height_from_max = pf.nodes.func.mix(factor=shape_rounded_sharp, a=1.0, b=1.07)
-    height_a_base_value = pf.nodes.func.map_range(
+    height_from_max = pf.nodes.math.mix(factor=shape_rounded_sharp, a=1.0, b=1.07)
+    height_a_base_value = pf.nodes.math.map_range(
         value=height_value,
         from_min=height_from_min * height_from_max,
         from_max=height_from_max,
     )
     height_a_base_from_max = pf.nodes.math.maximum(a=shape_margin, b=0.0001)
 
-    color_value = pf.nodes.func.map_range(
+    color_value = pf.nodes.math.map_range(
         value=height_a_base_value, from_min=height_a_base_from_max
     )
     color_from_max = pf.nodes.math.maximum(a=shape_bevel, b=0.0001)
-    color_factor_b_a = pf.nodes.func.map_range(
+    color_factor_b_a = pf.nodes.math.map_range(
         value=color_value, from_max=color_from_max
     )
     color_factor = mask * (color_factor_b_a > 0.0)
     color_x = surface_hue_variation / 2.0
-    color_b_hue_to_min = pf.nodes.func.combine_xyz(
+    color_b_hue_to_min = pf.nodes.math.combine_xyz(
         x=0.5 - color_x,
         y=1.0 - surface_sat_variation,
         z=1.0 - surface_value_variation,
     )
-    color_b_hue_to_max = pf.nodes.func.combine_xyz(x=0.5 + color_x, y=1.0, z=1.0)
-    color_b_hue = pf.nodes.func.map_range(
+    color_b_hue_to_max = pf.nodes.math.combine_xyz(x=0.5 + color_x, y=1.0, z=1.0)
+    color_b_hue = pf.nodes.math.map_range(
         value=voronoi.color.astype(dtype=pf.Vector),
         from_min=(0.0, 0.0, 0.0),
         from_max=(1.0, 1.0, 1.0),
@@ -248,46 +248,46 @@ def large_gravel(
         to_max=color_b_hue_to_max,
     )
 
-    hue_saturation = pf.nodes.shader.hue_saturation(
+    hue_saturation = pf.nodes.color.hue_saturation(
         hue=color_b_hue.x,
         saturation=color_b_hue.y,
         value=color_b_hue.z,
         color=surface_gravel_color,
     )
 
-    color = pf.nodes.func.mix_rgb(factor=color_factor, a=base_color, b=hue_saturation)
+    color = pf.nodes.color.mix_rgb(factor=color_factor, a=base_color, b=hue_saturation)
 
-    white_noise_vector = pf.nodes.func.combine_xyz(
+    white_noise_vector = pf.nodes.math.combine_xyz(
         x=voronoi.color.astype(dtype=pf.Vector).x, y=shape_w
     )
-    white_noise = pf.nodes.shader.white_noise(
+    white_noise = pf.nodes.texture.white_noise(
         noise_dimensions="2D", vector=white_noise_vector
     )
 
-    spec_b = pf.nodes.func.map_range(
+    spec_b = pf.nodes.math.map_range(
         value=white_noise.color.astype(dtype=pf.Vector).y,
         to_min=surface_min_spec,
         to_max=surface_max_spec,
     )
-    spec = pf.nodes.func.mix(factor=color_factor, a=base_spec, b=spec_b)
+    spec = pf.nodes.math.mix(factor=color_factor, a=base_spec, b=spec_b)
 
-    roughness_b = pf.nodes.func.map_range(
+    roughness_b = pf.nodes.math.map_range(
         value=white_noise.color.astype(dtype=pf.Vector).z,
         to_min=surface_min_roughness,
         to_max=surface_max_roughness,
     )
-    roughness = pf.nodes.func.mix(factor=color_factor, a=base_roughness, b=roughness_b)
+    roughness = pf.nodes.math.mix(factor=color_factor, a=base_roughness, b=roughness_b)
 
     height_a_2 = color_factor_b_a
     height_b_1 = 1.0 - shape_up_down
     height_b_0 = shape_texture_size * shape_height
     height_a_a = (height_a_2 - height_b_1) * (mask * height_b_0)
-    height_a_1 = pf.nodes.func.mix(
+    height_a_1 = pf.nodes.math.mix(
         factor=shape_height_variation,
         a=height_a_a,
         b=height_a_a * white_noise.color.astype(dtype=pf.Vector).x,
     )
-    height_a_base = pf.nodes.func.map_range(
+    height_a_base = pf.nodes.math.map_range(
         value=height_a_base_value, from_max=height_a_base_from_max
     )
     height_a_0 = height_a_base**3.0

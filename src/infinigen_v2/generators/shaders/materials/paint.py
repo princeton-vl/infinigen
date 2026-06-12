@@ -47,18 +47,19 @@ def paint(
         vector=vector, size=bump_warp_size, strength=bump_warp_strength
     )
 
-    displacement_value_1 = pf.nodes.shader.noise(
+    displacement_value_1 = pf.nodes.texture.noise(
         vector=coord_warp_result.vector,
         scale=1.0 / bump_size,
         detail=4.0,
         noise_dimensions="2D",
     )
-    displacement_height_value_4 = pf.nodes.func.map_range(
+    displacement_height_value_4 = pf.nodes.math.map_range(
         value=displacement_value_1.fac, from_min=0.2, from_max=0.8
     )
-    displacement_height_17 = pf.nodes.func.float_curve(
+    displacement_height_17 = pf.nodes.math.float_curve(
         value=displacement_height_value_4,
         curve=np.array([[0.0, 0.0], [0.5682, 0.2688], [1.0, 1.0]]),
+        factor=1.0,
     )
 
     coord_warp_result_1 = coord_warp(
@@ -72,7 +73,7 @@ def paint(
         strength=splat_warp_strength,
     )
 
-    displacement_height_value_3 = pf.nodes.shader.voronoi(
+    displacement_height_value_3 = pf.nodes.texture.voronoi(
         vector=coord_warp_result_2.vector,
         scale=1.0 / splat_size,
         voronoi_dimensions="2D",
@@ -80,18 +81,18 @@ def paint(
 
     height_from_min_2 = pf.nodes.math.maximum(a=splat_width, b=0.0001)
 
-    displacement_height_16 = pf.nodes.func.map_range(
+    displacement_height_16 = pf.nodes.math.map_range(
         value=displacement_height_value_3.distance,
         from_min=1.0 - height_from_min_2,
     )
     displacement_scale = splat_size * 4.0
-    displacement_height_value_2 = pf.nodes.shader.noise(
+    displacement_height_value_2 = pf.nodes.texture.noise(
         vector=vector,
         scale=1.0 / displacement_scale,
         detail=4.0,
         noise_dimensions="2D",
     )
-    displacement_height_15 = pf.nodes.func.map_range(
+    displacement_height_15 = pf.nodes.math.map_range(
         value=displacement_height_value_2.fac,
         from_min=0.2,
         from_max=0.8,
@@ -103,13 +104,13 @@ def paint(
 
     height_from_min_1 = pf.nodes.math.clamp(displacement_height_14 * 2.0)
 
-    displacement_height_13 = pf.nodes.func.map_range(
+    displacement_height_13 = pf.nodes.math.map_range(
         value=displacement_height_14,
         from_min=0.5,
         to_min=1.0,
         to_max=0.0,
     )
-    displacement_height_12 = pf.nodes.func.map_range(
+    displacement_height_12 = pf.nodes.math.map_range(
         value=displacement_height_15,
         from_min=1.0 - height_from_min_1,
         from_max=displacement_height_13,
@@ -118,32 +119,33 @@ def paint(
     displacement_height_10 = (displacement_height_17 * bump_height) + (
         displacement_height_11 * splat_height
     )
-    displacement_value_vector = pf.nodes.shader.noise(
+    displacement_value_vector = pf.nodes.texture.noise(
         vector=vector, scale=1.0 / stroke_length, detail=0.0
     )
     displacement_value = displacement_value_vector.color.astype(dtype=pf.Vector)
-    displacement_from_min_3 = pf.nodes.func.mix(factor=stroke_spread, a=0.9, b=0.2)
-    displacement_from_max = pf.nodes.func.mix(factor=stroke_spread, a=1.0, b=0.6)
-    displacement_height_value_1 = pf.nodes.func.map_range(
+    displacement_from_min_3 = pf.nodes.math.mix(factor=stroke_spread, a=0.9, b=0.2)
+    displacement_from_max = pf.nodes.math.mix(factor=stroke_spread, a=1.0, b=0.6)
+    displacement_height_value_1 = pf.nodes.math.map_range(
         value=displacement_value.x,
         from_min=displacement_from_min_3,
         from_max=displacement_from_max,
     )
-    displacement_height_9 = pf.nodes.func.float_curve(
+    displacement_height_9 = pf.nodes.math.float_curve(
         value=displacement_height_value_1,
         curve=np.array([[0.0, 0.0], [0.1955, 0.0687], [0.7364, 0.875], [1.0, 1.0]]),
+        factor=1.0,
     )
     displacement_height_8 = displacement_height_9 * stroke_height
-    displacement_from_min_2 = pf.nodes.func.constant(0.6)
-    displacement_from_min_numerator = pf.nodes.func.constant(0.25)
+    displacement_from_min_2 = pf.nodes.math.constant(0.6)
+    displacement_from_min_numerator = pf.nodes.math.constant(0.25)
     displacement_from_min_1 = displacement_from_min_numerator / 2.0
-    displacement_height_factor_1 = pf.nodes.func.map_range(
+    displacement_height_factor_1 = pf.nodes.math.map_range(
         value=displacement_value.y,
         from_min=displacement_from_min_2 - displacement_from_min_1,
         from_max=displacement_from_min_2 + displacement_from_min_1,
     )
-    displacement_from_min = pf.nodes.func.constant(0.5)
-    displacement_height_factor = pf.nodes.func.map_range(
+    displacement_from_min = pf.nodes.math.constant(0.5)
+    displacement_height_factor = pf.nodes.math.map_range(
         value=displacement_value.z,
         from_min=displacement_from_min - displacement_from_min_1,
         from_max=displacement_from_min + displacement_from_min_1,
@@ -156,7 +158,7 @@ def paint(
         detail=2.0,
     )
 
-    displacement_height_7 = pf.nodes.shader.noise(
+    displacement_height_7 = pf.nodes.texture.noise(
         vector=coord_warp_result_3.vector * (1.0, 0.01, 1.0),
         scale=1.0 / stroke_size,
         noise_dimensions="2D",
@@ -170,15 +172,18 @@ def paint(
     )
 
     displacement_height_vector_3 = pf.nodes.math.vector_rotate_axis_angle(
-        coord_warp_result_4.vector
+        coord_warp_result_4.vector,
+        axis=(0, 0, 1),
+        angle=0.0,
+        center=(0, 0, 0),
     )
     displacement_height_vector_2 = displacement_height_vector_3 * (1.0, 0.01, 1.0)
-    displacement_height_6 = pf.nodes.shader.noise(
+    displacement_height_6 = pf.nodes.texture.noise(
         vector=displacement_height_vector_2 + (55.5, 0.0, 0.0),
         scale=1.0 / stroke_size,
         noise_dimensions="2D",
     )
-    displacement_height_5 = pf.nodes.func.mix(
+    displacement_height_5 = pf.nodes.math.mix(
         factor=displacement_height_factor,
         a=displacement_height_7.fac,
         b=displacement_height_6.fac,
@@ -192,15 +197,18 @@ def paint(
     )
 
     displacement_height_vector_1 = pf.nodes.math.vector_rotate_axis_angle(
-        coord_warp_result_5.vector
+        coord_warp_result_5.vector,
+        axis=(0, 0, 1),
+        angle=0.0,
+        center=(0, 0, 0),
     )
     displacement_height_vector = displacement_height_vector_1 * (1.0, 0.01, 1.0)
-    displacement_height_4 = pf.nodes.shader.noise(
+    displacement_height_4 = pf.nodes.texture.noise(
         vector=displacement_height_vector + (-67.2, 0.0, 0.0),
         scale=1.0 / stroke_size,
         noise_dimensions="2D",
     )
-    displacement_height_3 = pf.nodes.func.mix(
+    displacement_height_3 = pf.nodes.math.mix(
         factor=displacement_height_factor_1,
         a=displacement_height_5,
         b=displacement_height_4.fac,
@@ -208,20 +216,20 @@ def paint(
 
     coord_warp_result_6 = coord_warp(vector=vector, size=globule_size * 2.0, detail=1.0)
 
-    displacement_height_value = pf.nodes.shader.voronoi(
+    displacement_height_value = pf.nodes.texture.voronoi(
         vector=coord_warp_result_6.vector,
         scale=1.0 / globule_size,
         detail=2.0,
         normalize=True,
     )
-    displacement_height_2 = pf.nodes.func.map_range(
+    displacement_height_2 = pf.nodes.math.map_range(
         value=1.0 - displacement_height_value.distance,
         from_min=0.56,
     )
     displacement_height_from_min = pf.nodes.math.minimum(
         a=1.0 - globule_spread, b=0.9999
     )
-    displacement_height_1 = pf.nodes.func.map_range(
+    displacement_height_1 = pf.nodes.math.map_range(
         value=displacement_height_2,
         from_min=displacement_height_from_min,
         to_max=globule_height * globule_spread,

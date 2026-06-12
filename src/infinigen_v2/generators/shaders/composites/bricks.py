@@ -62,7 +62,7 @@ def bricks_red_concave(
     )
 
     surface_color_1 = brick_cutter_result.random.astype(dtype=pf.Vector)
-    surface_color = pf.nodes.func.mix_rgb(
+    surface_color = pf.nodes.color.mix_rgb(
         factor=1.0,
         a=pf.Color((0.577, 0.206, 0.132)),
         b=surface_color_1.x.astype(dtype=pf.Color),
@@ -98,7 +98,7 @@ def bricks_red_concave(
         b=brick_concrete_result_1.surface,
     )
 
-    displacement = pf.nodes.func.mix(
+    displacement = pf.nodes.math.mix(
         factor=brick_cutter_result.mask,
         a=brick_concrete_result.displacement,
         b=brick_concrete_result_1.displacement,
@@ -151,7 +151,7 @@ def bricks_red(
     )
 
     surface_color_1 = brick_cutter_result.random.astype(dtype=pf.Vector)
-    surface_color = pf.nodes.func.mix_rgb(
+    surface_color = pf.nodes.color.mix_rgb(
         factor=1.0,
         a=pf.Color((0.577, 0.206, 0.132)),
         b=surface_color_1.x.astype(dtype=pf.Color),
@@ -186,7 +186,7 @@ def bricks_red(
         b=brick_concrete_result_1.surface,
     )
 
-    displacement = pf.nodes.func.mix(
+    displacement = pf.nodes.math.mix(
         factor=brick_cutter_result.mask,
         a=brick_concrete_result.displacement,
         b=brick_concrete_result_1.displacement,
@@ -238,10 +238,10 @@ def bricks_grey_rounded(
         displacement_additional_height=brick_cutter_result.height,
     )
 
-    surface_color_factor = pf.nodes.func.constant(0.286)
-    surface_color_2 = pf.nodes.func.constant(pf.Color((0.5, 0.5, 0.5)))
+    surface_color_factor = pf.nodes.math.constant(0.286)
+    surface_color_2 = pf.nodes.math.constant(pf.Color((0.5, 0.5, 0.5)))
     surface_color_1 = brick_cutter_result.random.astype(dtype=pf.Vector)
-    surface_color = pf.nodes.func.mix_rgb(
+    surface_color = pf.nodes.color.mix_rgb(
         factor=surface_color_factor,
         a=surface_color_2,
         b=surface_color_1.x.astype(dtype=pf.Color),
@@ -279,7 +279,7 @@ def bricks_grey_rounded(
         b=brick_concrete_result_1.surface,
     )
 
-    displacement = pf.nodes.func.mix(
+    displacement = pf.nodes.math.mix(
         factor=brick_cutter_result.mask,
         a=brick_concrete_result.displacement,
         b=brick_concrete_result_1.displacement,
@@ -332,9 +332,9 @@ def bricks_grey(
         displacement_additional_height=brick_cutter_result.height,
     )
 
-    surface_color_factor = pf.nodes.func.constant(0.286)
+    surface_color_factor = pf.nodes.math.constant(0.286)
     surface_color_1 = brick_cutter_result.random.astype(dtype=pf.Vector)
-    surface_color = pf.nodes.func.mix_rgb(
+    surface_color = pf.nodes.color.mix_rgb(
         factor=surface_color_factor,
         a=pf.Color((0.391, 0.391, 0.391)),
         b=surface_color_1.x.astype(dtype=pf.Color),
@@ -372,7 +372,7 @@ def bricks_grey(
         b=brick_concrete_result_1.surface,
     )
 
-    displacement = pf.nodes.func.mix(
+    displacement = pf.nodes.math.mix(
         factor=brick_cutter_result.mask,
         a=brick_concrete_result.displacement,
         b=brick_concrete_result_1.displacement,
@@ -462,7 +462,7 @@ def brick_masonry_sharp(
     )
 
     displacement_layer_1_height = brick_cutter_result.distance_from_edge**0.32
-    displacement_layer_2_mask = pf.nodes.func.map_range(
+    displacement_layer_2_mask = pf.nodes.math.map_range(
         value=brick_cutter_result.distance_from_edge, from_max=0.43
     )
 
@@ -529,7 +529,7 @@ def brick_masonry_granite(
         b=granite_result.surface,
     )
 
-    displacement_layer_2_mask = pf.nodes.func.map_range(
+    displacement_layer_2_mask = pf.nodes.math.map_range(
         value=brick_cutter_result.distance_from_edge, from_max=0.43
     )
 
@@ -599,7 +599,7 @@ def brick_masonry_brown(
         b=brick_concrete_result.surface,
     )
 
-    displacement_layer_2_mask = pf.nodes.func.map_range(
+    displacement_layer_2_mask = pf.nodes.math.map_range(
         value=brick_cutter_result.distance_from_edge, from_max=0.43
     )
 
@@ -661,7 +661,7 @@ def bricks_checkered_sparse(
         brick_id=brick_cutter_result.brick_id, skip_x=1.0, skip_y=1.0, bias=1.0
     )
 
-    displacement_color = pf.nodes.func.mix_rgb(
+    displacement_color = pf.nodes.color.mix_rgb(
         factor=brick_selector_result.selection,
         a=pf.Color((0.06, 0.01, 0.006)),
         b=pf.Color((0.554, 0.338, 0.2)),
@@ -727,7 +727,7 @@ def bricks_checkered(
         bias=1.0,
     )
 
-    displacement_color = pf.nodes.func.mix_rgb(
+    displacement_color = pf.nodes.color.mix_rgb(
         factor=brick_selector_result.selection,
         a=pf.Color((0.06, 0.021, 0.018)),
         b=pf.Color((0.478, 0.301, 0.187)),
@@ -789,7 +789,7 @@ def bricks_striped(
 
     granite_result = granite.granite_sandy(vector=brick_cutter_result.vector)
 
-    displacement_color = pf.nodes.shader.hue_saturation(
+    displacement_color = pf.nodes.color.hue_saturation(
         hue=0.41,
         saturation=0.8,
         value=0.2,
@@ -884,7 +884,7 @@ def bricks_paint_strokes(
     )
 
     displacement_color_1 = brick_cutter_result.random.astype(dtype=pf.Vector)
-    displacement_color = pf.nodes.func.mix_rgb(
+    displacement_color = pf.nodes.color.mix_rgb(
         factor=1.0,
         a=pf.Color((0.391, 0.391, 0.391)),
         b=displacement_color_1.x.astype(dtype=pf.Color),
@@ -916,7 +916,7 @@ def bricks_paint_strokes(
         displacement_additional_height=brick_cutter_result.height,
     )
 
-    displacement_1 = pf.nodes.func.mix(
+    displacement_1 = pf.nodes.math.mix(
         factor=brick_cutter_result.mask,
         a=brick_concrete_result.displacement,
         b=brick_concrete_result_1.displacement,
@@ -989,7 +989,7 @@ def bricks_paint_spots(
     )
 
     displacement_color_1 = brick_cutter_result.random.astype(dtype=pf.Vector)
-    displacement_color = pf.nodes.func.mix_rgb(
+    displacement_color = pf.nodes.color.mix_rgb(
         factor=1.0,
         a=pf.Color((0.577, 0.206, 0.132)),
         b=displacement_color_1.x.astype(dtype=pf.Color),
@@ -1021,7 +1021,7 @@ def bricks_paint_spots(
         displacement_additional_height=brick_cutter_result.height,
     )
 
-    displacement_1 = pf.nodes.func.mix(
+    displacement_1 = pf.nodes.math.mix(
         factor=brick_cutter_result.mask,
         a=brick_concrete_result.displacement,
         b=brick_concrete_result_1.displacement,
@@ -1073,7 +1073,7 @@ def bricks_paint_worn(
     )
 
     surface_color_1 = brick_cutter_result.random.astype(dtype=pf.Vector)
-    surface_color = pf.nodes.func.mix_rgb(
+    surface_color = pf.nodes.color.mix_rgb(
         factor=1.0,
         a=pf.Color((0.041, 0.041, 0.041)),
         b=surface_color_1.x.astype(dtype=pf.Color),
@@ -1105,7 +1105,7 @@ def bricks_paint_worn(
         displacement_additional_height=brick_cutter_result.height,
     )
 
-    displacement_1 = pf.nodes.func.mix(
+    displacement_1 = pf.nodes.math.mix(
         factor=brick_cutter_result.mask,
         a=brick_concrete_result.displacement,
         b=brick_concrete_result_1.displacement,
@@ -1140,7 +1140,7 @@ def bricks_paint_worn(
         b=paint_result.surface,
     )
 
-    displacement = pf.nodes.func.mix(
+    displacement = pf.nodes.math.mix(
         factor=wear_and_tear_result,
         a=(0.0, 0.0, 0.0),
         b=displacement_1,
@@ -1236,7 +1236,7 @@ def brick_color_pattern_distribution(
         fac = brick_selector.brick_selector_distribution(rng=rs1, brick_id=brick_id)
         color_1 = brick_concrete.brick_concrete_color_distribution(rs2)
         color_2 = brick_concrete.brick_concrete_color_distribution(rs3)
-        return pf.nodes.func.mix_rgb(
+        return pf.nodes.color.mix_rgb(
             factor=fac.selection,
             a=color_1,
             b=color_2,
@@ -1244,7 +1244,7 @@ def brick_color_pattern_distribution(
 
     def mix_per_brick_option(ro, vector, brick_random, **_):
         ro1, ro2 = ro.spawn(2)
-        return pf.nodes.func.mix_rgb(
+        return pf.nodes.color.mix_rgb(
             factor=brick_random.x,
             a=brick_concrete.brick_concrete_color_distribution(ro1),
             b=brick_concrete.brick_concrete_color_distribution(ro2),
@@ -1253,7 +1253,7 @@ def brick_color_pattern_distribution(
 
     def discrete_per_brick_option(ro, vector, brick_random, **_):
         ratio = pf.random.uniform(ro, 0.1, 0.9)
-        return pf.nodes.func.mix_rgb(
+        return pf.nodes.color.mix_rgb(
             factor=brick_random.x > ratio,
             a=brick_concrete.brick_concrete_color_distribution(ro),
             b=brick_concrete.brick_concrete_color_distribution(ro),
@@ -1266,7 +1266,7 @@ def brick_color_pattern_distribution(
     def tile_pattern_color_option(rt, brick_id, **_):
         rt2, rt3, rt4 = rt.spawn(3)
         # x/y scales normalize brick_id to metric space for ~1.5m tile repeat
-        tile_vector = pf.nodes.func.combine_xyz(
+        tile_vector = pf.nodes.math.combine_xyz(
             x=brick_id.x * 0.667, y=brick_id.y * 0.233
         )
         border = pf.random.uniform(rt2, 0.15, 0.25)
@@ -1274,7 +1274,7 @@ def brick_color_pattern_distribution(
         color_1 = brick_concrete.brick_concrete_color_distribution(rt3)
         color_2 = brick_concrete.brick_concrete_color_distribution(rt4)
         tile_type = tile_mask.result.astype(dtype=pf.Vector).x > 0.5
-        return pf.nodes.func.mix_rgb(factor=tile_type, a=color_1, b=color_2)
+        return pf.nodes.color.mix_rgb(factor=tile_type, a=color_1, b=color_2)
 
     r1, r2 = rng.spawn(2)
 
@@ -1363,7 +1363,7 @@ def bricks_distribution(
         a=grout_shader.surface,
         b=brick_shader.surface,
     )
-    displacement = pf.nodes.func.mix(
+    displacement = pf.nodes.math.mix(
         factor=brick_cutter.mask,
         a=grout_shader.displacement,
         b=brick_shader.displacement,
@@ -1478,17 +1478,17 @@ def bricks_masonry_distribution(
         a=grout_shader.surface,
         b=brick_shader.surface,
     )
-    displacement = pf.nodes.func.mix(
+    displacement = pf.nodes.math.mix(
         factor=brick_cutter.mask,
         a=grout_shader.displacement,
         b=brick_shader.displacement,
     )
 
-    displacement_layer_2_mask = pf.nodes.func.map_range(
+    displacement_layer_2_mask = pf.nodes.math.map_range(
         value=brick_cutter.distance_from_edge, from_max=0.43
     )
 
-    dimensions_sep = pf.nodes.func.separate_xyz(vector=dimensions)
+    dimensions_sep = pf.nodes.math.separate_xyz(vector=dimensions)
 
     mult = dimensions_sep.x * (3 * pf.random.clip_gaussian(rng, 1, 0.2, 0.7, 1.7))
     # exp = pf.random.uniform(rng, 0.3, 1)
@@ -1587,7 +1587,7 @@ def bricks_paint_distribution(
         a=bricks.surface,
         b=paint_material.surface,
     )
-    cracks_mix_displacement = pf.nodes.func.mix(
+    cracks_mix_displacement = pf.nodes.math.mix(
         factor=mix_mask,
         a=bricks_displacement,
         b=bricks_and_paint_displacement,

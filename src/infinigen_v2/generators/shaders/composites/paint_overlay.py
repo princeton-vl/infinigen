@@ -45,7 +45,7 @@ def paint_weartear_flakes(
     displacement_1 = pf.nodes.shader.displacement(
         height=-0.0005, midlevel=0.0, normal=(0.0, 0.0, 0.0)
     )
-    displacement = pf.nodes.func.mix(
+    displacement = pf.nodes.math.mix(
         factor=wear_and_tear_result,
         a=displacement_1,
         b=paint_result.displacement,
@@ -86,7 +86,7 @@ def paint_overlay_distribution(
         normal=(0.0, 0.0, 0.0),
     )
 
-    displacement = pf.nodes.func.mix(
+    displacement = pf.nodes.math.mix(
         factor=mask,
         a=material.displacement,
         b=material.displacement + paint.displacement + paint_thickness_displacement,

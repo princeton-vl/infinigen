@@ -19,6 +19,8 @@ def rectangle_outline(
     transform = pf.nodes.geo.transform(
         geometry=curve_quadrilateral,
         translation=vector * (0.5, 0.5, 0.0),
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
     )
     return transform
 

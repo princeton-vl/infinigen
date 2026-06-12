@@ -55,9 +55,10 @@ def sandstone_displacement_layer(
     noise_value_vector_1 = pf.nodes.math.vector_rotate_euler(
         vector=coord_warp_result_1.vector,
         rotation=rotation,
+        center=(0, 0, 0),
     )
-    noise_value_vector = pf.nodes.func.combine_xyz(x=1.0, y=1.0, z=stretch)
-    noise_value_4 = pf.nodes.shader.voronoi(
+    noise_value_vector = pf.nodes.math.combine_xyz(x=1.0, y=1.0, z=stretch)
+    noise_value_4 = pf.nodes.texture.voronoi(
         vector=noise_value_vector_1 / noise_value_vector,
         w=w,
         scale=5.0 / size,
@@ -65,19 +66,19 @@ def sandstone_displacement_layer(
         normalize=True,
         voronoi_dimensions="4D",
     )
-    noise_value_3 = pf.nodes.shader.noise(
+    noise_value_3 = pf.nodes.texture.noise(
         vector=noise_value_vector_1 / noise_value_vector,
         w=w,
         scale=5.0 / size,
         detail=detail,
         noise_dimensions="4D",
     )
-    noise_value_2 = pf.nodes.func.mix(
+    noise_value_2 = pf.nodes.math.mix(
         factor=noise_value_factor,
         a=noise_value_4.distance,
         b=noise_value_3.fac,
     )
-    noise_value_1 = pf.nodes.shader.voronoi_distance(
+    noise_value_1 = pf.nodes.texture.voronoi_distance(
         vector=noise_value_vector_1 / noise_value_vector,
         w=w,
         scale=5.0 / size,
@@ -85,30 +86,30 @@ def sandstone_displacement_layer(
         normalize=True,
         voronoi_dimensions="4D",
     )
-    noise_value = pf.nodes.func.mix(
+    noise_value = pf.nodes.math.mix(
         factor=noise_value_factor - 1.0, a=noise_value_2, b=noise_value_1
     )
     noise_from_min_1 = 1.0 - smoothness
     noise_from_min = spread - 0.0001
-    noise_1 = pf.nodes.func.map_range(
+    noise_1 = pf.nodes.math.map_range(
         value=noise_value,
         from_min=noise_from_min_1 * noise_from_min,
         from_max=spread,
         to_min=1.0,
         to_max=0.0,
     )
-    noise = pf.nodes.func.mix(factor=invert, a=noise_1, b=1.0 - noise_1)
+    noise = pf.nodes.math.mix(factor=invert, a=noise_1, b=1.0 - noise_1)
 
     height_6 = noise * (height * 0.01)
-    height_5 = pf.nodes.func.mix(
+    height_5 = pf.nodes.math.mix(
         factor=mix_mode - 1.0,
         a=(height_6 + height_offset) + base_height,
         b=base_height - (height_6 + height_offset),
     )
     height_4 = pf.nodes.math.maximum(a=height_6 + height_offset, b=base_height)
-    height_3 = pf.nodes.func.mix(factor=height_factor, a=height_5, b=height_4)
+    height_3 = pf.nodes.math.mix(factor=height_factor, a=height_5, b=height_4)
     height_2 = pf.nodes.math.minimum(a=height_6 + height_offset, b=base_height)
-    height_1 = pf.nodes.func.mix(factor=height_factor - 1.0, a=height_3, b=height_2)
+    height_1 = pf.nodes.math.mix(factor=height_factor - 1.0, a=height_3, b=height_2)
     return SandstoneDisplacementLayerResult(
         vector=vector,
         height=height_1,
@@ -160,12 +161,13 @@ def sandstone_color_layer(
         detail=detail,
     )
 
-    noise_vector = pf.nodes.func.combine_xyz(x=1.0, y=1.0, z=stretch)
+    noise_vector = pf.nodes.math.combine_xyz(x=1.0, y=1.0, z=stretch)
     noise_value_vector = pf.nodes.math.vector_rotate_euler(
         vector=coord_warp_result_1.vector / noise_vector,
         rotation=rotation,
+        center=(0, 0, 0),
     )
-    noise_value_4 = pf.nodes.shader.voronoi(
+    noise_value_4 = pf.nodes.texture.voronoi(
         vector=noise_value_vector,
         w=w,
         scale=5.0 / size,
@@ -173,19 +175,19 @@ def sandstone_color_layer(
         normalize=True,
         voronoi_dimensions="4D",
     )
-    noise_value_3 = pf.nodes.shader.noise(
+    noise_value_3 = pf.nodes.texture.noise(
         vector=noise_value_vector,
         w=w,
         scale=5.0 / size,
         detail=detail,
         noise_dimensions="4D",
     )
-    noise_value_2 = pf.nodes.func.mix_rgb(
+    noise_value_2 = pf.nodes.color.mix_rgb(
         factor=noise_value_factor,
         a=noise_value_4.distance.astype(dtype=pf.Color),
         b=noise_value_3.fac.astype(dtype=pf.Color),
     )
-    noise_value_1 = pf.nodes.shader.voronoi_distance(
+    noise_value_1 = pf.nodes.texture.voronoi_distance(
         vector=noise_value_vector,
         w=w,
         scale=5.0 / size,
@@ -193,42 +195,42 @@ def sandstone_color_layer(
         normalize=True,
         voronoi_dimensions="4D",
     )
-    noise_value = pf.nodes.func.mix_rgb(
+    noise_value = pf.nodes.color.mix_rgb(
         factor=noise_value_factor - 1.0,
         a=noise_value_2,
         b=noise_value_1.astype(dtype=pf.Color),
     )
     noise_from_min_1 = 1.0 - smoothness
     noise_from_min = spread - 0.0001
-    noise_1 = pf.nodes.func.map_range(
+    noise_1 = pf.nodes.math.map_range(
         value=noise_value.astype(dtype=float),
         from_min=noise_from_min_1 * noise_from_min,
         from_max=spread,
         to_min=1.0,
         to_max=0.0,
     )
-    noise = pf.nodes.func.mix(factor=invert, a=noise_1, b=1.0 - noise_1)
+    noise = pf.nodes.math.mix(factor=invert, a=noise_1, b=1.0 - noise_1)
 
-    color_7 = pf.nodes.func.mix_rgb(factor=noise, a=base_color, b=texture_color)
-    color_6 = pf.nodes.func.mix_rgb(
+    color_7 = pf.nodes.color.mix_rgb(factor=noise, a=base_color, b=texture_color)
+    color_6 = pf.nodes.color.mix_rgb(
         factor=noise,
         a=base_color,
         b=texture_color,
         blend_type="MULTIPLY",
     )
-    color_5 = pf.nodes.func.mix_rgb(factor=mix_mode - 1.0, a=color_7, b=color_6)
-    color_4 = pf.nodes.func.mix_rgb(
+    color_5 = pf.nodes.color.mix_rgb(factor=mix_mode - 1.0, a=color_7, b=color_6)
+    color_4 = pf.nodes.color.mix_rgb(
         factor=noise,
         a=base_color,
         b=texture_color,
         blend_type="SOFT_LIGHT",
     )
-    color_3 = pf.nodes.func.mix_rgb(factor=color_factor, a=color_5, b=color_4)
-    color_2 = pf.nodes.func.mix_rgb(
+    color_3 = pf.nodes.color.mix_rgb(factor=color_factor, a=color_5, b=color_4)
+    color_2 = pf.nodes.color.mix_rgb(
         factor=noise, a=base_color, b=texture_color, blend_type="OVERLAY"
     )
-    color_1 = pf.nodes.func.mix_rgb(factor=color_factor - 1.0, a=color_3, b=color_2)
-    color = pf.nodes.func.mix_rgb(factor=mask, a=base_color, b=color_1)
+    color_1 = pf.nodes.color.mix_rgb(factor=color_factor - 1.0, a=color_3, b=color_2)
+    color = pf.nodes.color.mix_rgb(factor=mask, a=base_color, b=color_1)
     return SandstoneColorLayerResult(
         vector=vector,
         color=color,
@@ -501,7 +503,7 @@ def _stone_red_sandstone_distribution(
 #         h_offset = pf.random.uniform(rng, -0.05, 0.05)
 #         s_offset = pf.random.uniform(rng, -0.1, 0.1)
 #         v_offset = pf.random.uniform(rng, -0.15, 0.15)
-#         base_color = pf.nodes.shader.hue_saturation(
+#         base_color = pf.nodes.color.hue_saturation(
 #             color=base_color,
 #             hue=h_offset + 0.5,
 #             saturation=s_offset + 1.0,
