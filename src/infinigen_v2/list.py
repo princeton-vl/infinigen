@@ -9,7 +9,7 @@ def get_parser():
         "--categories",
         nargs="+",
         default=None,
-        choices=["Material", "Object", "Exporter", "Scene"],
+        choices=["Material", "Object", "Exporter", "Scene", "Mask"],
     )
     parser.add_argument("-k", type=str, default=None)
     parser.add_argument("--columns", nargs="+", default=["name"])

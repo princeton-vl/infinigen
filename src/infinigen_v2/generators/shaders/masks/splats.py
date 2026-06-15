@@ -1,7 +1,13 @@
+from typing import NamedTuple
+
 import procfunc as pf
 from procfunc.nodes import types as t
 
 from infinigen_v2.generators.shaders.util.coord import coord_warp, space_warp
+
+
+class SplatsMaskResult(NamedTuple):
+    mask: pf.ProcNode[float]
 
 
 @pf.nodes.node_function
@@ -760,7 +766,7 @@ def splats_streaks(vector: t.SocketOrVal[pf.Vector]):
 def splats_mask_presets(
     rng: pf.RNG,
     vector: t.SocketOrVal[pf.Vector],
-) -> pf.ProcNode[float]:
+) -> SplatsMaskResult:
     func = pf.control.choice(
         rng,
         [
@@ -770,7 +776,7 @@ def splats_mask_presets(
             (splats_streaks_mask, 3.0),
         ],
     )
-    return func(vector=vector)
+    return SplatsMaskResult(mask=func(vector=vector))
 
 
 def metal_base_material(vector: t.SocketOrVal[pf.Vector]):
@@ -793,7 +799,7 @@ def splats_base_material(vector: t.SocketOrVal[pf.Vector]):
 def metal_splats_presets(rng: pf.RNG, vector):
     del vector
     coord = pf.nodes.shader.coord()
-    mask = splats_mask_presets(rng=rng, vector=coord.object)
+    mask = splats_mask_presets(rng=rng, vector=coord.object).mask
     diffuse = splats_base_material(vector=coord.object)
     metal = metal_base_material(vector=coord.object)
     mix_shader = pf.nodes.shader.mix_shader(factor=mask, a=metal, b=diffuse)
@@ -917,7 +923,7 @@ def splats_mask_distribution(
     gradient_fac: t.SocketOrVal[float] | None = None,
     gradient_start: t.SocketOrVal[float] | None = None,
     gradient_end: t.SocketOrVal[float] | None = None,
-) -> pf.ProcNode[float]:
+) -> SplatsMaskResult:
     if size is None:
         size = pf.random.clip_gaussian(rng, 2, 4, 0.5, 10)
 
@@ -947,4 +953,4 @@ def splats_mask_distribution(
         )
         mask = pf.nodes.math.clamp(mask * gradient)
 
-    return mask
+    return SplatsMaskResult(mask=mask)

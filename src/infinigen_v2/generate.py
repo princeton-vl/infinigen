@@ -415,9 +415,9 @@ def _unpack_by_category(category: str, result, data: dict):
         case "Material" | "MaterialOverlay":
             data["material"] = result
         case "Mask":
-            data["mask"] = result
+            data["mask"] = result.mask
             data["material"] = pf.Material(
-                surface=pf.nodes.shader.diffuse_bsdf(color=result)
+                surface=pf.nodes.shader.diffuse_bsdf(color=result.mask)
             )
         case "Object":
             data["obj"] = result.mesh

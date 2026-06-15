@@ -36,7 +36,7 @@ def patterned_color_distribution(
     color3: t.SocketOrVal[pf.Color],
     tile_mask_result: TileShapeResult,
 ):
-    mask = tile_mask_result.result.astype(dtype=float) > 0.1
+    mask = tile_mask_result.mask.astype(dtype=float) > 0.1
     mask1 = tile_mask_result.tile_type_1.astype(dtype=float) > 0.1
     mask2 = tile_mask_result.tile_type_2.astype(dtype=float) > 0.1
 
@@ -76,7 +76,7 @@ def fabric_patterned_distribution(
             rngs[0],
             tile_coord_transform_distribution(rngs[1], vector, scale=scale),
         )
-    mask = tile_mask.result.astype(dtype=float) > 0.1
+    mask = tile_mask.mask.astype(dtype=float) > 0.1
 
     if color1 is None:
         color1, color2, color3 = fabric_patterned_colors_distribution(rngs[2])

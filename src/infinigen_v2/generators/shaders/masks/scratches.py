@@ -1,5 +1,11 @@
+from typing import NamedTuple
+
 import procfunc as pf
 from procfunc.nodes import types as t
+
+
+class ScratchesMaskResult(NamedTuple):
+    mask: pf.ProcNode[float]
 
 
 def scratches_distribution(
@@ -8,7 +14,7 @@ def scratches_distribution(
     displacement_a: t.SocketOrVal[pf.Vector] | None = None,
     displacement_b: t.SocketOrVal[pf.Vector] | None = None,
     height_threshold: t.SocketOrVal[float] = -1.0,
-):
+) -> ScratchesMaskResult:
     angle1 = pf.random.uniform(rng, 10.0, 80.0)
     angle2 = pf.random.uniform(rng, -80.0, -10.0)
     scratch_scale = pf.random.log_uniform(rng, 5.0, 20.0)
@@ -31,7 +37,7 @@ def scratches_distribution(
         scratch_detail=scratch_detail,
         scratch_mask_detail=scratch_mask_detail,
     )
-    return scratch_mask_result
+    return ScratchesMaskResult(mask=scratch_mask_result)
 
 
 @pf.nodes.node_function

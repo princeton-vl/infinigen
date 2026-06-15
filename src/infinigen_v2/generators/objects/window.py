@@ -730,10 +730,10 @@ def window_glass_splats_distribution(
         [
             (splats_window, 2),
             (splats.splats_mask_distribution, 1.0),
-            (lambda *_, **__: 0.0, 5),
+            (lambda *_, **__: splats.SplatsMaskResult(mask=0.0), 5),
         ],
     )
-    mask = mask_fn(rng=rng, vector=splats_vector)
+    mask = mask_fn(rng=rng, vector=splats_vector).mask
 
     roughness = pf.random.clip_gaussian(rng, 0.02, 0.03, 0.0, 0.3)
     glass = glass_no_refraction.glass_no_refraction_distribution(

@@ -185,12 +185,14 @@ def main() -> int:
     material_limit = int(os.environ.get("MATERIAL_LIMIT", "-1"))
     object_limit = int(os.environ.get("OBJECT_LIMIT", "-1"))
     scene_limit = int(os.environ.get("SCENE_LIMIT", "-1"))
+    mask_limit = int(os.environ.get("MASK_LIMIT", "-1"))
 
     output_path = args.output_path
     slot_count = len(slot_gpus)
     materials_all = list_category("Material", extra_args)
     objects_all = list_category("Object", extra_args)
     scenes_all = list_category("Scene", extra_args)
+    masks_all = list_category("Mask", extra_args)
 
     procs: list[tuple[int, str, subprocess.Popen[str]]] = []
     runner = render_runner(output_path)
@@ -199,10 +201,12 @@ def main() -> int:
         materials = shard_items(materials_all, slot_count, slot_idx, material_limit)
         objects = shard_items(objects_all, slot_count, slot_idx, object_limit)
         scenes = shard_items(scenes_all, slot_count, slot_idx, scene_limit)
+        masks = shard_items(masks_all, slot_count, slot_idx, mask_limit)
 
         print(
             f"slot={slot_idx}/{slot_count - 1} gpu={gpu_id} "
-            f"materials={count_items(materials)} objects={count_items(objects)} scenes={count_items(scenes)}"
+            f"materials={count_items(materials)} objects={count_items(objects)} "
+            f"scenes={count_items(scenes)} masks={count_items(masks)}"
         )
 
         env = os.environ.copy()
@@ -212,6 +216,7 @@ def main() -> int:
         env["MATERIALS"] = materials
         env["OBJECTS"] = objects
         env["SCENES"] = scenes
+        env["MASKS"] = masks
 
         cmd = ["scripts/integration_v2/launch.sh", str(output_path), "1", *extra_args]
         proc = subprocess.Popen(cmd, env=env, text=True)

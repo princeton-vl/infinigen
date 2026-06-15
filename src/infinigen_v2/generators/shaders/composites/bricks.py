@@ -1273,7 +1273,7 @@ def brick_color_pattern_distribution(
         tile_mask = tile_mask_distribution(rt2, vector=tile_vector, border=border)
         color_1 = brick_concrete.brick_concrete_color_distribution(rt3)
         color_2 = brick_concrete.brick_concrete_color_distribution(rt4)
-        tile_type = tile_mask.result.astype(dtype=pf.Vector).x > 0.5
+        tile_type = tile_mask.mask.astype(dtype=pf.Vector).x > 0.5
         return pf.nodes.color.mix_rgb(factor=tile_type, a=color_1, b=color_2)
 
     r1, r2 = rng.spawn(2)
@@ -1580,7 +1580,7 @@ def bricks_paint_distribution(
             displacement_a=bricks_and_paint_displacement,
             displacement_b=paint_material.displacement,
             height_threshold=0.02,
-        )
+        ).mask
 
     cracks_mix_surface = pf.nodes.shader.mix_shader(
         factor=mix_mask,

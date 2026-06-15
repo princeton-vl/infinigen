@@ -1,5 +1,11 @@
+from typing import NamedTuple
+
 import procfunc as pf
 from procfunc.nodes import types as t
+
+
+class EdgewearMaskResult(NamedTuple):
+    mask: pf.ProcNode[float]
 
 
 def edgewear_distribution(
@@ -8,7 +14,7 @@ def edgewear_distribution(
     displacement_a: t.SocketOrVal[pf.Vector] = (0.0, 0.0, 0.0),
     displacement_b: t.SocketOrVal[pf.Vector] = (0.0, 0.0, 0.0),
     height_threshold: t.SocketOrVal[float] = -1.0,
-):
+) -> EdgewearMaskResult:
     scratch_radius = pf.random.uniform(rng, 0.01, 0.03)
     scratch_mask_randomness = pf.random.uniform(rng, 10.0, 20.0)
     scratch_density = pf.random.uniform(rng, 5.0, 10.0)
@@ -24,7 +30,7 @@ def edgewear_distribution(
         scratch_density=scratch_density,
         scratch_opacity=scratch_opacity,
     )
-    return edge_wear_mask_result
+    return EdgewearMaskResult(mask=edge_wear_mask_result)
 
 
 @pf.nodes.node_function

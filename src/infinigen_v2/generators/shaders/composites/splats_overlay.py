@@ -36,7 +36,7 @@ def splats_overlay_distribution(
     if overlay_material is None:
         overlay_material = splats_base_material_distribution(rng=rng, vector=vector)
 
-    mask = splats.splats_mask_distribution(rng=rng, vector=vector, size=size)
+    mask = splats.splats_mask_distribution(rng=rng, vector=vector, size=size).mask
     shader = pf.nodes.shader.mix_shader(
         factor=mask, a=material.surface, b=overlay_material.surface
     )

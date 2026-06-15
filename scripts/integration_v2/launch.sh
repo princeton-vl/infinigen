@@ -19,6 +19,7 @@ fi
 MATERIALS=${MATERIALS-$(uv run python -m infinigen_v2.list $LIST_ARGS --categories Material --missing_values drop --columns shortname $REST_ARGS)}
 OBJECTS=${OBJECTS-$(uv run python -m infinigen_v2.list $LIST_ARGS --categories Object --missing_values drop --columns shortname $REST_ARGS)}
 SCENES=${SCENES-$(uv run python -m infinigen_v2.list $LIST_ARGS --categories Scene --missing_values drop --columns shortname $REST_ARGS)}
+MASKS=${MASKS-$(uv run python -m infinigen_v2.list $LIST_ARGS --categories Mask --missing_values drop --columns shortname $REST_ARGS)}
 
 # store git info (for display purposes)
 mkdir -p "$OUTPUT_PATH"
@@ -69,6 +70,13 @@ echo "$MATERIALS" | xargs $XARGS "${RENDER_RUNNER_ARGS[@]}" \
     {} material_sphere render_eevee render_eevee_ground_truth visualize_gt \
     $GEN_ARGS --output $OUTPUT_PATH/material-{}-sphere-eevee-DISPLACEMENT_AND_BUMP \
     --seed 0 --passes rgb surface-normal --displacement_mode DISPLACEMENT_AND_BUMP -r 384 384 -s 128
+
+# MASKS VISUAL CHECK (black/white pattern renders on a flat UV plane)
+for i in {0..5}; do
+    echo "$MASKS" | xargs $XARGS "${RENDER_RUNNER_ARGS[@]}" {} material_plane_uv render_cycles \
+        $GEN_ARGS --output $OUTPUT_PATH/mask-{}-planeuv-cycles-$i --seed $i \
+        --passes rgb -r 384 384 -s 128
+done
 
 # OBJECTS VISUAL CHECK
 for i in {0..5}; do

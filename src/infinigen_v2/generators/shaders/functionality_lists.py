@@ -94,7 +94,7 @@ def paint_flaked_distribution(
         displacement_a=base_material.displacement,
         displacement_b=paint_mat.displacement,
         height_threshold=0.0,
-    )
+    ).mask
     return paint_overlay.paint_overlay_distribution(
         rng, vector, material=base_material, paint=paint_mat, mask=mask
     )

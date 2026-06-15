@@ -83,6 +83,50 @@
     "min_parameters": 0
   },
   {
+    "category": "Mask",
+    "name": "infinigen_v2.generators.shaders.masks.tile_shapes.triangle_distribution"
+  },
+  {
+    "category": "Mask",
+    "name": "infinigen_v2.generators.shaders.masks.tile_shapes.star_distribution"
+  },
+  {
+    "category": "Mask",
+    "name": "infinigen_v2.generators.shaders.masks.tile_shapes.spanish_bound_distribution"
+  },
+  {
+    "category": "Mask",
+    "name": "infinigen_v2.generators.shaders.masks.tile_shapes.shell_distribution"
+  },
+  {
+    "category": "Mask",
+    "name": "infinigen_v2.generators.shaders.masks.tile_shapes.hexagon_distribution"
+  },
+  {
+    "category": "Mask",
+    "name": "infinigen_v2.generators.shaders.masks.tile_shapes.herringbone_distribution"
+  },
+  {
+    "category": "Mask",
+    "name": "infinigen_v2.generators.shaders.masks.tile_shapes.diamond_distribution"
+  },
+  {
+    "category": "Mask",
+    "name": "infinigen_v2.generators.shaders.masks.tile_shapes.chevron_distribution"
+  },
+  {
+    "category": "Mask",
+    "name": "infinigen_v2.generators.shaders.masks.tile_shapes.brick_distribution"
+  },
+  {
+    "category": "Mask",
+    "name": "infinigen_v2.generators.shaders.masks.tile_shapes.basket_weave_distribution"
+  },
+  {
+    "category": "Mask",
+    "name": "infinigen_v2.generators.shaders.masks.tile_shapes.square_distribution"
+  },
+  {
     "category": "Material",
     "name": "infinigen_v2.generators.shaders.masks.splats.metal_splats_presets",
     "min_parameters": 0

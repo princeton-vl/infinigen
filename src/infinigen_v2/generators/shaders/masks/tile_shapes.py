@@ -6,7 +6,7 @@ from procfunc.nodes import types as t
 
 
 class TileShapeResult(NamedTuple):
-    result: pf.ProcNode[pf.Color]
+    mask: pf.ProcNode[pf.Color]
     tile_color: pf.ProcNode[pf.Color]
     tile_type_1: pf.ProcNode[float]
     tile_type_2: pf.ProcNode[float]
@@ -369,7 +369,7 @@ def half_shell(
     result_value = (result_7 * 1.4142) ** 2.0
     result_6 = pf.nodes.math.sqrt(result_value - 1.0)
     result_5 = (result_7 * 1.4142) - result_6
-    result_4 = 1.0 - (result_11.y > 0.0) * (result_10 / result_5)
+    result_4 = (1.0 - (result_11.y > 0.0)) * (result_10 / result_5)
     result_3 = (result_11.y > 0.0) * result_10
     result_2 = radius - (result_4 + result_3)
     result_1 = pf.nodes.color.mix_rgb(
@@ -582,7 +582,7 @@ def triangle(
     tile_type_2 = result_1.astype(dtype=float) * triangle_single_result_1.value
     tile_type_1 = (tile_type_3 + tile_type_2) > 0.0
     return TileShapeResult(
-        result=result,
+        mask=result,
         tile_color=tile_color,
         tile_type_1=tile_type,
         tile_type_2=tile_type_1,
@@ -663,7 +663,7 @@ def star(
     )
     tile_type = moon_single_result.result.astype(dtype=float) > 0.0
     return TileShapeResult(
-        result=result,
+        mask=result,
         tile_color=tile_color,
         tile_type_1=tile_type,
         tile_type_2=tile_type,
@@ -842,7 +842,7 @@ def spanish_bound(
     tile_color = pf.nodes.texture.white_noise(color_vector_2 + tile_color_vector)
     tile_type = (1.0 - tile_type_1) > 0.0
     return TileShapeResult(
-        result=result,
+        mask=result,
         tile_color=tile_color.color,
         tile_type_1=tile_type,
         tile_type_2=tile_type,
@@ -907,7 +907,7 @@ def shell(
         half_shell_result.even * tile_type
     )
     return TileShapeResult(
-        result=result,
+        mask=result,
         tile_color=tile_color,
         tile_type_1=tile_type,
         tile_type_2=tile_type_1,
@@ -1009,7 +1009,7 @@ def hexagon(
     tile_type = result_7.astype(dtype=float) > 0.0
     tile_type_1 = (result_7.astype(dtype=float) * hex_single_result.value) > 0.0
     return TileShapeResult(
-        result=result,
+        mask=result,
         tile_color=tile_color,
         tile_type_1=tile_type,
         tile_type_2=tile_type_1,
@@ -1148,7 +1148,7 @@ def herringbone(
         + scalar_positive_modulo_result_5 * tile_type
     )
     return TileShapeResult(
-        result=result,
+        mask=result,
         tile_color=tile_color.color,
         tile_type_1=tile_type,
         tile_type_2=mix_result,
@@ -1289,7 +1289,7 @@ def diamond(
     )
     tile_type_1 = (tile_type_3 + tile_type_2) > 0.0
     return TileShapeResult(
-        result=result,
+        mask=result,
         tile_color=tile_color,
         tile_type_1=tile_type,
         tile_type_2=tile_type_1,
@@ -1384,7 +1384,7 @@ def chevron(
         input_1=type_2_input, input_2=type_2_input_1_increment * 2.0
     )
     return TileShapeResult(
-        result=result,
+        mask=result,
         tile_color=tile_color.color,
         tile_type_1=tile_type,
         tile_type_2=scalar_positive_modulo_result,
@@ -1492,7 +1492,7 @@ def brick(
         scalar_positive_modulo_result < tile_type_4
     )
     return TileShapeResult(
-        result=result,
+        mask=result,
         tile_color=tile_color.color,
         tile_type_1=tile_type,
         tile_type_2=tile_type_1,
@@ -1678,7 +1678,7 @@ def basket_weave(
     tile_color = pf.nodes.texture.white_noise(color_vector_2 + tile_color_vector)
     tile_type = (1.0 - tile_type_1) > 0.0
     return TileShapeResult(
-        result=result,
+        mask=result,
         tile_color=tile_color.color,
         tile_type_1=tile_type,
         tile_type_2=tile_type,
@@ -1721,10 +1721,36 @@ def square(
         blend_type="DODGE",
     )
     return TileShapeResult(
-        result=result,
+        mask=result,
         tile_color=checker_texture.color,
         tile_type_1=checker_texture.fac,
         tile_type_2=checker_texture.fac,
+    )
+
+
+def _resolve_tile_params(
+    rng: pf.RNG,
+    subtiles_number: t.SocketOrVal[float] | None,
+    aspect_ratio: t.SocketOrVal[float] | None,
+    border: t.SocketOrVal[float] | None,
+    flatness: t.SocketOrVal[float] | None,
+) -> dict:
+    rngs = rng.spawn(5)
+    if subtiles_number is None:
+        subtiles_number = pf.control.choice(
+            rngs[1], [(1.0, 3.0), (2.0, 2.0), (3.0, 1.0), (4.0, 1.0)]
+        )
+    if aspect_ratio is None:
+        aspect_ratio = pf.random.randint(rngs[2], 2, 7 + 1)
+    if border is None:
+        border = pf.random.uniform(rngs[3], 0.03, 0.05)
+    if flatness is None:
+        flatness = pf.random.uniform(rngs[4], 0.9, 0.95)
+    return dict(
+        subtiles_number=subtiles_number,
+        aspect_ratio=aspect_ratio,
+        border=border,
+        flatness=flatness,
     )
 
 
@@ -1736,16 +1762,7 @@ def tile_mask_distribution(
     border: t.SocketOrVal[float] | None = None,
     flatness: t.SocketOrVal[float] | None = None,
 ) -> TileShapeResult:
-    rngs = rng.spawn(5)
-    if subtiles_number is None:
-        subtiles_number = pf.random.randint(rngs[1], 1, 2 + 1)
-    if aspect_ratio is None:
-        aspect_ratio = pf.random.randint(rngs[2], 2, 5 + 1)
-    if border is None:
-        border = pf.random.uniform(rngs[3], 0.03, 0.05)
-    if flatness is None:
-        flatness = pf.random.uniform(rngs[4], 0.9, 0.95)
-
+    params = _resolve_tile_params(rng, subtiles_number, aspect_ratio, border, flatness)
     func = pf.control.choice(
         rng,
         [
@@ -1761,12 +1778,167 @@ def tile_mask_distribution(
             (square, 2.0),
         ],
     )
-    return func(
-        vector=vector,
-        subtiles_number=subtiles_number,
-        aspect_ratio=aspect_ratio,
-        border=border,
-        flatness=flatness,
+    return func(vector=vector, **params)
+
+
+def _tile_shape_distribution(
+    shape,
+    rng: pf.RNG,
+    vector: pf.ProcNode[pf.Vector] | None,
+    subtiles_number: t.SocketOrVal[float] | None,
+    aspect_ratio: t.SocketOrVal[float] | None,
+    border: t.SocketOrVal[float] | None,
+    flatness: t.SocketOrVal[float] | None,
+) -> TileShapeResult:
+    rngs = rng.spawn(3)
+    params = _resolve_tile_params(
+        rngs[2], subtiles_number, aspect_ratio, border, flatness
+    )
+    scale = pf.random.log_uniform(rngs[0], 4.0, 10.0) / params["subtiles_number"]
+    vector = tile_coord_transform_distribution(rngs[1], vector=vector, scale=scale)
+    return shape(vector=vector, **params)
+
+
+def triangle_distribution(
+    rng: pf.RNG,
+    vector: pf.ProcNode[pf.Vector] | None = None,
+    subtiles_number: t.SocketOrVal[float] | None = None,
+    aspect_ratio: t.SocketOrVal[float] | None = None,
+    border: t.SocketOrVal[float] | None = None,
+    flatness: t.SocketOrVal[float] | None = None,
+) -> TileShapeResult:
+    return _tile_shape_distribution(
+        triangle, rng, vector, subtiles_number, aspect_ratio, border, flatness
+    )
+
+
+def star_distribution(
+    rng: pf.RNG,
+    vector: pf.ProcNode[pf.Vector] | None = None,
+    subtiles_number: t.SocketOrVal[float] | None = None,
+    aspect_ratio: t.SocketOrVal[float] | None = None,
+    border: t.SocketOrVal[float] | None = None,
+    flatness: t.SocketOrVal[float] | None = None,
+) -> TileShapeResult:
+    return _tile_shape_distribution(
+        star, rng, vector, subtiles_number, aspect_ratio, border, flatness
+    )
+
+
+def spanish_bound_distribution(
+    rng: pf.RNG,
+    vector: pf.ProcNode[pf.Vector] | None = None,
+    subtiles_number: t.SocketOrVal[float] | None = None,
+    aspect_ratio: t.SocketOrVal[float] | None = None,
+    border: t.SocketOrVal[float] | None = None,
+    flatness: t.SocketOrVal[float] | None = None,
+) -> TileShapeResult:
+    return _tile_shape_distribution(
+        spanish_bound, rng, vector, subtiles_number, aspect_ratio, border, flatness
+    )
+
+
+def shell_distribution(
+    rng: pf.RNG,
+    vector: pf.ProcNode[pf.Vector] | None = None,
+    subtiles_number: t.SocketOrVal[float] | None = None,
+    aspect_ratio: t.SocketOrVal[float] | None = None,
+    border: t.SocketOrVal[float] | None = None,
+    flatness: t.SocketOrVal[float] | None = None,
+) -> TileShapeResult:
+    return _tile_shape_distribution(
+        shell, rng, vector, subtiles_number, aspect_ratio, border, flatness
+    )
+
+
+def hexagon_distribution(
+    rng: pf.RNG,
+    vector: pf.ProcNode[pf.Vector] | None = None,
+    subtiles_number: t.SocketOrVal[float] | None = None,
+    aspect_ratio: t.SocketOrVal[float] | None = None,
+    border: t.SocketOrVal[float] | None = None,
+    flatness: t.SocketOrVal[float] | None = None,
+) -> TileShapeResult:
+    return _tile_shape_distribution(
+        hexagon, rng, vector, subtiles_number, aspect_ratio, border, flatness
+    )
+
+
+def herringbone_distribution(
+    rng: pf.RNG,
+    vector: pf.ProcNode[pf.Vector] | None = None,
+    subtiles_number: t.SocketOrVal[float] | None = None,
+    aspect_ratio: t.SocketOrVal[float] | None = None,
+    border: t.SocketOrVal[float] | None = None,
+    flatness: t.SocketOrVal[float] | None = None,
+) -> TileShapeResult:
+    return _tile_shape_distribution(
+        herringbone, rng, vector, subtiles_number, aspect_ratio, border, flatness
+    )
+
+
+def diamond_distribution(
+    rng: pf.RNG,
+    vector: pf.ProcNode[pf.Vector] | None = None,
+    subtiles_number: t.SocketOrVal[float] | None = None,
+    aspect_ratio: t.SocketOrVal[float] | None = None,
+    border: t.SocketOrVal[float] | None = None,
+    flatness: t.SocketOrVal[float] | None = None,
+) -> TileShapeResult:
+    return _tile_shape_distribution(
+        diamond, rng, vector, subtiles_number, aspect_ratio, border, flatness
+    )
+
+
+def chevron_distribution(
+    rng: pf.RNG,
+    vector: pf.ProcNode[pf.Vector] | None = None,
+    subtiles_number: t.SocketOrVal[float] | None = None,
+    aspect_ratio: t.SocketOrVal[float] | None = None,
+    border: t.SocketOrVal[float] | None = None,
+    flatness: t.SocketOrVal[float] | None = None,
+) -> TileShapeResult:
+    return _tile_shape_distribution(
+        chevron, rng, vector, subtiles_number, aspect_ratio, border, flatness
+    )
+
+
+def brick_distribution(
+    rng: pf.RNG,
+    vector: pf.ProcNode[pf.Vector] | None = None,
+    subtiles_number: t.SocketOrVal[float] | None = None,
+    aspect_ratio: t.SocketOrVal[float] | None = None,
+    border: t.SocketOrVal[float] | None = None,
+    flatness: t.SocketOrVal[float] | None = None,
+) -> TileShapeResult:
+    return _tile_shape_distribution(
+        brick, rng, vector, subtiles_number, aspect_ratio, border, flatness
+    )
+
+
+def basket_weave_distribution(
+    rng: pf.RNG,
+    vector: pf.ProcNode[pf.Vector] | None = None,
+    subtiles_number: t.SocketOrVal[float] | None = None,
+    aspect_ratio: t.SocketOrVal[float] | None = None,
+    border: t.SocketOrVal[float] | None = None,
+    flatness: t.SocketOrVal[float] | None = None,
+) -> TileShapeResult:
+    return _tile_shape_distribution(
+        basket_weave, rng, vector, subtiles_number, aspect_ratio, border, flatness
+    )
+
+
+def square_distribution(
+    rng: pf.RNG,
+    vector: pf.ProcNode[pf.Vector] | None = None,
+    subtiles_number: t.SocketOrVal[float] | None = None,
+    aspect_ratio: t.SocketOrVal[float] | None = None,
+    border: t.SocketOrVal[float] | None = None,
+    flatness: t.SocketOrVal[float] | None = None,
+) -> TileShapeResult:
+    return _tile_shape_distribution(
+        square, rng, vector, subtiles_number, aspect_ratio, border, flatness
     )
 
 
@@ -1781,6 +1953,7 @@ def tile_coord_transform_distribution(
     rngs = rng.spawn(3)
     if vector is None:
         vector = pf.nodes.shader.coord().uv
+    vector = vector * (1.0, 1.0, 0.0)
     if rotation_deg is None:
         rotation_deg = pf.random.randint(rngs[0], 0, 8 + 1) * 45.0
     if scale is None:
