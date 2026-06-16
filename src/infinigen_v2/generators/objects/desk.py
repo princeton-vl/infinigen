@@ -18,19 +18,7 @@ def tagged_cube(
     size: t.SocketOrVal[pf.Vector],
 ) -> pf.ProcNode:
     cube = pf.nodes.geo.mesh_cube(size)
-
-    input_index = pf.nodes.geo.input_index()
-
-    result_0_selection = pf.nodes.func.equal(a=input_index, b=2)
-
-    store_named_attribute = pf.nodes.geo.store_named_attribute(
-        geometry=cube.mesh,
-        name="TAG_support",
-        selection=result_0_selection,
-        value=True,
-        domain="FACE",
-    )
-    return store_named_attribute
+    return cube.mesh
 
 
 @pf.nodes.node_function

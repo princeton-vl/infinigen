@@ -60,7 +60,7 @@ def floating_object_asset_distribution(rng: pf.RNG) -> pf.MeshObject:
         [
             (random_primitives.primitives_distribution, 1.0),
             (obj_func, 3.0),
-            (small_object_distribution, 1.5),
+            # (small_object_distribution, 1.5),
         ],
     )
 
@@ -74,13 +74,14 @@ def floating_object_asset_distribution(rng: pf.RNG) -> pf.MeshObject:
     vec = pf.nodes.shader.coord().uv
 
     p = pf.random.uniform(rng, 0.0, 1.0)
-    if p < 0.2:
-        mat = random_primitives.bsdf_simple_distribution(rng, vec)
-        pf.ops.object.set_material(
-            obj, surface=mat.surface, displacement=mat.displacement
-        )
-    elif p < 0.4:
-        mat = random_primitives.all_materials_distribution(rng, vec)
+    if p < 0.4:
+        # override material samples coord().uv; UV-less furniture needs a layer
+        if not obj.item().data.uv_layers:
+            pf.ops.uv.cube_project(obj, uv_name="UVMap")
+        if p < 0.2:
+            mat = random_primitives.bsdf_simple_distribution(rng, vec)
+        else:
+            mat = random_primitives.all_materials_distribution(rng, vec)
         pf.ops.object.set_material(
             obj, surface=mat.surface, displacement=mat.displacement
         )

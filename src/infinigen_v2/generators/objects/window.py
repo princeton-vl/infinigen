@@ -82,7 +82,7 @@ def curtain(
     curve_line = pf.nodes.geo.curve_line(start=curve_line_start, end=curve_line_end)
 
     resample_curve_count = pf.nodes.geo.resample_curve_count(
-        curve=curve_line, count=200
+        curve=curve_line, count=100
     )
 
     curve_line_1_start = pf.nodes.math.combine_xyz(l1)
@@ -92,7 +92,7 @@ def curtain(
     )
 
     resample_curve_count_1 = pf.nodes.geo.resample_curve_count(
-        curve=curve_line_1, count=200
+        curve=curve_line_1, count=100
     )
 
     join: pf.ProcNode[pf.CurveObject] = pf.nodes.geo.join_geometry(
@@ -659,10 +659,21 @@ def window_geometry(
     join = pf.nodes.geo.join_geometry([set_position_1, window_panel_result_1])
 
     realized = pf.nodes.geo.realize_instances(join)
-    bound_box = pf.nodes.geo.bound_box(realized)
+
+    # Even out the long frame polys before subsurf, then crease all frame
+    # edges so the later subsurf keeps the frame crisp.
+    subdivided = pf.nodes.geo.subdivide_mesh(mesh=realized, level=3)
+    creased = pf.nodes.geo.store_named_attribute(
+        domain="EDGE",
+        geometry=subdivided,
+        name="crease_edge",
+        value=1.0,
+    )
+
+    bound_box = pf.nodes.geo.bound_box(creased)
 
     return WindowGeometryResult(
-        geometry=realized,
+        geometry=creased,
         bounding_box=bound_box.bounding_box,
     )
 
@@ -874,6 +885,9 @@ def window_distribution(
     curtain_offset = frame_thickness * 0.5 + 0.07
     pf.ops.object.set_transform(curtain, location=(0.0, 0.0, curtain_offset))
     pf.ops.object.join(frame_obj, curtain)
+
+    # Smooth the curtains; crease_edge keeps the frame edges sharp.
+    pf.ops.modifier.subdivide_surface(frame_obj, levels=2, _skip_apply=True)
 
     portal_light = pf.ops.primitives.light.area_lamp(
         shape="RECTANGLE",

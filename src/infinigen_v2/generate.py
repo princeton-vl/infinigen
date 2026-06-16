@@ -88,6 +88,14 @@ def get_parser():
         help="Frame range to render (start, end)",
     )
     parser.add_argument(
+        "--exporter_frames",
+        type=int,
+        nargs=2,
+        default=None,
+        help="Frame range for Exporter generators only; defaults to --frames. "
+        "Lets the scene/camera span the full range while exporters render a subset.",
+    )
+    parser.add_argument(
         "-d",
         "--debug",
         nargs="*",
@@ -280,19 +288,49 @@ def _cleanup_except_returnvals(return_data: dict) -> list[str]:
     return cleaned
 
 
+def _tight_world_bbox(obj: pf.MeshObject) -> tuple[np.ndarray, np.ndarray]:
+    """Tight world-space bbox from evaluated vertices. bbox_min_max(global_coords=True)
+    is the local AABB transformed by matrix_world, which inflates rotated objects."""
+    item = obj.item()
+    eval_obj = item.evaluated_get(bpy.context.evaluated_depsgraph_get())
+    mesh = eval_obj.to_mesh()
+    n = len(mesh.vertices)
+    mat = np.array(item.matrix_world)
+    if n == 0:
+        eval_obj.to_mesh_clear()
+        local = np.array(item.bound_box)
+    else:
+        local = np.empty(n * 3)
+        mesh.vertices.foreach_get("co", local)
+        eval_obj.to_mesh_clear()
+        local = local.reshape(-1, 3)
+    world = (mat[:3, :3] @ local.T).T + mat[:3, 3]
+    return world.min(0), world.max(0)
+
+
+def _bounds(objects: list[pf.MeshObject]) -> tuple[np.ndarray, np.ndarray]:
+    mins, maxs = zip(*[_tight_world_bbox(o) for o in objects], strict=True)
+    return np.minimum.reduce(mins), np.maximum.reduce(maxs)
+
+
 def _centroid_camera(
-    objects: list[pf.MeshObject], frac: pf.Vector, rotation: pf.Euler
+    objects: list[pf.MeshObject],
+    frac: pf.Vector,
+    footprint: pf.MeshObject | None = None,
 ) -> pf.CameraObject:
-    all_bbminmax = [
-        pf.ops.attr.bbox_min_max(obj, global_coords=True) for obj in objects
-    ]
-    all_min = np.minimum.reduce([all_bbminmax[0] for all_bbminmax in all_bbminmax])
-    all_max = np.maximum.reduce([all_bbminmax[1] for all_bbminmax in all_bbminmax])
-    loc = all_min + (all_max - all_min) * frac
+    z_min, z_max = _bounds(objects)
+    xy_min, xy_max = _bounds([footprint]) if footprint is not None else (z_min, z_max)
+    lo = np.array([xy_min[0], xy_min[1], z_min[2]])
+    hi = np.array([xy_max[0], xy_max[1], z_max[2]])
+    extent = hi - lo
+    loc = pf.Vector(lo + extent * np.array(frac))
+    # Aim at the scene centroid, biased low so the floor and furniture stay in frame
+    target = pf.Vector(lo + extent * np.array((0.5, 0.5, 0.35)))
+    rotation_euler = (target - loc).to_track_quat("-Z", "Y").to_euler()
     camera = pf.ops.primitives.perspective_camera()
-    pf.ops.object.set_transform(camera, loc, rotation)
+    pf.ops.object.set_transform(camera, loc, rotation_euler)
     camera.item().name = "Camera"
-    camera.item().data.lens = 40
+    camera.item().data.lens = 20
     return camera
 
 
@@ -301,7 +339,7 @@ def _ensure_cameras_and_lights(data: dict):
     cameras = data.get("cameras", [])
     if not isinstance(cameras, cg.Proxy) and len(cameras) == 0:
         dummy_camera = _centroid_camera(
-            data["objects"], (0.1, 0.1, 0.5), np.deg2rad((90, 0, -45))
+            data["objects"], (0.2, 0.2, 0.5), footprint=data.get("floor")
         )
         data["cameras"] = [dummy_camera]
         cameras = data["cameras"]
@@ -429,6 +467,10 @@ def _unpack_by_category(category: str, result, data: dict):
             data["lights"] += getattr(result, "lights", [])
             if hasattr(result, "colliders"):
                 data["colliders"] = result.colliders
+            if getattr(result, "floor", None) is not None:
+                data["floor"] = result.floor
+            if getattr(result, "dimensions", None) is not None:
+                data["dimensions"] = result.dimensions
         case "Exporter":
             data["exports"] = data["exports"] + [result]
         case "Cameras":
@@ -459,9 +501,7 @@ def execute_generators(
     if any(gen_str in uv_generators for gen_str, _, _ in generators):
         data["vector"] = pf.nodes.shader.coord().uv
     else:
-        vec = pf.nodes.shader.geometry().position
-        vec = pf.nodes.shader.mapping(vector=vec, rotation=(-np.pi * 0.25, 0, 0))
-        data["vector"] = vec
+        data["vector"] = pf.nodes.shader.geometry().position
 
     rngs = rng.spawn(len(generators))
     realized = False
@@ -487,10 +527,15 @@ def execute_generators(
 
         if category == "Exporter":
             _ensure_cameras_and_lights(data)
+            exp_data = {
+                **data,
+                "frame_start": data["exporter_frame_start"],
+                "frame_end": data["exporter_frame_end"],
+            }
             for cam_idx in data.get("camera_indices", [0]):
-                data["camera"] = data["cameras"][cam_idx]
+                exp_data["camera"] = data["cameras"][cam_idx]
                 result = _execute_step(
-                    generator_str, category, generator_func, data, rng
+                    generator_str, category, generator_func, exp_data, rng
                 )
                 _unpack_by_category(category, result, data)
         else:
@@ -512,6 +557,7 @@ def execute_generators(
     for name, elapsed in generator_times.items():
         logger.info(f"{name}: {elapsed:.3f}s")
 
+    data["generator_times"] = generator_times
     return {k: v for k, v in data.items() if k not in pipeline_parameters}
 
 
@@ -567,13 +613,19 @@ def _main():  # noqa: C901
         signal.signal(signal.SIGTERM, handler)
 
     slurm_restart_count = int(os.environ.get("SLURM_RESTART_COUNT", 0))
+    exporter_frames = (
+        args.exporter_frames if args.exporter_frames is not None else args.frames
+    )
     pipeline_parameters = dict(
         output_folder=args.output,
         frame_start=args.frames[0],
         frame_end=args.frames[1],
+        exporter_frame_start=exporter_frames[0],
+        exporter_frame_end=exporter_frames[1],
         resolution=args.resolution,
         min_samples=32,
         max_samples=args.samples,
+        samples_adaptive_threshold=0.005,
         export_passes=args.passes,
         film_exposure=2.0,
         displacement_mode=getattr(DisplacementMode, args.displacement_mode),

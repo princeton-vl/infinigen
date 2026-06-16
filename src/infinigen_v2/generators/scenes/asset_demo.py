@@ -146,6 +146,43 @@ def material_sphere(
 
 
 @pf.tracer.grammar
+def material_orbit_sphere(
+    rng: pf.RNG,
+    material: pf.Material | None = None,
+    subdivisions: int = 4,
+    radius: float = 0.75,
+) -> DevSceneResult:
+    """Sphere on a floor with no scale reference and no camera, for pairing with
+    an orbit camera stage (the camera stage supplies the sole 'Camera')."""
+    sphere = pf.ops.primitives.mesh_uv_sphere(
+        radius=radius,
+        location=t.Vector((0, 0, radius)),
+    )
+    pf.ops.modifier.subdivide_surface(sphere, levels=subdivisions, _skip_apply=True)
+
+    if material is None:
+        material = developer_grid(vector=pf.nodes.shader.coord().generated)
+
+    pf.ops.object.set_material(sphere, material=material)
+
+    lighting = sky_lighting.nishita_sky(
+        sun_rotation_deg=260,
+        sun_elevation_deg=30,
+    )
+
+    plane_size = 24.0
+    tile_m = 8.0
+    plane = pf.ops.primitives.mesh_plane(location=t.Vector((0, 0, 0)), size=plane_size)
+    uvs = pf.ops.attr.uv_coords(plane)
+    pf.ops.attr.write_uv_coords(plane, uvs * (plane_size / tile_m))
+    pf.ops.object.set_material(
+        plane, material=developer_grid(vector=pf.nodes.shader.coord().uv)
+    )
+
+    return DevSceneResult(lights=[lighting], all_objects=[sphere, plane], cameras=[])
+
+
+@pf.tracer.grammar
 def material_torus_uv(
     rng: pf.RNG,
     material: pf.Material | None = None,

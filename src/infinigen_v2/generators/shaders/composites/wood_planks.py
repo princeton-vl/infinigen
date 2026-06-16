@@ -13,6 +13,10 @@ from infinigen_v2.generators.shaders.materials.wood_grain import (
 )
 
 
+def _grout_shader(color: t.SocketOrVal[pf.Color]) -> pf.ProcNode[pf.Shader]:
+    return pf.nodes.shader.diffuse_bsdf(color=color)
+
+
 def wood_planks_deck(
     vector: t.SocketOrVal[pf.Vector],
 ):
@@ -61,6 +65,7 @@ def wood_planks_deck(
 
     mix_shader = pf.nodes.shader.mix_shader(
         factor=brick_cutter_result.mask,
+        a=_grout_shader(displacement_grains_color_1),
         b=wood_shader_result.surface,
     )
     return pf.Material(
@@ -117,6 +122,7 @@ def wood_planks_brown(
 
     mix_shader = pf.nodes.shader.mix_shader(
         factor=brick_cutter_result.mask,
+        a=_grout_shader(displacement_grains_color_1),
         b=wood_shader_result.surface,
     )
     return pf.Material(
@@ -173,6 +179,7 @@ def wood_planks_blonde(
 
     mix_shader = pf.nodes.shader.mix_shader(
         factor=brick_cutter_result.mask,
+        a=_grout_shader(surface_b_grains_color_1),
         b=wood_shader_result.surface,
     )
 
@@ -359,6 +366,7 @@ def wood_planks_distribution(
 
     mix_shader = pf.nodes.shader.mix_shader(
         factor=brick_cutter_result.mask,
+        a=_grout_shader(grains_color_1),
         b=shader_result.bsdf,
     )
 

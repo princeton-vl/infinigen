@@ -9,6 +9,10 @@
   },
   {
     "category": "Exporter",
+    "name": "infinigen_v2.exporters.render_cycles.render_validity_check"
+  },
+  {
+    "category": "Exporter",
     "name": "infinigen_v2.exporters.render_eevee.render_eevee"
   },
   {
@@ -302,6 +306,10 @@
   },
   {
     "category": "Scene",
+    "name": "infinigen_v2.generators.scenes.asset_demo.material_orbit_sphere"
+  },
+  {
+    "category": "Scene",
     "name": "infinigen_v2.generators.scenes.asset_demo.material_torus_uv"
   },
   {
@@ -426,6 +434,10 @@
   },
   {
     "category": "Object",
+    "name": "infinigen_v2.generators.objects.slot_cabinet.slot_cabinet_distribution"
+  },
+  {
+    "category": "Object",
     "name": "infinigen_v2.generators.objects.triangle_shelf.triangle_shelf_distribution"
   },
   {
@@ -447,6 +459,18 @@
   {
     "category": "Cameras",
     "name": "infinigen_v2.generators.cameras.monocular_360_camera_distribution"
+  },
+  {
+    "category": "Cameras",
+    "name": "infinigen_v2.generators.cameras.linear_pan_camera_distribution"
+  },
+  {
+    "category": "Cameras",
+    "name": "infinigen_v2.generators.cameras.orbit_90_camera_distribution"
+  },
+  {
+    "category": "Cameras",
+    "name": "infinigen_v2.generators.cameras.material_orbit_camera_distribution"
   },
   {
     "category": "Cameras",

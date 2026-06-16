@@ -391,6 +391,6 @@ def vase_distribution(rng: pf.RNG) -> VaseResult:
 
     thickness = pf.random.uniform(rng, 0.005, 0.01)
     pf.ops.modifier.solidify(obj, thickness=thickness)
-    pf.ops.modifier.subdivide_surface(obj, levels=4, _skip_apply=True)
+    pf.ops.modifier.subdivide_surface(obj, levels=2, _skip_apply=True)
 
     return VaseResult(mesh=obj)

@@ -32,16 +32,21 @@ def camera_collision_check(
     colliders: ccol.CollisionSet,
     probe_offset: float = 0.0,
     probe_size: float = 0.75,
+    forward_clearance: float = 0.0,
 ) -> bool:
     """Return True if camera pose is acceptable (no collision)."""
     bpy.context.view_layer.update()
     cam_obj = camera.item()
-    probe_center = cam_obj.matrix_world @ pf.Vector((0, 0, probe_offset))
-    probe_transform = np.array(cam_obj.matrix_world)
-    probe_transform[:3, 3] = np.array(probe_center)
-    if ccol.box_intersection_test(colliders, probe_transform, size=probe_size):
-        logger.debug("Camera is too close to an object, rejecting")
-        return False
+    offsets = [probe_offset]
+    if forward_clearance > 0:
+        offsets.append(-forward_clearance)
+    for off in offsets:
+        probe_center = cam_obj.matrix_world @ pf.Vector((0, 0, off))
+        probe_transform = np.array(cam_obj.matrix_world)
+        probe_transform[:3, 3] = np.array(probe_center)
+        if ccol.box_intersection_test(colliders, probe_transform, size=probe_size):
+            logger.debug("Camera is too close to an object, rejecting")
+            return False
     return True
 
 

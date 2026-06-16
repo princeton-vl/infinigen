@@ -58,12 +58,18 @@ def rug_material_distribution(
     return func(rng, vector, translucency=0.0)
 
 
-def rug_distribution(rng: pf.RNG) -> RugResult:
-    width = pf.random.clip_gaussian(rng, 2.5, 0.8, 1.5, 4.0)
-    length = width * pf.random.uniform(rng, 1.0, 1.5)
+def rug_distribution(
+    rng: pf.RNG,
+    dimensions: pf.Vector | None = None,
+) -> RugResult:
+    if dimensions is None:
+        width = pf.random.clip_gaussian(rng, 2.5, 0.8, 1.5, 4.0)
+        length = width * pf.random.uniform(rng, 1.0, 1.5)
+        thickness = pf.random.uniform(rng, 0.01, 0.02)
+        dimensions = (length, width, thickness)
+    length, width, thickness = dimensions
     min_dim = min(width, length)
     fillet_radius = pf.random.uniform(rng, 0.0, min_dim / 2)
-    thickness = pf.random.uniform(rng, 0.01, 0.02)
 
     vec = pf.nodes.shader.geometry().position
     mat_shader = rug_material_distribution(rng, vec)

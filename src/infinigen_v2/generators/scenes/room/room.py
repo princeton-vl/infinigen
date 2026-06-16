@@ -11,7 +11,8 @@ from infinigen_v2.generators.scenes.room.room_shape import (
     room_shape_distribution,
 )
 from infinigen_v2.generators.scenes.room.room_small_objects import (
-    room_small_objects_distribution,
+    place_small_objects_on_targets,
+    small_objects_collection_distribution,
 )
 from infinigen_v2.generators.scenes.room.room_surface_features import (
     ceiling_feature_distribution,
@@ -34,6 +35,12 @@ class LivingroomResult(NamedTuple):
     floor: pf.MeshObject
     storage_surfaces: list[pf.MeshObject]
     dimensions: pf.Vector | None = None
+    windows: list[pf.MeshObject] | None = None
+    wall_planes: list[pf.MeshObject] | None = None
+    windowsills: list[pf.MeshObject] | None = None
+    wall_shelves: list[pf.MeshObject] | None = None
+    sofas: list[pf.MeshObject] | None = None
+    rugs: list[pf.MeshObject] | None = None
 
 
 @pf.tracer.grammar
@@ -54,18 +61,23 @@ def livingroom_nofurniture_distribution(
     ceiling_result = ceiling_feature_distribution(rng_ceiling, shape)
     logger.info("Created ceiling and floor features")
 
-    skirt_objs = skirting_distribution(rng_skirting, shape)
+    skirt_objs = skirting_distribution(
+        rng_skirting, walls=wall_result.wall_planes + [shape.walls]
+    )
     logger.info(f"Created {len(skirt_objs)} skirting objects")
 
     result_categories = {
         "room_floor": [shape.floor],
-        "room_ceiling": [shape.ceiling],
+        "room_ceiling": [ceiling_result.ceiling],
         "room_wall": wall_result.wall_planes,
         "room_wall_corners": [shape.walls],
         "room_skirting": skirt_objs,
-        "room_wall_back": wall_result.extras + [ceiling_result.extras[0]],
-        "ceiling_light": ceiling_result.extras[1:],
+        "room_wall_back": wall_result.backs + ceiling_result.backs,
+        "room_wall_sill": wall_result.sills + ceiling_result.sills,
+        "ceiling_light": ceiling_result.light_meshes,
     }
+    result_categories.update(wall_result.decorations)
+
     for name, objs in result_categories.items():
         for i, obj in enumerate(objs):
             obj.item().name = f"{name}.{i:02d}"
@@ -82,8 +94,11 @@ def livingroom_nofurniture_distribution(
         side_tables=[],
         diningtable_objs=[],
         floor=shape.floor,
-        storage_surfaces=[],
+        storage_surfaces=wall_result.storage,
         dimensions=shape.dimensions,
+        windows=wall_result.decorations.get("window", []),
+        wall_planes=wall_result.wall_planes,
+        windowsills=wall_result.sills + ceiling_result.sills,
     )
 
 
@@ -98,16 +113,15 @@ def livingroom_distribution(
 
     result = livingroom_nofurniture_distribution(rng_room, dimensions=dimensions)
 
-    wall_planes = [
-        o for o in result.all_objects if o.item().name.startswith("room_wall.")
-    ]
     furniture = room_furniture_distribution(
         rng_furniture,
         dimensions=result.dimensions,
-        wall_planes=wall_planes,
+        wall_planes=result.wall_planes,
         floor=result.floor,
         frame_start=frame_start,
         frame_end=frame_end,
+        extra_colliders=result.storage_surfaces + (result.windows or []),
+        wall_storage=result.storage_surfaces,
     )
 
     all_objects = result.all_objects + furniture.furniture
@@ -122,7 +136,13 @@ def livingroom_distribution(
         side_tables=furniture.side_tables,
         diningtable_objs=furniture.diningtable_objs,
         floor=result.floor,
-        storage_surfaces=furniture.storage_surfaces,
+        dimensions=result.dimensions,
+        storage_surfaces=furniture.storage_surfaces + result.storage_surfaces,
+        wall_planes=result.wall_planes,
+        windowsills=result.windowsills or [],
+        wall_shelves=result.storage_surfaces,
+        sofas=furniture.sofas,
+        rugs=furniture.rugs,
     )
 
 
@@ -138,12 +158,121 @@ def livingroom_with_smallobj_distribution(
     result = livingroom_distribution(
         rng_room, dimensions=dimensions, frame_start=frame_start, frame_end=frame_end
     )
-    small_objects = room_small_objects_distribution(
-        rng_small,
-        storage_surfaces=result.storage_surfaces,
-        floor=result.floor,
-        colliders=result.colliders,
+
+    rng_pool, rng_place = rng_small.spawn(2)
+    pool = small_objects_collection_distribution(rng_pool)
+    (
+        rng_dining,
+        rng_coffee,
+        rng_side,
+        rng_storage,
+        rng_sofa,
+        rng_rug,
+        rng_shelf,
+        rng_sill,
+    ) = rng_place.spawn(8)
+    colliders = result.colliders
+    small_objects: list = []
+
+    placed, colliders = pf.control.choice(
+        rng_coffee,
+        [
+            (
+                lambda: place_small_objects_on_targets(
+                    rng_coffee, result.coffee_tables, pool, colliders
+                ),
+                3.0,
+            ),
+            (lambda: ([], colliders), 1.0),
+        ],
+    )()
+    small_objects += placed
+
+    placed, colliders = pf.control.choice(
+        rng_side,
+        [
+            (
+                lambda: place_small_objects_on_targets(
+                    rng_side, result.side_tables, pool, colliders
+                ),
+                3.0,
+            ),
+            (lambda: ([], colliders), 1.0),
+        ],
+    )()
+    small_objects += placed
+
+    placed, colliders = pf.control.choice(
+        rng_storage,
+        [
+            (
+                lambda: place_small_objects_on_targets(
+                    rng_storage, result.storage_objects, pool, colliders
+                ),
+                4.0,
+            ),
+            (lambda: ([], colliders), 1.0),
+        ],
+    )()
+    small_objects += placed
+
+    """
+    placed, colliders = pf.control.choice(
+        rng_sofa,
+        [
+            (
+                lambda: place_small_objects_on_targets(
+                    rng_sofa, result.sofas or [], pool, colliders
+                ),
+                1.0,
+            ),
+            (lambda: ([], colliders), 4.0),
+        ],
+    )()
+    small_objects += placed
+
+    placed, colliders = pf.control.choice(
+        rng_rug,
+        [
+            (
+                lambda: place_small_objects_on_targets(
+                    rng_rug, result.rugs or [], pool, colliders
+                ),
+                1.0,
+            ),
+            (lambda: ([], colliders), 5.0),
+        ],
+    )()
+    small_objects += placed
+
+    placed, colliders = place_small_objects_on_targets(
+        rng_dining, result.diningtable_objs, pool, colliders, skip_prob=0.5
     )
+    small_objects += placed
+    """
+
+    placed, colliders = place_small_objects_on_targets(
+        rng_shelf,
+        result.wall_shelves or [],
+        pool,
+        colliders,
+        skip_prob=0.25,
+    )
+    small_objects += placed
+
+    placed, colliders = pf.control.choice(
+        rng_sill,
+        [
+            (
+                lambda: place_small_objects_on_targets(
+                    rng_sill, result.windowsills or [], pool, colliders
+                ),
+                1.0,
+            ),
+            (lambda: ([], colliders), 1.0),
+        ],
+    )()
+    small_objects += placed
 
     all_objects = result.all_objects + small_objects
     return result._replace(

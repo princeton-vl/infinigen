@@ -15,11 +15,11 @@ def glass_no_refraction_distribution(
 ) -> pf.Material:
     assert vector is not None
     if roughness is None:
-        roughness = pf.random.clip_gaussian(rng, 0.0, 0.015, 0.0, 0.03)
+        roughness = pf.random.clip_gaussian(rng, 0.05, 0.03, 0.02, 0.15)
     alpha = pf.random.clip_gaussian(rng, 0.05, 0.05, 0.0, 0.2)
     surface = pf.nodes.shader.principled_bsdf(
         roughness=roughness,
         alpha=alpha,
-        metallic=1.0,
+        metallic=0.0,
     )
     return pf.Material(surface=surface)

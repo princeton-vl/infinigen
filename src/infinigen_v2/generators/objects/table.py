@@ -7,6 +7,7 @@ from infinigen_v2.generators.shaders.functionality_lists import (
     furniture_material_distribution,
     table_top_material_distribution,
 )
+from infinigen_v2.generators.util import mesh
 
 
 class TableResult(NamedTuple):
@@ -543,117 +544,22 @@ def leg_straight(
     return n_gon_cylinder_result.mesh
 
 
-class TableTopResult(NamedTuple):
-    geometry: t.ProcNode[pf.MeshObject]
-    curve: pf.ProcNode
-
-
 @pf.nodes.node_function
 def table_top(
-    thickness: t.SocketOrVal[float],
-    n_gon: t.SocketOrVal[int],
-    profile_width: t.SocketOrVal[float],
-    aspect_ratio: t.SocketOrVal[float],
-    fillet_ratio: t.SocketOrVal[float],
-    fillet_radius_vertical: t.SocketOrVal[float],
-) -> TableTopResult:
-    curve_line = pf.nodes.geo.curve_line(start=(1.0, 0.0, 1.0), end=(1.0, 0.0, -1.0))
+    size: t.SocketOrVal[pf.Vector] = (1.4, 0.8, 0.05),
+    support_loop_offset: t.SocketOrVal[pf.Vector] = (0.02, 0.02, 0.01),
+) -> t.ProcNode[pf.MeshObject]:
+    """Slab spanning z in [0, size.z]; support_loop_offset sets edge roundness.
+    Subdivision is left to an unapplied modifier on the final object."""
+    box = mesh.corner_box(size=size, support_loop_offset=support_loop_offset)
+    smooth = pf.nodes.geo.set_shade_smooth(geometry=box.mesh, shade_smooth=True)
 
-    n_gon_cylinder_result = n_gon_cylinder(
-        radius_curve=curve_line,
-        height=thickness,
-        n_gon=n_gon,
-        profile_width=profile_width,
-        aspect_ratio=aspect_ratio,
-        fillet_ratio=fillet_ratio,
-        profile_resolution=512,
-        resolution=10,
-    )
-
-    input_index = pf.nodes.geo.input_index()
-
-    join_geometries_0_selection = pf.nodes.func.equal(a=input_index, b=0)
-
-    store_named_attribute = pf.nodes.geo.store_named_attribute(
-        geometry=n_gon_cylinder_result.caps,
-        name="TAG_support",
-        selection=join_geometries_0_selection,
-        value=True,
-        domain="FACE",
-    )
-
-    curve_arc = pf.nodes.geo.curve_arc(resolution=4, radius=0.7071, sweep_angle=4.7124)
-
-    transform_1 = pf.nodes.geo.transform(
-        geometry=curve_arc,
-        rotation=(0.0, 0.0, -0.7854),
-        translation=(0, 0, 0),
-        scale=(1, 1, 1),
-    )
-    transform_2 = pf.nodes.geo.transform(
-        geometry=transform_1,
-        rotation=(0.0, 1.5708, 0.0),
-        translation=(0, 0, 0),
-        scale=(1, 1, 1),
-    )
-    transform_3 = pf.nodes.geo.transform(
-        geometry=transform_2,
-        translation=(0.0, 0.5, 0.0),
+    translation = pf.nodes.math.combine_xyz(z=size.z * 0.5)
+    return pf.nodes.geo.transform(
+        geometry=smooth,
+        translation=translation,
         rotation=(0, 0, 0),
         scale=(1, 1, 1),
-    )
-    transform_4_scale = pf.nodes.math.combine_xyz(
-        x=1.0, y=fillet_radius_vertical, z=1.0
-    )
-    transform_4 = pf.nodes.geo.transform(
-        geometry=transform_3,
-        scale=transform_4_scale,
-        translation=(0, 0, 0),
-        rotation=(0, 0, 0),
-    )
-
-    fillet_curve = pf.nodes.geo.fillet_curve_poly(
-        curve=transform_4,
-        radius=fillet_radius_vertical,
-        limit_radius=True,
-        count=8,
-    )
-
-    transform_5 = pf.nodes.geo.transform(
-        geometry=fillet_curve,
-        rotation=(1.5708, 1.5708, 0.0),
-        scale=thickness.astype(dtype=pf.Vector),
-        translation=(0, 0, 0),
-    )
-
-    curve_to = pf.nodes.geo.curve_to_mesh(
-        curve=n_gon_cylinder_result.profile_curve,
-        profile_curve=transform_5,
-    )
-
-    transform_6_translation = pf.nodes.math.combine_xyz(z=thickness * -0.5)
-    transform_6 = pf.nodes.geo.transform(
-        geometry=curve_to,
-        translation=transform_6_translation,
-        rotation=(0, 0, 0),
-        scale=(1, 1, 1),
-    )
-
-    flip_edge = pf.nodes.geo.flip_faces(transform_6)
-
-    join = pf.nodes.geo.join_geometry([store_named_attribute, flip_edge])
-
-    geometry_translation = pf.nodes.math.combine_xyz(z=thickness)
-
-    transform = pf.nodes.geo.transform(
-        geometry=join,
-        translation=geometry_translation,
-        rotation=(0, 0, 0),
-        scale=(1, 1, 1),
-    )
-    return TableTopResult(
-        geometry=transform,
-        curve=n_gon_cylinder_result.profile_curve,
     )
 
 
@@ -880,8 +786,6 @@ def dining_table_distribution(
     if top_thickness is None:
         top_thickness = pf.random.uniform(rng, 0.03, 0.08)
 
-    top_profile_width = 1.414 * x
-    top_profile_aspect_ratio = y / x
     top_height = z - top_thickness
 
     vec = pf.nodes.shader.geometry().position
@@ -890,16 +794,21 @@ def dining_table_distribution(
     if leg_material is None:
         leg_material = furniture_material_distribution(rng, vec)
 
+    corner_frac_x = pf.random.uniform(rng, 0.1, 0.5)
+    corner_frac_y = pf.random.uniform(rng, 0.1, 0.5)
+    edge_frac = pf.random.uniform(rng, 0.1, 0.5)
+    # square biases the x/y corner support loops tight to the edge -> sharper corners
+    corner_shrink = pf.random.uniform(rng, 0.0, 1.0) ** 2
     top = table_top(
-        thickness=top_thickness,
-        n_gon=4,
-        profile_width=top_profile_width,
-        aspect_ratio=top_profile_aspect_ratio,
-        fillet_ratio=pf.random.uniform(rng, 0.0, 0.02),
-        fillet_radius_vertical=pf.random.uniform(rng, 0.1, 0.3),
+        size=(x, y, top_thickness),
+        support_loop_offset=(
+            corner_frac_x * corner_shrink * x,
+            corner_frac_y * corner_shrink * y,
+            edge_frac * top_thickness * (1.0 - corner_shrink),
+        ),
     )
     top = pf.nodes.geo.transform(
-        top.geometry,
+        top,
         translation=(0, 0, top_height),
         rotation=(0, 0, 0),
         scale=(1, 1, 1),
@@ -925,7 +834,10 @@ def dining_table_distribution(
         base, surface=leg_material.surface, displacement=leg_material.displacement
     )
 
+    pf.ops.attr.write_attribute(base, data=1.0, key="crease_edge", domain="EDGE")
+
     pf.ops.object.join(top, base)
+    pf.ops.modifier.subdivide_surface(top, levels=3, _skip_apply=True)
     return TableResult(mesh=top)
 
 
@@ -941,7 +853,7 @@ def side_table_dimensions_distribution(rng: pf.RNG) -> pf.Vector:
 def side_table_distribution(rng: pf.RNG) -> TableResult:
     """Side table."""
     dimensions = side_table_dimensions_distribution(rng)
-    top_thickness = pf.random.uniform(rng, 0.0, 0.04)
+    top_thickness = pf.random.uniform(rng, 0.01, 0.04)
     return dining_table_distribution(rng, dimensions, top_thickness=top_thickness)
 
 

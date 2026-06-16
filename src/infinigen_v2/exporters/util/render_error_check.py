@@ -274,18 +274,6 @@ def _object_uv_layers(obj: bpy.types.Object) -> UVLayerInfo:
     return UVLayerInfo(active_render=active_render, names=names, degenerate=degenerate)
 
 
-MISSING = "missing"  # hard: required UV layer absent on the mesh (the real bug)
-DEGENERATE = "degenerate"  # softer: layer present but collapsed to ~zero area
-
-
-class UVCoordIssue(NamedTuple):
-    object_name: str
-    material_name: str
-    layer: str  # required layer name, or ACTIVE_RENDER
-    severity: str  # MISSING or DEGENERATE
-    reason: str
-
-
 class UVCoordError(ValueError):
     pass
 
@@ -311,46 +299,31 @@ def _layer_issue(
     layer: str,
     info: UVLayerInfo,
     attr_names: set[str],
-) -> UVCoordIssue | None:
-    """One UVCoordIssue for a required UV layer, or None when it is satisfied."""
+) -> str | None:
+    """One issue message for a required UV layer, or None when it is satisfied."""
     if layer == ACTIVE_RENDER:
         if info.active_render is None:
-            return UVCoordIssue(
-                obj_name,
-                mat_name,
-                ACTIVE_RENDER,
-                MISSING,
-                "material samples coord().uv (active-render UV layer) but the mesh "
-                "has no active-render UV layer",
+            return (
+                f"{obj_name}/{mat_name}: material samples coord().uv but the mesh "
+                "has no active-render UV layer"
             )
         if info.active_render in info.degenerate:
-            return UVCoordIssue(
-                obj_name,
-                mat_name,
-                info.active_render,
-                DEGENERATE,
-                f"active-render UV layer {info.active_render!r} is degenerate "
-                "(UV bbox ~zero area); UV-driven textures render flat",
+            return (
+                f"{obj_name}/{mat_name}: active-render UV layer "
+                f"{info.active_render!r} is degenerate (UV bbox ~zero area)"
             )
         return None
     if layer in info.names:
         if layer in info.degenerate:
-            return UVCoordIssue(
-                obj_name,
-                mat_name,
-                layer,
-                DEGENERATE,
-                f"UV layer {layer!r} is degenerate (UV bbox ~zero area)",
+            return (
+                f"{obj_name}/{mat_name}: UV layer {layer!r} is degenerate "
+                "(UV bbox ~zero area)"
             )
         return None
     if layer not in attr_names:
-        return UVCoordIssue(
-            obj_name,
-            mat_name,
-            layer,
-            MISSING,
-            f"material samples named layer {layer!r} but the mesh has no such UV "
-            "layer (nor any attribute by that name)",
+        return (
+            f"{obj_name}/{mat_name}: material samples named layer {layer!r} but the "
+            "mesh has no such UV layer (nor any attribute by that name)"
         )
     return None
 
@@ -359,7 +332,7 @@ def check_material_uv_coords(
     obj: bpy.types.Object,
     material: bpy.types.Material | None = None,
     mat_index: int | None = None,
-) -> list[UVCoordIssue]:
+) -> list[str]:
     """Diagnose whether `material`'s UV sampling is satisfied by `obj`'s realized
     UV layers. Pass EITHER a `material` or a `mat_index` into obj.data.materials;
     defaults to obj.active_material. Returns a list of issue messages (empty == ok);

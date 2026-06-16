@@ -2,6 +2,7 @@ import argparse
 import fnmatch
 import json
 import re
+import shutil
 import subprocess
 import time
 from datetime import datetime
@@ -25,6 +26,8 @@ SLURM_STATES = [
 
 
 def get_cluster_state(jobnamestr: str) -> dict[str, int]:
+    if shutil.which("squeue") is None:
+        return {}
     result = subprocess.run(
         ["squeue", "--format=%j %T", "--noheader"],
         capture_output=True,

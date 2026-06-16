@@ -5,6 +5,8 @@ import bpy
 import numpy as np
 import procfunc as pf
 
+from infinigen_v2.generators.scenes import collision_collection as ccol
+
 T = TypeVar("T")
 
 
@@ -142,27 +144,6 @@ def compute_grid_locations(
     return np.array(box_min) + positions * box_size
 
 
-def aliases(
-    obj: pf.Object,
-    locations: np.ndarray,
-    rotations: np.ndarray | None = None,
-    scales: np.ndarray | None = None,
-) -> list[pf.Object]:
-    orig_rot = tuple(obj.item().rotation_euler)
-    orig_scale = tuple(obj.item().scale)
-    result = []
-    for i, loc in enumerate(locations):
-        alias = pf.ops.object.alias(obj)
-        alias.item().name = obj.item().name
-        alias.item().location = tuple(loc)
-        alias.item().rotation_euler = (
-            tuple(rotations[i]) if rotations is not None else orig_rot
-        )
-        alias.item().scale = tuple(scales[i]) if scales is not None else orig_scale
-        result.append(alias)
-    return result
-
-
 def duplicates(
     obj: pf.Object,
     locations: np.ndarray,
@@ -197,3 +178,25 @@ def delete_object(obj: bpy.types.Object) -> None:
         bpy.data.meshes.remove(data)
     elif item_type == "LIGHT":
         bpy.data.lights.remove(data)
+
+
+def keep_non_colliding(
+    items: list[T | None],
+    colliders: ccol.CollisionSet,
+    key: Callable[[T], pf.Object] = lambda x: x.mesh,
+) -> tuple[list[T], ccol.CollisionSet]:
+    """Keep each item whose `key(item)` mesh doesn't collide with `colliders` or an
+    already-kept item, folding kept meshes into the set. Skips Nones; rejected items
+    are dropped (not deleted) and removed later by scene autocleanup.
+    """
+    kept: list[T] = []
+    for item in items:
+        if item is None:
+            continue
+        mesh = key(item)
+        if ccol.intersection_test(colliders, mesh):
+            mesh.item().name = mesh.item().name + "_COLLIDE"
+            continue
+        colliders = ccol.collision_set(colliders.objs + [mesh], existing=colliders)
+        kept.append(item)
+    return kept, colliders

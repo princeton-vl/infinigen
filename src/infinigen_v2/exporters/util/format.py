@@ -191,6 +191,6 @@ SCENE_PASS_DEFAULTS: dict[ExportType, RenderPass] = {
         ExportType.OBJ_IMU_TUM_TRAJ, Path("obj-imu-tum/"), np.dtype(np.float32)
     ),
     ExportType.CAMERA: RenderPass(
-        ExportType.CAMERA, Path("%c/camera.npz"), np.dtype(np.float32)
+        ExportType.CAMERA, Path("%c/camera_%f.npz"), np.dtype(np.float32)
     ),
 }

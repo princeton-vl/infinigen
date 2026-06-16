@@ -5,9 +5,6 @@ import pytest
 from procfunc.util.manifest import import_item
 
 from infinigen_v2.exporters.util.render_error_check import (
-    ACTIVE_RENDER,
-    DEGENERATE,
-    MISSING,
     SHADER_NODE_COUNT_FAIL,
     DisplacementCoordError,
     check_material_uv_coords,
@@ -242,9 +239,8 @@ def test_texcoord_uv_no_layer_missing():
     _remove_uv_layers(obj)
     issues = check_material_uv_coords(obj)
     assert len(issues) == 1
-    assert issues[0].severity == MISSING
-    assert issues[0].layer == ACTIVE_RENDER
-    assert issues[0].object_name == obj.name
+    assert "no active-render UV layer" in issues[0]
+    assert obj.name in issues[0]
 
 
 def test_texcoord_uv_degenerate_layer():
@@ -252,7 +248,7 @@ def test_texcoord_uv_degenerate_layer():
     _collapse_active_uv(obj)
     issues = check_material_uv_coords(obj)
     assert len(issues) == 1
-    assert issues[0].severity == DEGENERATE
+    assert "degenerate" in issues[0]
 
 
 def test_non_uv_coord_no_false_positive():
@@ -270,9 +266,8 @@ def test_geometry_position_no_false_positive():
 def test_named_uv_map_missing():
     obj = _plane_with_material(pf.nodes.shader.uv_map(uv_map="MyUV"), valid_uv=True)
     issues = check_material_uv_coords(obj)
-    missing = [i for i in issues if i.severity == MISSING]
-    assert len(missing) == 1
-    assert missing[0].layer == "MyUV"
+    assert len(issues) == 1
+    assert "MyUV" in issues[0]
 
 
 def test_accept_by_material_index():
@@ -280,20 +275,3 @@ def test_accept_by_material_index():
     _remove_uv_layers(obj)
     issues = check_material_uv_coords(obj, mat_index=0)
     assert len(issues) == 1
-    assert issues[0].severity == MISSING
-
-
-def test_uv_issues_flag_missing():
-    obj = _plane_with_material(pf.nodes.shader.coord().uv, valid_uv=True)
-    _remove_uv_layers(obj)
-    issues = check_material_uv_coords(obj)
-    assert any(i.severity == MISSING for i in issues)
-
-
-def test_uv_issues_degenerate_not_missing():
-    obj = _plane_with_material(pf.nodes.shader.coord().uv, valid_uv=True)
-    _collapse_active_uv(obj)
-    issues = check_material_uv_coords(obj)
-    assert issues
-    assert all(i.severity != MISSING for i in issues)
-    assert any(i.severity == DEGENERATE for i in issues)

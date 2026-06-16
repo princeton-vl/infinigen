@@ -252,6 +252,7 @@ def faces_for_instance_grid_bboxes(
     verts_per_instance_y: t.SocketOrVal[int] = 2,
     margin_verts_x: t.SocketOrVal[int] = 1,
     margin_verts_y: t.SocketOrVal[int] = 1,
+    face_expand_margin: t.SocketOrVal[pf.Vector] = (0.0, 0.0, 0.0),
 ) -> FacesForInstanceGridBboxesResult:
     n_verts_x = pf.nodes.geo.attribute_statistic(
         geometry=query_grid,
@@ -341,8 +342,8 @@ def faces_for_instance_grid_bboxes(
         value=take_which_corner_value,
         from_min=(0.0, 0.0, 0.0),
         from_max=(1.0, 1.0, 1.0),
-        to_min=bound_box.min + instance_uv,
-        to_max=bound_box.max + instance_uv,
+        to_min=bound_box.min - face_expand_margin + instance_uv,
+        to_max=bound_box.max + face_expand_margin + instance_uv,
     )
 
     normed_uv = normed_uv_to_bounds_uv(
@@ -406,8 +407,17 @@ def faces_for_instance_grid_bboxes(
         boolean=is_instance_face,
     )
 
+    # store the sampled surface UVs back as UVMap so the wall stays textured
+    mesh_with_uv = pf.nodes.geo.store_named_attribute(
+        geometry=capture_attribute.geometry,
+        name="UVMap",
+        value=mix_for_corners_vs_boundaries,
+        domain="CORNER",
+        data_type="FLOAT2",
+    )
+
     return FacesForInstanceGridBboxesResult(
-        mesh=capture_attribute.geometry,
+        mesh=mesh_with_uv,
         is_instance_face=capture_attribute.boolean,
     )
 
@@ -419,6 +429,9 @@ def place_instances_on_uv_grid(
     grid_mesh: pf.ProcNode[pf.MeshObject],
     query_uv: t.SocketOrVal[pf.Vector],
     instance: pf.ProcNode[pf.MeshObject],
+    secondary_axis_vector: t.SocketOrVal[pf.Vector] = (0, 0, 1),
+    up_align: t.SocketOrVal[bool] = False,
+    rotation_offset: t.SocketOrVal[float] = 0.0,
 ) -> pf.ProcNode[t.Instances]:
     input_position = pf.nodes.geo.input_position()
     sample_uv = pf.nodes.geo.sample_uv_surface(
@@ -438,12 +451,26 @@ def place_instances_on_uv_grid(
         sample_uv=query_uv,
         uv_map=uv_field,
     )
+    primary = pf.nodes.func.switch(
+        switch=up_align, a=sample_normal.value, b=(0.0, 0.0, 1.0)
+    )
+    secondary = pf.nodes.func.switch(
+        switch=up_align, a=secondary_axis_vector, b=sample_normal.value
+    )
     rotation = pf.nodes.func.axes_to_rotation(
-        primary_axis_vector=sample_normal.value,
-        secondary_axis_vector=(0, 0, 1),
+        primary_axis_vector=primary,
+        secondary_axis_vector=secondary,
         primary_axis="Z",
         secondary_axis="Y",
     )
+
+    # yaw about world up; default 0.0 leaves rotation untouched
+    if not (isinstance(rotation_offset, float) and rotation_offset == 0.0):
+        rotation = pf.nodes.func.rotate_rotation(
+            rotation=rotation,
+            rotate_by=pf.nodes.math.combine_xyz(z=rotation_offset),
+            rotation_space="GLOBAL",
+        )
 
     return pf.nodes.geo.instance_on_points(
         points=grid_positioned,

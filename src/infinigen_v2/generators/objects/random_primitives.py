@@ -137,20 +137,20 @@ def primitives_distribution(
         rng,
         [
             (_cone_distribution, 1.0),
-            (_cube_distribution, 1.0),
-            (_cylinder_distribution, 1.0),
+            (_cube_distribution, 3.0),
+            (_cylinder_distribution, 2.0),
             (_grid_distribution, 0.5),
-            (_icosphere_distribution, 1.0),
-            (_monkey_distribution, 1.0),
+            # (_icosphere_distribution, 1.0),
+            (_monkey_distribution, 0.5),
             (_plane_distribution, 0.5),
             (_torus_distribution, 1.0),
-            (_uv_sphere_distribution, 1.0),
+            # (_uv_sphere_distribution, 1.0),
         ],
     )
     obj = func(rng)
     obj.item().name = func.__name__.removeprefix("_")
 
-    obj = pf.control.choice(
+    creased = pf.control.choice(
         rng,
         [
             (

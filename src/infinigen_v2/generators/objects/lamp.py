@@ -1,7 +1,6 @@
 from functools import partial
 from typing import NamedTuple
 
-import numpy as np
 import procfunc as pf
 from procfunc.nodes import types as t
 
@@ -10,9 +9,6 @@ from infinigen_v2.generators.shaders.functionality_lists import (
     furniture_material_distribution,
 )
 from infinigen_v2.generators.shaders.materials import fabric
-from infinigen_v2.generators.shaders.materials.emissive_nonblocking import (
-    lamp_bulb_nonemissive,
-)
 from infinigen_v2.generators.util.curve import curve_to_mesh_with_uv
 
 
@@ -37,117 +33,6 @@ def point_light_indoor_distribution(
     pf.nodes.to_light(light, surface=emission)
 
     return light
-
-
-@pf.nodes.node_function
-def bulb(
-    lampshade_material: t.SocketOrVal[pf.Material],
-    metal_material: t.SocketOrVal[pf.Material],
-) -> pf.ProcNode:
-    curve_line = pf.nodes.geo.curve_line(start=(0, 0, 0), end=(0, 0, 1))
-
-    resample_curve_count = pf.nodes.geo.resample_curve_count(
-        curve=curve_line, count=100
-    )
-
-    spline_parameter = pf.nodes.geo.spline_parameter()
-
-    curve_to_curve_radius = pf.nodes.math.float_curve(
-        value=spline_parameter.factor,
-        curve=np.array(
-            [
-                [0.0, 0.15],
-                [0.05, 0.17],
-                [0.15, 0.2],
-                [0.55, 0.38],
-                [0.8, 0.35],
-                [0.9568, 0.22],
-                [1.0, 0.0],
-            ]
-        ),
-        factor=1.0,
-    )
-
-    set_curve_radius = pf.nodes.geo.set_curve_radius(
-        curve=resample_curve_count,
-        radius=curve_to_curve_radius,
-    )
-
-    curve_circle = pf.nodes.geo.curve_circle(100)
-    curve_to = pf.nodes.geo.curve_to_mesh(
-        curve=set_curve_radius, profile_curve=curve_circle
-    )
-
-    set_material = pf.nodes.geo.set_material(
-        geometry=curve_to,
-        material=lampshade_material,
-        selection=True,
-    )
-
-    curve_line_1 = pf.nodes.geo.curve_line(start=(0.0, 0.0, -0.2), end=(0.0, 0.0, -0.3))
-
-    resample_curve_count_1 = pf.nodes.geo.resample_curve_count(
-        curve=curve_line_1, count=100
-    )
-
-    spline_parameter_1 = pf.nodes.geo.spline_parameter()
-
-    curve_radius = pf.nodes.math.float_curve(
-        value=spline_parameter_1.factor,
-        curve=np.array([[0.0, 1.0], [0.4432, 0.55], [1.0, 0.275]]),
-        factor=1.0,
-    )
-
-    set_curve_radius_1 = pf.nodes.geo.set_curve_radius(
-        curve=resample_curve_count_1, radius=curve_radius
-    )
-
-    curve_circle_1 = pf.nodes.geo.curve_circle(resolution=100, radius=0.15)
-    curve_to_1 = pf.nodes.geo.curve_to_mesh(
-        curve=set_curve_radius_1,
-        profile_curve=curve_circle_1,
-        fill_caps=True,
-    )
-    curve_spiral = pf.nodes.geo.curve_spiral(
-        rotations=5.0, start_radius=0.15, end_radius=0.15, height=0.2
-    )
-
-    transform_1 = pf.nodes.geo.transform(
-        geometry=curve_spiral,
-        translation=(0.0, 0.0, -0.2),
-        rotation=(0, 0, 0),
-        scale=(1, 1, 1),
-    )
-
-    curve_circle_2 = pf.nodes.geo.curve_circle(resolution=100, radius=0.015)
-    curve_to_2 = pf.nodes.geo.curve_to_mesh(
-        curve=transform_1,
-        profile_curve=curve_circle_2,
-        fill_caps=True,
-    )
-    curve_line_2 = pf.nodes.geo.curve_line(start=(0.0, 0.0, -0.2), end=(0.0, 0.0, 0.0))
-    curve_circle_3 = pf.nodes.geo.curve_circle(resolution=100, radius=0.15)
-    curve_to_3 = pf.nodes.geo.curve_to_mesh(
-        curve=curve_line_2,
-        profile_curve=curve_circle_3,
-        fill_caps=True,
-    )
-
-    join = pf.nodes.geo.join_geometry([curve_to_1, curve_to_2, curve_to_3])
-
-    set_material_1 = pf.nodes.geo.set_material(
-        geometry=join, material=metal_material, selection=True
-    )
-
-    join_1 = pf.nodes.geo.join_geometry([set_material, set_material_1])
-
-    transform = pf.nodes.geo.transform(
-        geometry=join_1,
-        translation=(0.0, 0.0, 0.3),
-        rotation=(0, 0, 0),
-        scale=(1, 1, 1),
-    )
-    return transform
 
 
 @pf.nodes.node_function
@@ -236,53 +121,6 @@ def bulb_rack(
     return curve_to
 
 
-class ReversiableBulbResult(NamedTuple):
-    geometry: pf.ProcNode
-    rack_support: pf.ProcNode[float]
-
-
-@pf.nodes.node_function
-def reversiable_bulb(
-    scale: t.SocketOrVal[float],
-    black_material: t.SocketOrVal[pf.Material],
-    lampshade_material: t.SocketOrVal[pf.Material],
-    metal_material: t.SocketOrVal[pf.Material],
-    reverse: t.SocketOrVal[bool] = False,
-) -> ReversiableBulbResult:
-    bulb_result = bulb(
-        lampshade_material=lampshade_material, metal_material=metal_material
-    )
-
-    transform_scale = pf.nodes.math.combine_xyz(x=scale, y=scale, z=scale)
-    transform = pf.nodes.geo.transform(
-        geometry=bulb_result,
-        scale=transform_scale,
-        translation=(0, 0, 0),
-        rotation=(0, 0, 0),
-    )
-
-    to_instance = pf.nodes.geo.geometry_to_instance(transform)
-
-    geometry_rotation = pf.nodes.math.combine_xyz(
-        y=reverse.astype(dtype=float) * 3.1415
-    )
-
-    rotate_instances = pf.nodes.geo.rotate_instances(
-        instances=to_instance,
-        rotation=geometry_rotation.astype(dtype=pf.Euler),
-        pivot_point=(0, 0, 0),
-    )
-
-    rack_support_b = pf.nodes.math.multiply_add(
-        a=reverse.astype(dtype=float), b=2.0, addend=-1.0
-    )
-    rack_support = -0.015 * rack_support_b
-    return ReversiableBulbResult(
-        geometry=rotate_instances,
-        rack_support=rack_support,
-    )
-
-
 @pf.nodes.node_function
 def lamp_head(
     shade_height: t.SocketOrVal[float],
@@ -340,20 +178,12 @@ def lamp_head(
 
     geometries_2_scale = top_radius * 0.8
 
-    reversiable_bulb_result = reversiable_bulb(
-        scale=geometries_2_scale,
-        reverse=False,
-        black_material=black_material,
-        lampshade_material=lampshade_material,
-        metal_material=metal_material,
-    )
-
     bulb_rack_result = bulb_rack(
         thickness=rack_thickness,
         amount=3,
         inner_radius=geometries_2_scale * 0.15,
         outer_radius=top_radius,
-        inner_height=reversiable_bulb_result.rack_support,
+        inner_height=0.015,
         outer_height=bulb_rack_outer_height,
     )
 
@@ -363,9 +193,7 @@ def lamp_head(
         selection=True,
     )
 
-    join = pf.nodes.geo.join_geometry(
-        [set_material, set_material_1, reversiable_bulb_result.geometry]
-    )
+    join = pf.nodes.geo.join_geometry([set_material, set_material_1])
     return join
 
 
@@ -592,20 +420,15 @@ def lamp_distribution(
 
     lamp = pf.nodes.to_mesh_object(result.geometry)
 
-    bulb_radius = head_top_radius * 0.3
-    bulb_mat = lamp_bulb_nonemissive()
-    bulb_sphere = pf.nodes.geo.mesh_uv_sphere(radius=bulb_radius, segments=32, rings=16)
-    bulb_sphere = pf.nodes.geo.set_material(bulb_sphere.mesh, bulb_mat)
-    bulb_obj = pf.nodes.to_mesh_object(bulb_sphere)
-    bulb_obj.item().location.z = height
-    bulb_obj.item().parent = lamp.item()
-
     if energy is None:
         energy = pf.random.clip_gaussian(rng, 7, 4, 5, 18)
     point_light = point_light_indoor_distribution(
         rng, temperature=temperature, energy=energy
     )
-    point_light.item().location.z = height
+    # Sit the emitter at the open rim plane (not recessed deep in the shade cup)
+    # so light escapes through the opening instead of being absorbed by the
+    # fabric shade walls.
+    point_light.item().location.z = height - 0.25 * shade_height
     point_light.item().parent = lamp.item()
 
     return LampResult(mesh=lamp, light=point_light)
@@ -617,10 +440,7 @@ def desk_lamp_distribution(rng: pf.RNG) -> LampResult:
 
 
 if __name__ == "__main__":
-    bulb_result = bulb()
     bulb_rack_result = bulb_rack()
-
-    reversiable_bulb_result = reversiable_bulb()
 
     lamp_head_result = lamp_head()
     lamp_geometry_result = lamp_geometry()

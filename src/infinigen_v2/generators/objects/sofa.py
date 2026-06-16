@@ -205,35 +205,11 @@ def sofa(
         crease=cushion_crease,
     )
 
-    input_index = pf.nodes.geo.input_index()
-
-    transform_1_selection_2 = pf.nodes.func.equal(a=input_index, b=2)
-
-    store_named_attribute_1 = pf.nodes.geo.store_named_attribute(
-        domain="FACE",
-        geometry=seat_cushion_1,
-        selection=transform_1_selection_2,
-        name="TAG_support",
-        value=True,
-    )
-
-    input_index_1 = pf.nodes.geo.input_index()
-
-    transform_1_selection_1 = pf.nodes.func.equal(a=input_index_1, b=1)
-
-    store_named_attribute_2 = pf.nodes.geo.store_named_attribute(
-        domain="FACE",
-        geometry=store_named_attribute_1,
-        selection=transform_1_selection_1,
-        name="TAG_support",
-        value=True,
-    )
-
     transform_1_selection_0 = pf.nodes.math.constant(1.0)
 
     store_named_attribute_3 = pf.nodes.geo.store_named_attribute(
         domain="FACE",
-        geometry=store_named_attribute_2,
+        geometry=seat_cushion_1,
         selection=transform_1_selection_0.astype(dtype=bool),
         name="TAG_cushion",
         value=True,

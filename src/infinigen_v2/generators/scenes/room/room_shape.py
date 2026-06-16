@@ -103,10 +103,8 @@ def room_edge_to_walls(
 def room_dimensions_distribution(
     rng: pf.RNG,
 ) -> pf.Vector:
-    # pf.random.clip_gaussian(rng, 4.0, 1.5, 5, 8)
-    width = pf.random.uniform(rng, 3.5, 8)
-    # pf.random.clip_gaussian(rng, 4.5, 1.5, 5, 8)
-    depth = pf.random.uniform(rng, 4.5, 8)
+    width = pf.random.clip_gaussian(rng, 4.5, 1, 3.5, 8)
+    depth = pf.random.clip_gaussian(rng, 5.5, 1, 4.5, 8)
     height = pf.random.clip_gaussian(rng, 2.5, 1, 2.2, 4.5)
     dimensions = pf.Vector((width, depth, height))
     return dimensions

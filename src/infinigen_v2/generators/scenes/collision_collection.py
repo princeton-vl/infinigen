@@ -240,7 +240,9 @@ def box_intersection_test(
     if n_colliders(col) == 0:
         return False
     _sync_transforms(col)
-    box = trimesh.creation.box(extents=[size, size, size])
+    box = trimesh.creation.box(
+        extents=np.broadcast_to(np.asarray(size, dtype=float), 3)
+    )
     fcl_geom = col.collision_manager._get_fcl_obj(box)
     probe = trimesh.collision.CollisionManager()
     _add_object_cached(
