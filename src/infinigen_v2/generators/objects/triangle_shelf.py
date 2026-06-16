@@ -74,7 +74,7 @@ def leg_straight(
     profile_width: t.SocketOrVal[float],
     aspect_ratio: t.SocketOrVal[float],
     fillet_ratio: t.SocketOrVal[float],
-    resolution: t.SocketOrVal[int] = 128,
+    resolution: t.SocketOrVal[int] = 6,
 ) -> LegStraightResult:
     mesh_position_z_to_min = height * -1.0
 
@@ -240,7 +240,7 @@ def curve_board(
     ctb_line_end = pf.nodes.math.combine_xyz(z=ctb_z_to_min)
     ctb_line = pf.nodes.geo.curve_line(end=ctb_line_end, start=(0, 0, 0))
     ctb_tilt = pf.nodes.geo.set_curve_tilt(curve=ctb_line, tilt=3.1416)
-    ctb_resample = pf.nodes.geo.resample_curve_count(curve=ctb_tilt, count=128)
+    ctb_resample = pf.nodes.geo.resample_curve_count(curve=ctb_tilt, count=6)
     ctb_spline_param = pf.nodes.geo.spline_parameter()
     ctb_capture = pf.nodes.geo.capture_attribute(
         geometry=ctb_resample,
@@ -312,7 +312,7 @@ def side_leg(
         profile_width=profile_width,
         aspect_ratio=aspect_ratio,
         fillet_ratio=fillet_ratio,
-        resolution=128,
+        resolution=6,
     )
 
     curve_arc = pf.nodes.geo.curve_arc(resolution=4, radius=0.7071, sweep_angle=4.7124)

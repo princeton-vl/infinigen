@@ -101,7 +101,7 @@ def node_group(
         rotation=(0, 0, 0),
         scale=(1, 1, 1),
     )
-    cylinder = pf.nodes.geo.mesh_cylinder(vertices=64, radius=0.01, depth=0.0005)
+    cylinder = pf.nodes.geo.mesh_cylinder(vertices=24, radius=0.01, depth=0.0005)
     transform_2 = pf.nodes.geo.transform(
         geometry=cylinder.mesh,
         translation=(0.005, 0.0, 0.0),
@@ -127,7 +127,7 @@ def knob_handle(
     door_width: t.SocketOrVal[float],
 ) -> pf.ProcNode:
     cyl_depth = (thickness_2 + thickness_1) + length
-    cyl = pf.nodes.geo.mesh_cylinder(vertices=64, radius=radius, depth=cyl_depth)
+    cyl = pf.nodes.geo.mesh_cylinder(vertices=24, radius=radius, depth=cyl_depth)
     tvec = pf.nodes.math.combine_xyz(
         x=((door_width - edge_width) * -0.5) - 0.005,
         y=cyl_depth * 0.5,
@@ -227,9 +227,7 @@ def double_rampled_edge(
     )
     join = pf.nodes.geo.join_geometry([curve_to, body, curve_to_1])
     join = pf.nodes.geo.merge_by_distance(geometry=join, distance=0.0001)
-    return pf.nodes.geo.subdivide_mesh(
-        mesh=pf.nodes.geo.realize_instances(join), level=4
-    )
+    return pf.nodes.geo.realize_instances(join)
 
 
 @pf.nodes.node_function
@@ -300,7 +298,7 @@ def ramped_edge(
     )
     geo = pf.nodes.geo.join_geometry([body, wedge])
     geo = pf.nodes.geo.merge_by_distance(geometry=geo, distance=0.0001)
-    geo = pf.nodes.geo.subdivide_mesh(mesh=pf.nodes.geo.realize_instances(geo), level=4)
+    geo = pf.nodes.geo.realize_instances(geo)
     return pf.nodes.geo.transform(
         geometry=geo,
         translation=pf.nodes.math.combine_xyz(x=x_full * -0.5),

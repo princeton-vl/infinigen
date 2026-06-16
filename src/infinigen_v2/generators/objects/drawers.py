@@ -59,7 +59,7 @@ def door_knob(
 ) -> pf.ProcNode:
     cylinder_depth = length + 0.0
     cylinder = pf.nodes.geo.mesh_cylinder(
-        vertices=64, radius=radius, depth=cylinder_depth
+        vertices=24, radius=radius, depth=cylinder_depth
     )
 
     store_named_attribute = pf.nodes.geo.store_named_attribute(
@@ -215,7 +215,7 @@ def board_rail(
 
     cylinder_depth = transform_a_3 - 0.03
     cylinder = pf.nodes.geo.mesh_cylinder(
-        vertices=64, radius=0.003, depth=cylinder_depth
+        vertices=24, radius=0.003, depth=cylinder_depth
     )
 
     store_named_attribute = pf.nodes.geo.store_named_attribute(
@@ -259,7 +259,7 @@ def board_rail(
         translation=(0, 0, 0),
     )
 
-    cylinder_1 = pf.nodes.geo.mesh_cylinder(vertices=64, radius=0.004, depth=0.005)
+    cylinder_1 = pf.nodes.geo.mesh_cylinder(vertices=24, radius=0.004, depth=0.005)
 
     store_named_attribute_2 = pf.nodes.geo.store_named_attribute(
         geometry=cylinder_1.mesh,

@@ -55,6 +55,7 @@ def corner_cube(
     vertices_x: t.SocketOrVal[int] = 2,
     vertices_y: t.SocketOrVal[int] = 2,
     vertices_z: t.SocketOrVal[int] = 2,
+    crease: t.SocketOrVal[float] = 0.0,
 ) -> pf.ProcNode[pf.MeshObject]:
     cube = pf.nodes.geo.mesh_cube(
         size=dimensions,
@@ -82,12 +83,9 @@ def corner_cube(
         scale=(1, 1, 1),
     )
 
-    # store_named_attribute = pf.nodes.geo.store_named_attribute(
-    #    geometry=transform,
-    #    name="UVMap",
-    #    value=cube.uv_map,
-    # )
-    return transform
+    return pf.nodes.geo.store_named_attribute(
+        geometry=transform, domain="EDGE", name="crease_edge", value=crease
+    )
 
 
 ARM_TYPE_SQUARE = 0
@@ -120,6 +118,9 @@ def sofa(
     footrest: t.SocketOrVal[bool] = False,
     count: t.SocketOrVal[int] = 0,
     scaling_footrest: t.SocketOrVal[float] = 0,
+    body_crease: t.SocketOrVal[float] = 0.7,
+    cushion_crease: t.SocketOrVal[float] = 0.15,
+    arm_back_crease: t.SocketOrVal[float] = 0.2,
 ) -> pf.ProcNode[pf.MeshObject]:
     join_y_numerator_addend = pf.nodes.math.vector_multiply_add(
         a=arm_dimensions,
@@ -159,6 +160,7 @@ def sofa(
         vertices_x=2,
         vertices_y=2,
         vertices_z=2,
+        crease=cushion_crease,
     )
 
     extrude = pf.nodes.geo.extrude_mesh(mesh=seat_cushion, offset_scale=0.03)
@@ -170,14 +172,6 @@ def sofa(
         center=(0, 0, 0),
     )
 
-    subdivision_surface = pf.nodes.geo.subdivision_surface(scale_elements)
-
-    # store_named_attribute = pf.nodes.geo.store_named_attribute(
-    #     geometry=subdivision_surface,
-    #     name="UVMap",
-    #     value=transform_value,
-    # )
-
     transform_translation_x_1 = backrest_width * -1.0
     transform_translation_x_0 = back_dimensions.x + 0.1
     transform_translation = pf.nodes.math.combine_xyz(
@@ -186,7 +180,7 @@ def sofa(
     transform_rotation = pf.nodes.math.combine_xyz(y=backrest_angle + -1.5708)
     transform_scale = pf.nodes.math.combine_xyz(x=seat_margin, y=seat_margin, z=1.0)
     transform = pf.nodes.geo.transform(
-        geometry=subdivision_surface,
+        geometry=scale_elements,
         translation=transform_translation,
         rotation=transform_rotation.astype(dtype=pf.Euler),
         scale=transform_scale,
@@ -208,6 +202,7 @@ def sofa(
         vertices_x=2,
         vertices_y=2,
         vertices_z=2,
+        crease=cushion_crease,
     )
 
     input_index = pf.nodes.geo.input_index()
@@ -478,9 +473,10 @@ def sofa(
         centering_loc=(0.0, 0.5, -1.0),
         dimensions=base_board_2_dimensions,
         supporting_edge_fac=0.0,
-        vertices_x=2,
-        vertices_y=2,
+        vertices_x=5,
+        vertices_y=5,
         vertices_z=2,
+        crease=body_crease,
     )
 
     back_board = corner_cube(
@@ -489,8 +485,9 @@ def sofa(
         dimensions=base_a,
         supporting_edge_fac=0.0,
         vertices_x=2,
-        vertices_y=2,
-        vertices_z=2,
+        vertices_y=5,
+        vertices_z=5,
+        crease=arm_back_crease,
     )
 
     is_arm_angular = pf.nodes.func.equal(a=arm_type, b=ARM_TYPE_ANGULAR)
@@ -540,6 +537,7 @@ def sofa(
         vertices_x=4,
         vertices_y=4,
         vertices_z=4,
+        crease=arm_back_crease,
     )
 
     arm_round = pf.nodes.geo.join_geometry([transform_12, arm_cube])
@@ -553,6 +551,7 @@ def sofa(
         vertices_x=4,
         vertices_y=4,
         vertices_z=10,
+        crease=arm_back_crease,
     )
 
     input_position = pf.nodes.geo.input_position()
@@ -627,12 +626,10 @@ def sofa(
     join_6 = pf.nodes.geo.join_geometry([back_board, arm_sym])
     join_7 = pf.nodes.geo.join_geometry([join_7_geometries, base_board_2, join_6])
 
-    subdivide_2 = pf.nodes.geo.subdivide_mesh(mesh=join_7, level=1)
-    all_fabric = pf.nodes.geo.join_geometry([join_1, subdivide_2])
+    all_fabric = pf.nodes.geo.join_geometry([join_1, join_7])
     all_fabric = pf.nodes.geo.set_material(all_fabric, fabric_material)
 
     geometry = pf.nodes.geo.join_geometry([all_fabric, feet])
-    geometry = pf.nodes.geo.subdivision_surface(geometry)
 
     # TODO: this messes up the overall `dimensions`
     bbox_min_z = pf.nodes.geo.bound_box(geometry).min.z
@@ -699,6 +696,10 @@ def sofa_distribution(
     leg_z = pf.random.uniform(rng, 1.1, 2.5)
     leg_faces = pf.control.choice(rng, [(4, 0.5), (25, 0.5)])
 
+    body_crease = pf.random.uniform(rng, 0.5, 0.9)
+    cushion_crease = pf.random.uniform(rng, 0.0, 0.3)
+    arm_back_crease = pf.random.uniform(rng, 0.0, 0.4)
+
     vec = pf.nodes.shader.coord().uv
     if material is None:
         material = sofa_fabric_distribution(rng, vec)
@@ -727,8 +728,11 @@ def sofa_distribution(
         leg_z=leg_z,
         leg_faces=leg_faces,
         footrest=False,  # disabled due to bugs with missing footrest seat and too tricky to assign the material
+        body_crease=body_crease,
+        cushion_crease=cushion_crease,
+        arm_back_crease=arm_back_crease,
     )
     obj = pf.nodes.to_mesh_object(res)
     pf.ops.uv.cube_project(obj, uv_name="UVMap")
-    pf.ops.modifier.subdivide_surface(obj, levels=2, _skip_apply=True)
+    pf.ops.modifier.subdivide_surface(obj, levels=4, _skip_apply=True)
     return SofaResult(mesh=obj)

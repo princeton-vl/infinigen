@@ -69,7 +69,7 @@ def table_legs(
 ) -> pf.ProcNode:
     cylinder_depth = height - thickness
     cylinder = pf.nodes.geo.mesh_cylinder(
-        vertices=128, radius=radius, depth=cylinder_depth
+        vertices=32, radius=radius, depth=cylinder_depth
     )
 
     transform_b = dist + 0.0
