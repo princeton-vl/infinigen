@@ -31,9 +31,7 @@ def attach_gadget(
     depth_val = depth + 0.0
 
     cube_size = pf.nodes.math.combine_xyz(x=width_val, y=top_len_val, z=thickness_val)
-    cube = pf.nodes.geo.mesh_cube(
-        size=cube_size, vertices_x=5, vertices_y=5, vertices_z=5
-    )
+    cube = pf.nodes.geo.mesh_cube(size=cube_size)
 
     translate_y = (depth_val - top_len_val) * -0.5
     translate_z = height - division_thickness
@@ -46,9 +44,7 @@ def attach_gadget(
     cube_1_size = pf.nodes.math.combine_xyz(
         x=width_val, y=thickness_val, z=back_len_val
     )
-    cube_1 = pf.nodes.geo.mesh_cube(
-        size=cube_1_size, vertices_x=5, vertices_y=5, vertices_z=5
-    )
+    cube_1 = pf.nodes.geo.mesh_cube(size=cube_1_size)
 
     translate_1_y = depth_val * -0.5
     translate_1_z = translate_z - (back_len_val * 0.5)
@@ -144,9 +140,7 @@ def back_board(
     depth_val = depth + 0.0
 
     cube_size = pf.nodes.math.combine_xyz(x=width, y=thickness_val, z=height_val)
-    cube = pf.nodes.geo.mesh_cube(
-        size=cube_size, vertices_x=10, vertices_y=10, vertices_z=10
-    )
+    cube = pf.nodes.geo.mesh_cube(size=cube_size)
 
     translate_y = pf.nodes.math.multiply_add(
         a=depth_val, b=-0.5, addend=thickness_val * -0.5
@@ -173,9 +167,7 @@ def all_division_boards(
     depth_val = depth + 0.0
 
     cube_size = pf.nodes.math.combine_xyz(x=inner_width, y=depth_val, z=board_thickness)
-    cube = pf.nodes.geo.mesh_cube(
-        size=cube_size, vertices_x=10, vertices_y=10, vertices_z=10
-    )
+    cube = pf.nodes.geo.mesh_cube(size=cube_size)
 
     half_thickness = board_thickness * 0.5
     bottom_z = gap + half_thickness
@@ -212,9 +204,7 @@ def side_board(
     width_val = width + 0.0
 
     cube_size = pf.nodes.math.combine_xyz(x=thickness_val, y=depth_val, z=height_val)
-    cube = pf.nodes.geo.mesh_cube(
-        size=cube_size, vertices_x=10, vertices_y=10, vertices_z=10
-    )
+    cube = pf.nodes.geo.mesh_cube(size=cube_size)
 
     offset_x = (width_val - thickness_val) * -0.5
     offset_z = height_val * 0.5
@@ -314,9 +304,8 @@ def bookcase_geometry(
         [frame_with_mat, screws_with_mat, attach_with_mat]
     )
     final_realized = pf.nodes.geo.realize_instances(all_joined)
-    triangulated = pf.nodes.geo.triangulate(final_realized)
     rotated = pf.nodes.geo.transform(
-        geometry=triangulated,
+        geometry=final_realized,
         rotation=(0.0, 0.0, -1.5708),
         translation=(0, 0, 0),
         scale=(1, 1, 1),

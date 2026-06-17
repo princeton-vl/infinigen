@@ -11,7 +11,8 @@ from infinigen_v2.generators.scenes.room.room_shape import (
     room_shape_distribution,
 )
 from infinigen_v2.generators.scenes.room.room_small_objects import (
-    place_small_objects_on_targets,
+    objects_scatter_distribution,
+    objects_scattered_on_surface,
     small_objects_collection_distribution,
 )
 from infinigen_v2.generators.scenes.room.room_surface_features import (
@@ -172,56 +173,37 @@ def livingroom_with_smallobj_distribution(
         rng_sill,
     ) = rng_place.spawn(8)
     colliders = result.colliders
+    wall_cabinets = result.wall_shelves or []
+    if wall_cabinets:
+        colliders = ccol.collision_set(
+            colliders.objs + wall_cabinets, existing=colliders
+        )
     small_objects: list = []
 
-    placed, colliders = pf.control.choice(
-        rng_coffee,
-        [
-            (
-                lambda: place_small_objects_on_targets(
-                    rng_coffee, result.coffee_tables, pool, colliders
-                ),
-                3.0,
-            ),
-            (lambda: ([], colliders), 1.0),
-        ],
-    )()
+    placed, colliders = objects_scattered_on_surface(
+        rng_coffee, result.coffee_tables, pool, colliders, skip_prob=2 / 3
+    )
     small_objects += placed
+    logger.info(f"Placed {len(placed)} small objects on coffee tables")
 
-    placed, colliders = pf.control.choice(
-        rng_side,
-        [
-            (
-                lambda: place_small_objects_on_targets(
-                    rng_side, result.side_tables, pool, colliders
-                ),
-                3.0,
-            ),
-            (lambda: ([], colliders), 1.0),
-        ],
-    )()
+    placed, colliders = objects_scattered_on_surface(
+        rng_side, result.side_tables, pool, colliders
+    )
     small_objects += placed
+    logger.info(f"Placed {len(placed)} small objects on side tables")
 
-    placed, colliders = pf.control.choice(
-        rng_storage,
-        [
-            (
-                lambda: place_small_objects_on_targets(
-                    rng_storage, result.storage_objects, pool, colliders
-                ),
-                4.0,
-            ),
-            (lambda: ([], colliders), 1.0),
-        ],
-    )()
+    placed, colliders = objects_scattered_on_surface(
+        rng_storage, result.storage_objects, pool, colliders, skip_prob=1 / 3
+    )
     small_objects += placed
+    logger.info(f"Placed {len(placed)} small objects on floor storage")
 
     """
     placed, colliders = pf.control.choice(
         rng_sofa,
         [
             (
-                lambda: place_small_objects_on_targets(
+                lambda: objects_scattered_on_surface(
                     rng_sofa, result.sofas or [], pool, colliders
                 ),
                 1.0,
@@ -235,7 +217,7 @@ def livingroom_with_smallobj_distribution(
         rng_rug,
         [
             (
-                lambda: place_small_objects_on_targets(
+                lambda: objects_scattered_on_surface(
                     rng_rug, result.rugs or [], pool, colliders
                 ),
                 1.0,
@@ -245,34 +227,27 @@ def livingroom_with_smallobj_distribution(
     )()
     small_objects += placed
 
-    placed, colliders = place_small_objects_on_targets(
+    placed, colliders = objects_scattered_on_surface(
         rng_dining, result.diningtable_objs, pool, colliders, skip_prob=0.5
     )
     small_objects += placed
     """
 
-    placed, colliders = place_small_objects_on_targets(
+    placed, colliders = objects_scatter_distribution(
         rng_shelf,
         result.wall_shelves or [],
         pool,
         colliders,
-        skip_prob=0.25,
+        skip_prob=1 / 3,
     )
     small_objects += placed
+    logger.info(f"Placed {len(placed)} small objects on wall shelves")
 
-    placed, colliders = pf.control.choice(
-        rng_sill,
-        [
-            (
-                lambda: place_small_objects_on_targets(
-                    rng_sill, result.windowsills or [], pool, colliders
-                ),
-                1.0,
-            ),
-            (lambda: ([], colliders), 1.0),
-        ],
-    )()
+    placed, colliders = objects_scattered_on_surface(
+        rng_sill, result.windowsills or [], pool, colliders, skip_prob=2 / 3
+    )
     small_objects += placed
+    logger.info(f"Placed {len(placed)} small objects on windowsills")
 
     all_objects = result.all_objects + small_objects
     return result._replace(

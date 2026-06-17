@@ -30,9 +30,6 @@ def bottom_board(
     board_h = height + 0.0
     cube = pf.nodes.geo.mesh_cube(
         size=pf.nodes.math.combine_xyz(x=width, y=thickness, z=board_h),
-        vertices_x=10,
-        vertices_y=10,
-        vertices_z=10,
     )
     tvec = pf.nodes.math.combine_xyz(
         x=x_translation,
@@ -54,9 +51,6 @@ def back_board(
     h = height + 0.0
     cube = pf.nodes.geo.mesh_cube(
         size=pf.nodes.math.combine_xyz(x=width, y=thickness, z=h),
-        vertices_x=10,
-        vertices_y=10,
-        vertices_z=10,
     )
     tvec = pf.nodes.math.combine_xyz(
         y=pf.nodes.math.multiply_add(a=depth + 0.0, b=-0.5, addend=thickness * -0.5),
@@ -77,9 +71,6 @@ def side_board(
     h = height + 0.0
     cube = pf.nodes.geo.mesh_cube(
         size=pf.nodes.math.combine_xyz(x=board_thickness + 0.0, y=depth + 0.0, z=h),
-        vertices_x=10,
-        vertices_y=10,
-        vertices_z=10,
     )
     return pf.nodes.geo.transform(
         geometry=cube.mesh,
@@ -540,9 +531,6 @@ def _shelf_geometry(
         for z in division_board_z_translation:
             cube = pf.nodes.geo.mesh_cube(
                 size=(shelf_cell_width[i], shelf_depth, division_board_thickness),
-                vertices_x=5,
-                vertices_y=5,
-                vertices_z=5,
             )
             board = pf.nodes.geo.transform(
                 geometry=cube.mesh,
@@ -561,7 +549,6 @@ def _shelf_geometry(
 
     joined = pf.nodes.geo.join_geometry([frame_geo, board_geo])
     joined = pf.nodes.geo.realize_instances(joined)
-    joined = pf.nodes.geo.triangulate(joined)
     joined = pf.nodes.geo.transform(
         joined, rotation=(0.0, 0.0, -1.5708), scale=(1, 1, 1), translation=(0, 0, 0)
     )
@@ -703,7 +690,6 @@ def _door_geometry(
         scale=(1, 1, 1),
     )
     geo = pf.nodes.geo.realize_instances(geo)
-    geo = pf.nodes.geo.triangulate(geo)
     if door_left_hinge:
         geo = pf.nodes.geo.transform(
             geo, scale=(-1.0, 1.0, 1.0), rotation=(0, 0, 0), translation=(0, 0, 0)
