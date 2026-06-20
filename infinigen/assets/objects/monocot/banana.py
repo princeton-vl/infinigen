@@ -3,6 +3,10 @@
 
 # Authors: Lingjie Mei
 
+from __future__ import annotations
+
+from typing import Any, ClassVar
+
 import bmesh
 import numpy as np
 from numpy.random import uniform
@@ -14,30 +18,62 @@ from infinigen.assets.utils.nodegroup import geo_radius
 from infinigen.assets.utils.object import join_objects, origin2lowest
 from infinigen.assets.utils.shapes import point_normal_up
 from infinigen.core import surface
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import (
+    LegacyBridgeParameters,
+    ParameterizedAssetFactory,
+    apply_bridge_parameters,
+    legacy_init_to_parameters,
+)
 from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 
 
-class BananaMonocotFactory(MonocotGrowthFactory):
+class BananaMonocotParameters(LegacyBridgeParameters):
+    pass
+
+
+def _banana_monocot_legacy_init(inst: Any, seed: int, coarse: bool) -> None:
+    MonocotGrowthFactory.__init__(inst, seed, coarse)
+    with FixedSeed(seed):
+        inst.stem_offset = uniform(0.6, 1.0)
+        inst.angle = uniform(np.pi / 4, np.pi / 3)
+        inst.z_scale = uniform(1, 1.5)
+        inst.z_drag = uniform(0.1, 0.2)
+        inst.min_y_angle = uniform(np.pi * 0.05, np.pi * 0.1)
+        inst.max_y_angle = uniform(np.pi * 0.25, np.pi * 0.45)
+        inst.leaf_range = uniform(0.5, 0.7), 1
+        inst.count = int(log_uniform(16, 24))
+        inst.scale_curve = [(0, uniform(0.4, 1.0)), (1, uniform(0.6, 1.0))]
+        inst.radius = uniform(0.04, 0.06)
+        inst.bud_angle = uniform(np.pi / 8, np.pi / 6)
+        inst.cut_angle = inst.bud_angle + uniform(np.pi / 20, np.pi / 12)
+        inst.freq = log_uniform(100, 300)
+        inst.n_cuts = np.random.randint(6, 10) if uniform(0, 1) < 0.8 else 0
+
+
+class BananaMonocotFactory(ParameterizedAssetFactory, MonocotGrowthFactory):
+    parameters_model: ClassVar[type[LegacyBridgeParameters]] = BananaMonocotParameters
+
     def __init__(self, factory_seed, coarse=False):
-        super(BananaMonocotFactory, self).__init__(factory_seed, coarse)
-        with FixedSeed(factory_seed):
-            self.stem_offset = uniform(0.6, 1.0)
-            self.angle = uniform(np.pi / 4, np.pi / 3)
-            self.z_scale = uniform(1, 1.5)
-            self.z_drag = uniform(0.1, 0.2)
-            self.min_y_angle = uniform(np.pi * 0.05, np.pi * 0.1)
-            self.max_y_angle = uniform(np.pi * 0.25, np.pi * 0.45)
-            self.leaf_range = uniform(0.5, 0.7), 1
-            self.count = int(log_uniform(16, 24))
-            self.scale_curve = [(0, uniform(0.4, 1.0)), (1, uniform(0.6, 1.0))]
-            self.radius = uniform(0.04, 0.06)
-            self.bud_angle = uniform(np.pi / 8, np.pi / 6)
-            self.cut_angle = self.bud_angle + uniform(np.pi / 20, np.pi / 12)
-            self.freq = log_uniform(100, 300)
-            self.n_cuts = np.random.randint(6, 10) if uniform(0, 1) < 0.8 else 0
+        AssetFactory.__init__(self, factory_seed, coarse)
+        self.init_legacy_parameters()
+
+    def _sample_init_parameters(self, seed: int) -> BananaMonocotParameters:
+        return legacy_init_to_parameters(
+            BananaMonocotParameters,
+            BananaMonocotFactory,
+            seed,
+            self.coarse,
+            init_fn=_banana_monocot_legacy_init,
+        )
+
+    def apply_parameters(
+        self, params: BananaMonocotParameters, *, spawn_scope: bool = True
+    ) -> None:
+        apply_bridge_parameters(self, params, spawn_scope=spawn_scope)
 
     @staticmethod
     def build_base_hue():
@@ -120,19 +156,46 @@ class BananaMonocotFactory(MonocotGrowthFactory):
         )
 
 
+class TaroMonocotParameters(LegacyBridgeParameters):
+    pass
+
+
+def _taro_monocot_legacy_init(
+    inst: TaroMonocotFactory, seed: int, coarse: bool
+) -> None:
+    BananaMonocotFactory.__init__(inst, seed, coarse)
+    with FixedSeed(seed):
+        inst.stem_offset = uniform(0.05, 0.1)
+        inst.radius = uniform(0.02, 0.04)
+        inst.z_drag = uniform(0.2, 0.3)
+        inst.bud_angle = uniform(np.pi * 0.6, np.pi * 0.7)
+        inst.freq = log_uniform(10, 20)
+        inst.count = int(log_uniform(12, 16))
+        inst.n_cuts = np.random.randint(1, 2) if uniform(0, 1) < 0.5 else 0
+        inst.min_y_angle = uniform(-np.pi * 0.25, -np.pi * 0.05)
+        inst.max_y_angle = uniform(-np.pi * 0.05, 0)
+
+
 class TaroMonocotFactory(BananaMonocotFactory):
+    parameters_model: ClassVar[type[LegacyBridgeParameters]] = TaroMonocotParameters
+
     def __init__(self, factory_seed, coarse=False):
-        super(TaroMonocotFactory, self).__init__(factory_seed, coarse)
-        with FixedSeed(factory_seed):
-            self.stem_offset = uniform(0.05, 0.1)
-            self.radius = uniform(0.02, 0.04)
-            self.z_drag = uniform(0.2, 0.3)
-            self.bud_angle = uniform(np.pi * 0.6, np.pi * 0.7)
-            self.freq = log_uniform(10, 20)
-            self.count = int(log_uniform(12, 16))
-            self.n_cuts = np.random.randint(1, 2) if uniform(0, 1) < 0.5 else 0
-            self.min_y_angle = uniform(-np.pi * 0.25, -np.pi * 0.05)
-            self.max_y_angle = uniform(-np.pi * 0.05, 0)
+        AssetFactory.__init__(self, factory_seed, coarse)
+        self.init_legacy_parameters()
+
+    def _sample_init_parameters(self, seed: int) -> TaroMonocotParameters:
+        return legacy_init_to_parameters(
+            TaroMonocotParameters,
+            TaroMonocotFactory,
+            seed,
+            self.coarse,
+            init_fn=_taro_monocot_legacy_init,
+        )
+
+    def apply_parameters(
+        self, params: TaroMonocotParameters, *, spawn_scope: bool = True
+    ) -> None:
+        apply_bridge_parameters(self, params, spawn_scope=spawn_scope)
 
     def displace_veins(self, obj):
         point_normal_up(obj)

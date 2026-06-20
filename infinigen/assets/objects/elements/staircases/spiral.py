@@ -6,28 +6,74 @@
 # - Lingjie Mei
 # - Karhan Kayan: fix constants
 
+from __future__ import annotations
+
+from typing import ClassVar
+
 import numpy as np
 from numpy.random import uniform
 
 import infinigen.core.util.blender as butil
-from infinigen.assets.objects.elements.staircases.curved import CurvedStaircaseFactory
+from infinigen.assets.objects.elements.staircases.curved import (
+    CurvedStaircaseFactory,
+    _curved_legacy_init,
+)
 from infinigen.assets.utils.decorate import read_co, remove_vertices, write_attribute
 from infinigen.assets.utils.nodegroup import geo_radius
 from infinigen.assets.utils.object import new_line, separate_loose
 from infinigen.core import surface
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import (
+    LegacyBridgeParameters,
+    ParameterizedAssetFactory,
+    apply_bridge_parameters,
+    legacy_init_to_parameters,
+)
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 
 
+class SpiralStaircaseParameters(LegacyBridgeParameters):
+    pass
+
+
+def _spiral_staircase_legacy_init(
+    inst: SpiralStaircaseFactory,
+    seed: int,
+    coarse: bool,
+    constants=None,
+) -> None:
+    inst._init_constants = constants
+    _curved_legacy_init(inst, seed, coarse, constants)
+    with FixedSeed(seed):
+        inst.column_radius = inst.radius - inst.step_width + uniform(0.05, 0.08)
+        inst.has_column = True
+        inst.handrail_alphas = [1 - inst.handrail_offset / inst.step_width]
+
+
 class SpiralStaircaseFactory(CurvedStaircaseFactory):
+    parameters_model: ClassVar[type[LegacyBridgeParameters]] = SpiralStaircaseParameters
     support_types = "column"
 
     def __init__(self, factory_seed, coarse=False, constants=None):
-        super(SpiralStaircaseFactory, self).__init__(factory_seed, coarse, constants)
-        with FixedSeed(self.factory_seed):
-            self.column_radius = self.radius - self.step_width + uniform(0.05, 0.08)
-            self.has_column = True
-            self.handrail_alphas = [1 - self.handrail_offset / self.step_width]
+        self._init_constants = constants
+        AssetFactory.__init__(self, factory_seed, coarse)
+        self.init_legacy_parameters()
+
+    def _sample_init_parameters(self, seed: int) -> SpiralStaircaseParameters:
+        return legacy_init_to_parameters(
+            SpiralStaircaseParameters,
+            SpiralStaircaseFactory,
+            seed,
+            self.coarse,
+            init_fn=_spiral_staircase_legacy_init,
+            constants=self._init_constants,
+        )
+
+    def apply_parameters(
+        self, params: SpiralStaircaseParameters, *, spawn_scope: bool = True
+    ) -> None:
+        apply_bridge_parameters(self, params, spawn_scope=spawn_scope)
 
     def build_size_config(self):
         while True:

@@ -5,8 +5,10 @@
 # - Alexander Raistrick: FishSchoolFactory, basic version of FishFactory, anim & simulation
 # - Mingzhe Wang: Fin placement
 
+from __future__ import annotations
 
 from collections import defaultdict
+from typing import Any, ClassVar
 
 import bpy
 import gin
@@ -29,6 +31,13 @@ from infinigen.assets.objects.creatures.util.creature_util import offset_center
 from infinigen.assets.objects.creatures.util.genome import Joint
 from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory, make_asset_collection
+from infinigen.core.placement.parameters import (
+    AssetParameters,
+    LegacyBridgeParameters,
+    ParameterizedAssetFactory,
+    apply_bridge_parameters,
+    legacy_init_to_parameters,
+)
 from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed, clip_gaussian
@@ -258,8 +267,37 @@ def simulate_fish_cloth(joined, extras, cloth_params, rigidity="cloth_pin_rigidi
     return joined
 
 
+def _fish_legacy_init(
+    inst: Any,
+    seed: int,
+    coarse: bool,
+    bvh: Any = None,
+    animation_mode: str | None = None,
+    species_variety: float | None = None,
+    clothsim_skin: bool = False,
+) -> None:
+    inst.bvh = bvh
+    inst.animation_mode = animation_mode
+    inst.clothsim_skin = clothsim_skin
+    inst.species_genome = fish_genome()
+    inst.species_variety = (
+        species_variety
+        if species_variety is not None
+        else clip_gaussian(0.2, 0.1, 0.05, 0.45)
+    )
+    body_material_fac = weighted_sample(material_assignments.fish)
+    inst.body_material = body_material_fac()
+    inst.fin_material = materials.creature.FishFin()
+    inst.eye_material = materials.creature.FishEye()
+
+
+class FishParameters(LegacyBridgeParameters):
+    pass
+
+
 @gin.configurable
-class FishFactory(AssetFactory):
+class FishFactory(ParameterizedAssetFactory, AssetFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = FishParameters
     max_distance = 40
 
     def __init__(
@@ -272,23 +310,30 @@ class FishFactory(AssetFactory):
         clothsim_skin: bool = False,
         **_,
     ):
+        self._fish_bvh = bvh
+        self._fish_animation_mode = animation_mode
+        self._fish_species_variety = species_variety
+        self._fish_clothsim_skin = clothsim_skin
         super().__init__(factory_seed, coarse)
-        self.bvh = bvh
-        self.animation_mode = animation_mode
-        self.clothsim_skin = clothsim_skin
+        self.init_legacy_parameters()
 
-        with FixedSeed(factory_seed):
-            self.species_genome = fish_genome()
-            self.species_variety = (
-                species_variety
-                if species_variety is not None
-                else clip_gaussian(0.2, 0.1, 0.05, 0.45)
-            )
+    def _sample_init_parameters(self, seed: int) -> FishParameters:
+        return legacy_init_to_parameters(
+            FishParameters,
+            FishFactory,
+            seed,
+            self.coarse,
+            self._fish_bvh,
+            self._fish_animation_mode,
+            self._fish_species_variety,
+            self._fish_clothsim_skin,
+            init_fn=_fish_legacy_init,
+        )
 
-            body_material_fac = weighted_sample(material_assignments.fish)
-            self.body_material = body_material_fac()
-            self.fin_material = materials.creature.FishFin()
-            self.eye_material = materials.creature.FishEye()
+    def apply_parameters(
+        self, params: FishParameters, *, spawn_scope: bool = True
+    ) -> None:
+        apply_bridge_parameters(self, params, spawn_scope=spawn_scope)
 
     def apply_materials(self, obj):
         if obj.name.find("Nurb") >= 0:

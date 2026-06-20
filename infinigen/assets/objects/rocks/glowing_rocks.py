@@ -7,12 +7,20 @@
 import bpy
 import gin
 import numpy as np
+from typing import Any, ClassVar
 
 from infinigen.assets import colors
 from infinigen.assets.objects.rocks.blender_rock import BlenderRockFactory
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory, make_asset_collection
+from infinigen.core.placement.parameters import (
+    AssetParameters,
+    LegacyBridgeParameters,
+    ParameterizedAssetFactory,
+    apply_bridge_parameters,
+    legacy_init_to_parameters,
+)
 from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 
@@ -37,7 +45,29 @@ def shader_glowrock(nw: NodeWrangler, transparent_for_bounce=True):
 
 
 @gin.configurable
-class GlowingRocksFactory(AssetFactory):
+def _glowing_rocks_legacy_init(inst: Any, seed: int, coarse: bool) -> None:
+    AssetFactory.__init__(inst, seed, coarse=coarse)
+    if coarse:
+        return
+    inst.watt_power_range = (400, 800)
+    inst.rock_collection = make_asset_collection(
+        BlenderRockFactory(np.random.randint(1e5), detail=1),
+        name="glow_rock_base",
+        n=5,
+    )
+    for o in inst.rock_collection.objects:
+        butil.modify_mesh(o, "SUBSURF", levels=2)
+    inst.material = surface.shaderfunc_to_material(shader_glowrock)
+
+
+class GlowingRocksParameters(LegacyBridgeParameters):
+    pass
+
+
+@gin.configurable
+class GlowingRocksFactory(ParameterizedAssetFactory, AssetFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = GlowingRocksParameters
+
     def quickly_resample(obj):
         assert obj.type == "EMPTY", obj.type
         obj.rotation_euler[:] = np.random.uniform(-np.pi, np.pi, size=(3,))
@@ -50,20 +80,25 @@ class GlowingRocksFactory(AssetFactory):
         watt_power_range=(400, 800),
         **kwargs,
     ):
-        super().__init__(factory_seed, coarse=coarse)
-        if coarse:
-            return
-        self.watt_power_range = watt_power_range
-        self.rock_collection = make_asset_collection(
-            BlenderRockFactory(np.random.randint(1e5), detail=1),
-            name="glow_rock_base",
-            n=5,
+        self._transparent_for_bounce = transparent_for_bounce
+        self._watt_power_range = watt_power_range
+        self._extra_kwargs = kwargs
+        AssetFactory.__init__(self, factory_seed, coarse=coarse)
+        self.init_legacy_parameters()
+
+    def _sample_init_parameters(self, seed: int) -> GlowingRocksParameters:
+        return legacy_init_to_parameters(
+            GlowingRocksParameters,
+            GlowingRocksFactory,
+            seed,
+            self.coarse,
+            init_fn=_glowing_rocks_legacy_init,
         )
 
-        for o in self.rock_collection.objects:
-            butil.modify_mesh(o, "SUBSURF", levels=2)
-
-        self.material = surface.shaderfunc_to_material(shader_glowrock)
+    def apply_parameters(
+        self, params: GlowingRocksParameters, *, spawn_scope: bool = True
+    ) -> None:
+        apply_bridge_parameters(self, params, spawn_scope=spawn_scope)
 
     def create_placeholder(self, i, loc, rot):
         placeholder = butil.spawn_empty("placeholder", disp_type="SPHERE", s=0.1)

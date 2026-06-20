@@ -5,6 +5,10 @@
 # - Yiming Zuo: primary author
 # - Alexander Raistrick: implement placeholder
 
+from __future__ import annotations
+
+from typing import ClassVar
+
 import bpy
 from numpy.random import choice, uniform
 
@@ -26,8 +30,14 @@ from infinigen.core import surface, tagging
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import (
+    AssetParameters,
+    LegacyBridgeParameters,
+    ParameterizedAssetFactory,
+    apply_bridge_parameters,
+    legacy_init_to_parameters,
+)
 from infinigen.core.surface import NoApply
-from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import weighted_sample
 
 
@@ -200,23 +210,42 @@ def geometry_assemble_table(nw: NodeWrangler, **kwargs):
     )
 
 
-class TableCocktailFactory(AssetFactory):
+class TableCocktailParameters(LegacyBridgeParameters):
+    pass
+
+
+def _table_cocktail_legacy_init(
+    inst: TableCocktailFactory, seed: int, coarse: bool, dimensions=None
+) -> None:
+    inst.dimensions = dimensions
+    inst.params = TableCocktailFactory.sample_parameters(dimensions)
+    inst.clothes_scatter = NoApply()
+    inst.material_params, inst.scratch, inst.edge_wear = inst.get_material_params()
+    inst.params.update(inst.material_params)
+
+
+class TableCocktailFactory(ParameterizedAssetFactory, AssetFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = TableCocktailParameters
+
     def __init__(self, factory_seed, coarse=False, dimensions=None):
+        self._dimensions = dimensions
         super(TableCocktailFactory, self).__init__(factory_seed, coarse=coarse)
+        self.init_legacy_parameters()
 
-        self.dimensions = dimensions
+    def _sample_init_parameters(self, seed: int) -> TableCocktailParameters:
+        return legacy_init_to_parameters(
+            TableCocktailParameters,
+            TableCocktailFactory,
+            seed,
+            self.coarse,
+            self._dimensions,
+            init_fn=_table_cocktail_legacy_init,
+        )
 
-        with FixedSeed(factory_seed):
-            self.params = self.sample_parameters(dimensions)
-
-            # self.clothes_scatter = ClothesCover(factory_fn=blanket.BlanketFactory, width=log_uniform(.8, 1.2),
-            #                                     size=uniform(.8, 1.2)) if uniform() < .3 else NoApply()
-            self.clothes_scatter = NoApply()
-            self.material_params, self.scratch, self.edge_wear = (
-                self.get_material_params()
-            )
-
-        self.params.update(self.material_params)
+    def apply_parameters(
+        self, params: TableCocktailParameters, *, spawn_scope: bool = True
+    ) -> None:
+        apply_bridge_parameters(self, params, spawn_scope=spawn_scope)
 
     def get_material_params(self):
         params = {

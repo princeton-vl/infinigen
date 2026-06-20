@@ -3,6 +3,9 @@
 
 # Authors: Lingjie Mei
 
+from __future__ import annotations
+
+from typing import Any, ClassVar
 
 import bpy
 import numpy as np
@@ -16,36 +19,76 @@ from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_utils import build_color_ramp
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core.placement.detail import remesh_with_attrs
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import (
+    AssetParameters,
+    LegacyBridgeParameters,
+    ParameterizedAssetFactory,
+    apply_bridge_parameters,
+    legacy_init_to_parameters,
+)
 from infinigen.core.surface import shaderfunc_to_material
 from infinigen.core.tagging import tag_object
 from infinigen.core.util.color import hsv2rgba
-from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 
 
-class PineconeFactory(MonocotGrowthFactory):
+def _monocot_base_legacy_init(inst: Any, seed: int, coarse: bool) -> None:
+    base = MonocotGrowthFactory.__new__(MonocotGrowthFactory)
+    AssetFactory.__init__(base, seed, coarse)
+    MonocotGrowthFactory.__init__(base, seed, coarse)
+    for key, value in vars(base).items():
+        if key not in ("factory_seed", "coarse"):
+            setattr(inst, key, value)
+
+
+def _pinecone_legacy_init(inst: Any, seed: int, coarse: bool) -> None:
+    _monocot_base_legacy_init(inst, seed, coarse)
+    inst.angle = 2 * np.pi / (np.random.randint(4, 8) + 0.5)
+    inst.max_y_angle = uniform(0.7, 0.8) * np.pi / 2
+    inst.leaf_prob = uniform(0.9, 0.95)
+    inst.count = int(log_uniform(64, 96))
+    inst.stem_offset = uniform(0.2, 0.4)
+    inst.perturb = 0
+    inst.scale_curve = [
+        (0, 0.5),
+        (0.5, uniform(0.6, 1.0)),
+        (1, uniform(0.1, 0.2)),
+    ]
+    inst.bright_color = hsv2rgba(uniform(0.02, 0.06), uniform(0.8, 1.0), 0.01)
+    inst.dark_color = hsv2rgba(uniform(0.02, 0.06), uniform(0.8, 1.0), 0.005)
+    inst.material = shaderfunc_to_material(
+        inst.shader_monocot,
+        inst.dark_color,
+        inst.bright_color,
+        inst.use_distance,
+    )
+
+
+class PineconeParameters(LegacyBridgeParameters):
+    pass
+
+
+class PineconeFactory(ParameterizedAssetFactory, MonocotGrowthFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = PineconeParameters
+
     def __init__(self, factory_seed, coarse=False):
-        super().__init__(factory_seed, coarse)
-        with FixedSeed(factory_seed):
-            self.angle = 2 * np.pi / (np.random.randint(4, 8) + 0.5)
-            self.max_y_angle = uniform(0.7, 0.8) * np.pi / 2
-            self.leaf_prob = uniform(0.9, 0.95)
-            self.count = int(log_uniform(64, 96))
-            self.stem_offset = uniform(0.2, 0.4)
-            self.perturb = 0
-            self.scale_curve = [
-                (0, 0.5),
-                (0.5, uniform(0.6, 1.0)),
-                (1, uniform(0.1, 0.2)),
-            ]
-            self.bright_color = hsv2rgba(uniform(0.02, 0.06), uniform(0.8, 1.0), 0.01)
-            self.dark_color = hsv2rgba(uniform(0.02, 0.06), uniform(0.8, 1.0), 0.005)
-            self.material = shaderfunc_to_material(
-                self.shader_monocot,
-                self.dark_color,
-                self.bright_color,
-                self.use_distance,
-            )
+        super(PineconeFactory, self).__init__(factory_seed, coarse)
+        self.init_legacy_parameters()
+
+    def _sample_init_parameters(self, seed: int) -> PineconeParameters:
+        return legacy_init_to_parameters(
+            PineconeParameters,
+            PineconeFactory,
+            seed,
+            self.coarse,
+            init_fn=_pinecone_legacy_init,
+        )
+
+    def apply_parameters(
+        self, params: PineconeParameters, *, spawn_scope: bool = True
+    ) -> None:
+        apply_bridge_parameters(self, params, spawn_scope=spawn_scope)
 
     def build_leaf(self, face_size):
         obj = new_circle(vertices=128)

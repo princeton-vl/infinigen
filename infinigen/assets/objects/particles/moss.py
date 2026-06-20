@@ -4,9 +4,14 @@
 
 
 # Authors: Lingjie Mei
+
+from __future__ import annotations
+
 import math
+from typing import Annotated, ClassVar
 
 from numpy.random import uniform as U
+from pydantic import Field
 
 from infinigen.assets.utils.misc import assign_material
 from infinigen.assets.utils.object import new_cube
@@ -14,15 +19,50 @@ from infinigen.core import surface
 from infinigen.core.nodes.node_utils import build_color_ramp
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import AssetParameters, ParameterizedAssetFactory
 from infinigen.core.tagging import tag_object
 from infinigen.core.util.color import hsv2rgba
 
 
-class MossFactory(AssetFactory):
+class MossParameters(AssetParameters):
+    base_hue: Annotated[float, Field(ge=0.2, le=0.24, json_schema_extra={"editable": True})]
+    shader_hue_offset: Annotated[
+        float, Field(ge=-0.02, le=0.02, json_schema_extra={"editable": True})
+    ] = 0.0
+    end_z: Annotated[float, Field(ge=0.04, le=0.05, json_schema_extra={"editable": True})] = (
+        0.045
+    )
+
+
+class MossFactory(ParameterizedAssetFactory, AssetFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = MossParameters
+    max_polygon = 1e4
+
     def __init__(self, factory_seed):
-        super(MossFactory, self).__init__(factory_seed)
-        self.max_polygon = 1e4
-        self.base_hue = U(0.2, 0.24)
+        super().__init__(factory_seed)
+        self.init_legacy_parameters()
+
+    def _sample_init_parameters(self, seed: int) -> MossParameters:
+        return MossParameters(seed=seed, base_hue=U(0.2, 0.24))
+
+    def _sample_spawn_parameters(
+        self, params: MossParameters, seed: int, i: int
+    ) -> MossParameters:
+        return params.model_copy(
+            update={
+                "shader_hue_offset": U(-0.02, 0.02),
+                "end_z": U(0.04, 0.05),
+            }
+        )
+
+    def apply_parameters(
+        self, params: MossParameters, *, spawn_scope: bool = True
+    ) -> None:
+        self.base_hue = params.base_hue
+        self._use_fixed_spawn_draws = spawn_scope
+        if spawn_scope:
+            self.shader_hue_offset = params.shader_hue_offset
+            self.end_z = params.end_z
 
     @staticmethod
     def shader_moss(nw: NodeWrangler, base_hue=0.3):
@@ -78,26 +118,11 @@ class MossFactory(AssetFactory):
         )
         return mix_shader
 
-    def create_asset(self, face_size=0.01, **params):
-        obj = new_cube()
-        surface.add_geomod(
-            obj, self.geo_moss_instance, apply=True, input_args=[face_size]
-        )
-        assign_material(
-            obj,
-            surface.shaderfunc_to_material(
-                MossFactory.shader_moss, (self.base_hue + U(-0.02, 0.02) % 1)
-            ),
-        )
-        tag_object(obj, "moss")
-        return obj
-
-    @staticmethod
-    def geo_moss_instance(nw: NodeWrangler, face_size):
+    def geo_moss_instance(self, nw: NodeWrangler, face_size: float, end_z: float):
         radius = 0.008
         start = (0.0, 0.0, 0.0)
         start_handle = (-0.03, 0.0, 0.02)
-        end = (-0.04, 0.0, U(0.04, 0.05))
+        end = (-0.04, 0.0, end_z)
         end_handle = (end[0] + U(-0.03, -0.02), 0.0, end[2] + U(-0.01, 0.0))
         bezier = nw.new_node(
             Nodes.CurveBezierSegment,
@@ -114,3 +139,24 @@ class MossFactory(AssetFactory):
         ).outputs["Curve"]
         mesh = nw.curve2mesh(bezier, circle)
         nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": mesh})
+
+    def create_asset(self, face_size=0.01, **params):
+        end_z = self.end_z if self._use_fixed_spawn_draws else U(0.04, 0.05)
+        shader_hue = (
+            (self.base_hue + self.shader_hue_offset) % 1
+            if self._use_fixed_spawn_draws
+            else (self.base_hue + U(-0.02, 0.02)) % 1
+        )
+        obj = new_cube()
+        surface.add_geomod(
+            obj,
+            lambda nw, fs: self.geo_moss_instance(nw, fs, end_z),
+            apply=True,
+            input_args=[face_size],
+        )
+        assign_material(
+            obj,
+            surface.shaderfunc_to_material(MossFactory.shader_moss, shader_hue),
+        )
+        tag_object(obj, "moss")
+        return obj

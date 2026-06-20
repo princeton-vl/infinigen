@@ -6,23 +6,81 @@
 # - Hongyu Wen: primary author
 # - Alexander Raistrick: add point light
 
+from __future__ import annotations
+
+from typing import Annotated, Any, ClassVar
+
 import random
 
 import bpy
 import numpy as np
 from numpy.random import uniform as U
+from pydantic import Field
 
 from infinigen.assets.composition import material_assignments
 from infinigen.assets.lighting.indoor_lights import PointLampFactory
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import (
+    AssetParameters,
+    LegacyBridgeParameters,
+    ParameterizedAssetFactory,
+    apply_bridge_parameters,
+    legacy_init_to_parameters,
+)
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import weighted_sample
 
 
-class LampFactory(AssetFactory):
+class DeskLampParameters(AssetParameters):
+    StandRadius: Annotated[float, Field(ge=0.005, le=0.015, json_schema_extra={"editable": True})]
+    BaseRadius: Annotated[float, Field(ge=0.05, le=0.15, json_schema_extra={"editable": True})]
+    BaseHeight: Annotated[float, Field(ge=0.01, le=0.03, json_schema_extra={"editable": True})]
+    ShadeHeight: Annotated[float, Field(ge=0.18, le=0.3, json_schema_extra={"editable": True})]
+    HeadTopRadius: Annotated[float, Field(ge=0.07, le=0.15, json_schema_extra={"editable": True})]
+    HeadBotRadius: Annotated[float, Field(ge=0.0, le=0.05, json_schema_extra={"editable": True})]
+    RackThickness: Annotated[float, Field(ge=0.001, le=0.003, json_schema_extra={"editable": True})]
+    height: Annotated[float, Field(ge=0.25, le=0.4, json_schema_extra={"editable": True})]
+    z1: Annotated[float, Field(ge=0.010002, le=0.383766, json_schema_extra={"editable": True})]
+    z2: Annotated[float, Field(ge=0.029471, le=0.383766, json_schema_extra={"editable": True})]
+    lamp_178: Annotated[float, Field(ge=0.0, le=1.0, json_schema_extra={"editable": True})]
+    BlackMaterial: Any = Field(json_schema_extra={"editable": False})
+    MetalMaterial: Any = Field(json_schema_extra={"editable": False})
+    LampshadeMaterial: Any = Field(json_schema_extra={"editable": False})
+    scratch: Any | None = Field(default=None, json_schema_extra={"editable": False})
+    edge_wear: Any | None = Field(default=None, json_schema_extra={"editable": False})
+
+
+class LampParameters(LegacyBridgeParameters):
+    pass
+
+
+def _lamp_legacy_init(
+    inst: Any,
+    seed: int,
+    coarse: bool,
+    dimensions: list[float] | None = None,
+    lamp_type: str = "FloorLamp",
+) -> None:
+    inst.dimensions = dimensions if dimensions is not None else [1.0, 1.0, 1.0]
+    inst.lamp_type = lamp_type
+    inst.bulb_fac = PointLampFactory(seed)
+    inst.bulb_fac.params["Temperature"] = max(
+        inst.bulb_fac.params["Temperature"] * 0.6, 2500
+    )
+    inst.bulb_fac.params["Wattage"] *= 0.5
+    inst.lampshade_material = weighted_sample(material_assignments.lampshade)()
+    inst.metal_material = weighted_sample(material_assignments.furniture_leg)()
+    inst.params = inst.sample_lamp_geometry(inst.dimensions)
+    inst.material_params, inst.scratch, inst.edge_wear = inst.get_material_params()
+    inst.params.update(inst.material_params)
+
+
+class LampFactory(ParameterizedAssetFactory, AssetFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = LampParameters
+
     def __init__(
         self,
         factory_seed,
@@ -30,70 +88,71 @@ class LampFactory(AssetFactory):
         dimensions=[1.0, 1.0, 1.0],
         lamp_type="FloorLamp",
     ):
+        self._lamp_dimensions = dimensions
+        self._lamp_type = lamp_type
         super(LampFactory, self).__init__(factory_seed, coarse=coarse)
+        self.init_legacy_parameters()
 
-        self.bulb_fac = PointLampFactory(factory_seed)
-        self.bulb_fac.params["Temperature"] = max(
-            self.bulb_fac.params["Temperature"] * 0.6, 2500
+    def _sample_init_parameters(self, seed: int) -> LampParameters:
+        return legacy_init_to_parameters(
+            LampParameters,
+            LampFactory,
+            seed,
+            self.coarse,
+            self._lamp_dimensions,
+            self._lamp_type,
+            init_fn=_lamp_legacy_init,
         )
-        self.bulb_fac.params["Wattage"] *= 0.5
 
-        self.dimensions = dimensions
-        self.lamp_type = lamp_type
-        self.lamp_default_params = {
-            "DeskLamp": {
-                "StandRadius": 0.01,
-                "StandHeight": 0.3,
-                "BaseRadius": 0.07,
-                "BaseHeight": 0.02,
-                "ShadeHeight": 0.18,
-                "HeadTopRadius": 0.08,
-                "HeadBotRadius": 0.11,
-                "ReverseLamp": True,
-                "RackThickness": 0.002,
-                "CurvePoint1": (0.0, 0.0, 0.0),
-                "CurvePoint2": (0.0, 0.0, 0.2),
-                "CurvePoint3": (0.0, 0.0, 0.3),
-            },
-            "FloorLamp1": {
-                "StandRadius": 0.01,
-                "StandHeight": 0.3,
-                "BaseRadius": 0.1,
-                "BaseHeight": 0.02,
-                "ShadeHeight": 0.2,
-                "HeadTopRadius": 0.1,
-                "HeadBotRadius": 0.12,
-                "ReverseLamp": False,
-                "RackThickness": 0.002,
-                "CurvePoint1": (0.0, 0.0, 1.0),
-                "CurvePoint2": (0.05, 0.0, 1.2),
-                "CurvePoint3": (0.2, 0.0, 1.0),
-            },
-            "FloorLamp2": {
-                "StandRadius": 0.01,
-                "StandHeight": 0.3,
-                "BaseRadius": 0.1,
-                "BaseHeight": 0.02,
-                "ShadeHeight": 0.2,
-                "HeadTopRadius": 0.1,
-                "HeadBotRadius": 0.11,
-                "ReverseLamp": True,
-                "RackThickness": 0.002,
-                "CurvePoint1": (0.0, 0.0, 1.0),
-                "CurvePoint2": (0.0, 0.0, 1.1),
-                "CurvePoint3": (0.0, 0.0, 1.2),
-            },
-        }
-        self.lampshade_material = weighted_sample(material_assignments.lampshade)()
-        self.metal_material = weighted_sample(material_assignments.furniture_leg)()
+    def apply_parameters(
+        self, params: LampParameters, *, spawn_scope: bool = True
+    ) -> None:
+        apply_bridge_parameters(self, params, spawn_scope=spawn_scope)
 
-        with FixedSeed(factory_seed):
-            self.params = self.sample_parameters(dimensions)
-            self.material_params, self.scratch, self.edge_wear = (
-                self.get_material_params()
-            )
-
-        self.params.update(self.material_params)
+    lamp_default_params = {
+        "DeskLamp": {
+            "StandRadius": 0.01,
+            "StandHeight": 0.3,
+            "BaseRadius": 0.07,
+            "BaseHeight": 0.02,
+            "ShadeHeight": 0.18,
+            "HeadTopRadius": 0.08,
+            "HeadBotRadius": 0.11,
+            "ReverseLamp": True,
+            "RackThickness": 0.002,
+            "CurvePoint1": (0.0, 0.0, 0.0),
+            "CurvePoint2": (0.0, 0.0, 0.2),
+            "CurvePoint3": (0.0, 0.0, 0.3),
+        },
+        "FloorLamp1": {
+            "StandRadius": 0.01,
+            "StandHeight": 0.3,
+            "BaseRadius": 0.1,
+            "BaseHeight": 0.02,
+            "ShadeHeight": 0.2,
+            "HeadTopRadius": 0.1,
+            "HeadBotRadius": 0.12,
+            "ReverseLamp": False,
+            "RackThickness": 0.002,
+            "CurvePoint1": (0.0, 0.0, 1.0),
+            "CurvePoint2": (0.05, 0.0, 1.2),
+            "CurvePoint3": (0.2, 0.0, 1.0),
+        },
+        "FloorLamp2": {
+            "StandRadius": 0.01,
+            "StandHeight": 0.3,
+            "BaseRadius": 0.1,
+            "BaseHeight": 0.02,
+            "ShadeHeight": 0.2,
+            "HeadTopRadius": 0.1,
+            "HeadBotRadius": 0.11,
+            "ReverseLamp": True,
+            "RackThickness": 0.002,
+            "CurvePoint1": (0.0, 0.0, 1.0),
+            "CurvePoint2": (0.0, 0.0, 1.1),
+            "CurvePoint3": (0.0, 0.0, 1.2),
+        },
+    }
 
     def get_material_params(self):
         # black_material = shader_black
@@ -113,7 +172,7 @@ class LampFactory(AssetFactory):
 
         return wrapped_params, scratch, edge_wear
 
-    def sample_parameters(self, dimensions, use_default=False):
+    def sample_lamp_geometry(self, dimensions, use_default=False):
         if use_default:
             if self.lamp_type == "DeskLamp":
                 return self.lamp_default_params["DeskLamp"]
@@ -192,17 +251,135 @@ class LampFactory(AssetFactory):
             self.edge_wear.apply(assets)
 
 
-class DeskLampFactory(LampFactory):
+class DeskLampFactory(ParameterizedAssetFactory, AssetFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = DeskLampParameters
+
     def __init__(self, factory_seed, coarse=False):
-        super().__init__(factory_seed, coarse=coarse, lamp_type="DeskLamp")
+        super().__init__(factory_seed, coarse=coarse)
+        self.bulb_fac = PointLampFactory(factory_seed)
+        self.bulb_fac.params["Temperature"] = max(
+            self.bulb_fac.params["Temperature"] * 0.6, 2500
+        )
+        self.bulb_fac.params["Wattage"] *= 0.5
+        self.init_legacy_parameters()
+
+    def _sample_materials(self) -> tuple[dict[str, Any], Any | None, Any | None]:
+        metal_material = weighted_sample(material_assignments.furniture_leg)()
+        lampshade_material = weighted_sample(material_assignments.lampshade)()
+        wrapped_params = {
+            "BlackMaterial": metal_material(),
+            "MetalMaterial": metal_material(),
+            "LampshadeMaterial": lampshade_material(),
+        }
+        scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
+        scratch_fn, edge_wear_fn = material_assignments.wear_tear
+        scratch = None if U() > scratch_prob else scratch_fn()
+        edge_wear = None if U() > edge_wear_prob else edge_wear_fn()
+        return wrapped_params, scratch, edge_wear
+
+    def _sample_init_parameters(self, seed: int) -> DeskLampParameters:
+        base_height = U(0.01, 0.03)
+        height = U(0.25, 0.4)
+        z1 = U(base_height, height)
+        z2 = U(z1, height)
+        head_top_radius = U(0.07, 0.15)
+        materials, scratch, edge_wear = self._sample_materials()
+        return DeskLampParameters(
+            seed=seed,
+            StandRadius=U(0.005, 0.015),
+            BaseRadius=U(0.05, 0.15),
+            BaseHeight=base_height,
+            ShadeHeight=U(0.18, 0.3),
+            HeadTopRadius=head_top_radius,
+            HeadBotRadius=U(0, 0.05),
+            RackThickness=U(0.001, 0.003),
+            height=height,
+            z1=z1,
+            z2=z2,
+            lamp_178=U(),
+            **materials,
+            scratch=scratch,
+            edge_wear=edge_wear,
+        )
+
+    def apply_parameters(
+        self, params: DeskLampParameters, *, spawn_scope: bool = True
+    ) -> None:
+        self.params = {
+            "StandRadius": params.StandRadius,
+            "BaseRadius": params.BaseRadius,
+            "BaseHeight": params.BaseHeight,
+            "ShadeHeight": params.ShadeHeight,
+            "HeadTopRadius": params.HeadTopRadius,
+            "HeadBotRadius": params.HeadTopRadius + params.HeadBotRadius,
+            "ReverseLamp": True,
+            "RackThickness": params.RackThickness,
+            "CurvePoint1": (0.0, 0.0, params.z1),
+            "CurvePoint2": (0.0, 0.0, params.z2),
+            "CurvePoint3": (0.0, 0.0, params.height),
+            "BlackMaterial": params.BlackMaterial,
+            "MetalMaterial": params.MetalMaterial,
+            "LampshadeMaterial": params.LampshadeMaterial,
+        }
+        self.scratch = params.scratch
+        self.edge_wear = params.edge_wear
+        self._use_fixed_spawn_draws = spawn_scope
+        if spawn_scope:
+            self._lamp_178 = params.lamp_178
+
+    def create_asset(self, i, **params):
+        obj = butil.spawn_cube()
+        butil.modify_mesh(
+            obj,
+            "NODES",
+            node_group=nodegroup_lamp_geometry(),
+            ng_inputs=self.params,
+            apply=True,
+        )
+
+        bulb_draw = self._lamp_178 if self._use_fixed_spawn_draws else U()
+        if bulb_draw < 0.6:
+            bulb = self.bulb_fac(i)
+            butil.parent_to(bulb, obj, no_inverse=True, no_transform=True)
+            bulb.location.z = obj.bound_box[-2][2] - self.params["ShadeHeight"] * 0.5
+
+        with butil.SelectObjects(obj):
+            bpy.ops.object.shade_flat()
+
+        return obj
+
+    def finalize_assets(self, assets):
+        if self.scratch:
+            self.scratch.apply(assets)
+        if self.edge_wear:
+            self.edge_wear.apply(assets)
+
+
+class FloorLampParameters(LegacyBridgeParameters):
+    pass
+
+
+def _floor_lamp_legacy_init(inst: Any, seed: int, coarse: bool) -> None:
+    lamp_type = np.random.choice(["FloorLamp1", "FloorLamp2"])
+    _lamp_legacy_init(inst, seed, coarse, [1.0, 1.0, 1.0], lamp_type)
 
 
 class FloorLampFactory(LampFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = FloorLampParameters
+
     def __init__(self, factory_seed, coarse=False):
-        super().__init__(
-            factory_seed,
-            coarse,
-            lamp_type=np.random.choice(["FloorLamp1", "FloorLamp2"]),
+        AssetFactory.__init__(self, factory_seed, coarse)
+        self._lamp_dimensions = [1.0, 1.0, 1.0]
+        self._lamp_type = "FloorLamp1"
+        self.init_legacy_parameters()
+
+    def _sample_init_parameters(self, seed: int) -> FloorLampParameters:
+        return legacy_init_to_parameters(
+            FloorLampParameters,
+            FloorLampFactory,
+            seed,
+            self.coarse,
+            init_fn=_floor_lamp_legacy_init,
         )
 
 

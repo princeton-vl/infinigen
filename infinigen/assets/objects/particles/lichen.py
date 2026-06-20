@@ -5,10 +5,15 @@
 
 # ruff: noqa: I001
 
+from __future__ import annotations
+
+from typing import Annotated, ClassVar
+
 import bpy
 import numpy as np
 from numpy.random import normal as N
 from numpy.random import uniform
+from pydantic import Field
 
 from infinigen.assets.utils.mesh import polygon_angles
 from infinigen.assets.utils.misc import assign_material
@@ -16,17 +21,58 @@ from infinigen.assets.utils.object import data2mesh
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import AssetParameters, ParameterizedAssetFactory
 from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 from infinigen.core.util.color import hsv2rgba
 from infinigen.infinigen_gpl.extras.diff_growth import build_diff_growth
 
 
-class LichenFactory(AssetFactory):
+class LichenParameters(AssetParameters):
+    base_hue: Annotated[float, Field(ge=0.15, le=0.3, json_schema_extra={"editable": True})]
+    n: Annotated[int, Field(ge=4, le=5, json_schema_extra={"editable": True})]
+    max_polygon_factor: Annotated[
+        float, Field(ge=0.2, le=1.0, json_schema_extra={"editable": True})
+    ] = 0.5
+    shader_hue_offset: Annotated[
+        float, Field(ge=-0.04, le=0.04, json_schema_extra={"editable": True})
+    ] = 0.0
+
+
+class LichenFactory(ParameterizedAssetFactory, AssetFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = LichenParameters
+    max_polygon = 1e4
+
     def __init__(self, factory_seed):
         super(LichenFactory, self).__init__(factory_seed)
-        self.max_polygon = 1e4
-        self.base_hue = uniform(0.15, 0.3)
+        self.init_legacy_parameters()
+
+    def _sample_init_parameters(self, seed: int) -> LichenParameters:
+        return LichenParameters(
+            seed=seed,
+            base_hue=uniform(0.15, 0.3),
+            n=int(np.random.randint(4, 6)),
+        )
+
+    def _sample_spawn_parameters(
+        self, params: LichenParameters, seed: int, i: int
+    ) -> LichenParameters:
+        return params.model_copy(
+            update={
+                "max_polygon_factor": uniform(0.2, 1),
+                "shader_hue_offset": uniform(-0.04, 0.04),
+            }
+        )
+
+    def apply_parameters(
+        self, params: LichenParameters, *, spawn_scope: bool = True
+    ) -> None:
+        self.base_hue = params.base_hue
+        self.n = params.n
+        self._use_fixed_spawn_draws = spawn_scope
+        if spawn_scope:
+            self.max_polygon_factor = params.max_polygon_factor
+            self.shader_hue_offset = params.shader_hue_offset
 
     @staticmethod
     def build_lichen_circle_mesh(n):
@@ -92,20 +138,24 @@ class LichenFactory(AssetFactory):
         return principled_bsdf
 
     def create_asset(self, **kwargs):
-        n = np.random.randint(4, 6)
-        mesh = self.build_lichen_circle_mesh(n)
+        mesh = self.build_lichen_circle_mesh(self.n)
         obj = bpy.data.objects.new("lichen", mesh)
         bpy.context.scene.collection.objects.link(obj)
         bpy.context.view_layer.objects.active = obj
 
         boundary = obj.vertex_groups.new(name="Boundary")
-        boundary.add(list(range(n)), 1.0, "REPLACE")
+        boundary.add(list(range(self.n)), 1.0, "REPLACE")
 
         growth_scale = 1, 1, 0.5
+        max_poly = (
+            self.max_polygon * self.max_polygon_factor
+            if self._use_fixed_spawn_draws
+            else self.max_polygon * uniform(0.2, 1)
+        )
         build_diff_growth(
             obj,
             boundary.index,
-            max_polygons=self.max_polygon * uniform(0.2, 1),
+            max_polygons=max_poly,
             growth_scale=growth_scale,
             inhibit_shell=4,
             repulsion_radius=2,
@@ -113,11 +163,14 @@ class LichenFactory(AssetFactory):
         )
         obj.scale = [0.004] * 3
         butil.apply_transform(obj)
+        shader_hue = (
+            (self.base_hue + self.shader_hue_offset) % 1
+            if self._use_fixed_spawn_draws
+            else (self.base_hue + uniform(-0.04, 0.04)) % 1
+        )
         assign_material(
             obj,
-            surface.shaderfunc_to_material(
-                LichenFactory.shader_lichen, (self.base_hue + uniform(-0.04, 0.04)) % 1
-            ),
+            surface.shaderfunc_to_material(LichenFactory.shader_lichen, shader_hue),
         )
 
         tag_object(obj, "lichen")

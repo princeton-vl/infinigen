@@ -3,10 +3,14 @@
 
 # Authors: Alexander Raistrick, Stamatis Alexandropolous, Yiming Zuo
 
+from __future__ import annotations
+
+from typing import Annotated, Any, ClassVar
 
 import bpy
 import numpy as np
 from numpy.random import uniform
+from pydantic import ConfigDict, Field
 
 from infinigen.assets.composition import material_assignments
 from infinigen.core import surface, tagging
@@ -14,6 +18,13 @@ from infinigen.core import tags as t
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import (
+    AssetParameters,
+    LegacyBridgeParameters,
+    ParameterizedAssetFactory,
+    apply_bridge_parameters,
+    legacy_init_to_parameters,
+)
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import clip_gaussian, weighted_sample
@@ -1426,17 +1437,36 @@ def sofa_parameter_distribution(dimensions=None):
     }
 
 
-class SofaFactory(AssetFactory):
+def _sofa_legacy_init(inst: Any, seed: int, coarse: bool) -> None:
+    inst.params = sofa_parameter_distribution()
+    sofa_fabric_gen_class = weighted_sample(material_assignments.fabrics)
+    inst.sofa_fabric = sofa_fabric_gen_class()()
+
+
+class SofaParameters(LegacyBridgeParameters):
+    pass
+
+
+class SofaFactory(ParameterizedAssetFactory, AssetFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = SofaParameters
+
     def __init__(self, factory_seed):
         super().__init__(factory_seed)
-        with FixedSeed(factory_seed):
-            self.params = sofa_parameter_distribution()
-            # from infinigen.assets.scatters.clothes import ClothesCover
-            # self.clothes_scatter = ClothesCover(factory_fn=blanket.BlanketFactory, width=log_uniform(1, 1.5),
-            #                                    size=uniform(.8, 1.2)) if uniform() < .3 else NoApply()
+        self.init_legacy_parameters()
 
-            sofa_fabric_gen_class = weighted_sample(material_assignments.fabrics)
-            self.sofa_fabric = sofa_fabric_gen_class()()
+    def _sample_init_parameters(self, seed: int) -> SofaParameters:
+        return legacy_init_to_parameters(
+            SofaParameters,
+            SofaFactory,
+            seed,
+            False,
+            init_fn=_sofa_legacy_init,
+        )
+
+    def apply_parameters(
+        self, params: SofaParameters, *, spawn_scope: bool = True
+    ) -> None:
+        apply_bridge_parameters(self, params, spawn_scope=spawn_scope)
 
     def create_placeholder(self, **_):
         obj = butil.spawn_vert()
@@ -1465,9 +1495,55 @@ class SofaFactory(AssetFactory):
         return hipoly
 
 
+class ArmChairParameters(AssetParameters):
+    model_config = ConfigDict(arbitrary_types_allowed=True, populate_by_name=True)
+
+    dimensions: tuple[float, float, float] = Field(alias="Dimensions")
+    arm_dimensions: tuple[float, float, float] = Field(alias="Arm Dimensions")
+    back_dimensions: tuple[float, float, float] = Field(alias="Back Dimensions")
+    seat_dimensions: tuple[float, float, float] = Field(alias="Seat Dimensions")
+    foot_dimensions: tuple[float, float, float] = Field(alias="Foot Dimensions")
+    baseboard_height: float = Field(alias="Baseboard Height")
+    backrest_width: float = Field(alias="Backrest Width")
+    seat_margin: float = Field(alias="Seat Margin")
+    backrest_angle: float = Field(alias="Backrest Angle")
+    arm_type: int = Field(alias="Arm Type")
+    arm_width: float = Field(alias="arm_width")
+    arm_height: float = Field(alias="Arm_height")
+    arms_angle: float = Field(alias="arms_angle")
+    footrest: bool = Field(alias="Footrest")
+    count: int = Field(alias="Count")
+    scaling_footrest: float = Field(alias="Scaling footrest")
+    reflection: int = Field(alias="Reflection")
+    leg_type: bool = Field(alias="leg_type")
+    leg_dimensions: float = Field(alias="leg_dimensions")
+    leg_z: float = Field(alias="leg_z")
+    leg_faces: float = Field(alias="leg_faces")
+    sofa_fabric: Any = Field(json_schema_extra={"editable": False})
+
+
 class ArmChairFactory(SofaFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = ArmChairParameters
+
     def __init__(self, factory_seed):
-        super().__init__(factory_seed)
-        with FixedSeed(factory_seed):
-            dimensions = (uniform(0.8, 1), uniform(0.9, 1.1), uniform(0.69, 0.97))
-            self.params = sofa_parameter_distribution(dimensions=dimensions)
+        AssetFactory.__init__(self, factory_seed)
+        self.init_legacy_parameters()
+
+    def _sample_init_parameters(self, seed: int) -> ArmChairParameters:
+        dimensions = (uniform(0.8, 1), uniform(0.9, 1.1), uniform(0.69, 0.97))
+        geometry = sofa_parameter_distribution(dimensions=dimensions)
+        sofa_fabric_gen_class = weighted_sample(material_assignments.fabrics)
+        sofa_fabric = sofa_fabric_gen_class()()
+        return ArmChairParameters.model_validate(
+            {"seed": seed, "sofa_fabric": sofa_fabric, **geometry}
+        )
+
+    def apply_parameters(
+        self, params: ArmChairParameters, *, spawn_scope: bool = True
+    ) -> None:
+        self.params = params.model_dump(
+            exclude={"seed", "sofa_fabric"},
+            by_alias=True,
+        )
+        self.sofa_fabric = params.sofa_fabric
+        self._use_fixed_spawn_draws = spawn_scope

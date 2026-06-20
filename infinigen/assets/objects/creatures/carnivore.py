@@ -3,11 +3,16 @@
 
 # Authors: Alexander Raistrick
 
+from __future__ import annotations
+
+from typing import Annotated, Any, ClassVar
+
 import gin
 import mathutils
 import numpy as np
 from numpy.random import normal as N
 from numpy.random import uniform as U
+from pydantic import BaseModel, ConfigDict, Field
 
 from infinigen.assets import materials
 from infinigen.assets.composition import material_assignments
@@ -19,22 +24,54 @@ from infinigen.assets.objects.creatures.util.creature_util import offset_center
 from infinigen.assets.objects.creatures.util.genome import Joint
 from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import AssetParameters, ParameterizedAssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import clip_gaussian
 from infinigen.core.util.random import weighted_sample
 
 
-def tiger_hair_params():
-    mat_roughness = U(0.4, 0.7)
+class CarnivoreHairParams(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
+    density: int = 500000
+    clump_n: Annotated[int, Field(ge=5, le=69)]
+    avoid_features_dist: float = 0.01
+    grooming: dict[str, Any]
+    material: dict[str, float]
+
+
+class CarnivoreCreatureParams(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    hair: CarnivoreHairParams
+    body_theta_scale: Annotated[float, Field(ge=0.7, le=1.3)]
+    use_carnivore_head: bool
+    head_length_rad1_rad2: tuple[float, float, float]
+    jaw_coord: tuple[float, float, float]
+    jaw_rest_y: Annotated[float, Field(ge=10.0, le=35.0)]
+    nurbs_head_var: Annotated[float, Field(ge=0.7, le=1.3)]
+    eye_radius: Annotated[float, Field(ge=0.0, le=0.06)]
+    eye_t: Annotated[float, Field(ge=0.61, le=0.64)]
+    eye_splay: Annotated[float, Field(ge=90.0, le=140.0)]
+    eye_r: Annotated[float, Field(ge=0.8, le=0.9)]
+    nose_coord: tuple[float, float, float]
+    ear_t: Annotated[float, Field(ge=0.19, le=0.47)]
+    ear_splay: Annotated[float, Field(ge=100.0, le=150.0)]
+    ear_rot: tuple[float, float, float]
+    neck_coord: Annotated[float, Field(ge=0.94, le=1.0)]
+    neck_rest_y: Annotated[float, Field(ge=5.0, le=35.0)]
+    shoulder_splay: Annotated[float, Field(ge=90.0, le=130.0)]
+    shoulder_t: Annotated[float, Field(ge=0.08, le=0.12)]
+    leg_length_rad1_rad2: tuple[float, float, float]
+
+
+def sample_creature_params() -> CarnivoreCreatureParams:
+    mat_roughness = U(0.4, 0.7)
     length = clip_gaussian(0.022, 0.03, 0.01, 0.1)
     puff = U(0.14, 0.4)
-
-    return {
-        "density": 500000,
-        "clump_n": np.random.randint(5, 70),
-        "avoid_features_dist": 0.01,
-        "grooming": {
+    hair = CarnivoreHairParams(
+        clump_n=int(np.random.randint(5, 70)),
+        grooming={
             "Length MinMaxScale": np.array(
                 (length, length * N(2, 0.5), U(15, 60)), dtype=np.float32
             ),
@@ -51,12 +88,59 @@ def tiger_hair_params():
             "Post Clump Noise Mag": 0.0005 * N(1, 0.15),
             "Hair Length Pct Min": U(0.5, 0.9),
         },
-        "material": {
+        material={
             "Roughness": mat_roughness,
             "Radial Roughness": mat_roughness + N(0, 0.07),
             "Random Roughness": 0,
             "IOR": 1.55,
         },
+    )
+    use_carnivore_head = U() < 0.5
+    if use_carnivore_head:
+        head_length_rad1_rad2 = tuple(
+            (np.array((0.36, 0.20, 0.18)) * N(1, 0.1, 3)).tolist()
+        )
+        jaw_coord = (0.2 * N(1, 0.1), 0.0, 0.35 * N(1, 0.1))
+    else:
+        headl = N(1, 0.1)
+        head_length_rad1_rad2 = tuple(
+            (np.array((headl, 0.20, 0.18)) * N(1, 0.1, 3)).tolist()
+        )
+        jaw_coord = (0.12, 0.0, 0.3 * N(1, 0.1))
+    return CarnivoreCreatureParams(
+        hair=hair,
+        body_theta_scale=float(N(1, 0.1)),
+        use_carnivore_head=use_carnivore_head,
+        head_length_rad1_rad2=head_length_rad1_rad2,
+        jaw_coord=jaw_coord,
+        jaw_rest_y=float(U(10, 35)),
+        nurbs_head_var=float(N(1, 0.1)),
+        eye_radius=float(N(0.027, 0.009)),
+        eye_t=float(U(0.61, 0.64)),
+        eye_splay=float(U(90, 140)),
+        eye_r=float(U(0.8, 0.9)),
+        nose_coord=(float(U(0.9, 0.96)), 1.0, float(U(0.5, 0.7))),
+        ear_t=float(N(0.33, 0.07)),
+        ear_splay=float(U(100, 150)),
+        ear_rot=tuple((np.array([-20, -10, -23]) + N(0, 4, 3)).tolist()),
+        neck_coord=float(N(0.97, 0.01)),
+        neck_rest_y=float(N(20, 5)),
+        shoulder_splay=float(clip_gaussian(130, 7, 90, 130)),
+        shoulder_t=float(clip_gaussian(0.12, 0.05, 0.08, 0.12)),
+        leg_length_rad1_rad2=tuple(
+            (np.array((1.6, 0.1, 0.05)) * N(1, (0.15, 0.05, 0.05), 3)).tolist()
+        ),
+    )
+
+
+def tiger_hair_params(params: CarnivoreCreatureParams) -> dict[str, Any]:
+    hair = params.hair
+    return {
+        "density": hair.density,
+        "clump_n": hair.clump_n,
+        "avoid_features_dist": hair.avoid_features_dist,
+        "grooming": hair.grooming,
+        "material": hair.material,
     }
 
 
@@ -74,18 +158,19 @@ def tiger_skin_sim_params():
     }
 
 
-def tiger_genome():
+def tiger_genome(params: CarnivoreCreatureParams):
+    p = params
     body_fac = parts.generic_nurbs.NurbsBody(
         prefix="body_feline", tags=["body"], var=0.7, temperature=0.2
     )
-    body_fac.params["thetas"][-3] *= N(1, 0.1)
+    body_fac.params["thetas"][-3] *= p.body_theta_scale
     body = genome.part(body_fac)
 
     tail = genome.part(parts.tail.Tail())
     genome.attach(tail, body, coord=(0.07, 1, 1), joint=Joint(rest=(N(0, 10), 180, 0)))
 
-    if U() < 0.5:
-        head_length_rad1_rad2 = np.array((0.36, 0.20, 0.18)) * N(1, 0.1, 3)
+    head_length_rad1_rad2 = np.array(p.head_length_rad1_rad2)
+    if p.use_carnivore_head:
         head_fac = parts.head.CarnivoreHead({"length_rad1_rad2": head_length_rad1_rad2})
         head = genome.part(head_fac)
 
@@ -98,18 +183,15 @@ def tiger_genome():
         genome.attach(
             jaw,
             head,
-            coord=(0.2 * N(1, 0.1), 0, 0.35 * N(1, 0.1)),
-            joint=Joint(rest=(0, U(10, 35), 0), pose=(0, 0, 0)),
+            coord=p.jaw_coord,
+            joint=Joint(rest=(0, p.jaw_rest_y, 0), pose=(0, 0, 0)),
         )
 
     else:
         head_fac = parts.generic_nurbs.NurbsHead(
-            prefix="head_carnivore", tags=["head"], var=0.5
+            prefix="head_carnivore", tags=["head"], var=p.nurbs_head_var
         )
         head = genome.part(head_fac)
-
-        headl = head_fac.params["length"][0]
-        head_length_rad1_rad2 = np.array((headl, 0.20, 0.18)) * N(1, 0.1, 3)
 
         jaw_pct = np.array((0.7, 0.55, 0.5))
         jaw = genome.part(
@@ -120,20 +202,19 @@ def tiger_genome():
         genome.attach(
             jaw,
             head,
-            coord=(0.12, 0, 0.3 * N(1, 0.1)),
-            joint=Joint(rest=(0, U(10, 35), 0), pose=(0, 0, 0)),
+            coord=p.jaw_coord,
+            joint=Joint(rest=(0, p.jaw_rest_y, 0), pose=(0, 0, 0)),
         )
 
-        eye_fac = parts.eye.MammalEye({"Radius": N(0.027, 0.009)})
-        eye_t, splay = U(0.61, 0.64), U(90, 140) / 180
-        r = U(0.8, 0.9)
+        eye_fac = parts.eye.MammalEye({"Radius": p.eye_radius})
+        splay = p.eye_splay / 180
         rot = np.array([0, 0, 0])
         for side in [-1, 1]:
             eye = genome.part(eye_fac)
             genome.attach(
                 eye,
                 head,
-                coord=(eye_t, splay, r),
+                coord=(p.eye_t, splay, p.eye_r),
                 joint=Joint(rest=rot),
                 rotation_basis="normal",
                 side=side,
@@ -141,18 +222,17 @@ def tiger_genome():
 
     nose = genome.part(parts.head_detail.CatNose())
     genome.attach(
-        nose, head, coord=(U(0.9, 0.96), 1, U(0.5, 0.7)), joint=Joint(rest=(0, 20, 0))
+        nose, head, coord=p.nose_coord, joint=Joint(rest=(0, 20, 0))
     )
 
     ear_fac = parts.head_detail.CatEar()
-    t, splay = N(0.33, 0.07), U(100, 150) / 180
-    rot = np.array([-20, -10, -23]) + N(0, 4, 3)
+    rot = np.array(p.ear_rot)
     for side in [-1, 1]:
         ear = genome.part(ear_fac)
         genome.attach(
             ear,
             head,
-            coord=(t, splay, 1),
+            coord=(p.ear_t, p.ear_splay / 180, 1),
             joint=Joint(rest=rot),
             rotation_basis="normal",
             side=side,
@@ -160,14 +240,11 @@ def tiger_genome():
 
     neck_t = 0.7
     shoulder_bounds = np.array([[-20, -20, -20], [20, 20, 20]])
-    splay = clip_gaussian(130, 7, 90, 130) / 180
-    shoulder_t = clip_gaussian(0.12, 0.05, 0.08, 0.12)
-    params = {
-        "length_rad1_rad2": np.array((1.6, 0.1, 0.05)) * N(1, (0.15, 0.05, 0.05), 3)
-    }
+    splay = p.shoulder_splay / 180
+    leg_params = {"length_rad1_rad2": np.array(p.leg_length_rad1_rad2)}
 
     foot_fac = parts.foot.Foot()
-    backleg_fac = parts.leg.QuadrupedBackLeg(params=params)
+    backleg_fac = parts.leg.QuadrupedBackLeg(params=leg_params)
     for side in [-1, 1]:
         back_leg = genome.attach(
             genome.part(foot_fac),
@@ -178,13 +255,13 @@ def tiger_genome():
         genome.attach(
             back_leg,
             body,
-            coord=(shoulder_t, splay, 1.2),
+            coord=(p.shoulder_t, splay, 1.2),
             joint=Joint(rest=(0, 90, 0), bounds=shoulder_bounds),
             rotation_basis="global",
             side=side,
-        )  # , smooth_rad=0.06)#, bridge_rad=0.1)
+        )
 
-    frontleg_fac = parts.leg.QuadrupedFrontLeg(params=params)
+    frontleg_fac = parts.leg.QuadrupedFrontLeg(params=leg_params)
     for side in [-1, 1]:
         front_leg = genome.attach(
             genome.part(foot_fac),
@@ -195,34 +272,41 @@ def tiger_genome():
         genome.attach(
             front_leg,
             body,
-            coord=(neck_t - shoulder_t, splay, 0.8),
+            coord=(neck_t - p.shoulder_t, splay, 0.8),
             joint=Joint(rest=(0, 90, 0)),
             rotation_basis="global",
             side=side,
-        )  # , smooth_rad=0.06)#, bridge_rad=0.1)
+        )
 
-    # neck_lrr = np.array((body_lrr[0], body_lrr[-1], body_lrr[-1])) * np.array((0.45, 0.5, 0.25)) * N(1, 0.05, 3)
-    # neck = genome.part(parts.head.Neck({'length_rad1_rad2': neck_lrr}))
     genome.attach(
         head,
         body,
-        coord=(N(0.97, 0.01), 0, 0),
-        joint=Joint(rest=(0, N(20, 5), 0)),
+        coord=(p.neck_coord, 0, 0),
+        joint=Joint(rest=(0, p.neck_rest_y, 0)),
         rotation_basis="global",
-    )  # , bridge_rad=0.1)
-    # genome.attach(neck, body, coord=(0.8, 0, 0.1), joint=Joint(rest=(0, -N(15, 2), 0)))
+    )
 
     return genome.CreatureGenome(
         parts=body,
         postprocess_params=dict(
-            hair=tiger_hair_params(),
+            hair=tiger_hair_params(p),
             skin=tiger_skin_sim_params(),
         ),
     )
 
 
+class CarnivoreParameters(AssetParameters):
+    creature: CarnivoreCreatureParams
+    body_material: Any = Field(json_schema_extra={"editable": False})
+    tongue_material: Any = Field(json_schema_extra={"editable": False})
+    teeth_material: Any = Field(json_schema_extra={"editable": False})
+    nose_material: Any = Field(json_schema_extra={"editable": False})
+
+
 @gin.configurable
-class CarnivoreFactory(AssetFactory):
+class CarnivoreFactory(ParameterizedAssetFactory, AssetFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = CarnivoreParameters
+
     def __init__(
         self,
         factory_seed=None,
@@ -233,23 +317,37 @@ class CarnivoreFactory(AssetFactory):
         clothsim_skin: bool = False,
         **kwargs,
     ):
-        super().__init__(factory_seed, coarse)
         self.bvh = bvh
         self.animation_mode = animation_mode
         self.hair = hair
         self.clothsim_skin = clothsim_skin
+        super().__init__(factory_seed, coarse)
+        self.init_legacy_parameters()
 
+    def _sample_init_parameters(self, seed: int) -> CarnivoreParameters:
+        return CarnivoreParameters(
+            seed=seed,
+            creature=sample_creature_params(),
+            body_material=weighted_sample(material_assignments.carnivore)(),
+            tongue_material=materials.creature.Tongue(),
+            teeth_material=materials.creature.Bone(),
+            nose_material=materials.creature.Nose(),
+        )
+
+    def apply_parameters(
+        self, params: CarnivoreParameters, *, spawn_scope: bool = True
+    ) -> None:
         if self.hair and (self.animation_mode is not None or self.clothsim_skin):
             raise NotImplementedError(
                 "Dynamic hair is not yet fully working. "
                 "Please disable either hair or both of animation/clothsim"
             )
-
-        body_material_fac = weighted_sample(material_assignments.carnivore)
-        self.body_material = body_material_fac()
-        self.tongue_material = materials.creature.Tongue()
-        self.teeth_material = materials.creature.Bone()
-        self.nose_material = materials.creature.Nose()
+        self.creature_params = params.creature
+        self.body_material = params.body_material
+        self.tongue_material = params.tongue_material
+        self.teeth_material = params.teeth_material
+        self.nose_material = params.nose_material
+        self._use_fixed_spawn_draws = spawn_scope
 
     def create_placeholder(self, **kwargs):
         return butil.spawn_cube(size=4)
@@ -271,7 +369,7 @@ class CarnivoreFactory(AssetFactory):
         self.nose_material.apply(joining.get_parts(root, False, "Nose"))
 
     def create_asset(self, i, placeholder, **kwargs):
-        genome = tiger_genome()
+        genome = tiger_genome(self.creature_params)
         root, parts = creature.genome_to_creature(
             genome, name=f"carnivore({self.factory_seed}, {i})"
         )

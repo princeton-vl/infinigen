@@ -21,6 +21,7 @@ from infinigen.core.nodes.node_utils import build_color_ramp
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core.placement.detail import adapt_mesh_resolution
 from infinigen.core.placement.factory import AssetFactory, make_asset_collection
+from infinigen.core.placement.parameters import ParameterizedAssetFactory
 from infinigen.core.surface import shaderfunc_to_material
 from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
@@ -34,6 +35,10 @@ class MonocotGrowthFactory(AssetFactory):
 
     def __init__(self, factory_seed, coarse=False):
         super(MonocotGrowthFactory, self).__init__(factory_seed, coarse)
+        if isinstance(self, ParameterizedAssetFactory) and not getattr(
+            self, "_legacy_bridge_init", False
+        ):
+            return
         with FixedSeed(factory_seed):
             self.count = 128
             self.perturb = 0.05

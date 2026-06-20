@@ -5,6 +5,10 @@
 
 
 # Code generated using version v2.0.1 of the node_transpiler
+from __future__ import annotations
+
+from typing import Any, ClassVar
+
 import bpy
 import numpy as np
 from numpy.random import normal, uniform
@@ -14,6 +18,13 @@ from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import (
+    AssetParameters,
+    LegacyBridgeParameters,
+    ParameterizedAssetFactory,
+    apply_bridge_parameters,
+    legacy_init_to_parameters,
+)
 from infinigen.core.tagging import tag_nodegroup, tag_object
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed, dict_lerp
@@ -897,17 +908,43 @@ def geo_flower(nw, petal_material, center_material):
     )
 
 
-class FlowerFactory(AssetFactory):
+class FlowerParameters(LegacyBridgeParameters):
+    pass
+
+
+def _flower_legacy_init(inst: Any, seed: int, coarse: bool, rad: float = 0.15, diversity_fac: float = 0.25) -> None:
+    AssetFactory.__init__(inst, seed, coarse)
+    inst.rad = rad
+    inst.diversity_fac = diversity_fac
+    inst.petal_material = surface.shaderfunc_to_material(shader_petal)
+    inst.center_material = surface.shaderfunc_to_material(shader_flower_center)
+    inst.species_params = FlowerFactory.get_flower_params(inst.rad)
+
+
+class FlowerFactory(ParameterizedAssetFactory, AssetFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = FlowerParameters
+
     def __init__(self, factory_seed, rad=0.15, diversity_fac=0.25):
-        super(FlowerFactory, self).__init__(factory_seed=factory_seed)
+        self._rad = rad
+        self._diversity_fac = diversity_fac
+        AssetFactory.__init__(self, factory_seed)
+        self.init_legacy_parameters()
 
-        self.rad = rad
-        self.diversity_fac = diversity_fac
+    def _sample_init_parameters(self, seed: int) -> FlowerParameters:
+        return legacy_init_to_parameters(
+            FlowerParameters,
+            FlowerFactory,
+            seed,
+            False,
+            self._rad,
+            self._diversity_fac,
+            init_fn=_flower_legacy_init,
+        )
 
-        with FixedSeed(factory_seed):
-            self.petal_material = surface.shaderfunc_to_material(shader_petal)
-            self.center_material = surface.shaderfunc_to_material(shader_flower_center)
-            self.species_params = self.get_flower_params(self.rad)
+    def apply_parameters(
+        self, params: FlowerParameters, *, spawn_scope: bool = True
+    ) -> None:
+        apply_bridge_parameters(self, params, spawn_scope=spawn_scope)
 
     @staticmethod
     def get_flower_params(overall_rad=0.05):

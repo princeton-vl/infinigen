@@ -2,35 +2,69 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Lingjie Mei
+from __future__ import annotations
+
+from typing import Any, ClassVar
+
 import bpy
 import numpy as np
 from numpy.random import uniform
 
 from infinigen.assets.utils.decorate import subsurf, write_co
 from infinigen.assets.utils.object import new_grid
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import (
+    AssetParameters,
+    LegacyBridgeParameters,
+    ParameterizedAssetFactory,
+    apply_bridge_parameters,
+    legacy_init_to_parameters,
+)
 from infinigen.core.util import blender as butil
-from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 
 from .base import TablewareFactory
 
 
-class SpoonFactory(TablewareFactory):
+def _spoon_legacy_init(inst: Any, seed: int, coarse: bool) -> None:
+    TablewareFactory.__init__(inst, seed, coarse)
+    inst.x_length = log_uniform(0.2, 0.8)
+    inst.y_length = log_uniform(0.06, 0.12)
+    inst.z_depth = log_uniform(0.08, 0.25)
+    inst.z_offset = uniform(0.0, 0.05)
+    inst.thickness = log_uniform(0.008, 0.015)
+    inst.has_guard = uniform(0, 1) < 0.4
+    inst.guard_type = "round" if uniform(0, 1) < 0.6 else "double"
+    inst.guard_depth = log_uniform(0.2, 1.0) * inst.thickness
+    inst.scale = log_uniform(0.15, 0.25)
+
+
+class SpoonParameters(LegacyBridgeParameters):
+    pass
+
+
+class SpoonFactory(ParameterizedAssetFactory, TablewareFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = SpoonParameters
     x_end = 0.15
     is_fragile = True
 
     def __init__(self, factory_seed, coarse=False):
-        super().__init__(factory_seed, coarse)
-        with FixedSeed(factory_seed):
-            self.x_length = log_uniform(0.2, 0.8)
-            self.y_length = log_uniform(0.06, 0.12)
-            self.z_depth = log_uniform(0.08, 0.25)
-            self.z_offset = uniform(0.0, 0.05)
-            self.thickness = log_uniform(0.008, 0.015)
-            self.has_guard = uniform(0, 1) < 0.4
-            self.guard_type = "round" if uniform(0, 1) < 0.6 else "double"
-            self.guard_depth = log_uniform(0.2, 1.0) * self.thickness
-            self.scale = log_uniform(0.15, 0.25)
+        AssetFactory.__init__(self, factory_seed, coarse)
+        self.init_legacy_parameters()
+
+    def _sample_init_parameters(self, seed: int) -> SpoonParameters:
+        return legacy_init_to_parameters(
+            SpoonParameters,
+            SpoonFactory,
+            seed,
+            self.coarse,
+            init_fn=_spoon_legacy_init,
+        )
+
+    def apply_parameters(
+        self, params: SpoonParameters, *, spawn_scope: bool = True
+    ) -> None:
+        apply_bridge_parameters(self, params, spawn_scope=spawn_scope)
 
     def create_asset(self, **params) -> bpy.types.Object:
         x_anchors = np.array(

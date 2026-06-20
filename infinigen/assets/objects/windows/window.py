@@ -5,6 +5,10 @@
 # - Hongyu Wen: primary author
 # - Alexander Raistrick: update window glass
 
+from __future__ import annotations
+
+from typing import Any, ClassVar
+
 import bpy
 import numpy as np
 from numpy.random import randint as RI
@@ -17,6 +21,13 @@ from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import (
+    AssetParameters,
+    LegacyBridgeParameters,
+    ParameterizedAssetFactory,
+    apply_bridge_parameters,
+    legacy_init_to_parameters,
+)
 from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.math import FixedSeed, clip_gaussian
@@ -57,7 +68,29 @@ def shader_window_glass(nw: NodeWrangler):
     )
 
 
-class WindowFactory(AssetFactory):
+def _window_legacy_init(
+    inst: Any,
+    seed: int,
+    coarse: bool,
+    dimensions: Any = None,
+    open: bool | None = None,
+    curtain: bool | None = None,
+    shutter: bool | None = None,
+) -> None:
+    inst.params = WindowFactory.sample_geometry_parameters()
+    inst.beveler = BevelSharp()
+    inst.open = open
+    inst.curtain = curtain
+    inst.shutter = shutter
+
+
+class WindowParameters(LegacyBridgeParameters):
+    pass
+
+
+class WindowFactory(ParameterizedAssetFactory, AssetFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = WindowParameters
+
     def __init__(
         self,
         factory_seed,
@@ -67,17 +100,33 @@ class WindowFactory(AssetFactory):
         curtain=None,
         shutter=None,
     ):
+        self._window_dimensions = dimensions
+        self._window_open = open
+        self._window_curtain = curtain
+        self._window_shutter = shutter
         super(WindowFactory, self).__init__(factory_seed, coarse=coarse)
+        self.init_legacy_parameters()
 
-        with FixedSeed(factory_seed):
-            self.params = self.sample_parameters()
-            self.beveler = BevelSharp()
-            self.open = open
-            self.curtain = curtain
-            self.shutter = shutter
+    def _sample_init_parameters(self, seed: int) -> WindowParameters:
+        return legacy_init_to_parameters(
+            WindowParameters,
+            WindowFactory,
+            seed,
+            self.coarse,
+            self._window_dimensions,
+            self._window_open,
+            self._window_curtain,
+            self._window_shutter,
+            init_fn=_window_legacy_init,
+        )
+
+    def apply_parameters(
+        self, params: WindowParameters, *, spawn_scope: bool = True
+    ) -> None:
+        apply_bridge_parameters(self, params, spawn_scope=spawn_scope)
 
     @staticmethod
-    def sample_parameters():
+    def sample_geometry_parameters():
         frame_width = U(0.05, 0.1)
         sub_frame_width = U(0.01, frame_width)
         sub_frame_h_amount = RI(1, 2)

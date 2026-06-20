@@ -6,10 +6,15 @@
 # - Lingjie Mei
 # - Karhan Kayan: fix cutter bug
 
+from __future__ import annotations
+
+from typing import Annotated, Any, ClassVar
+
 import bmesh
 import bpy
 import numpy as np
 from numpy.random import uniform
+from pydantic import Field
 
 from infinigen.assets.utils.decorate import subsurf
 from infinigen.assets.utils.object import (
@@ -18,41 +23,151 @@ from infinigen.assets.utils.object import (
     new_base_cylinder,
     origin2lowest,
 )
+from infinigen.core.placement.parameters import AssetParameters, ParameterizedAssetFactory
 from infinigen.core.util import blender as butil
-from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 
-from .base import TablewareFactory
+from .base import TablewareFactory, apply_tableware_base, sample_tableware_base
 
 
-class PanFactory(TablewareFactory):
+class PanParameters(AssetParameters):
+    r_expand: Annotated[float, Field(ge=1.0, le=1.2, json_schema_extra={"editable": True})]
+    depth: Annotated[float, Field(ge=0.3, le=0.8, json_schema_extra={"editable": True})]
+    r_mid: Annotated[float, Field(ge=1.0, le=1.3, json_schema_extra={"editable": True})]
+    has_handle_hole_draw: Annotated[
+        float, Field(ge=0.0, le=1.0, json_schema_extra={"editable": True})
+    ]
+    x_handle: Annotated[float, Field(ge=1.2, le=2.0, json_schema_extra={"editable": True})]
+    z_handle_frac: Annotated[
+        float, Field(ge=0.0, le=0.2, json_schema_extra={"editable": True})
+    ]
+    z_handle_mid_frac: Annotated[
+        float, Field(ge=0.6, le=0.8, json_schema_extra={"editable": True})
+    ]
+    s_handle: Annotated[float, Field(ge=0.8, le=1.2, json_schema_extra={"editable": True})]
+    thickness: Annotated[float, Field(ge=0.04, le=0.06, json_schema_extra={"editable": True})]
+    has_guard_draw: Annotated[
+        float, Field(ge=0.0, le=1.0, json_schema_extra={"editable": True})
+    ]
+    x_guard_extra: Annotated[
+        float, Field(ge=0.0, le=0.2, json_schema_extra={"editable": True})
+    ]
+    guard_depth_mult: Annotated[
+        float, Field(ge=1.0, le=2.0, json_schema_extra={"editable": True})
+    ]
+    scale: Annotated[float, Field(ge=0.1, le=0.15, json_schema_extra={"editable": True})]
+    lower_thresh: Annotated[float, Field(ge=0.5, le=0.8, json_schema_extra={"editable": True})]
+    scratch_draw: Annotated[
+        float, Field(ge=0.0, le=1.0, json_schema_extra={"editable": True})
+    ]
+    edge_wear_draw: Annotated[
+        float, Field(ge=0.0, le=1.0, json_schema_extra={"editable": True})
+    ]
+    n_vertices: Annotated[float, Field(ge=4.0, le=8.0, json_schema_extra={"editable": True})] = (
+        4.0
+    )
+    grid_offset: Annotated[int, Field(ge=0, le=6, json_schema_extra={"editable": True})] = 0
+    hole_scale: Annotated[float, Field(ge=0.06, le=0.1, json_schema_extra={"editable": True})] = (
+        0.06
+    )
+    hole_location_frac: Annotated[
+        float, Field(ge=0.8, le=0.9, json_schema_extra={"editable": True})
+    ] = 0.8
+    surface: Any = Field(json_schema_extra={"editable": False})
+    inside_surface: Any = Field(json_schema_extra={"editable": False})
+    guard_surface: Any = Field(json_schema_extra={"editable": False})
+    scratch: Any | None = Field(default=None, json_schema_extra={"editable": False})
+    edge_wear: Any | None = Field(default=None, json_schema_extra={"editable": False})
+    has_guard: bool = Field(default=False, json_schema_extra={"editable": False})
+    metal_color: str | None = Field(default=None, json_schema_extra={"editable": False})
+
+
+class PanFactory(ParameterizedAssetFactory, TablewareFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = PanParameters
+
     def __init__(self, factory_seed, coarse=False):
         super().__init__(factory_seed, coarse)
-        with FixedSeed(factory_seed):
-            self.r_expand = 1 if uniform(0, 1) < 0.2 else log_uniform(1.0, 1.2)
-            self.depth = log_uniform(0.3, 0.8)
-            if self.r_expand == 1:
-                self.r_mid = log_uniform(1.0, 1.3)
-            else:
-                self.r_mid = 1 + (self.r_expand - 1) * (
-                    uniform(0.5, 0.85) if uniform(0, 1) < 0.5 else 0.5
-                )
-            self.has_handle = True
-            self.has_handle_hole = uniform() < 0.6
-            self.pre_level = 2
-            self.x_handle = log_uniform(1.2, 2.0)
-            self.z_handle = self.x_handle * uniform(0, 0.2)
-            self.z_handle_mid = uniform(0.6, 0.8) * self.z_handle
-            self.s_handle = log_uniform(0.8, 1.2)
-            self.thickness = log_uniform(0.04, 0.06)
-            self.has_guard = uniform(0, 1) < 0.8
-            self.x_guard = self.r_expand + uniform(0, 0.2) * self.x_handle
-            self.guard_type = "round"
-            self.guard_depth = log_uniform(1.0, 2.0) * self.thickness
+        self.has_handle = True
+        self.pre_level = 2
+        self.guard_type = "round"
+        self.init_legacy_parameters()
 
-            self.metal_color = None
-            self.scale = log_uniform(0.1, 0.15)
-            self.scratch = self.edge_wear = None
+    def _sample_init_parameters(self, seed: int) -> PanParameters:
+        base = sample_tableware_base(seed)
+        r_expand = 1 if uniform(0, 1) < 0.2 else log_uniform(1.0, 1.2)
+        depth = log_uniform(0.3, 0.8)
+        if r_expand == 1:
+            r_mid = log_uniform(1.0, 1.3)
+        else:
+            r_mid = 1 + (r_expand - 1) * (
+                uniform(0.5, 0.85) if uniform(0, 1) < 0.5 else 0.5
+            )
+        x_handle = log_uniform(1.2, 2.0)
+        z_handle_frac = uniform(0, 0.2)
+        thickness = log_uniform(0.04, 0.06)
+        return PanParameters(
+            seed=seed,
+            r_expand=r_expand,
+            depth=depth,
+            r_mid=r_mid,
+            has_handle_hole_draw=uniform(),
+            x_handle=x_handle,
+            z_handle_frac=z_handle_frac,
+            z_handle_mid_frac=uniform(0.6, 0.8),
+            s_handle=log_uniform(0.8, 1.2),
+            thickness=thickness,
+            has_guard_draw=uniform(0, 1),
+            x_guard_extra=uniform(0, 0.2),
+            guard_depth_mult=log_uniform(1.0, 2.0),
+            scale=log_uniform(0.1, 0.15),
+            lower_thresh=base["lower_thresh"],
+            scratch_draw=base["scratch_draw"],
+            edge_wear_draw=base["edge_wear_draw"],
+            surface=base["surface"],
+            inside_surface=base["inside_surface"],
+            guard_surface=base["guard_surface"],
+            scratch=None,
+            edge_wear=None,
+            has_guard=False,
+            metal_color=None,
+        )
+
+    def _sample_spawn_parameters(
+        self, params: PanParameters, seed: int, i: int
+    ) -> PanParameters:
+        n_factor = log_uniform(4, 8)
+        n = 4 * int(n_factor)
+        return params.model_copy(
+            update={
+                "n_vertices": n_factor,
+                "grid_offset": int(np.random.randint(n // 4)),
+                "hole_scale": uniform(0.06, 0.1),
+                "hole_location_frac": uniform(0.8, 0.9),
+            }
+        )
+
+    def apply_parameters(
+        self, params: PanParameters, *, spawn_scope: bool = True
+    ) -> None:
+        apply_tableware_base(self, params)
+        self.r_expand = params.r_expand
+        self.depth = params.depth
+        self.r_mid = params.r_mid
+        self.has_handle_hole = params.has_handle_hole_draw < 0.6
+        self.x_handle = params.x_handle
+        self.z_handle = params.x_handle * params.z_handle_frac
+        self.z_handle_mid = params.z_handle_mid_frac * self.z_handle
+        self.s_handle = params.s_handle
+        self.has_guard = params.has_guard_draw < 0.8
+        self.x_guard = params.r_expand + params.x_guard_extra * params.x_handle
+        self.guard_depth = params.guard_depth_mult * params.thickness
+        self.metal_color = params.metal_color
+        self._use_fixed_spawn_draws = spawn_scope
+        if spawn_scope:
+            self._n = 4 * int(params.n_vertices)
+            self._grid_offset = params.grid_offset
+            self._hole_scale = params.hole_scale
+            self._hole_location_frac = params.hole_location_frac
 
     def create_asset(self, **params) -> bpy.types.Object:
         obj = self.make_base()
@@ -62,11 +177,14 @@ class PanFactory(TablewareFactory):
         return obj
 
     def make_base(self):
-        n = 4 * int(log_uniform(4, 8))
+        if self._use_fixed_spawn_draws:
+            n = self._n
+            grid_offset = self._grid_offset
+        else:
+            n = 4 * int(log_uniform(4, 8))
+            grid_offset = np.random.randint(n // 4)
         base = new_base_circle(vertices=n)
-        middle = new_base_circle(
-            vertices=n,
-        )
+        middle = new_base_circle(vertices=n)
         middle.location[-1] = self.depth / 2
         middle.scale = [self.r_mid] * 3
         upper = new_base_circle(vertices=n)
@@ -82,9 +200,7 @@ class PanFactory(TablewareFactory):
             bm.select_flush(False)
             bmesh.update_edit_mesh(obj.data)
         with butil.ViewportMode(obj, "EDIT"):
-            bpy.ops.mesh.fill_grid(
-                use_interp_simple=True, offset=np.random.randint(n // 4)
-            )
+            bpy.ops.mesh.fill_grid(use_interp_simple=True, offset=grid_offset)
             bpy.ops.mesh.quads_convert_to_tris(
                 quad_method="BEAUTY", ngon_method="BEAUTY"
             )
@@ -139,8 +255,14 @@ class PanFactory(TablewareFactory):
             )
 
     def add_handle_hole(self, obj):
+        if self._use_fixed_spawn_draws:
+            hole_scale = self._hole_scale
+            hole_location_frac = self._hole_location_frac
+        else:
+            hole_scale = uniform(0.06, 0.1)
+            hole_location_frac = uniform(0.8, 0.9)
         cutter = new_base_cylinder()
-        cutter.scale = *([uniform(0.06, 0.1)] * 2), 1
-        cutter.location[0] = self.r_expand + uniform(0.8, 0.9) * self.x_handle
+        cutter.scale = *([hole_scale] * 2), 1
+        cutter.location[0] = self.r_expand + hole_location_frac * self.x_handle
         butil.modify_mesh(obj, "BOOLEAN", object=cutter, operation="DIFFERENCE")
         butil.delete(cutter)

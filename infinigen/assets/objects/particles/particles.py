@@ -5,6 +5,10 @@
 
 # ruff: noqa: I001
 
+from __future__ import annotations
+
+from typing import ClassVar
+
 import bpy
 from numpy.random import normal as N
 
@@ -13,6 +17,7 @@ from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import AssetParameters, ParameterizedAssetFactory
 from infinigen.core.tagging import tag_object
 from infinigen.infinigen_gpl.surfaces import snow
 
@@ -102,7 +107,25 @@ class RaindropFactory(AssetFactory):
         surface.add_material(assets, shader_raindrop)
 
 
-class DustMoteFactory(AssetFactory):
+class DustMoteParameters(AssetParameters):
+    pass
+
+
+class DustMoteFactory(ParameterizedAssetFactory, AssetFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = DustMoteParameters
+
+    def __init__(self, factory_seed=None, coarse=False):
+        super().__init__(factory_seed, coarse)
+        self.init_legacy_parameters()
+
+    def _sample_init_parameters(self, seed: int) -> DustMoteParameters:
+        return DustMoteParameters(seed=seed)
+
+    def apply_parameters(
+        self, params: DustMoteParameters, *, spawn_scope: bool = True
+    ) -> None:
+        self._use_fixed_spawn_draws = spawn_scope
+
     def create_asset(self, **kwargs):
         bpy.ops.mesh.primitive_ico_sphere_add(
             radius=1,
@@ -119,7 +142,25 @@ class DustMoteFactory(AssetFactory):
         dirt.apply(assets)
 
 
-class SnowflakeFactory(AssetFactory):
+class SnowflakeParameters(AssetParameters):
+    pass
+
+
+class SnowflakeFactory(ParameterizedAssetFactory, AssetFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = SnowflakeParameters
+
+    def __init__(self, factory_seed=None, coarse=False):
+        super().__init__(factory_seed, coarse)
+        self.init_legacy_parameters()
+
+    def _sample_init_parameters(self, seed: int) -> SnowflakeParameters:
+        return SnowflakeParameters(seed=seed)
+
+    def apply_parameters(
+        self, params: SnowflakeParameters, *, spawn_scope: bool = True
+    ) -> None:
+        self._use_fixed_spawn_draws = spawn_scope
+
     def create_asset(self, **params) -> bpy.types.Object:
         bpy.ops.mesh.primitive_circle_add(
             vertices=6,

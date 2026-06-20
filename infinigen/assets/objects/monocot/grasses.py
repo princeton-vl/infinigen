@@ -4,9 +4,14 @@
 # Authors: Lingjie Mei
 
 
+from __future__ import annotations
+
+from typing import Annotated, ClassVar
+
 import bpy
 import numpy as np
 from numpy.random import uniform
+from pydantic import Field
 
 from infinigen.assets.objects.monocot.growth import MonocotGrowthFactory
 from infinigen.assets.utils.decorate import (
@@ -22,7 +27,14 @@ from infinigen.core import surface
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core.placement.detail import remesh_with_attrs
-from infinigen.core.placement.factory import make_asset_collection
+from infinigen.core.placement.factory import AssetFactory, make_asset_collection
+from infinigen.core.placement.parameters import (
+    AssetParameters,
+    LegacyBridgeParameters,
+    ParameterizedAssetFactory,
+    apply_bridge_parameters,
+    legacy_init_to_parameters,
+)
 from infinigen.core.surface import shaderfunc_to_material
 from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
@@ -31,18 +43,52 @@ from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 
 
-class GrassesMonocotFactory(MonocotGrowthFactory):
+class GrassesMonocotParameters(LegacyBridgeParameters):
+    cut_prob_draw: Annotated[
+        float, Field(ge=0.0, le=1.0, json_schema_extra={"editable": True})
+    ] = 0.0
+
+
+def _grasses_monocot_legacy_init(
+    inst: GrassesMonocotFactory, seed: int, coarse: bool
+) -> None:
+    MonocotGrowthFactory.__init__(inst, seed, coarse)
+    with FixedSeed(seed):
+        inst.stem_offset = uniform(1.5, 2.0)
+        inst.angle = uniform(np.pi / 6, np.pi / 3)
+        inst.z_drag = uniform(0.0, 0.2)
+        inst.min_y_angle = uniform(np.pi * 0.35, np.pi * 0.45)
+        inst.max_y_angle = uniform(np.pi * 0.45, np.pi * 0.5)
+        inst.count = int(log_uniform(16, 64))
+        inst.scale_curve = [(0, 1.0), (1, 0.2)]
+        inst.bend_angle = np.pi / 2
+
+
+class GrassesMonocotFactory(ParameterizedAssetFactory, MonocotGrowthFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = GrassesMonocotParameters
+
     def __init__(self, factory_seed, coarse=False):
-        super(GrassesMonocotFactory, self).__init__(factory_seed, coarse)
-        with FixedSeed(factory_seed):
-            self.stem_offset = uniform(1.5, 2.0)
-            self.angle = uniform(np.pi / 6, np.pi / 3)
-            self.z_drag = uniform(0.0, 0.2)
-            self.min_y_angle = uniform(np.pi * 0.35, np.pi * 0.45)
-            self.max_y_angle = uniform(np.pi * 0.45, np.pi * 0.5)
-            self.count = int(log_uniform(16, 64))
-            self.scale_curve = [(0, 1.0), (1, 0.2)]
-            self.bend_angle = np.pi / 2
+        AssetFactory.__init__(self, factory_seed, coarse)
+        self.init_legacy_parameters()
+
+    def _sample_init_parameters(self, seed: int) -> GrassesMonocotParameters:
+        return legacy_init_to_parameters(
+            GrassesMonocotParameters,
+            GrassesMonocotFactory,
+            seed,
+            self.coarse,
+            init_fn=_grasses_monocot_legacy_init,
+        )
+
+    def _sample_spawn_parameters(
+        self, params: GrassesMonocotParameters, seed: int, i: int
+    ) -> GrassesMonocotParameters:
+        return params.model_copy(update={"cut_prob_draw": uniform()})
+
+    def apply_parameters(
+        self, params: GrassesMonocotParameters, *, spawn_scope: bool = True
+    ) -> None:
+        apply_bridge_parameters(self, params, spawn_scope=spawn_scope)
 
     @staticmethod
     def build_base_hue():
@@ -56,8 +102,7 @@ class GrassesMonocotFactory(MonocotGrowthFactory):
         y_anchors = np.array([0, uniform(0.02, 0.03), uniform(0.02, 0.03), 0])
         obj = leaf(x_anchors, y_anchors, face_size=face_size)
 
-        cut_prob = 0.4
-        if uniform(0, 1) < cut_prob:
+        if (self.cut_prob_draw if self._use_fixed_spawn_draws else uniform()) < 0.4:
             x_cutoff = uniform(0.5, 1.0)
             angle = uniform(-np.pi / 3, np.pi / 3)
             remove_vertices(
@@ -73,17 +118,44 @@ class GrassesMonocotFactory(MonocotGrowthFactory):
         return True
 
 
-class WheatEarMonocotFactory(MonocotGrowthFactory):
+class WheatEarMonocotParameters(LegacyBridgeParameters):
+    pass
+
+
+def _wheat_ear_monocot_legacy_init(
+    inst: WheatEarMonocotFactory, seed: int, coarse: bool
+) -> None:
+    MonocotGrowthFactory.__init__(inst, seed, coarse)
+    with FixedSeed(seed):
+        inst.stem_offset = uniform(0.4, 0.5)
+        inst.angle = uniform(np.pi / 6, np.pi / 4)
+        inst.min_y_angle = uniform(np.pi / 4, np.pi / 3)
+        inst.max_y_angle = np.pi / 2
+        inst.leaf_prob = uniform(0.9, 1)
+        inst.count = int(log_uniform(96, 128))
+        inst.bend_angle = np.pi
+
+
+class WheatEarMonocotFactory(ParameterizedAssetFactory, MonocotGrowthFactory):
+    parameters_model: ClassVar[type[LegacyBridgeParameters]] = WheatEarMonocotParameters
+
     def __init__(self, factory_seed, coarse=False):
-        super(WheatEarMonocotFactory, self).__init__(factory_seed, coarse)
-        with FixedSeed(factory_seed):
-            self.stem_offset = uniform(0.4, 0.5)
-            self.angle = uniform(np.pi / 6, np.pi / 4)
-            self.min_y_angle = uniform(np.pi / 4, np.pi / 3)
-            self.max_y_angle = np.pi / 2
-            self.leaf_prob = uniform(0.9, 1)
-            self.count = int(log_uniform(96, 128))
-            self.bend_angle = np.pi
+        AssetFactory.__init__(self, factory_seed, coarse)
+        self.init_legacy_parameters()
+
+    def _sample_init_parameters(self, seed: int) -> WheatEarMonocotParameters:
+        return legacy_init_to_parameters(
+            WheatEarMonocotParameters,
+            WheatEarMonocotFactory,
+            seed,
+            self.coarse,
+            init_fn=_wheat_ear_monocot_legacy_init,
+        )
+
+    def apply_parameters(
+        self, params: WheatEarMonocotParameters, *, spawn_scope: bool = True
+    ) -> None:
+        apply_bridge_parameters(self, params, spawn_scope=spawn_scope)
 
     @staticmethod
     def build_base_hue():
@@ -105,13 +177,49 @@ class WheatEarMonocotFactory(MonocotGrowthFactory):
         return obj
 
 
+class WheatMonocotParameters(LegacyBridgeParameters):
+    ear_bend_angle: Annotated[
+        float, Field(ge=0.0, le=np.pi, json_schema_extra={"editable": True})
+    ] = 0.0
+
+
+def _wheat_monocot_legacy_init(
+    inst: WheatMonocotFactory, seed: int, coarse: bool
+) -> None:
+    _grasses_monocot_legacy_init(inst, seed, coarse)
+    with FixedSeed(seed):
+        inst.ear_factory = WheatEarMonocotFactory(seed, coarse)
+        inst.scale_curve = [(0, 1.0), (1, 0.6)]
+        inst.leaf_range = 0.1, 0.7
+
+
 class WheatMonocotFactory(GrassesMonocotFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = WheatMonocotParameters
+
     def __init__(self, factory_seed, coarse=False):
-        super(WheatMonocotFactory, self).__init__(factory_seed, coarse)
-        with FixedSeed(factory_seed):
-            self.ear_factory = WheatEarMonocotFactory(factory_seed, coarse)
-            self.scale_curve = [(0, 1.0), (1, 0.6)]
-            self.leaf_range = 0.1, 0.7
+        AssetFactory.__init__(self, factory_seed, coarse)
+        self.init_legacy_parameters()
+
+    def _sample_init_parameters(self, seed: int) -> WheatMonocotParameters:
+        return legacy_init_to_parameters(
+            WheatMonocotParameters,
+            WheatMonocotFactory,
+            seed,
+            self.coarse,
+            init_fn=_wheat_monocot_legacy_init,
+        )
+
+    def _sample_spawn_parameters(
+        self, params: WheatMonocotParameters, seed: int, i: int
+    ) -> WheatMonocotParameters:
+        return params.model_copy(
+            update={"ear_bend_angle": uniform(0, params.ear_factory.bend_angle)}
+        )
+
+    def apply_parameters(
+        self, params: WheatMonocotParameters, *, spawn_scope: bool = True
+    ) -> None:
+        apply_bridge_parameters(self, params, spawn_scope=spawn_scope)
 
     @staticmethod
     def build_base_hue():
@@ -120,11 +228,16 @@ class WheatMonocotFactory(GrassesMonocotFactory):
     def create_asset(self, **params):
         obj = super().create_raw(**params)
         ear = self.ear_factory.create_asset(**params)
+        bend_angle = (
+            self.ear_bend_angle
+            if self._use_fixed_spawn_draws
+            else uniform(0, self.ear_factory.bend_angle)
+        )
         butil.modify_mesh(
             ear,
             "SIMPLE_DEFORM",
             deform_method="BEND",
-            angle=uniform(0, self.ear_factory.bend_angle),
+            angle=bend_angle,
         )
         ear.location[-1] = self.stem_offset - 0.02
         obj = join_objects([obj, ear])
@@ -133,13 +246,39 @@ class WheatMonocotFactory(GrassesMonocotFactory):
         return obj
 
 
+class MaizeMonocotParameters(LegacyBridgeParameters):
+    pass
+
+
+def _maize_monocot_legacy_init(
+    inst: MaizeMonocotFactory, seed: int, coarse: bool
+) -> None:
+    _grasses_monocot_legacy_init(inst, seed, coarse)
+    inst.stem_offset = uniform(2.0, 2.5)
+    inst.scale_curve = [(0, 1.0), (1, 0.6)]
+    inst.leaf_range = 0.1, 0.7
+
+
 class MaizeMonocotFactory(GrassesMonocotFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = MaizeMonocotParameters
+
     def __init__(self, factory_seed, coarse=False):
-        super(MaizeMonocotFactory, self).__init__(factory_seed, coarse)
-        with FixedSeed(factory_seed):
-            self.stem_offset = uniform(2.0, 2.5)
-            self.scale_curve = [(0, 1.0), (1, 0.6)]
-            self.leaf_range = 0.1, 0.7
+        AssetFactory.__init__(self, factory_seed, coarse)
+        self.init_legacy_parameters()
+
+    def _sample_init_parameters(self, seed: int) -> MaizeMonocotParameters:
+        return legacy_init_to_parameters(
+            MaizeMonocotParameters,
+            MaizeMonocotFactory,
+            seed,
+            self.coarse,
+            init_fn=_maize_monocot_legacy_init,
+        )
+
+    def apply_parameters(
+        self, params: MaizeMonocotParameters, *, spawn_scope: bool = True
+    ) -> None:
+        apply_bridge_parameters(self, params, spawn_scope=spawn_scope)
 
     def build_leaf(self, face_size):
         x_anchors = np.array([0, uniform(0.1, 0.2), uniform(0.5, 0.7), 1.0])

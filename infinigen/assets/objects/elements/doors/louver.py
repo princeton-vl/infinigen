@@ -1,6 +1,10 @@
 # Copyright (C) 2024, Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 # Authors: Lingjie Mei
+from __future__ import annotations
+
+from typing import Any, ClassVar
+
 import bpy
 import numpy as np
 from numpy.random import uniform
@@ -8,24 +12,59 @@ from numpy.random import uniform
 from infinigen.assets.objects.elements.doors.panel import PanelDoorFactory
 from infinigen.assets.utils.decorate import write_attribute, write_co
 from infinigen.assets.utils.object import new_cube, new_plane
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import (
+    AssetParameters,
+    LegacyBridgeParameters,
+    ParameterizedAssetFactory,
+    apply_bridge_parameters,
+    legacy_init_to_parameters,
+)
 from infinigen.core.util import blender as butil
-from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 
 
+def _louver_legacy_init(
+    inst: Any, seed: int, coarse: bool, constants: Any = None
+) -> None:
+    PanelDoorFactory.__init__(inst, seed, coarse, constants)
+    inst.x_subdivisions = 1
+    inst.y_subdivisions = np.clip(np.random.binomial(5, 0.4), 1, None)
+    inst.has_panel = uniform() < 0.7
+    inst.has_upper_panel = uniform() < 0.5
+    inst.louver_width = uniform(0.002, 0.004)
+    inst.louver_margin = uniform(0.02, 0.03)
+    inst.louver_size = log_uniform(0.05, 0.1)
+    inst.louver_angle = uniform(np.pi / 4.5, np.pi / 3.5)
+    inst.has_louver = True
+
+
+class LouverDoorParameters(LegacyBridgeParameters):
+    pass
+
+
 class LouverDoorFactory(PanelDoorFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = LouverDoorParameters
+
     def __init__(self, factory_seed, coarse=False, constants=None):
-        super(LouverDoorFactory, self).__init__(factory_seed, coarse, constants)
-        with FixedSeed(self.factory_seed):
-            self.x_subdivisions = 1
-            self.y_subdivisions = np.clip(np.random.binomial(5, 0.4), 1, None)
-            self.has_panel = uniform() < 0.7
-            self.has_upper_panel = uniform() < 0.5
-            self.louver_width = uniform(0.002, 0.004)
-            self.louver_margin = uniform(0.02, 0.03)
-            self.louver_size = log_uniform(0.05, 0.1)
-            self.louver_angle = uniform(np.pi / 4.5, np.pi / 3.5)
-            self.has_louver = True
+        self._constants = constants
+        AssetFactory.__init__(self, factory_seed, coarse)
+        self.init_legacy_parameters()
+
+    def _sample_init_parameters(self, seed: int) -> LouverDoorParameters:
+        return legacy_init_to_parameters(
+            LouverDoorParameters,
+            LouverDoorFactory,
+            seed,
+            self.coarse,
+            self._constants,
+            init_fn=_louver_legacy_init,
+        )
+
+    def apply_parameters(
+        self, params: LouverDoorParameters, *, spawn_scope: bool = True
+    ) -> None:
+        apply_bridge_parameters(self, params, spawn_scope=spawn_scope)
 
     def louver(self, obj, panel):
         x_min, x_max, y_min, y_max = panel["dimension"]

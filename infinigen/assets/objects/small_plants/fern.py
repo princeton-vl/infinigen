@@ -4,6 +4,9 @@
 # Authors: Beining Han
 # Acknowledgement: This file draws inspiration from https://www.youtube.com/watch?v=MGxNuS_-bpo by Bad Normals
 
+from __future__ import annotations
+
+from typing import Any, ClassVar
 
 import bpy
 import gin
@@ -16,6 +19,13 @@ from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import (
+    AssetParameters,
+    LegacyBridgeParameters,
+    ParameterizedAssetFactory,
+    apply_bridge_parameters,
+    legacy_init_to_parameters,
+)
 from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 
@@ -1360,11 +1370,51 @@ def geo_fern(nw: NodeWrangler, **kwargs):
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": geometry})
 
 
+def _fern_legacy_init(inst: Any, seed: int, coarse: bool) -> None:
+    inst.leaf_material = simple_greenery.SimpleGreenery()
+
+
+def _sample_fern_spawn_fields() -> dict[str, Any]:
+    type_bit = randint(0, 2, (1,))[0]
+    return {
+        "fern_mode": "young_and_grownup" if type_bit else "all_grownup",
+        "scale": 0.02,
+        "version_num": 5,
+        "pinnae_num": int(randint(12, 30, size=(1,))[0]),
+        "leaf_seed": int(randint(0, 1000, size=(1,))[0]),
+    }
+
+
+class FernParameters(LegacyBridgeParameters):
+    pass
+
+
 @gin.register
-class FernFactory(AssetFactory):
+class FernFactory(ParameterizedAssetFactory, AssetFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = FernParameters
+
     def __init__(self, factory_seed, coarse=False):
         super(FernFactory, self).__init__(factory_seed, coarse=coarse)
-        self.leaf_material = simple_greenery.SimpleGreenery()
+        self.init_legacy_parameters()
+
+    def _sample_init_parameters(self, seed: int) -> FernParameters:
+        return legacy_init_to_parameters(
+            FernParameters,
+            FernFactory,
+            seed,
+            self.coarse,
+            init_fn=_fern_legacy_init,
+        )
+
+    def _sample_spawn_parameters(
+        self, params: FernParameters, seed: int, i: int
+    ) -> FernParameters:
+        return params.model_copy(update=_sample_fern_spawn_fields())
+
+    def apply_parameters(
+        self, params: FernParameters, *, spawn_scope: bool = True
+    ) -> None:
+        apply_bridge_parameters(self, params, spawn_scope=spawn_scope)
 
     def create_asset(self, **params):
         bpy.ops.mesh.primitive_plane_add(
@@ -1376,24 +1426,31 @@ class FernFactory(AssetFactory):
         )
         obj = bpy.context.active_object
 
-        if "fern_mode" not in params:
-            type_bit = randint(0, 2, (1,))[0]
-            if type_bit:
-                params["fern_mode"] = "young_and_grownup"
-            else:
-                params["fern_mode"] = "all_grownup"
+        if self._use_fixed_spawn_draws:
+            params.setdefault("fern_mode", self.fern_mode)
+            params.setdefault("scale", self.scale)
+            params.setdefault("version_num", self.version_num)
+            params.setdefault("pinnae_num", self.pinnae_num)
+            lf_seed = self.leaf_seed
+        else:
+            if "fern_mode" not in params:
+                type_bit = randint(0, 2, (1,))[0]
+                if type_bit:
+                    params["fern_mode"] = "young_and_grownup"
+                else:
+                    params["fern_mode"] = "all_grownup"
 
-        if "scale" not in params:
-            params["scale"] = 0.02
+            if "scale" not in params:
+                params["scale"] = 0.02
 
-        if "version_num" not in params:
-            params["version_num"] = 5
+            if "version_num" not in params:
+                params["version_num"] = 5
 
-        if "pinnae_num" not in params:
-            params["pinnae_num"] = randint(12, 30, size=(1,))[0]
+            if "pinnae_num" not in params:
+                params["pinnae_num"] = randint(12, 30, size=(1,))[0]
 
-        # Make the Leaf and Delete It Later
-        lf_seed = randint(0, 1000, size=(1,))[0]
+            lf_seed = randint(0, 1000, size=(1,))[0]
+
         leaf_model = Leaf.LeafFactory(
             genome={"leaf_width": 0.4, "width_rand": 0.04}, factory_seed=lf_seed
         )

@@ -2,9 +2,14 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Lingjie Mei
+from __future__ import annotations
+
+from typing import Annotated, Any, ClassVar
+
 import bpy
 import numpy as np
 from numpy.random import uniform
+from pydantic import Field
 
 from infinigen.assets.composition import material_assignments
 from infinigen.assets.objects.elements.warehouses.pallet import PalletFactory
@@ -27,34 +32,92 @@ from infinigen.assets.utils.object import (
 from infinigen.core import surface
 from infinigen.core import tags as t
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import AssetParameters, ParameterizedAssetFactory
 from infinigen.core.surface import write_attr_data
 from infinigen.core.tagging import PREFIX
 from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
-from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import weighted_sample
 
 
-class RackFactory(AssetFactory):
+class RackParameters(AssetParameters):
+    depth: Annotated[float, Field(ge=1.0, le=1.2, json_schema_extra={"editable": True})]
+    width: Annotated[float, Field(ge=4.0, le=5.0, json_schema_extra={"editable": True})]
+    height: Annotated[float, Field(ge=1.6, le=1.8, json_schema_extra={"editable": True})]
+    steps: Annotated[int, Field(ge=3, le=5, json_schema_extra={"editable": True})]
+    thickness: Annotated[float, Field(ge=0.06, le=0.08, json_schema_extra={"editable": True})]
+    hole_radius_ratio: Annotated[
+        float, Field(ge=0.5, le=0.6, json_schema_extra={"editable": True})
+    ]
+    support_angle: Annotated[
+        float, Field(ge=0.523599, le=0.785398, json_schema_extra={"editable": True})
+    ]
+    is_support_round_draw: Annotated[
+        float, Field(ge=0.0, le=1.0, json_schema_extra={"editable": True})
+    ]
+    frame_height_ratio: Annotated[
+        float, Field(ge=3.0, le=4.0, json_schema_extra={"editable": True})
+    ]
+    frame_count: Annotated[int, Field(ge=20, le=29, json_schema_extra={"editable": True})]
+    margin: Annotated[float, Field(ge=0.3, le=0.5, json_schema_extra={"editable": True})] = (
+        0.4
+    )
+    stand_surface: Any = Field(json_schema_extra={"editable": False})
+    support_surface: Any = Field(json_schema_extra={"editable": False})
+    frame_surface: Any = Field(json_schema_extra={"editable": False})
+
+
+class RackFactory(ParameterizedAssetFactory, AssetFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = RackParameters
+
     def __init__(self, factory_seed, coarse=False):
         super(RackFactory, self).__init__(factory_seed, coarse)
-        with FixedSeed(factory_seed):
-            self.depth = uniform(1, 1.2)
-            self.width = uniform(4.0, 5.0)
-            self.height = uniform(1.6, 1.8)
-            self.steps = np.random.randint(3, 6)
-            self.thickness = uniform(0.06, 0.08)
-            self.hole_radius = self.thickness / 2 * uniform(0.5, 0.6)
-            self.support_angle = uniform(np.pi / 6, np.pi / 4)
-            self.is_support_round = uniform() < 0.5
-            self.frame_height = self.thickness * uniform(3, 4)
-            self.frame_count = np.random.randint(20, 30)
+        self.init_legacy_parameters()
 
-            self.stand_surface = self.support_surface = self.frame_surface = (
-                weighted_sample(material_assignments.metals)()
-            )
-            self.pallet_factory = PalletFactory(self.factory_seed)
-            self.margin_range = 0.3, 0.5
+    def _sample_init_parameters(self, seed: int) -> RackParameters:
+        thickness = uniform(0.06, 0.08)
+        metal_surface = weighted_sample(material_assignments.metals)()
+        return RackParameters(
+            seed=seed,
+            depth=uniform(1, 1.2),
+            width=uniform(4.0, 5.0),
+            height=uniform(1.6, 1.8),
+            steps=int(np.random.randint(3, 6)),
+            thickness=thickness,
+            hole_radius_ratio=uniform(0.5, 0.6),
+            support_angle=uniform(np.pi / 6, np.pi / 4),
+            is_support_round_draw=uniform(),
+            frame_height_ratio=uniform(3, 4),
+            frame_count=int(np.random.randint(20, 30)),
+            stand_surface=metal_surface,
+            support_surface=metal_surface,
+            frame_surface=metal_surface,
+        )
+
+    def _sample_spawn_parameters(
+        self, params: RackParameters, seed: int, i: int
+    ) -> RackParameters:
+        return params.model_copy(update={"margin": uniform(0.3, 0.5)})
+
+    def apply_parameters(self, params: RackParameters, *, spawn_scope: bool = True) -> None:
+        self.depth = params.depth
+        self.width = params.width
+        self.height = params.height
+        self.steps = params.steps
+        self.thickness = params.thickness
+        self.hole_radius = params.thickness / 2 * params.hole_radius_ratio
+        self.support_angle = params.support_angle
+        self.is_support_round = params.is_support_round_draw < 0.5
+        self.frame_height = params.thickness * params.frame_height_ratio
+        self.frame_count = params.frame_count
+        self.stand_surface = params.stand_surface
+        self.support_surface = params.support_surface
+        self.frame_surface = params.frame_surface
+        self.pallet_factory = PalletFactory(self.factory_seed)
+        self.margin_range = 0.3, 0.5
+        self._use_fixed_spawn_draws = spawn_scope
+        if spawn_scope:
+            self.margin = params.margin
 
     def create_placeholder(self, **kwargs) -> bpy.types.Object:
         bbox = new_bbox(
@@ -91,9 +154,13 @@ class RackFactory(AssetFactory):
         co[:, -1] = np.clip(co[:, -1], 0, self.height * self.steps)
         write_co(obj, co)
         pallets = [self.pallet_factory(i) for i in range(self.steps * 2)]
+        margin = (
+            self.margin
+            if self._use_fixed_spawn_draws
+            else uniform(*self.margin_range)
+        )
         for i, p in enumerate(pallets):
             p.parent = obj
-            margin = uniform(*self.margin_range)
             p.location = (
                 margin if i % 2 else self.width - margin - p.dimensions[0],
                 (self.depth - p.dimensions[1]) / 2,
@@ -102,7 +169,6 @@ class RackFactory(AssetFactory):
         self.pallet_factory.finalize_assets(pallets)
         for p in pallets:
             p.parent = obj
-        # obj = join_objects([obj] + pallets)
         obj.rotation_euler[-1] = np.pi / 2
         butil.apply_transform(obj)
         return obj
@@ -200,9 +266,6 @@ class RackFactory(AssetFactory):
         return frames
 
     def finalize_assets(self, assets):
-        # self.stand_surface.apply(assets, "stand", metal_color="bw")
-        # self.support_surface.apply(assets, "support", metal_color="bw")
-        # self.frame_surface.apply(assets, "frame", metal_color="bw")
         surface.assign_material(assets, self.stand_surface())
         surface.assign_material(assets, self.support_surface())
         surface.assign_material(assets, self.frame_surface())

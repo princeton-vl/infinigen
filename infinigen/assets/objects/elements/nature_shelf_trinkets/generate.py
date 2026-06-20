@@ -3,21 +3,33 @@
 
 # Authors: Stamatis Alexandropulos
 
+from __future__ import annotations
+
+from typing import Annotated, Any, ClassVar
 
 import bpy
 import mathutils
 import numpy as np
 import trimesh
+from pydantic import Field
 
 from infinigen.assets.objects import corals, creatures, mollusk, monocot, rocks
 from infinigen.assets.utils import object as obj
 from infinigen.assets.utils.object import join_objects
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import AssetParameters, ParameterizedAssetFactory
 from infinigen.core.util import blender as butil
-from infinigen.core.util.math import FixedSeed
 
 
-class NatureShelfTrinketsFactory(AssetFactory):
+class NatureShelfTrinketsParameters(AssetParameters):
+    size: Annotated[float, Field(ge=0.1, le=0.15, json_schema_extra={"editable": True})]
+    asset_index: Annotated[int, Field(ge=0, le=9999999, json_schema_extra={"editable": False})]
+    base_factory: Any = Field(json_schema_extra={"editable": False})
+
+
+class NatureShelfTrinketsFactory(ParameterizedAssetFactory, AssetFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = NatureShelfTrinketsParameters
+
     factories = [
         corals.CoralFactory,
         rocks.BlenderRockFactory,
@@ -37,35 +49,66 @@ class NatureShelfTrinketsFactory(AssetFactory):
 
     def __init__(self, factory_seed, coarse=False):
         super(NatureShelfTrinketsFactory, self).__init__(factory_seed, coarse)
-        with FixedSeed(self.factory_seed):
-            base_factory_fn = np.random.choice(
-                self.factories, p=self.probs / self.probs.sum()
-            )
+        self.init_legacy_parameters()
 
-            kwargs = {}
-            if base_factory_fn in [
-                creatures.HerbivoreFactory,
-                creatures.CarnivoreFactory,
-            ]:
-                kwargs.update({"hair": False})
+    def _sample_init_parameters(self, seed: int) -> NatureShelfTrinketsParameters:
+        base_factory_fn = np.random.choice(
+            self.factories, p=self.probs / self.probs.sum()
+        )
+        kwargs: dict[str, Any] = {}
+        if base_factory_fn in [
+            creatures.HerbivoreFactory,
+            creatures.CarnivoreFactory,
+        ]:
+            kwargs["hair"] = False
+        return NatureShelfTrinketsParameters(
+            seed=seed,
+            size=0.125,
+            asset_index=0,
+            base_factory=base_factory_fn(seed, **kwargs),
+        )
 
-            self.base_factory = base_factory_fn(self.factory_seed, **kwargs)
+    def _sample_spawn_parameters(
+        self, params: NatureShelfTrinketsParameters, seed: int, i: int
+    ) -> NatureShelfTrinketsParameters:
+        return params.model_copy(
+            update={
+                "size": np.random.uniform(0.1, 0.15),
+                "asset_index": np.random.randint(1e7),
+            }
+        )
+
+    def apply_parameters(
+        self, params: NatureShelfTrinketsParameters, *, spawn_scope: bool = True
+    ) -> None:
+        self.base_factory = params.base_factory
+        self._asset_index = params.asset_index
+        self._placeholder_size = params.size
+        self._use_fixed_spawn_draws = spawn_scope
 
     def create_placeholder(self, **params) -> bpy.types.Object:
-        size = np.random.uniform(0.1, 0.15)
+        size = (
+            self._placeholder_size
+            if self._use_fixed_spawn_draws
+            else np.random.uniform(0.1, 0.15)
+        )
         bpy.ops.mesh.primitive_cube_add(size=size, location=(0, 0, size / 2))
         placeholder = bpy.context.active_object
         return placeholder
 
     def create_asset(self, i, placeholder=None, **params):
+        asset_index = (
+            self._asset_index
+            if self._use_fixed_spawn_draws
+            else np.random.randint(1e7)
+        )
         asset = self.base_factory.spawn_asset(
-            np.random.randint(1e7), distance=200, adaptive_resolution=False
+            asset_index, distance=200, adaptive_resolution=False
         )
 
         if list(asset.children):
             asset = join_objects(list(asset.children))
 
-        # butil.modify_mesh(asset, 'DECIMATE')
         butil.apply_transform(asset, loc=True)
         butil.apply_modifiers(asset)
         if isinstance(self.base_factory, creatures.HerbivoreFactory) or isinstance(
@@ -83,7 +126,6 @@ class NatureShelfTrinketsFactory(AssetFactory):
         bounding_box = placeholder.dimensions
         scale = min([bounding_box[i] / dim[i] for i in range(3)])
         asset.scale = [scale for i in range(3)]
-        # asset.dimensions = placeholder.dimensions
         butil.apply_transform(asset, loc=True)
         bounds = butil.bounds(asset)
         cur_loc = asset.location

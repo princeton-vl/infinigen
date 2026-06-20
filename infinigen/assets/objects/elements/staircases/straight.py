@@ -6,11 +6,16 @@
 # - Lingjie Mei
 # - Karhan Kayan: fix constants
 
+from __future__ import annotations
+
+from typing import Annotated, ClassVar
+
 import bmesh
 import bpy
 import numpy as np
 import shapely
 from numpy.random import uniform
+from pydantic import Field
 from shapely import LineString, Polygon
 
 from infinigen.assets.composition import material_assignments
@@ -41,6 +46,13 @@ from infinigen.core.constraints.constraint_language.constants import RoomConstan
 from infinigen.core.nodes import Nodes, NodeWrangler
 from infinigen.core.placement.detail import sharp_remesh_with_attrs
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import (
+    AssetParameters,
+    LegacyBridgeParameters,
+    ParameterizedAssetFactory,
+    apply_bridge_parameters,
+    legacy_init_to_parameters,
+)
 from infinigen.core.surface import read_attr_data, write_attr_data
 from infinigen.core.tagging import PREFIX
 from infinigen.core.util import blender as butil
@@ -49,7 +61,100 @@ from infinigen.core.util.random import log_uniform, weighted_sample
 from infinigen.core.util.random import random_general as rg
 
 
-class StraightStaircaseFactory(AssetFactory):
+class StraightStaircaseParameters(LegacyBridgeParameters):
+    handrail_cap_width_ratio: Annotated[
+        float, Field(ge=0.2, le=0.5, json_schema_extra={"editable": True})
+    ] = 0.35
+    handrail_cap_segments: Annotated[
+        int, Field(ge=4, le=6, json_schema_extra={"editable": True})
+    ] = 5
+
+
+def _straight_staircase_legacy_init(
+    inst: StraightStaircaseFactory,
+    seed: int,
+    coarse: bool,
+    constants: RoomConstants | None = None,
+) -> None:
+    with FixedSeed(seed):
+        if constants is None:
+            constants = RoomConstants()
+        inst.constants = constants
+        inst.support_type = rg(inst.support_types)
+        inst.n, inst.step_height, inst.step_width, inst.step_length = 0, 0, 0, 0
+        inst.build_size_config()
+
+        inst.has_step = inst.support_type in ["solid", "hole"]
+        inst.hole_size = log_uniform(0.6, 1.0)
+        inst.step_surface = weighted_sample(material_assignments.step)()
+
+        inst.has_rail = inst.support_type in ["single-rail", "double-rail"]
+        inst.rail_offset = inst.step_width * uniform(0.15, 0.3)
+        inst.is_rail_circular = uniform() < 0.5
+        inst.rail_width = log_uniform(0.08, 0.2)
+        inst.rail_height = log_uniform(0.08, 0.12)
+        inst.rail_surface = weighted_sample(material_assignments.rail)()
+
+        inst.has_tread = not inst.has_step or uniform() < 0.75
+        inst.tread_height = (
+            uniform(0.01, 0.02) if inst.has_step else uniform(0.06, 0.08)
+        )
+        inst.tread_length = inst.step_length + uniform(0.01, 0.02)
+        inst.tread_width = (
+            inst.step_width + uniform(0.01, 0.02)
+            if uniform() < 0.8
+            else inst.step_width
+        )
+        inst.tread_surface = weighted_sample(material_assignments.tread)()
+
+        inst.has_sides = inst.support_type in ["side", "solid", "hole"]
+        inst.side_type = np.random.choice(["zig-zag", "straight"])
+        inst.side_height = inst.step_height * log_uniform(0.2, 0.8)
+        inst.side_thickness = uniform(0.03, 0.08)
+        inst.side_surface = weighted_sample(material_assignments.side)()
+
+        inst.has_column = inst.support_type == "chord"
+
+        inst.handrail_type = rg(inst.handrail_types)
+        inst.is_handrail_circular = uniform() < 0.7
+        inst.handrail_width = log_uniform(0.02, 0.06)
+        inst.handrail_height = log_uniform(0.02, 0.06)
+        inst.handrail_offset = inst.handrail_width * log_uniform(1, 2)
+        inst.handrail_extension = uniform(0.1, 0.2)
+        inst.handrail_alphas = [
+            inst.handrail_offset / inst.step_width,
+            1 - inst.handrail_offset / inst.step_width,
+        ]
+        inst.handrail_surface = weighted_sample(material_assignments.handrail)()
+
+        inst.post_height = log_uniform(0.8, 1.2)
+        inst.post_k = int(np.ceil(inst.step_width / inst.step_length))
+        inst.post_width = inst.handrail_width * log_uniform(0.6, 0.8)
+        inst.post_minor_width = inst.post_width * log_uniform(0.3, 0.5)
+        inst.is_post_circular = uniform() < 0.5
+        inst.post_surface = weighted_sample(material_assignments.post)()
+
+        inst.has_vertical_post = inst.handrail_type == "vertical-post"
+
+        inst.has_bars = inst.handrail_type == "horizontal-post"
+        inst.bar_size = log_uniform(0.1, 0.2)
+        inst.n_bars = int(
+            np.floor(inst.post_height / inst.bar_size * uniform(0.35, 0.75))
+        )
+
+        inst.has_glasses = inst.handrail_type == "glass"
+        inst.glass_height = inst.post_height - uniform(0, 0.05)
+        inst.glass_margin = inst.step_height / 2 + uniform(0, 0.05)
+        inst.glass_surface = weighted_sample(material_assignments.glasses)()
+
+        inst.has_spiral = False
+        inst.mirror = uniform() < 0.5
+        inst.rot_z = np.random.randint(4) * np.pi / 2
+        inst.end_margin = inst.step_length * 8
+
+
+class StraightStaircaseFactory(ParameterizedAssetFactory, AssetFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = StraightStaircaseParameters
     support_types = (
         "weighted_choice",
         (2, "single-rail"),
@@ -66,88 +171,34 @@ class StraightStaircaseFactory(AssetFactory):
     )
 
     def __init__(self, factory_seed, coarse=False, constants=None):
+        self._constants_arg = constants
         super(StraightStaircaseFactory, self).__init__(factory_seed, coarse)
-        with FixedSeed(self.factory_seed):
-            if constants is None:
-                constants = RoomConstants()
-            self.constants = constants
-            self.support_type = rg(self.support_types)
-            self.n, self.step_height, self.step_width, self.step_length = 0, 0, 0, 0
-            self.build_size_config()
+        self.init_legacy_parameters()
 
-            self.has_step = self.support_type in ["solid", "hole"]
-            self.hole_size = log_uniform(0.6, 1.0)
-            probs = np.array([3, 2, 2, 2])
-            self.step_surface = weighted_sample(material_assignments.step)()
+    def _sample_init_parameters(self, seed: int) -> StraightStaircaseParameters:
+        return legacy_init_to_parameters(
+            StraightStaircaseParameters,
+            StraightStaircaseFactory,
+            seed,
+            self.coarse,
+            init_fn=_straight_staircase_legacy_init,
+            constants=self._constants_arg,
+        )
 
-            self.has_rail = self.support_type in ["single-rail", "double-rail"]
-            self.rail_offset = self.step_width * uniform(0.15, 0.3)
-            self.is_rail_circular = uniform() < 0.5
-            self.rail_width = log_uniform(0.08, 0.2)
-            self.rail_height = log_uniform(0.08, 0.12)
-            probs = np.array([3, 2, 2, 1])
-            self.rail_surface = weighted_sample(material_assignments.rail)()
+    def _sample_spawn_parameters(
+        self, params: StraightStaircaseParameters, seed: int, i: int
+    ) -> StraightStaircaseParameters:
+        return params.model_copy(
+            update={
+                "handrail_cap_width_ratio": uniform(0.2, 0.5),
+                "handrail_cap_segments": int(np.random.randint(4, 7)),
+            }
+        )
 
-            self.has_tread = not self.has_step or uniform() < 0.75
-            self.tread_height = (
-                uniform(0.01, 0.02) if self.has_step else uniform(0.06, 0.08)
-            )
-            self.tread_length = self.step_length + uniform(0.01, 0.02)
-            self.tread_width = (
-                self.step_width + uniform(0.01, 0.02)
-                if uniform() < 0.8
-                else self.step_width
-            )
-            probs = np.array([3, 3, 1])
-            self.tread_surface = weighted_sample(material_assignments.tread)()
-
-            self.has_sides = self.support_type in ["side", "solid", "hole"]
-            self.side_type = np.random.choice(["zig-zag", "straight"])
-            self.side_height = self.step_height * log_uniform(0.2, 0.8)
-            self.side_thickness = uniform(0.03, 0.08)
-            probs = np.array([3, 3, 1, 2])
-            self.side_surface = weighted_sample(material_assignments.side)()
-
-            self.has_column = self.support_type == "chord"
-
-            self.handrail_type = rg(self.handrail_types)
-            self.is_handrail_circular = uniform() < 0.7
-            self.handrail_width = log_uniform(0.02, 0.06)
-            self.handrail_height = log_uniform(0.02, 0.06)
-            self.handrail_offset = self.handrail_width * log_uniform(1, 2)
-            self.handrail_extension = uniform(0.1, 0.2)
-            self.handrail_alphas = [
-                self.handrail_offset / self.step_width,
-                1 - self.handrail_offset / self.step_width,
-            ]
-            probs = np.array([3, 2, 3])
-            self.handrail_surface = weighted_sample(material_assignments.handrail)()
-
-            self.post_height = log_uniform(0.8, 1.2)
-            self.post_k = int(np.ceil(self.step_width / self.step_length))
-            self.post_width = self.handrail_width * log_uniform(0.6, 0.8)
-            self.post_minor_width = self.post_width * log_uniform(0.3, 0.5)
-            self.is_post_circular = uniform() < 0.5
-            probs = np.array([3, 3, 2])
-            self.post_surface = weighted_sample(material_assignments.post)()
-
-            self.has_vertical_post = self.handrail_type == "vertical-post"
-
-            self.has_bars = self.handrail_type == "horizontal-post"
-            self.bar_size = log_uniform(0.1, 0.2)
-            self.n_bars = int(
-                np.floor(self.post_height / self.bar_size * uniform(0.35, 0.75))
-            )
-
-            self.has_glasses = self.handrail_type == "glass"
-            self.glass_height = self.post_height - uniform(0, 0.05)
-            self.glass_margin = self.step_height / 2 + uniform(0, 0.05)
-            self.glass_surface = weighted_sample(material_assignments.glasses)()
-
-            self.has_spiral = False
-            self.mirror = uniform() < 0.5
-            self.rot_z = np.random.randint(4) * np.pi / 2
-            self.end_margin = self.step_length * 8
+    def apply_parameters(
+        self, params: StraightStaircaseParameters, *, spawn_scope: bool = True
+    ) -> None:
+        apply_bridge_parameters(self, params, spawn_scope=spawn_scope)
 
     def build_size_config(self):
         self.n = np.random.randint(13, 21)
@@ -387,11 +438,21 @@ class StraightStaircaseFactory(AssetFactory):
                 offset=0,
                 solidify_mode="NON_MANIFOLD",
             )
+            cap_width = (
+                self.handrail_cap_width_ratio
+                if self._use_fixed_spawn_draws
+                else uniform(0.2, 0.5)
+            )
+            cap_segments = (
+                self.handrail_cap_segments
+                if self._use_fixed_spawn_draws
+                else int(np.random.randint(4, 7))
+            )
             butil.modify_mesh(
                 obj,
                 "BEVEL",
-                width=self.handrail_width * uniform(0.2, 0.5),
-                segments=np.random.randint(4, 7),
+                width=self.handrail_width * cap_width,
+                segments=cap_segments,
             )
             obj.location[-1] += self.handrail_height
         write_attribute(obj, 1, "handrails", "FACE")

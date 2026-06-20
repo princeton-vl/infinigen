@@ -6,9 +6,13 @@
 # - Hongyu Wen
 # - Alexander Raistrick: add point light
 
+from __future__ import annotations
+
+from typing import Annotated, Any, ClassVar
 
 from numpy.random import randint as RI
 from numpy.random import uniform as U
+from pydantic import Field
 
 from infinigen.assets.composition import material_assignments
 from infinigen.assets.lighting.indoor_lights import PointLampFactory
@@ -21,14 +25,39 @@ from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import AssetParameters, ParameterizedAssetFactory
 from infinigen.core.util import blender as butil
-from infinigen.core.util.math import FixedSeed, clip_gaussian
+from infinigen.core.util.math import clip_gaussian
 
 
-class CeilingLightFactory(AssetFactory):
+class CeilingLightParameters(AssetParameters):
+    Radius: Annotated[float, Field(ge=0.1, le=0.25, json_schema_extra={"editable": True})]
+    Thickness: Annotated[
+        float, Field(ge=0.005, le=0.05, json_schema_extra={"editable": True})
+    ]
+    InnerRadius: Annotated[
+        float, Field(ge=0.4, le=0.9, json_schema_extra={"editable": True})
+    ]
+    Height: Annotated[float, Field(ge=0.049, le=0.105, json_schema_extra={"editable": True})]
+    InnerHeight: Annotated[
+        float, Field(ge=0.5, le=1.1, json_schema_extra={"editable": True})
+    ]
+    Curvature: Annotated[float, Field(ge=0.1, le=0.5, json_schema_extra={"editable": True})]
+    beveler_mult: Annotated[
+        float, Field(ge=1.0, le=3.0, json_schema_extra={"editable": True})
+    ]
+    BlackMaterial: Any = Field(json_schema_extra={"editable": False})
+    WhiteMaterial: Any = Field(json_schema_extra={"editable": False})
+    scratch: Any | None = Field(default=None, json_schema_extra={"editable": False})
+    edge_wear: Any | None = Field(default=None, json_schema_extra={"editable": False})
+    light_factory: Any = Field(json_schema_extra={"editable": False})
+
+
+class CeilingLightFactory(ParameterizedAssetFactory, AssetFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = CeilingLightParameters
+
     def __init__(self, factory_seed, coarse=False, dimensions=[1.0, 1.0, 1.0]):
         super(CeilingLightFactory, self).__init__(factory_seed, coarse=coarse)
-
         self.dimensions = dimensions
         self.ceiling_light_default_params = [
             {
@@ -56,53 +85,81 @@ class CeilingLightFactory(AssetFactory):
                 "Curvature": 0.4,
             },
         ]
-        with FixedSeed(factory_seed):
-            self.light_factory = PointLampFactory(factory_seed)
-            self.params = self.sample_parameters(dimensions)
-            self.material_params, self.scratch, self.edge_wear = (
-                self.get_material_params()
-            )
+        self.init_legacy_parameters()
 
-        self.params.update(self.material_params)
-        self.beveler = BevelSharp(mult=U(1, 3))
-
-    def get_material_params(self):
-        black_material = shader_black
-        white_material = shader_lamp_bulb_nonemissive
-
-        wrapped_params = {
-            "BlackMaterial": surface.shaderfunc_to_material(black_material),
-            "WhiteMaterial": surface.shaderfunc_to_material(white_material),
+    @staticmethod
+    def _sample_geometry(use_default: bool, defaults: list[dict]) -> dict[str, float]:
+        if use_default:
+            d = defaults[RI(0, len(defaults))]
+            return {
+                "Radius": d["Radius"],
+                "Thickness": d["Thickness"],
+                "InnerRadius": d["InnerRadius"] / d["Radius"],
+                "Height": d["Height"],
+                "InnerHeight": d["InnerHeight"] / d["Height"],
+                "Curvature": d["Curvature"],
+            }
+        radius = clip_gaussian(0.12, 0.04, 0.1, 0.25)
+        thickness = U(0.005, 0.05)
+        height = 0.7 * clip_gaussian(0.09, 0.03, 0.07, 0.15)
+        inner_height_ratio = U(0.5, 1.1)
+        return {
+            "Radius": radius,
+            "Thickness": thickness,
+            "InnerRadius": U(0.4, 0.9),
+            "Height": height,
+            "InnerHeight": inner_height_ratio,
+            "Curvature": U(0.1, 0.5),
         }
 
-        scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
-        scratch, edge_wear = material_assignments.wear_tear
-        scratch = None if U() > scratch_prob else scratch()
-        edge_wear = None if U() > edge_wear_prob else edge_wear()
+    def sample_parameters(self, dimensions, use_default=False):
+        return self._sample_geometry(use_default, self.ceiling_light_default_params)
 
+    def _sample_materials(self) -> tuple[dict[str, Any], Any | None, Any | None]:
+        wrapped_params = {
+            "BlackMaterial": surface.shaderfunc_to_material(shader_black),
+            "WhiteMaterial": surface.shaderfunc_to_material(shader_lamp_bulb_nonemissive),
+        }
+        scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
+        scratch_fn, edge_wear_fn = material_assignments.wear_tear
+        scratch = None if U() > scratch_prob else scratch_fn()
+        edge_wear = None if U() > edge_wear_prob else edge_wear_fn()
         return wrapped_params, scratch, edge_wear
 
-    def sample_parameters(self, dimensions, use_default=False):
-        if use_default:
-            return self.ceiling_light_default_params[
-                RI(0, len(self.ceiling_light_default_params))
-            ]
-        else:
-            Radius = clip_gaussian(0.12, 0.04, 0.1, 0.25)
-            Thickness = U(0.005, 0.05)
-            InnerRadius = Radius * U(0.4, 0.9)
-            Height = 0.7 * clip_gaussian(0.09, 0.03, 0.07, 0.15)
-            InnerHeight = Height * U(0.5, 1.1)
-            Curvature = U(0.1, 0.5)
-            params = {
-                "Radius": Radius,
-                "Thickness": Thickness,
-                "InnerRadius": InnerRadius,
-                "Height": Height,
-                "InnerHeight": InnerHeight,
-                "Curvature": Curvature,
-            }
-            return params
+    def _sample_init_parameters(self, seed: int) -> CeilingLightParameters:
+        geometry = self._sample_geometry(False, self.ceiling_light_default_params)
+        materials, scratch, edge_wear = self._sample_materials()
+        return CeilingLightParameters(
+            seed=seed,
+            **geometry,
+            beveler_mult=U(1, 3),
+            **materials,
+            scratch=scratch,
+            edge_wear=edge_wear,
+            light_factory=PointLampFactory(seed),
+        )
+
+    def apply_parameters(
+        self, params: CeilingLightParameters, *, spawn_scope: bool = True
+    ) -> None:
+        self.params = {
+            "Radius": params.Radius,
+            "Thickness": params.Thickness,
+            "InnerRadius": params.Radius * params.InnerRadius,
+            "Height": params.Height,
+            "InnerHeight": params.Height * params.InnerHeight,
+            "Curvature": params.Curvature,
+            "BlackMaterial": params.BlackMaterial,
+            "WhiteMaterial": params.WhiteMaterial,
+        }
+        self.scratch = params.scratch
+        self.edge_wear = params.edge_wear
+        self.light_factory = params.light_factory
+        self.beveler = BevelSharp(mult=params.beveler_mult)
+        self._use_fixed_spawn_draws = spawn_scope
+
+    def get_material_params(self):
+        return self._sample_materials()
 
     def create_placeholder(self, i, **params):
         obj = butil.spawn_cube()

@@ -2,6 +2,10 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Lingjie Mei
+from __future__ import annotations
+
+from typing import Any, ClassVar
+
 import bpy
 import numpy as np
 from numpy.random import uniform
@@ -12,55 +16,79 @@ from infinigen.assets.utils.draw import spin
 from infinigen.assets.utils.object import join_objects, new_cylinder, new_line
 from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import (
+    AssetParameters,
+    LegacyBridgeParameters,
+    ParameterizedAssetFactory,
+    apply_bridge_parameters,
+    legacy_init_to_parameters,
+)
 from infinigen.core.util import blender as butil
-from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import weighted_sample
 
 
-class LidFactory(AssetFactory):
+def _lid_legacy_init(inst: Any, seed: int, coarse: bool) -> None:
+    inst.x_length = uniform(0.08, 0.15)
+    inst.z_height = inst.x_length * uniform(0, 0.5)
+    inst.thickness = uniform(0.003, 0.005)
+    inst.is_glass = uniform() < 0.5
+    inst.hardware_type = None
+    inst.rim_height = uniform(1, 2) * inst.thickness
+    inst.handle_type = np.random.choice(["handle", "knob"])
+    if inst.handle_type == "knob":
+        inst.handle_height = inst.x_length * uniform(0.1, 0.15)
+    else:
+        inst.handle_height = inst.x_length * uniform(0.2, 0.25)
+    inst.handle_radius = inst.x_length * uniform(0.15, 0.25)
+    inst.handle_width = inst.x_length * uniform(0.25, 0.3)
+    inst.handle_subsurf_level = np.random.randint(0, 3)
+
+    if inst.is_glass:
+        surface_gen_class = weighted_sample(
+            material_assignments.appliance_front_maybeglass
+        )
+    else:
+        surface_gen_class = weighted_sample(material_assignments.decorative_hard)
+
+    inst.surface_material_gen = surface_gen_class()
+
+    rim_surface_gen_class = weighted_sample(material_assignments.metals)
+    inst.rim_surface_material_gen = rim_surface_gen_class()
+
+    handle_surface_gen_class = weighted_sample(material_assignments.decorative_hard)
+    inst.handle_surface_material_gen = handle_surface_gen_class()
+
+    scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
+    scratch, edge_wear = material_assignments.wear_tear
+
+    inst.scratch = None if uniform() > scratch_prob else scratch()
+    inst.edge_wear = None if uniform() > edge_wear_prob else edge_wear()
+
+
+class LidParameters(LegacyBridgeParameters):
+    pass
+
+
+class LidFactory(ParameterizedAssetFactory, AssetFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = LidParameters
+
     def __init__(self, factory_seed, coarse=False):
         super(LidFactory, self).__init__(factory_seed, coarse)
-        with FixedSeed(self.factory_seed):
-            self.x_length = uniform(0.08, 0.15)
-            self.z_height = self.x_length * uniform(0, 0.5)
-            self.thickness = uniform(0.003, 0.005)
-            self.is_glass = uniform() < 0.5
-            self.hardware_type = None
-            self.rim_height = uniform(1, 2) * self.thickness
-            self.handle_type = np.random.choice(["handle", "knob"])
-            if self.handle_type == "knob":
-                self.handle_height = self.x_length * uniform(0.1, 0.15)
-            else:
-                self.handle_height = self.x_length * uniform(0.2, 0.25)
-            self.handle_radius = self.x_length * uniform(0.15, 0.25)
-            self.handle_width = self.x_length * uniform(0.25, 0.3)
-            self.handle_subsurf_level = np.random.randint(0, 3)
+        self.init_legacy_parameters()
 
-            if self.is_glass:
-                surface_gen_class = weighted_sample(
-                    material_assignments.appliance_front_maybeglass
-                )
+    def _sample_init_parameters(self, seed: int) -> LidParameters:
+        return legacy_init_to_parameters(
+            LidParameters,
+            LidFactory,
+            seed,
+            self.coarse,
+            init_fn=_lid_legacy_init,
+        )
 
-            else:
-                surface_gen_class = weighted_sample(
-                    material_assignments.decorative_hard
-                )
-
-            self.surface_material_gen = surface_gen_class()
-
-            rim_surface_gen_class = weighted_sample(material_assignments.metals)
-            self.rim_surface_material_gen = rim_surface_gen_class()
-
-            handle_surface_gen_class = weighted_sample(
-                material_assignments.decorative_hard
-            )
-            self.handle_surface_material_gen = handle_surface_gen_class()
-
-            scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
-            scratch, edge_wear = material_assignments.wear_tear
-
-            self.scratch = None if uniform() > scratch_prob else scratch()
-            self.edge_wear = None if uniform() > edge_wear_prob else edge_wear()
+    def apply_parameters(
+        self, params: LidParameters, *, spawn_scope: bool = True
+    ) -> None:
+        apply_bridge_parameters(self, params, spawn_scope=spawn_scope)
 
     def create_asset(self, **params) -> bpy.types.Object:
         self.surface = self.surface_material_gen()

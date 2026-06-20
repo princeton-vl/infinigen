@@ -3,47 +3,104 @@
 
 # Authors: Alexander Raistrick
 
+from __future__ import annotations
+
+from typing import Annotated, Any, ClassVar
 
 import bpy
 import numpy as np
 from numpy.random import normal, uniform
+from pydantic import Field
 
 from infinigen.assets.materials.plant import grass_blade
 from infinigen.assets.utils.geometry.curve import Curve
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import AssetParameters, ParameterizedAssetFactory
 from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 
 
-class GrassTuftFactory(AssetFactory):
+class GrassTuftParameters(AssetParameters):
+    length_mean: Annotated[float, Field(ge=0.05, le=0.15, json_schema_extra={"editable": True})]
+    length_std: Annotated[float, Field(ge=0.2, le=0.5, json_schema_extra={"editable": True})]
+    curl_mean: Annotated[float, Field(ge=10.0, le=70.0, json_schema_extra={"editable": True})]
+    curl_std: Annotated[float, Field(ge=0.0, le=0.6, json_schema_extra={"editable": True})]
+    curl_power: Annotated[float, Field(ge=0.3, le=2.1, json_schema_extra={"editable": True})]
+    blade_width_pct_mean: Annotated[
+        float, Field(ge=0.01, le=0.03, json_schema_extra={"editable": True})
+    ]
+    blade_width_var: Annotated[float, Field(ge=0.0, le=0.05, json_schema_extra={"editable": True})]
+    taper_var: Annotated[float, Field(ge=0.0, le=0.1, json_schema_extra={"editable": True})]
+    base_spread: Annotated[
+        float, Field(ge=0.0, le=0.037414, json_schema_extra={"editable": True})
+    ]
+    base_angle_var: Annotated[float, Field(ge=0.0, le=15.0, json_schema_extra={"editable": True})]
+    n_blades: Annotated[int, Field(ge=30, le=59, json_schema_extra={"editable": True})] = 45
+    taper_points: Any = Field(json_schema_extra={"editable": False})
+    material_gen: Any = Field(json_schema_extra={"editable": False})
+
+
+class GrassTuftFactory(ParameterizedAssetFactory, AssetFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = GrassTuftParameters
+    n_seg = 4
+
     def __init__(self, seed):
-        super(GrassTuftFactory, self).__init__(seed)
+        super().__init__(seed)
+        self.init_legacy_parameters()
 
-        self.n_seg = 4
-        self.length_mean = uniform(0.05, 0.15)
-        self.length_std = self.length_mean * uniform(0.2, 0.5)
+    def _sample_taper_points(self, taper_var: float) -> np.ndarray:
+        taper_y = np.linspace(1, 0, self.n_seg) * normal(1, taper_var, self.n_seg)
+        taper_x = np.linspace(0, 1, self.n_seg)
+        return np.stack([taper_x, taper_y], axis=-1)
 
-        self.curl_mean = uniform(10, 70)
-        self.curl_std = self.curl_mean * np.clip(normal(0.3, 0.1), 0.01, 0.6)
-        self.curl_power = normal(1.2, 0.3)
-
-        self.blade_width_pct_mean = uniform(0.01, 0.03)
-        self.blade_width_var = uniform(0, 0.05)
-
-        self.taper_var = uniform(0, 0.1)
-        self.taper_y = np.linspace(1, 0, self.n_seg) * normal(
-            1, self.taper_var, self.n_seg
+    def _sample_init_parameters(self, seed: int) -> GrassTuftParameters:
+        length_mean = uniform(0.05, 0.15)
+        taper_var = uniform(0, 0.1)
+        return GrassTuftParameters(
+            seed=seed,
+            length_mean=length_mean,
+            length_std=uniform(0.2, 0.5),
+            curl_mean=uniform(10, 70),
+            curl_std=float(np.clip(normal(0.3, 0.1), 0.01, 0.6)),
+            curl_power=float(normal(1.2, 0.3)),
+            blade_width_pct_mean=uniform(0.01, 0.03),
+            blade_width_var=uniform(0, 0.05),
+            taper_var=taper_var,
+            base_spread=uniform(0, length_mean / 4),
+            base_angle_var=uniform(0, 15),
+            taper_points=self._sample_taper_points(taper_var),
+            material_gen=grass_blade.GrassBlade(),
         )
-        self.taper_x = np.linspace(0, 1, self.n_seg)
-        self.taper_points = np.stack([self.taper_x, self.taper_y], axis=-1)
 
-        self.base_spread = uniform(0, self.length_mean / 4)
-        self.base_angle_var = uniform(0, 15)
+    def _sample_spawn_parameters(
+        self, params: GrassTuftParameters, seed: int, i: int
+    ) -> GrassTuftParameters:
+        return params.model_copy(update={"n_blades": int(np.random.randint(30, 60))})
 
-        self.material_gen = grass_blade.GrassBlade()
+    def apply_parameters(
+        self, params: GrassTuftParameters, *, spawn_scope: bool = True
+    ) -> None:
+        self.length_mean = params.length_mean
+        self.length_std = params.length_mean * params.length_std
+        self.curl_mean = params.curl_mean
+        self.curl_std = params.curl_mean * params.curl_std
+        self.curl_power = params.curl_power
+        self.blade_width_pct_mean = params.blade_width_pct_mean
+        self.blade_width_var = params.blade_width_var
+        self.taper_points = params.taper_points
+        self.base_spread = params.base_spread
+        self.base_angle_var = params.base_angle_var
+        self.material_gen = params.material_gen
+        self._use_fixed_spawn_draws = spawn_scope
+        if spawn_scope:
+            self.n_blades = params.n_blades
 
     def create_asset(self, **params) -> bpy.types.Object:
-        n_blades = np.random.randint(30, 60)
+        n_blades = (
+            self.n_blades
+            if self._use_fixed_spawn_draws
+            else np.random.randint(30, 60)
+        )
 
         blade_lengths = normal(self.length_mean, self.length_std, (n_blades, 1))
         seg_lens = blade_lengths / self.n_seg
@@ -78,7 +135,6 @@ class GrassTuftFactory(AssetFactory):
             bpy.ops.object.convert(target="MESH")
         butil.delete(taper)
 
-        # Randomly pose and arrange the blades in a circle-ish cluster
         base_angles = uniform(0, 2 * np.pi, n_blades)
         base_rads = uniform(0, self.base_spread, n_blades)
         facing_offsets = np.rad2deg(normal(0, self.base_angle_var, n_blades))

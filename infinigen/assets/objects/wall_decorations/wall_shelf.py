@@ -2,6 +2,10 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Lingjie Mei
+from __future__ import annotations
+
+from typing import ClassVar
+
 import bpy
 import numpy as np
 import shapely
@@ -21,6 +25,13 @@ from infinigen.assets.utils.shapes import polygon2obj
 from infinigen.core import surface
 from infinigen.core import tagging as t
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import (
+    AssetParameters,
+    LegacyBridgeParameters,
+    ParameterizedAssetFactory,
+    apply_bridge_parameters,
+    legacy_init_to_parameters,
+)
 from infinigen.core.surface import write_attr_data
 from infinigen.core.tags import Subpart
 from infinigen.core.util import blender as butil
@@ -29,7 +40,39 @@ from infinigen.core.util.random import log_uniform
 from infinigen.core.util.random import random_general as rg
 
 
-class WallShelfFactory(AssetFactory):
+def _wall_shelf_legacy_init(inst: WallShelfFactory, seed: int, coarse: bool) -> None:
+    AssetFactory.__init__(inst, seed, coarse)
+    inst.support_side = rg(inst.support_sides_)
+    inst.support_margin = rg(inst.support_margins)
+    if inst.support_margin == 0:
+        n_support = np.random.choice([2, 3, 4], p=[0.7, 0.2, 0.1])
+    else:
+        n_support = np.random.choice([2, 3], p=[0.8, 0.2])
+    inst.support_locs = np.linspace(
+        -0.5 + inst.support_margin, 0.5 - inst.support_margin, n_support
+    )
+    inst.length = log_uniform(0.3, 0.8)
+    inst.width = log_uniform(0.1, 0.2)
+    match inst.support_side:
+        case "none":
+            inst.thickness = log_uniform(0.03, 0.08)
+        case _:
+            inst.thickness = log_uniform(0.01, 0.05)
+    inst.support_width = log_uniform(0.01, 0.015)
+    inst.support_thickness = inst.support_width * log_uniform(0.4, 1.0)
+    inst.support_length = inst.width * uniform(0.7, 1.1)
+    inst.plate_bevel = rg(inst.plate_bevels)
+    inst.support_join = np.random.choice(inst.support_joins)
+    inst.plate_surface = rg(inst.plate_surfaces)()
+    inst.support_surface = rg(inst.support_surfaces)()
+
+
+class WallShelfParameters(LegacyBridgeParameters):
+    pass
+
+
+class WallShelfFactory(ParameterizedAssetFactory, AssetFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = WallShelfParameters
     support_sides_ = (
         "weighted_choice",
         (0.5, "none"),
@@ -69,29 +112,21 @@ class WallShelfFactory(AssetFactory):
 
     def __init__(self, factory_seed, coarse=False):
         super(WallShelfFactory, self).__init__(factory_seed, coarse)
-        self.support_side = rg(self.support_sides_)
-        self.support_margin = rg(self.support_margins)
-        if self.support_margin == 0:
-            n_support = np.random.choice([2, 3, 4], p=[0.7, 0.2, 0.1])
-        else:
-            n_support = np.random.choice([2, 3], p=[0.8, 0.2])
-        self.support_locs = np.linspace(
-            -0.5 + self.support_margin, 0.5 - self.support_margin, n_support
+        self.init_legacy_parameters()
+
+    def _sample_init_parameters(self, seed: int) -> WallShelfParameters:
+        return legacy_init_to_parameters(
+            WallShelfParameters,
+            WallShelfFactory,
+            seed,
+            self.coarse,
+            init_fn=_wall_shelf_legacy_init,
         )
-        self.length = log_uniform(0.3, 0.8)
-        self.width = log_uniform(0.1, 0.2)
-        match self.support_side:
-            case "none":
-                self.thickness = log_uniform(0.03, 0.08)
-            case _:
-                self.thickness = log_uniform(0.01, 0.05)
-        self.support_width = log_uniform(0.01, 0.015)
-        self.support_thickness = self.support_width * log_uniform(0.4, 1.0)
-        self.support_length = self.width * uniform(0.7, 1.1)
-        self.plate_bevel = rg(self.plate_bevels)
-        self.support_join = np.random.choice(self.support_joins)
-        self.plate_surface = rg(self.plate_surfaces)()
-        self.support_surface = rg(self.support_surfaces)()
+
+    def apply_parameters(
+        self, params: WallShelfParameters, *, spawn_scope: bool = True
+    ) -> None:
+        apply_bridge_parameters(self, params, spawn_scope=spawn_scope)
 
     def create_placeholder(self, **kwargs) -> bpy.types.Object:
         box = new_bbox(

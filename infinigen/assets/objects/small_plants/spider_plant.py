@@ -13,8 +13,11 @@ from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import AssetParameters, ParameterizedAssetFactory
 from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
+from pydantic import Field
+from typing import Annotated, ClassVar
 
 
 @node_utils.to_nodegroup(
@@ -375,29 +378,126 @@ def geometry_spider_plant_nodes(nw: NodeWrangler, **kwargs):
     )
 
 
-class SpiderPlantFactory(AssetFactory):
+class SpiderPlantParameters(AssetParameters):
+    num_leaf_versions: Annotated[int, Field(ge=4, le=7, json_schema_extra={"editable": True})]
+    num_plant_bases: Annotated[int, Field(ge=5, le=11, json_schema_extra={"editable": True})]
+    init_base_radius: Annotated[
+        float, Field(ge=0.1, le=0.2, json_schema_extra={"editable": True})
+    ]
+    diff_base_radius: float = Field(json_schema_extra={"editable": False})
+    init_x_r: float = Field(json_schema_extra={"editable": False})
+    diff_x_r: float = Field(json_schema_extra={"editable": False})
+    init_x_s: float = Field(json_schema_extra={"editable": False})
+    diff_x_s: float = Field(json_schema_extra={"editable": False})
+    base_radius: tuple[float, ...] = Field(default=(), json_schema_extra={"editable": False})
+    leaf_x_R: tuple[float, ...] = Field(default=(), json_schema_extra={"editable": False})
+    leaf_x_S: tuple[float, ...] = Field(default=(), json_schema_extra={"editable": False})
+
+
+class SpiderPlantFactory(ParameterizedAssetFactory, AssetFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = SpiderPlantParameters
+
     def __init__(self, factory_seed, coarse=False):
         super(SpiderPlantFactory, self).__init__(factory_seed, coarse=coarse)
+        self.init_legacy_parameters()
+
+    @staticmethod
+    def _build_radius_lists(
+        num_bases: int,
+        init_base_radius: float,
+        diff_base_radius: float,
+        init_x_r: float,
+        diff_x_r: float,
+        init_x_s: float,
+        diff_x_s: float,
+    ) -> tuple[tuple[float, ...], tuple[float, ...], tuple[float, ...]]:
+        base_radius, leaf_x_r, leaf_x_s = [], [], []
+        for i in range(num_bases):
+            base_radius.append(init_base_radius - (i * diff_base_radius) / num_bases)
+            leaf_x_r.append(init_x_r - (i * diff_x_r) / num_bases)
+            leaf_x_s.append(init_x_s - (i * diff_x_s) / num_bases)
+        return tuple(base_radius), tuple(leaf_x_r), tuple(leaf_x_s)
+
+    def _sample_init_parameters(self, seed: int) -> SpiderPlantParameters:
+        return SpiderPlantParameters(
+            seed=seed,
+            num_leaf_versions=6,
+            num_plant_bases=8,
+            init_base_radius=0.15,
+            diff_base_radius=0.11,
+            init_x_r=1.35,
+            diff_x_r=0.9,
+            init_x_s=1.7,
+            diff_x_s=0.4,
+        )
+
+    def _sample_spawn_parameters(
+        self, params: SpiderPlantParameters, seed: int, i: int
+    ) -> SpiderPlantParameters:
+        init_base_radius = uniform(0.10, 0.20)
+        num_bases = randint(5, 12)
+        diff_base_radius = init_base_radius - 0.04
+        init_x_r, diff_x_r = uniform(1.2, 1.5), uniform(0.7, 1.1)
+        init_x_s, diff_x_s = uniform(1.4, 2.0), uniform(0.2, 0.6)
+        base_radius, leaf_x_r, leaf_x_s = self._build_radius_lists(
+            num_bases,
+            init_base_radius,
+            diff_base_radius,
+            init_x_r,
+            diff_x_r,
+            init_x_s,
+            diff_x_s,
+        )
+        return params.model_copy(
+            update={
+                "num_leaf_versions": randint(4, 8),
+                "num_plant_bases": num_bases,
+                "init_base_radius": init_base_radius,
+                "diff_base_radius": diff_base_radius,
+                "init_x_r": init_x_r,
+                "diff_x_r": diff_x_r,
+                "init_x_s": init_x_s,
+                "diff_x_s": diff_x_s,
+                "base_radius": base_radius,
+                "leaf_x_R": leaf_x_r,
+                "leaf_x_S": leaf_x_s,
+            }
+        )
+
+    def apply_parameters(
+        self, params: SpiderPlantParameters, *, spawn_scope: bool = True
+    ) -> None:
+        self.geom_params = {
+            "num_leaf_versions": params.num_leaf_versions,
+            "num_plant_bases": params.num_plant_bases,
+            "base_radius": list(params.base_radius),
+            "leaf_x_R": list(params.leaf_x_R),
+            "leaf_x_S": list(params.leaf_x_S),
+        }
+        self._use_fixed_spawn_draws = spawn_scope
 
     def get_params(self):
-        params = {}
-        params["num_leaf_versions"] = randint(4, 8)
-        num_bases = randint(5, 12)
-        params["num_plant_bases"] = num_bases
-        base_radius, leaf_x_R, leaf_x_S = [], [], []
         init_base_radius = uniform(0.10, 0.20)
+        num_bases = randint(5, 12)
         diff_base_radius = init_base_radius - 0.04
-        init_x_R, diff_x_R = uniform(1.2, 1.5), uniform(0.7, 1.1)
-        init_x_S, diff_x_S = uniform(1.4, 2.0), uniform(0.2, 0.6)
-        for i in range(params["num_plant_bases"]):
-            base_radius.append(init_base_radius - (i * diff_base_radius) / num_bases)
-            leaf_x_R.append(init_x_R - (i * diff_x_R) / num_bases)
-            leaf_x_S.append(init_x_S - (i * diff_x_S) / num_bases)
-        params["base_radius"] = base_radius
-        params["leaf_x_R"] = leaf_x_R
-        params["leaf_x_S"] = leaf_x_S
-
-        return params
+        init_x_r, diff_x_r = uniform(1.2, 1.5), uniform(0.7, 1.1)
+        init_x_s, diff_x_s = uniform(1.4, 2.0), uniform(0.2, 0.6)
+        base_radius, leaf_x_r, leaf_x_s = self._build_radius_lists(
+            num_bases,
+            init_base_radius,
+            diff_base_radius,
+            init_x_r,
+            diff_x_r,
+            init_x_s,
+            diff_x_s,
+        )
+        return {
+            "num_leaf_versions": randint(4, 8),
+            "num_plant_bases": num_bases,
+            "base_radius": list(base_radius),
+            "leaf_x_R": list(leaf_x_r),
+            "leaf_x_S": list(leaf_x_s),
+        }
 
     def create_asset(self, **params):
         bpy.ops.mesh.primitive_plane_add(
@@ -409,10 +509,10 @@ class SpiderPlantFactory(AssetFactory):
         )
         obj = bpy.context.active_object
 
-        params = self.get_params()
+        geom_params = self.geom_params if self._use_fixed_spawn_draws else self.get_params()
 
         surface.add_geomod(
-            obj, geometry_spider_plant_nodes, apply=True, input_kwargs=params
+            obj, geometry_spider_plant_nodes, apply=True, input_kwargs=geom_params
         )
         surface.add_material(obj, spider_plant.shader_spider_plant, selection=None)
 

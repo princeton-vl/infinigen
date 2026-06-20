@@ -3,20 +3,24 @@
 
 # Authors: Alexander Raistrick, Lingjie Mei
 
+from __future__ import annotations
+
+from typing import Annotated, ClassVar
+
 from numpy.random import normal as N
+from pydantic import Field
 
 from infinigen.assets import colors
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import AssetParameters, ParameterizedAssetFactory
 from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 
 
 def shader_material(nw: NodeWrangler):
-    # Code generated using version 2.6.3 of the node_transpiler
-
     object_info = nw.new_node(Nodes.ObjectInfo_Shader)
 
     colorramp = nw.new_node(
@@ -31,7 +35,7 @@ def shader_material(nw: NodeWrangler):
         Nodes.PrincipledBSDF, input_kwargs={"Base Color": colorramp}
     )
 
-    material_output = nw.new_node(
+    nw.new_node(
         Nodes.MaterialOutput, input_kwargs={"Surface": principled_bsdf}
     )
 
@@ -40,8 +44,6 @@ def shader_material(nw: NodeWrangler):
     "nodegroup_pine_needle", singleton=False, type="GeometryNodeTree"
 )
 def nodegroup_pine_needle(nw: NodeWrangler):
-    # Code generated using version 2.6.3 of the node_transpiler
-
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
@@ -101,20 +103,62 @@ def nodegroup_pine_needle(nw: NodeWrangler):
         },
     )
 
-    group_output = nw.new_node(
+    nw.new_node(
         Nodes.GroupOutput,
         input_kwargs={"Geometry": curve_to_mesh},
         attrs={"is_active_output": True},
     )
 
 
-class PineNeedleFactory(AssetFactory):
-    def sample_params(self):
+class PineNeedleParameters(AssetParameters):
+    s: Annotated[float, Field(ge=0.4, le=1.6, json_schema_extra={"editable": True})]
+    Bend: Annotated[float, Field(ge=0.4, le=1.6, json_schema_extra={"editable": True})]
+    Radius: Annotated[
+        float, Field(ge=0.4, le=1.6, json_schema_extra={"editable": True})
+    ]
+
+
+class PineNeedleFactory(ParameterizedAssetFactory, AssetFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = PineNeedleParameters
+
+    def __init__(self, factory_seed=None, coarse=False):
+        super().__init__(factory_seed, coarse)
+        self.init_legacy_parameters()
+
+    @staticmethod
+    def _sample_shape_params() -> dict[str, float]:
         s = N(1, 0.2)
         return {
+            "s": s,
+            "Bend": N(1, 0.2),
+            "Radius": N(1, 0.2),
+        }
+
+    def sample_params(self) -> dict[str, float]:
+        params = self._sample_shape_params()
+        s = params["s"]
+        return {
             "Scale": 0.04 * s,
-            "Bend": 0.03 * s * N(1, 0.2),
-            "Radius": 0.001 * s * N(1, 0.2),
+            "Bend": 0.03 * s * params["Bend"],
+            "Radius": 0.001 * s * params["Radius"],
+        }
+
+    def _sample_init_parameters(self, seed: int) -> PineNeedleParameters:
+        return PineNeedleParameters(seed=seed, **self._sample_shape_params())
+
+    def apply_parameters(
+        self, params: PineNeedleParameters, *, spawn_scope: bool = True
+    ) -> None:
+        self.s = params.s
+        self.Bend = params.Bend
+        self.Radius = params.Radius
+        self._use_fixed_spawn_draws = spawn_scope
+
+    def _ng_inputs(self) -> dict[str, float]:
+        return {
+            "Scale": 0.04 * self.s,
+            "Bend": 0.03 * self.s * self.Bend,
+            "Radius": 0.001 * self.s * self.Radius,
         }
 
     def create_asset(self, **_):
@@ -124,7 +168,7 @@ class PineNeedleFactory(AssetFactory):
             "NODES",
             apply=True,
             node_group=nodegroup_pine_needle(),
-            ng_inputs=self.sample_params(),
+            ng_inputs=self._ng_inputs(),
         )
         tag_object(obj, "pine_needle")
         return obj

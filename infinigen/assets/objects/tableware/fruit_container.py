@@ -2,9 +2,12 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Lingjie Mei
+from __future__ import annotations
+
 from collections.abc import Iterable
 from functools import cached_property
 from statistics import mean
+from typing import Any, ClassVar
 
 import bpy
 import numpy as np
@@ -17,6 +20,12 @@ from infinigen.assets.utils.decorate import read_co, write_co
 from infinigen.assets.utils.misc import make_normalized_factory, subclasses
 from infinigen.core.placement.factory import AssetFactory, make_asset_collection
 from infinigen.core.placement.instance_scatter import scatter_instances
+from infinigen.core.placement.parameters import (
+    LegacyBridgeParameters,
+    ParameterizedAssetFactory,
+    apply_bridge_parameters,
+    legacy_init_to_parameters,
+)
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 
@@ -56,15 +65,38 @@ class FruitCover:
             scattered.parent = obj
 
 
-class FruitContainerFactory(AssetFactory):
+def _fruit_container_legacy_init(inst: Any, seed: int, coarse: bool) -> None:
+    base_factory_fns = [BowlFactory, PotFactory]
+    probs = np.array([1, 1])
+    base_factory_fn = np.random.choice(base_factory_fns, p=probs / probs.sum())
+    inst.base_factory = base_factory_fn(seed, coarse)
+    inst.cover_seed = seed
+
+
+class FruitContainerParameters(LegacyBridgeParameters):
+    pass
+
+
+class FruitContainerFactory(ParameterizedAssetFactory, AssetFactory):
+    parameters_model: ClassVar[type[LegacyBridgeParameters]] = FruitContainerParameters
+
     def __init__(self, factory_seed, coarse=False):
         super(FruitContainerFactory, self).__init__(factory_seed, coarse)
-        with FixedSeed(factory_seed):
-            base_factory_fns = [BowlFactory, PotFactory]
-            probs = np.array([1, 1])
-            base_factory_fn = np.random.choice(base_factory_fns, p=probs / probs.sum())
-            self.base_factory = base_factory_fn(factory_seed, coarse)
-            self.cover_seed = factory_seed
+        self.init_legacy_parameters()
+
+    def _sample_init_parameters(self, seed: int) -> FruitContainerParameters:
+        return legacy_init_to_parameters(
+            FruitContainerParameters,
+            FruitContainerFactory,
+            seed,
+            self.coarse,
+            init_fn=_fruit_container_legacy_init,
+        )
+
+    def apply_parameters(
+        self, params: FruitContainerParameters, *, spawn_scope: bool = True
+    ) -> None:
+        apply_bridge_parameters(self, params, spawn_scope=spawn_scope)
 
     @cached_property
     def cover(self):

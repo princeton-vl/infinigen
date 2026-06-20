@@ -3,9 +3,14 @@
 
 # Authors: Beining Han
 
+from __future__ import annotations
+
+from typing import Annotated, ClassVar
+
 import bpy
 import numpy as np
 from numpy.random import normal, uniform
+from pydantic import Field
 
 from infinigen.assets.materials.wood.plywood import get_shelf_material
 from infinigen.assets.objects.shelves.utils import nodegroup_tagged_cube
@@ -13,6 +18,7 @@ from infinigen.core import surface, tagging
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import AssetParameters, ParameterizedAssetFactory
 
 
 @node_utils.to_nodegroup(
@@ -853,13 +859,48 @@ class SimpleBookcaseBaseFactory(AssetFactory):
         return obj
 
 
-class SimpleBookcaseFactory(SimpleBookcaseBaseFactory):
+class SimpleBookcaseParameters(AssetParameters):
+    dimension_depth: Annotated[
+        float, Field(ge=0.25, le=0.4, json_schema_extra={"editable": True})
+    ]
+    dimension_width: Annotated[
+        float, Field(ge=0.5, le=0.7, json_schema_extra={"editable": True})
+    ]
+    dimension_height: Annotated[
+        float, Field(ge=0.7, le=0.9, json_schema_extra={"editable": True})
+    ]
+
+
+class SimpleBookcaseFactory(ParameterizedAssetFactory, SimpleBookcaseBaseFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = SimpleBookcaseParameters
+
+    def __init__(self, factory_seed, coarse=False):
+        SimpleBookcaseBaseFactory.__init__(self, factory_seed, {}, coarse)
+        self.init_legacy_parameters()
+
+    def _sample_init_parameters(self, seed: int) -> SimpleBookcaseParameters:
+        return SimpleBookcaseParameters(
+            seed=seed,
+            dimension_depth=uniform(0.25, 0.4),
+            dimension_width=uniform(0.5, 0.7),
+            dimension_height=uniform(0.7, 0.9),
+        )
+
+    def apply_parameters(
+        self, params: SimpleBookcaseParameters, *, spawn_scope: bool = True
+    ) -> None:
+        self.params = {}
+        self._dimension_depth = params.dimension_depth
+        self._dimension_width = params.dimension_width
+        self._dimension_height = params.dimension_height
+        self._use_fixed_spawn_draws = spawn_scope
+
     def sample_params(self):
         params = dict()
         params["Dimensions"] = (
-            uniform(0.25, 0.4),
-            uniform(0.5, 0.7),
-            uniform(0.7, 0.9),
+            self._dimension_depth,
+            self._dimension_width,
+            self._dimension_height,
         )
         params["depth"] = params["Dimensions"][0] - 0.015
         params["width"] = params["Dimensions"][1]

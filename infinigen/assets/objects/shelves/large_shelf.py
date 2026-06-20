@@ -3,9 +3,14 @@
 
 # Authors: Beining Han
 
+from __future__ import annotations
+
+from typing import Annotated, ClassVar
+
 import bpy
 import numpy as np
 from numpy.random import normal, randint, uniform
+from pydantic import Field
 
 from infinigen.assets.materials.wood.plywood import (
     shader_shelves_black_wood,
@@ -19,6 +24,7 @@ from infinigen.core import surface, tagging
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import AssetParameters, ParameterizedAssetFactory
 
 
 @node_utils.to_nodegroup(
@@ -918,13 +924,48 @@ class LargeShelfBaseFactory(AssetFactory):
         return obj
 
 
-class LargeShelfFactory(LargeShelfBaseFactory):
+class LargeShelfParameters(AssetParameters):
+    dimension_depth: Annotated[
+        float, Field(ge=0.25, le=0.35, json_schema_extra={"editable": True})
+    ]
+    dimension_width: Annotated[
+        float, Field(ge=0.3, le=2.0, json_schema_extra={"editable": True})
+    ]
+    dimension_height: Annotated[
+        float, Field(ge=0.9, le=2.0, json_schema_extra={"editable": True})
+    ]
+
+
+class LargeShelfFactory(ParameterizedAssetFactory, LargeShelfBaseFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = LargeShelfParameters
+
+    def __init__(self, factory_seed, coarse=False):
+        LargeShelfBaseFactory.__init__(self, factory_seed, {}, coarse)
+        self.init_legacy_parameters()
+
+    def _sample_init_parameters(self, seed: int) -> LargeShelfParameters:
+        return LargeShelfParameters(
+            seed=seed,
+            dimension_depth=uniform(0.25, 0.35),
+            dimension_width=uniform(0.3, 2.0),
+            dimension_height=uniform(0.9, 2.0),
+        )
+
+    def apply_parameters(
+        self, params: LargeShelfParameters, *, spawn_scope: bool = True
+    ) -> None:
+        self.params = {}
+        self._dimension_depth = params.dimension_depth
+        self._dimension_width = params.dimension_width
+        self._dimension_height = params.dimension_height
+        self._use_fixed_spawn_draws = spawn_scope
+
     def sample_params(self):
         params = dict()
         params["Dimensions"] = (
-            uniform(0.25, 0.35),
-            uniform(0.3, 2.0),
-            uniform(0.9, 2.0),
+            self._dimension_depth,
+            self._dimension_width,
+            self._dimension_height,
         )
 
         params["bottom_board_height"] = 0.083

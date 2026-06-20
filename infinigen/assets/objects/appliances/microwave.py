@@ -3,14 +3,19 @@
 
 # Authors: Hongyu Wen
 
+from __future__ import annotations
+
+from typing import Annotated, Any, ClassVar
 
 from numpy.random import uniform as U
+from pydantic import Field
 
 from infinigen.assets.composition import material_assignments
 from infinigen.assets.utils.misc import generate_text
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import AssetParameters, ParameterizedAssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.bevelling import add_bevel, complete_no_bevel, get_bevel_edges
 from infinigen.core.util.blender import delete
@@ -18,59 +23,87 @@ from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import weighted_sample
 
 
-class MicrowaveFactory(AssetFactory):
-    def __init__(self, factory_seed, coarse=False, dimensions=[1.0, 1.0, 1.0]):
+class MicrowaveParameters(AssetParameters):
+    Depth: Annotated[float, Field(ge=0.5, le=0.7, json_schema_extra={"editable": True})]
+    Width: Annotated[float, Field(ge=0.6, le=1.0, json_schema_extra={"editable": True})]
+    Height: Annotated[float, Field(ge=0.35, le=0.45, json_schema_extra={"editable": True})]
+    PanelWidth: Annotated[float, Field(ge=0.2, le=0.4, json_schema_extra={"editable": True})]
+    MarginZ: Annotated[float, Field(ge=0.05, le=0.1, json_schema_extra={"editable": True})]
+    DoorThickness: Annotated[
+        float, Field(ge=0.02, le=0.04, json_schema_extra={"editable": True})
+    ]
+    DoorMargin: Annotated[float, Field(ge=0.03, le=0.1, json_schema_extra={"editable": True})]
+    DoorRotation: float = Field(default=0.0, json_schema_extra={"editable": False})
+    BrandName: str = Field(json_schema_extra={"editable": False})
+    Surface: Any = Field(json_schema_extra={"editable": False})
+    Back: Any = Field(json_schema_extra={"editable": False})
+    BlackGlass: Any = Field(json_schema_extra={"editable": False})
+    Glass: Any = Field(json_schema_extra={"editable": False})
+    scratch: Any | None = Field(default=None, json_schema_extra={"editable": False})
+    edge_wear: Any | None = Field(default=None, json_schema_extra={"editable": False})
+
+
+class MicrowaveFactory(ParameterizedAssetFactory, AssetFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = MicrowaveParameters
+
+    def __init__(self, factory_seed, coarse=False, dimensions=(1.0, 1.0, 1.0)):
         super(MicrowaveFactory, self).__init__(factory_seed, coarse=coarse)
-
         self.dimensions = dimensions
-        with FixedSeed(factory_seed):
-            self.params = self.sample_parameters(dimensions)
-            self.material_params, self.scratch, self.edge_wear = (
-                self.get_material_params()
-            )
-        self.params.update(self.material_params)
+        self.init_legacy_parameters()
 
-    def get_material_params(self):
-        params = {
-            "Surface": weighted_sample(material_assignments.metals)(),
-            "Back": weighted_sample(material_assignments.metals)(),
-            "BlackGlass": weighted_sample(
-                material_assignments.appliance_front_maybeglass
-            )(),
-            "Glass": weighted_sample(material_assignments.appliance_front_glass)(),
+    @staticmethod
+    def sample_geometry_parameters() -> dict[str, float]:
+        return {
+            "Depth": U(0.5, 0.7),
+            "Width": U(0.6, 1.0),
+            "Height": U(0.35, 0.45),
+            "PanelWidth": U(0.2, 0.4),
+            "MarginZ": U(0.05, 0.1),
+            "DoorThickness": U(0.02, 0.04),
+            "DoorMargin": U(0.03, 0.1),
+            "DoorRotation": 0.0,
+            "BrandName": generate_text(),
         }
-        wrapped_params = {k: v() for k, v in params.items()}
-
-        scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
-        scratch, edge_wear = material_assignments.wear_tear
-        scratch = None if U() > scratch_prob else scratch()
-        edge_wear = None if U() > edge_wear_prob else edge_wear()
-
-        return wrapped_params, scratch, edge_wear
 
     @staticmethod
     def sample_parameters(dimensions):
-        depth = U(0.5, 0.7)
-        width = U(0.6, 1.0)
-        height = U(0.35, 0.45)
-        panel_width = U(0.2, 0.4)
-        margin_z = U(0.05, 0.1)
-        door_thickness = U(0.02, 0.04)
-        door_margin = U(0.03, 0.1)
-        door_rotation = 0  # Set to 0 for now
-        brand_name = generate_text()
+        return MicrowaveFactory.sample_geometry_parameters()
+
+    def _sample_materials(self) -> tuple[dict[str, Any], Any | None, Any | None]:
         params = {
-            "Depth": depth,
-            "Width": width,
-            "Height": height,
-            "PanelWidth": panel_width,
-            "MarginZ": margin_z,
-            "DoorThickness": door_thickness,
-            "DoorMargin": door_margin,
-            "DoorRotation": door_rotation,
-            "BrandName": brand_name,
+            "Surface": weighted_sample(material_assignments.metals)(),
+            "Back": weighted_sample(material_assignments.metals)(),
+            "BlackGlass": weighted_sample(material_assignments.appliance_front_maybeglass)(),
+            "Glass": weighted_sample(material_assignments.appliance_front_glass)(),
         }
-        return params
+        wrapped_params = {k: v() for k, v in params.items()}
+        scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
+        scratch_fn, edge_wear_fn = material_assignments.wear_tear
+        scratch = None if U() > scratch_prob else scratch_fn()
+        edge_wear = None if U() > edge_wear_prob else edge_wear_fn()
+        return wrapped_params, scratch, edge_wear
+
+    def _sample_init_parameters(self, seed: int) -> MicrowaveParameters:
+        geometry = self.sample_geometry_parameters()
+        materials, scratch, edge_wear = self._sample_materials()
+        return MicrowaveParameters(
+            seed=seed,
+            **geometry,
+            **materials,
+            scratch=scratch,
+            edge_wear=edge_wear,
+        )
+
+    def apply_parameters(
+        self, params: MicrowaveParameters, *, spawn_scope: bool = True
+    ) -> None:
+        self.params = params.model_dump(exclude={"seed", "scratch", "edge_wear"})
+        self.scratch = params.scratch
+        self.edge_wear = params.edge_wear
+        self._use_fixed_spawn_draws = spawn_scope
+
+    def get_material_params(self):
+        return self._sample_materials()
 
     def create_asset(self, **params):
         obj = butil.spawn_cube()

@@ -3,6 +3,10 @@
 
 # Authors: Beining Han
 
+from __future__ import annotations
+
+from typing import Any, ClassVar
+
 import bpy
 import numpy as np
 from numpy.random import normal, uniform
@@ -18,6 +22,13 @@ from infinigen.core import surface, tagging
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import (
+    AssetParameters,
+    LegacyBridgeParameters,
+    ParameterizedAssetFactory,
+    apply_bridge_parameters,
+    legacy_init_to_parameters,
+)
 
 
 @node_utils.to_nodegroup(
@@ -391,8 +402,41 @@ class SimpleDeskBaseFactory(AssetFactory):
         return obj
 
 
-class SimpleDeskFactory(SimpleDeskBaseFactory):
+def _simple_desk_legacy_init(inst: Any, seed: int, coarse: bool) -> None:
+    SimpleDeskBaseFactory.__init__(inst, seed, {}, coarse)
+    inst.params = inst.sample_params()
+
+
+class SimpleDeskParameters(LegacyBridgeParameters):
+    pass
+
+
+class SimpleDeskFactory(ParameterizedAssetFactory, SimpleDeskBaseFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = SimpleDeskParameters
+
+    def __init__(self, factory_seed, params={}, coarse=False):
+        AssetFactory.__init__(self, factory_seed, coarse=coarse)
+        self.params = params
+        self.init_legacy_parameters()
+
+    def _sample_init_parameters(self, seed: int) -> SimpleDeskParameters:
+        return legacy_init_to_parameters(
+            SimpleDeskParameters,
+            SimpleDeskFactory,
+            seed,
+            self.coarse,
+            init_fn=_simple_desk_legacy_init,
+        )
+
+    def apply_parameters(
+        self, params: SimpleDeskParameters, *, spawn_scope: bool = True
+    ) -> None:
+        apply_bridge_parameters(self, params, spawn_scope=spawn_scope)
+
     def sample_params(self):
+        stored = getattr(self, "params", None)
+        if isinstance(stored, dict) and stored:
+            return dict(stored)
         params = dict()
         params["Dimensions"] = (uniform(0.5, 0.75), uniform(0.8, 2), uniform(0.6, 0.8))
         params["depth"] = params["Dimensions"][0]

@@ -3,7 +3,12 @@
 
 # Authors: Stamatis Alexandropoulos
 
+from __future__ import annotations
+
+from typing import Annotated, Any, ClassVar
+
 from numpy.random import randint, uniform
+from pydantic import Field
 
 from infinigen.assets import colors
 from infinigen.assets.lighting.indoor_lights import PointLampFactory
@@ -14,8 +19,8 @@ from infinigen.core import surface, tagging
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import AssetParameters, ParameterizedAssetFactory
 from infinigen.core.util import blender as butil
-from infinigen.core.util.math import FixedSeed
 
 
 def shader_lamp_material(nw: NodeWrangler):
@@ -405,22 +410,56 @@ def geometry_nodes(nw: NodeWrangler):
     )
 
 
-class CeilingClassicLampFactory(AssetFactory):
+class CeilingClassicLampParameters(AssetParameters):
+    cable_length: Annotated[
+        float, Field(ge=0.6, le=0.71, json_schema_extra={"editable": True})
+    ]
+    cable_radius: Annotated[
+        float, Field(ge=0.015, le=0.02, json_schema_extra={"editable": True})
+    ]
+    height: Annotated[float, Field(ge=0.4, le=0.71, json_schema_extra={"editable": True})]
+    top_radius: Annotated[
+        float, Field(ge=0.05, le=0.2, json_schema_extra={"editable": True})
+    ]
+    bottom_radius: Annotated[
+        float, Field(ge=0.22, le=0.35, json_schema_extra={"editable": True})
+    ]
+    Thickness: Annotated[
+        float, Field(ge=0.002, le=0.006, json_schema_extra={"editable": True})
+    ]
+    Amount: Annotated[int, Field(ge=1, le=7, json_schema_extra={"editable": True})]
+    light_factory: Any = Field(json_schema_extra={"editable": False})
+
+
+class CeilingClassicLampFactory(ParameterizedAssetFactory, AssetFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = CeilingClassicLampParameters
+
     def __init__(self, factory_seed):
         super(CeilingClassicLampFactory, self).__init__(factory_seed)
-        with FixedSeed(factory_seed):
-            self.params = {
-                "cable_length": uniform(0.6, 0.710),
-                "cable_radius": uniform(0.015, 0.02),
-                "height": uniform(0.4, 0.710),
-                "top_radius": uniform(0.05, 0.2),
-                "bottom_radius": uniform(0.22, 0.35),
-                "Thickness": uniform(0.002, 0.006),
-                "Amount": randint(1, 8),
-            }
-            self.light_factory = PointLampFactory(factory_seed)
+        self.init_legacy_parameters()
 
-        # self.beveler = BevelSharp(mult=uniform(1, 3))
+    def _sample_init_parameters(self, seed: int) -> CeilingClassicLampParameters:
+        return CeilingClassicLampParameters(
+            seed=seed,
+            cable_length=uniform(0.6, 0.710),
+            cable_radius=uniform(0.015, 0.02),
+            height=uniform(0.4, 0.710),
+            top_radius=uniform(0.05, 0.2),
+            bottom_radius=uniform(0.22, 0.35),
+            Thickness=uniform(0.002, 0.006),
+            Amount=randint(1, 8),
+            light_factory=PointLampFactory(seed),
+        )
+
+    def apply_parameters(
+        self, params: CeilingClassicLampParameters, *, spawn_scope: bool = True
+    ) -> None:
+        self.params = params.model_dump(
+            exclude={"seed", "light_factory"},
+            by_alias=True,
+        )
+        self.light_factory = params.light_factory
+        self._use_fixed_spawn_draws = spawn_scope
 
     def create_placeholder(self, **_):
         obj = butil.spawn_cube()

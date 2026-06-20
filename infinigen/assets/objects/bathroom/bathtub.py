@@ -1,10 +1,14 @@
 # Copyright (C) 2024, Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
-import bmesh
-
 # Authors: Lingjie Mei
+
+from __future__ import annotations
+
 import bpy
+import bmesh
+from typing import Any, ClassVar
+
 import numpy as np
 from numpy.random import uniform
 
@@ -28,70 +32,81 @@ from infinigen.assets.utils.object import (
 )
 from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import (
+    AssetParameters,
+    LegacyBridgeParameters,
+    ParameterizedAssetFactory,
+    apply_bridge_parameters,
+    legacy_init_to_parameters,
+)
 from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import weighted_sample
 
 
-class BathtubFactory(AssetFactory):
+def _bathtub_legacy_init(inst: Any, seed: int, coarse: bool) -> None:
+    inst.width = uniform(1.5, 2)
+    inst.size = uniform(0.8, 1)
+    inst.depth = uniform(0.55, 0.7)
+    prob = np.array([2, 2])
+    inst.bathtub_type = np.random.choice(
+        ["alcove", "freestanding"], p=prob / prob.sum()
+    )
+    inst.contour_fn = (
+        inst.make_corner_contour if inst.has_corner else inst.make_box_contour
+    )
+    inst.has_curve = uniform() < 0.5
+    inst.has_legs = uniform() < 0.5
+    inst.thickness = uniform(0.04, 0.08) if inst.has_base else uniform(0.02, 0.04)
+    inst.disp_x = uniform(0, 0.2, 2)
+    inst.disp_y = uniform(0, 0.1)
+    inst.leg_height = uniform(0.2, 0.3) * inst.depth
+    inst.leg_side = uniform(0.05, 0.1)
+    inst.leg_radius = uniform(0.02, 0.03)
+    inst.leg_y_scale = uniform()
+    inst.leg_subsurf_level = np.random.randint(3)
+    inst.taper_factor = uniform(-0.1, 0.1)
+    inst.stretch_factor = uniform(-0.2, 0.2)
+    inst.alcove_levels = np.random.randint(1, 3) if inst.has_base else 1
+    inst.levels = 5
+    inst.side_levels = 2
+    inst.is_hole_centered = False
+    inst.hole_radius = uniform(0.015, 0.02)
+    inst.surface_material_gen = weighted_sample(material_assignments.ceramics)
+    inst.leg_surface_material_gen = weighted_sample(material_assignments.metal_neutral)
+    inst.hole_surface_material_gen = weighted_sample(material_assignments.metal_neutral)
+    scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
+    scratch, edge_wear = material_assignments.wear_tear
+    inst.scratch = None if uniform() > scratch_prob else scratch()
+    inst.edge_wear = None if uniform() > edge_wear_prob else edge_wear()
+    inst.beveler = BevelSharp(mult=5, segments=5)
+
+
+class BathtubParameters(LegacyBridgeParameters):
+    pass
+
+
+class BathtubFactory(ParameterizedAssetFactory, AssetFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = BathtubParameters
+
     def __init__(self, factory_seed, coarse=False):
         super(BathtubFactory, self).__init__(factory_seed, coarse)
-        with FixedSeed(factory_seed):
-            self.width = uniform(1.5, 2)
-            self.size = uniform(0.8, 1)
-            self.depth = uniform(0.55, 0.7)
-            prob = np.array([2, 2])
-            self.bathtub_type = np.random.choice(
-                ["alcove", "freestanding"], p=prob / prob.sum()
-            )  # , 'corner'
-            self.contour_fn = (
-                self.make_corner_contour if self.has_corner else self.make_box_contour
-            )
-            self.has_curve = uniform() < 0.5
-            self.has_legs = uniform() < 0.5
+        self.init_legacy_parameters()
 
-            self.thickness = (
-                uniform(0.04, 0.08) if self.has_base else uniform(0.02, 0.04)
-            )
-            self.disp_x = uniform(0, 0.2, 2)
-            self.disp_y = uniform(0, 0.1)
+    def _sample_init_parameters(self, seed: int) -> BathtubParameters:
+        return legacy_init_to_parameters(
+            BathtubParameters,
+            BathtubFactory,
+            seed,
+            self.coarse,
+            init_fn=_bathtub_legacy_init,
+        )
 
-            self.leg_height = uniform(0.2, 0.3) * self.depth
-            self.leg_side = uniform(0.05, 0.1)
-            self.leg_radius = uniform(0.02, 0.03)
-            self.leg_y_scale = uniform()
-            self.leg_subsurf_level = np.random.randint(3)
-
-            self.taper_factor = uniform(-0.1, 0.1)
-            self.stretch_factor = uniform(-0.2, 0.2)
-
-            self.alcove_levels = np.random.randint(1, 3) if self.has_base else 1
-            self.levels = 5
-            self.side_levels = 2
-
-            self.is_hole_centered = False
-            self.hole_radius = uniform(0.015, 0.02)
-
-            # /////////////////// assign materials ///////////////////
-
-            surface_gen_class = weighted_sample(material_assignments.ceramics)
-            self.surface_material_gen = surface_gen_class
-
-            leg_surface_gen_class = weighted_sample(material_assignments.metal_neutral)
-            self.leg_surface_material_gen = leg_surface_gen_class
-
-            hole_surface_gen_class = weighted_sample(material_assignments.metal_neutral)
-            self.hole_surface_material_gen = hole_surface_gen_class
-
-            scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
-            scratch, edge_wear = material_assignments.wear_tear
-            self.scratch = None if uniform() > scratch_prob else scratch()
-            self.edge_wear = None if uniform() > edge_wear_prob else edge_wear()
-
-            # ////////////////////////////////////////////////////////
-
-            self.beveler = BevelSharp(mult=5, segments=5)
+    def apply_parameters(
+        self, params: BathtubParameters, *, spawn_scope: bool = True
+    ) -> None:
+        apply_bridge_parameters(self, params, spawn_scope=spawn_scope)
 
     @property
     def has_base(self):

@@ -6,10 +6,15 @@
 # - Lingjie Mei: primary author
 # - Karhan Kayan: fix rotation
 
+from __future__ import annotations
+
+from typing import Annotated, Any, ClassVar, Literal
+
 import bmesh
 import bpy
 import numpy as np
 from numpy.random import uniform
+from pydantic import Field
 
 from infinigen.assets.composition import material_assignments
 from infinigen.assets.materials.text import Text
@@ -37,42 +42,152 @@ from infinigen.assets.utils.uv import (
 )
 from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import AssetParameters, ParameterizedAssetFactory
 from infinigen.core.surface import write_attr_data
 from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
-from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform, weighted_sample
 
 
-class TVFactory(AssetFactory):
+class TVParameters(AssetParameters):
+    aspect_ratio: float = Field(json_schema_extra={"editable": False})
+    width: Annotated[float, Field(ge=0.6, le=2.1, json_schema_extra={"editable": True})]
+    screen_bevel_width: Annotated[
+        float, Field(ge=0.0, le=0.01, json_schema_extra={"editable": True})
+    ]
+    side_margin: Annotated[float, Field(ge=0.005, le=0.01, json_schema_extra={"editable": True})]
+    bottom_margin: Annotated[
+        float, Field(ge=0.005, le=0.03, json_schema_extra={"editable": True})
+    ]
+    depth: Annotated[float, Field(ge=0.02, le=0.04, json_schema_extra={"editable": True})]
+    has_depth_extrude_draw: Annotated[
+        float, Field(ge=0.0, le=1.0, json_schema_extra={"editable": True})
+    ]
+    depth_extrude_multiplier: Annotated[
+        float, Field(ge=2.0, le=5.0, json_schema_extra={"editable": True})
+    ]
+    leg_type: Literal["two-legged", "single-legged"] = Field(
+        json_schema_extra={"editable": False}
+    )
+    leg_length: Annotated[float, Field(ge=0.1, le=0.2, json_schema_extra={"editable": True})]
+    leg_length_y: Annotated[float, Field(ge=0.1, le=0.15, json_schema_extra={"editable": True})]
+    leg_radius: Annotated[float, Field(ge=0.008, le=0.015, json_schema_extra={"editable": True})]
+    leg_width: Annotated[float, Field(ge=0.5, le=0.8, json_schema_extra={"editable": True})]
+    leg_bevel_width: Annotated[
+        float, Field(ge=0.01, le=0.02, json_schema_extra={"editable": True})
+    ]
+    tv_164: Annotated[float, Field(ge=0.1, le=0.3, json_schema_extra={"editable": True})] = (
+        0.2
+    )
+    tv_165: Annotated[float, Field(ge=0.5, le=0.7, json_schema_extra={"editable": True})] = (
+        0.6
+    )
+    tv_176: Annotated[float, Field(ge=0.0, le=0.4, json_schema_extra={"editable": True})] = (
+        0.2
+    )
+    tv_241: Annotated[float, Field(ge=0.0, le=0.6, json_schema_extra={"editable": True})] = (
+        0.3
+    )
+    tv_243: Annotated[float, Field(ge=0.3, le=0.5, json_schema_extra={"editable": True})] = (
+        0.4
+    )
+    tv_250: Annotated[float, Field(ge=0.0, le=0.6, json_schema_extra={"editable": True})] = (
+        0.3
+    )
+    width_1: Annotated[float, Field(ge=0.3, le=0.6, json_schema_extra={"editable": True})] = (
+        0.45
+    )
+    surface: Any = Field(json_schema_extra={"editable": False})
+    support_surface: Any = Field(json_schema_extra={"editable": False})
+    screen_surface: Any = Field(json_schema_extra={"editable": False})
+    screen_emission: float = Field(json_schema_extra={"editable": False})
+
+
+class TVFactory(ParameterizedAssetFactory, AssetFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = TVParameters
+
     def __init__(self, factory_seed, coarse=False):
         super(TVFactory, self).__init__(factory_seed, coarse)
-        with FixedSeed(self.factory_seed):
-            self.aspect_ratio = np.random.choice([9 / 16, 3 / 4])
-            self.width = uniform(0.6, 2.1)
-            self.screen_bevel_width = uniform(0, 0.01)
-            self.side_margin = log_uniform(0.005, 0.01)
-            self.bottom_margin = uniform(0.005, 0.03)
-            self.depth = uniform(0.02, 0.04)
-            self.has_depth_extrude = uniform() < 0.4
-            if self.has_depth_extrude:
-                self.depth_extrude = self.depth * uniform(2, 5)
-            else:
-                self.depth_extrude = self.depth * 1.5
-            self.leg_type = np.random.choice(["two-legged", "single-legged"])  # 'none',
-            self.leg_length = uniform(0.1, 0.2)
-            self.leg_length_y = uniform(0.1, 0.15)
-            self.leg_radius = uniform(0.008, 0.015)
-            self.leg_width = uniform(0.5, 0.8)
-            self.leg_bevel_width = uniform(0.01, 0.02)
+        self.init_legacy_parameters()
 
-            self.surface = weighted_sample(material_assignments.metal_neutral)()
-            self.support_surface = weighted_sample(material_assignments.metal_neutral)()
-            self.screen_surface = weighted_sample(material_assignments.graphicdesign)()
-            if isinstance(self.screen_surface, Text):
-                self.screen_surface.emission = (
-                    0.01 if uniform() < 0.1 else uniform(2, 3)
-                )
+    def _sample_init_parameters(self, seed: int) -> TVParameters:
+        has_depth_extrude_draw = uniform()
+        depth = uniform(0.02, 0.04)
+        screen_surface = weighted_sample(material_assignments.graphicdesign)()
+        screen_emission = 0.01
+        if isinstance(screen_surface, Text):
+            screen_emission = 0.01 if uniform() < 0.1 else uniform(2, 3)
+        return TVParameters(
+            seed=seed,
+            aspect_ratio=float(np.random.choice([9 / 16, 3 / 4])),
+            width=uniform(0.6, 2.1),
+            screen_bevel_width=uniform(0, 0.01),
+            side_margin=log_uniform(0.005, 0.01),
+            bottom_margin=uniform(0.005, 0.03),
+            depth=depth,
+            has_depth_extrude_draw=has_depth_extrude_draw,
+            depth_extrude_multiplier=uniform(2, 5),
+            leg_type=np.random.choice(["two-legged", "single-legged"]),
+            leg_length=uniform(0.1, 0.2),
+            leg_length_y=uniform(0.1, 0.15),
+            leg_radius=uniform(0.008, 0.015),
+            leg_width=uniform(0.5, 0.8),
+            leg_bevel_width=uniform(0.01, 0.02),
+            surface=weighted_sample(material_assignments.metal_neutral)(),
+            support_surface=weighted_sample(material_assignments.metal_neutral)(),
+            screen_surface=screen_surface,
+            screen_emission=screen_emission,
+        )
+
+    def _sample_spawn_parameters(
+        self, params: TVParameters, seed: int, i: int
+    ) -> TVParameters:
+        return params.model_copy(
+            update={
+                "tv_164": uniform(0.1, 0.3),
+                "tv_165": uniform(0.5, 0.7),
+                "tv_176": uniform(0.0, 0.4),
+                "tv_241": uniform(0, 0.6),
+                "tv_243": uniform(0.3, 0.5),
+                "tv_250": uniform(0.0, 0.6),
+                "width_1": uniform(0.3, 0.6),
+            }
+        )
+
+    def apply_parameters(
+        self, params: TVParameters, *, spawn_scope: bool = True
+    ) -> None:
+        self.aspect_ratio = params.aspect_ratio
+        self.width = params.width
+        self.screen_bevel_width = params.screen_bevel_width
+        self.side_margin = params.side_margin
+        self.bottom_margin = params.bottom_margin
+        self.depth = params.depth
+        self.has_depth_extrude = params.has_depth_extrude_draw < 0.4
+        if self.has_depth_extrude:
+            self.depth_extrude = self.depth * params.depth_extrude_multiplier
+        else:
+            self.depth_extrude = self.depth * 1.5
+        self.leg_type = params.leg_type
+        self.leg_length = params.leg_length
+        self.leg_length_y = params.leg_length_y
+        self.leg_radius = params.leg_radius
+        self.leg_width = params.leg_width
+        self.leg_bevel_width = params.leg_bevel_width
+        self.surface = params.surface
+        self.support_surface = params.support_surface
+        self.screen_surface = params.screen_surface
+        if isinstance(self.screen_surface, Text):
+            self.screen_surface.emission = params.screen_emission
+        self._use_fixed_spawn_draws = spawn_scope
+        if spawn_scope:
+            self._tv_164 = params.tv_164
+            self._tv_165 = params.tv_165
+            self._tv_176 = params.tv_176
+            self._tv_241 = params.tv_241
+            self._tv_243 = params.tv_243
+            self._tv_250 = params.tv_250
+            self._width_1 = params.width_1
 
     @property
     def height(self):
@@ -161,10 +276,16 @@ class TVFactory(AssetFactory):
             bpy.ops.mesh.select_all(action="SELECT")
             bpy.ops.mesh.region_to_loop()
         height_min, height_max = (
-            self.total_height * uniform(0.1, 0.3),
-            self.total_height * uniform(0.5, 0.7),
+            self.total_height * (
+                self._tv_164 if self._use_fixed_spawn_draws else uniform(0.1, 0.3)
+            ),
+            self.total_height * (
+                self._tv_165 if self._use_fixed_spawn_draws else uniform(0.5, 0.7)
+            ),
         )
-        width = self.total_width * uniform(0.3, 0.6)
+        width = self.total_width * (
+            self._width_1 if self._use_fixed_spawn_draws else uniform(0.3, 0.6)
+        )
         extra = new_plane()
         extra.scale = width / 2, (height_max - height_min) / 2, 1
         extra.rotation_euler[0] = -np.pi / 2
@@ -173,7 +294,10 @@ class TVFactory(AssetFactory):
         with butil.ViewportMode(obj, "EDIT"):
             bpy.ops.mesh.select_mode(type="EDGE")
             bpy.ops.mesh.bridge_edge_loops(
-                number_cuts=32, profile_shape_factor=-uniform(0.0, 0.4)
+                number_cuts=32,
+                profile_shape_factor=-(
+                    self._tv_176 if self._use_fixed_spawn_draws else uniform(0.0, 0.4)
+                ),
             )
         x, y, z = read_co(obj).T
         z += (
@@ -186,11 +310,18 @@ class TVFactory(AssetFactory):
         return obj
 
     def add_two_legs(self):
+        leg_x_frac = self._tv_241 if self._use_fixed_spawn_draws else uniform(0, 0.6)
+        leg_attach_z_frac = (
+            self._tv_243 if self._use_fixed_spawn_draws else uniform(0.3, 0.5)
+        )
+        leg_z_clip_frac = (
+            self._tv_250 if self._use_fixed_spawn_draws else uniform(0.0, 0.6)
+        )
         vertices = (
             (
-                -self.total_width / 2 * self.leg_width * uniform(0, 0.6),
+                -self.total_width / 2 * self.leg_width * leg_x_frac,
                 0,
-                self.total_height * uniform(0.3, 0.5),
+                self.total_height * leg_attach_z_frac,
             ),
             (0, 0, -self.leg_length),
             (0, self.leg_length_y / 2, -self.leg_length),
@@ -209,7 +340,7 @@ class TVFactory(AssetFactory):
                     x,
                     y,
                     np.maximum(
-                        z, -self.leg_length - self.leg_radius * uniform(0.0, 0.6)
+                        z, -self.leg_length - self.leg_radius * leg_z_clip_frac
                     ),
                 ],
                 -1,
@@ -233,6 +364,9 @@ class TVFactory(AssetFactory):
         return [leg, leg_]
 
     def add_single_leg(self):
+        leg_attach_z_frac = (
+            self._tv_243 if self._use_fixed_spawn_draws else uniform(0.3, 0.5)
+        )
         leg = new_cube()
         leg.location = 0, 1, 1
         butil.apply_transform(leg, True)
@@ -240,7 +374,7 @@ class TVFactory(AssetFactory):
         leg.scale = [
             self.total_width * uniform(0.05, 0.1),
             self.leg_radius,
-            (self.leg_length + self.total_height * uniform(0.3, 0.5)) / 2,
+            (self.leg_length + self.total_height * leg_attach_z_frac) / 2,
         ]
         butil.apply_transform(leg, True)
         butil.modify_mesh(leg, "BEVEL", width=self.leg_bevel_width, segments=8)
@@ -257,8 +391,13 @@ class TVFactory(AssetFactory):
 
 
 class MonitorFactory(TVFactory):
-    def __init__(self, factory_seed, coarse=False):
-        super(MonitorFactory, self).__init__(factory_seed, coarse)
-        with FixedSeed(self.factory_seed):
-            self.width = log_uniform(0.4, 0.8)
-            self.leg_type = "single-legged"
+    parameters_model: ClassVar[type[AssetParameters]] = TVParameters
+
+    def _sample_init_parameters(self, seed: int) -> TVParameters:
+        params = super()._sample_init_parameters(seed)
+        return params.model_copy(
+            update={
+                "width": log_uniform(0.4, 0.8),
+                "leg_type": "single-legged",
+            }
+        )

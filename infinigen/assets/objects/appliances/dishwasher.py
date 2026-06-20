@@ -4,15 +4,21 @@
 # Authors: Hongyu Wen
 
 
+from __future__ import annotations
+
+from typing import Annotated, Any, ClassVar
+
 import gin
 from numpy.random import normal as N
 from numpy.random import randint as RI
 from numpy.random import uniform as U
+from pydantic import Field
 
 from infinigen.assets.composition import material_assignments
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import AssetParameters, ParameterizedAssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.bevelling import (
     add_bevel,
@@ -25,20 +31,57 @@ from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import weighted_sample
 
 
+class DishwasherParameters(AssetParameters):
+    Depth: Annotated[float, Field(ge=0.7, le=1.3, json_schema_extra={"editable": True})]
+    Width: Annotated[float, Field(ge=0.7, le=1.3, json_schema_extra={"editable": True})]
+    Height: Annotated[float, Field(ge=0.7, le=1.3, json_schema_extra={"editable": True})]
+    DoorThickness: Annotated[
+        float, Field(ge=0.035, le=0.13, json_schema_extra={"editable": True})
+    ]
+    DoorRotation: float = Field(default=0.0, json_schema_extra={"editable": False})
+    RackRadius: Annotated[float, Field(ge=0.01, le=0.02, json_schema_extra={"editable": True})]
+    RackAmount: Annotated[int, Field(ge=2, le=3, json_schema_extra={"editable": True})]
+    BrandName: str = Field(default="BrandName", json_schema_extra={"editable": False})
+    Surface: Any = Field(json_schema_extra={"editable": False})
+    Front: Any = Field(json_schema_extra={"editable": False})
+    WhiteMetal: Any = Field(json_schema_extra={"editable": False})
+    Top: Any = Field(json_schema_extra={"editable": False})
+    NameMaterial: Any = Field(json_schema_extra={"editable": False})
+    scratch: Any | None = Field(default=None, json_schema_extra={"editable": False})
+    edge_wear: Any | None = Field(default=None, json_schema_extra={"editable": False})
+
+
 @gin.configurable
-class DishwasherFactory(AssetFactory):
+class DishwasherFactory(ParameterizedAssetFactory, AssetFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = DishwasherParameters
+
     def __init__(self, factory_seed, coarse=False, dimensions=[1.0, 1.0, 1.0]):
         super(DishwasherFactory, self).__init__(factory_seed, coarse=coarse)
-
         self.dimensions = dimensions
-        with FixedSeed(factory_seed):
-            self.params = self.sample_parameters(dimensions)
-            self.material_params, self.scratch, self.edge_wear = (
-                self.get_material_params()
-            )
-        self.params.update(self.material_params)
+        self.init_legacy_parameters()
 
-    def get_material_params(self):
+    @staticmethod
+    def sample_geometry_parameters() -> dict[str, float | int | str]:
+        depth = 1 + N(0, 0.1)
+        width = 1 + N(0, 0.1)
+        height = 1 + N(0, 0.1)
+        door_thickness = U(0.05, 0.1) * depth
+        return {
+            "Depth": depth,
+            "Width": width,
+            "Height": height,
+            "DoorThickness": door_thickness,
+            "DoorRotation": 0,
+            "RackRadius": U(0.01, 0.02) * depth,
+            "RackAmount": RI(2, 3),
+            "BrandName": "BrandName",
+        }
+
+    @staticmethod
+    def sample_parameters(dimensions):
+        return DishwasherFactory.sample_geometry_parameters()
+
+    def _sample_materials(self) -> tuple[dict[str, Any], Any | None, Any | None]:
         params = {
             "Surface": weighted_sample(material_assignments.metals)(),
             "Front": weighted_sample(material_assignments.appliance_front_maybeglass)(),
@@ -47,38 +90,35 @@ class DishwasherFactory(AssetFactory):
             "NameMaterial": weighted_sample(material_assignments.metals)(),
         }
         wrapped_params = {k: v() for k, v in params.items()}
-
         scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
-        scratch, edge_wear = material_assignments.wear_tear
-        scratch = None if U() > scratch_prob else scratch()
-        edge_wear = None if U() > edge_wear_prob else edge_wear()
-
+        scratch_fn, edge_wear_fn = material_assignments.wear_tear
+        scratch = None if U() > scratch_prob else scratch_fn()
+        edge_wear = None if U() > edge_wear_prob else edge_wear_fn()
         return wrapped_params, scratch, edge_wear
 
-    @staticmethod
-    def sample_parameters(dimensions):
-        # depth, width, height = dimensions
-        depth = 1 + N(0, 0.1)
-        width = 1 + N(0, 0.1)
-        height = 1 + N(0, 0.1)
-        door_thickness = U(0.05, 0.1) * depth
-        door_rotation = 0  # Set to 0 for now
+    def get_material_params(self):
+        return self._sample_materials()
 
-        rack_radius = U(0.01, 0.02) * depth
-        rack_h_amount = RI(2, 3)
-        brand_name = "BrandName"
+    def _sample_init_parameters(self, seed: int) -> DishwasherParameters:
+        geometry = self.sample_geometry_parameters()
+        materials, scratch, edge_wear = self._sample_materials()
+        return DishwasherParameters(
+            seed=seed,
+            **geometry,
+            **materials,
+            scratch=scratch,
+            edge_wear=edge_wear,
+        )
 
-        params = {
-            "Depth": depth,
-            "Width": width,
-            "Height": height,
-            "DoorThickness": door_thickness,
-            "DoorRotation": door_rotation,
-            "RackRadius": rack_radius,
-            "RackAmount": rack_h_amount,
-            "BrandName": brand_name,
-        }
-        return params
+    def apply_parameters(
+        self, params: DishwasherParameters, *, spawn_scope: bool = True
+    ) -> None:
+        self.params = params.model_dump(
+            exclude={"seed", "scratch", "edge_wear"}, by_alias=False
+        )
+        self.scratch = params.scratch
+        self.edge_wear = params.edge_wear
+        self._use_fixed_spawn_draws = spawn_scope
 
     def create_asset(self, **params):
         obj = butil.spawn_cube()

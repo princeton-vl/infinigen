@@ -7,10 +7,18 @@
 import numpy as np
 from mathutils import Euler, kdtree
 from numpy.random import uniform
+from typing import Any, ClassVar
 
 from infinigen.assets.utils.mesh import polygon_angles
 from infinigen.assets.utils.object import join_objects
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import (
+    AssetParameters,
+    LegacyBridgeParameters,
+    ParameterizedAssetFactory,
+    apply_bridge_parameters,
+    legacy_init_to_parameters,
+)
 from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
@@ -19,17 +27,41 @@ from infinigen.core.util.math import FixedSeed
 from .growth import MushroomGrowthFactory
 
 
-class MushroomFactory(AssetFactory):
+def _mushroom_legacy_init(inst: Any, factory_seed: int, coarse: bool = False) -> None:
+    AssetFactory.__init__(inst, factory_seed, coarse)
+    with FixedSeed(factory_seed):
+        inst.makers = [inst.directional_make, inst.cluster_make]
+        inst.maker = np.random.choice(inst.makers)
+        inst.lowered = uniform(0, 1) < 0.5
+        inst.factory = MushroomGrowthFactory(factory_seed, coarse)
+        inst.tolerant_length = uniform(0, 0.2)
+
+
+class MushroomParameters(LegacyBridgeParameters):
+    pass
+
+
+class MushroomFactory(ParameterizedAssetFactory, AssetFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = MushroomParameters
     max_cluster = 10
 
     def __init__(self, factory_seed, coarse=False):
-        super().__init__(factory_seed, coarse)
-        with FixedSeed(factory_seed):
-            self.makers = [self.directional_make, self.cluster_make]
-            self.maker = np.random.choice(self.makers)
-            self.lowered = uniform(0, 1) < 0.5
-            self.factory = MushroomGrowthFactory(factory_seed, coarse)
-            self.tolerant_length = uniform(0, 0.2)
+        super(MushroomFactory, self).__init__(factory_seed, coarse)
+        self.init_legacy_parameters()
+
+    def _sample_init_parameters(self, seed: int) -> MushroomParameters:
+        return legacy_init_to_parameters(
+            MushroomParameters,
+            MushroomFactory,
+            seed,
+            self.coarse,
+            init_fn=_mushroom_legacy_init,
+        )
+
+    def apply_parameters(
+        self, params: MushroomParameters, *, spawn_scope: bool = True
+    ) -> None:
+        apply_bridge_parameters(self, params, spawn_scope=spawn_scope)
 
     def create_asset(self, i, face_size, **params):
         mushrooms, keypoints = self.build_mushrooms(i, face_size)

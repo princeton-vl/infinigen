@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 # Copyright (C) 2023, Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
@@ -15,28 +17,57 @@ from infinigen.assets.objects.table_decorations.utils import (
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from typing import Any, ClassVar
+from infinigen.core.placement.parameters import (
+    AssetParameters,
+    LegacyBridgeParameters,
+    ParameterizedAssetFactory,
+    apply_bridge_parameters,
+    legacy_init_to_parameters,
+)
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import weighted_sample
 
 
-class VaseFactory(AssetFactory):
+
+class VaseFactoryParameters(LegacyBridgeParameters):
+    pass
+
+
+def _vase_legacy_init(inst, seed, coarse, dimensions=None):
+    if dimensions is None:
+        z = uniform(0.17, 0.5)
+        x = z * uniform(0.3, 0.6)
+        dimensions = (x, x, z)
+    inst.dimensions = dimensions
+    inst.params = VaseFactory.sample_parameters(dimensions)
+    inst.material_params, inst.scratch, inst.edge_wear = inst.get_material_params()
+    inst.params.update(inst.material_params)
+
+
+class VaseFactory(ParameterizedAssetFactory, AssetFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = VaseFactoryParameters
+
     def __init__(self, factory_seed, coarse=False, dimensions=None):
+        self._dimensions = dimensions
         super(VaseFactory, self).__init__(factory_seed, coarse=coarse)
+        self.init_legacy_parameters()
 
-        if dimensions is None:
-            z = uniform(0.17, 0.5)
-            x = z * uniform(0.3, 0.6)
-            dimensions = (x, x, z)
-        self.dimensions = dimensions
+    def _sample_init_parameters(self, seed: int) -> VaseFactoryParameters:
+        return legacy_init_to_parameters(
+            VaseFactoryParameters,
+            VaseFactory,
+            seed,
+            self.coarse,
+            self._dimensions,
+            init_fn=_vase_legacy_init,
+        )
 
-        with FixedSeed(factory_seed):
-            self.params = self.sample_parameters(dimensions)
-            self.material_params, self.scratch, self.edge_wear = (
-                self.get_material_params()
-            )
-
-        self.params.update(self.material_params)
+    def apply_parameters(
+        self, params: VaseFactoryParameters, *, spawn_scope: bool = True
+    ) -> None:
+        apply_bridge_parameters(self, params, spawn_scope=spawn_scope)
 
     def get_material_params(self):
         params = {

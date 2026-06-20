@@ -2,6 +2,10 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Lingjie Mei
+from __future__ import annotations
+
+from typing import Any, ClassVar
+
 import bpy
 import numpy as np
 from numpy.random import uniform
@@ -10,17 +14,52 @@ from infinigen.assets.objects.elements.doors.base import BaseDoorFactory
 from infinigen.assets.utils.decorate import read_area, select_faces, write_attribute
 from infinigen.assets.utils.mesh import prepare_for_boolean
 from infinigen.assets.utils.object import new_cube
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import (
+    AssetParameters,
+    LegacyBridgeParameters,
+    ParameterizedAssetFactory,
+    apply_bridge_parameters,
+    legacy_init_to_parameters,
+)
 from infinigen.core.surface import read_attr_data, write_attr_data
 from infinigen.core.util import blender as butil
-from infinigen.core.util.math import FixedSeed
 
 
-class PanelDoorFactory(BaseDoorFactory):
+def _panel_door_legacy_init(
+    inst: Any, seed: int, coarse: bool, constants: Any = None
+) -> None:
+    BaseDoorFactory.__init__(inst, seed, coarse, constants)
+    inst.x_subdivisions = 1 if uniform() < 0.5 else 2
+    inst.y_subdivisions = np.clip(np.random.binomial(5, 0.45), 1, None)
+
+
+class PanelDoorParameters(LegacyBridgeParameters):
+    pass
+
+
+class PanelDoorFactory(ParameterizedAssetFactory, BaseDoorFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = PanelDoorParameters
+
     def __init__(self, factory_seed, coarse=False, constants=None):
-        super(PanelDoorFactory, self).__init__(factory_seed, coarse, constants)
-        with FixedSeed(self.factory_seed):
-            self.x_subdivisions = 1 if uniform() < 0.5 else 2
-            self.y_subdivisions = np.clip(np.random.binomial(5, 0.45), 1, None)
+        self._constants = constants
+        AssetFactory.__init__(self, factory_seed, coarse)
+        self.init_legacy_parameters()
+
+    def _sample_init_parameters(self, seed: int) -> PanelDoorParameters:
+        return legacy_init_to_parameters(
+            PanelDoorParameters,
+            PanelDoorFactory,
+            seed,
+            self.coarse,
+            self._constants,
+            init_fn=_panel_door_legacy_init,
+        )
+
+    def apply_parameters(
+        self, params: PanelDoorParameters, *, spawn_scope: bool = True
+    ) -> None:
+        apply_bridge_parameters(self, params, spawn_scope=spawn_scope)
 
     def bevel(self, obj, panel):
         x_min, x_max, y_min, y_max = panel["dimension"]
@@ -36,7 +75,6 @@ class PanelDoorFactory(BaseDoorFactory):
         )
         cutter.scale = (x_max - x_min) / 2 - 2e-3, 0.1, (y_max - y_min) / 2 - 2e-3
         butil.apply_transform(cutter, loc=True)
-        # butil.modify_mesh(cutter, 'BEVEL', width=self.bevel_width)
         write_attr_data(
             cutter, "cut", np.ones(len(cutter.data.polygons), dtype=int), "INT", "FACE"
         )
@@ -80,14 +118,42 @@ class PanelDoorFactory(BaseDoorFactory):
         return panels
 
 
+def _glass_panel_door_legacy_init(
+    inst: Any, seed: int, coarse: bool, constants: Any = None
+) -> None:
+    _panel_door_legacy_init(inst, seed, coarse, constants)
+    inst.x_subdivisions = 2
+    inst.y_subdivisions = np.clip(np.random.binomial(5, 0.5), 2, None)
+    inst.merge_glass = inst.y_subdivisions < 4
+    inst.has_glass = True
+
+
+class GlassPanelDoorParameters(LegacyBridgeParameters):
+    pass
+
+
 class GlassPanelDoorFactory(PanelDoorFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = GlassPanelDoorParameters
+
     def __init__(self, factory_seed, coarse=False, constants=None):
-        super(GlassPanelDoorFactory, self).__init__(factory_seed, coarse, constants)
-        with FixedSeed(self.factory_seed):
-            self.x_subdivisions = 2
-            self.y_subdivisions = np.clip(np.random.binomial(5, 0.5), 2, None)
-            self.merge_glass = self.y_subdivisions < 4
-            self.has_glass = True
+        self._constants = constants
+        AssetFactory.__init__(self, factory_seed, coarse)
+        self.init_legacy_parameters()
+
+    def _sample_init_parameters(self, seed: int) -> GlassPanelDoorParameters:
+        return legacy_init_to_parameters(
+            GlassPanelDoorParameters,
+            GlassPanelDoorFactory,
+            seed,
+            self.coarse,
+            self._constants,
+            init_fn=_glass_panel_door_legacy_init,
+        )
+
+    def apply_parameters(
+        self, params: GlassPanelDoorParameters, *, spawn_scope: bool = True
+    ) -> None:
+        apply_bridge_parameters(self, params, spawn_scope=spawn_scope)
 
     def make_panels(self):
         panels = super(GlassPanelDoorFactory, self).make_panels()

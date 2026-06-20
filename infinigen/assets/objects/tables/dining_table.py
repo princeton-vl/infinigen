@@ -3,6 +3,9 @@
 
 # Authors: Yiming Zuo
 
+from __future__ import annotations
+
+from typing import Any, ClassVar
 
 import bpy
 from numpy.random import choice, normal, uniform
@@ -29,6 +32,13 @@ from infinigen.core.nodes import node_utils
 # from infinigen.assets.materials.fabrics import fabric
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import (
+    AssetParameters,
+    LegacyBridgeParameters,
+    ParameterizedAssetFactory,
+    apply_bridge_parameters,
+    legacy_init_to_parameters,
+)
 from infinigen.core.surface import NoApply
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import weighted_sample
@@ -190,25 +200,47 @@ def geometry_assemble_table(nw: NodeWrangler, **kwargs):
     )
 
 
-class TableDiningFactory(AssetFactory):
+def _table_dining_legacy_init(
+    inst: Any, seed: int, coarse: bool, dimensions: Any = None
+) -> None:
+    inst.dimensions = dimensions
+    inst.params = TableDiningFactory.sample_geometry_parameters(dimensions)
+    inst.clothes_scatter = NoApply()
+    material_params, scratch, edge_wear = TableDiningFactory.get_material_params_static()
+    inst.scratch = scratch
+    inst.edge_wear = edge_wear
+    inst.params.update(material_params)
+
+
+class TableDiningParameters(LegacyBridgeParameters):
+    pass
+
+
+class TableDiningFactory(ParameterizedAssetFactory, AssetFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = TableDiningParameters
+
     def __init__(self, factory_seed, coarse=False, dimensions=None):
+        self._table_dimensions = dimensions
         super(TableDiningFactory, self).__init__(factory_seed, coarse=coarse)
+        self.init_legacy_parameters()
 
-        self.dimensions = dimensions
+    def _sample_init_parameters(self, seed: int) -> TableDiningParameters:
+        return legacy_init_to_parameters(
+            TableDiningParameters,
+            TableDiningFactory,
+            seed,
+            self.coarse,
+            self._table_dimensions,
+            init_fn=_table_dining_legacy_init,
+        )
 
-        with FixedSeed(factory_seed):
-            self.params = self.sample_parameters(dimensions)
+    def apply_parameters(
+        self, params: TableDiningParameters, *, spawn_scope: bool = True
+    ) -> None:
+        apply_bridge_parameters(self, params, spawn_scope=spawn_scope)
 
-            # self.clothes_scatter = ClothesCover(factory_fn=blanket.BlanketFactory, width=log_uniform(.8, 1.2),
-            #                                     size=uniform(.8, 1.2)) if uniform() < .3 else NoApply()
-            self.clothes_scatter = NoApply()
-            self.material_params, self.scratch, self.edge_wear = (
-                self.get_material_params()
-            )
-
-        self.params.update(self.material_params)
-
-    def get_material_params(self):
+    @staticmethod
+    def get_material_params_static():
         params = {
             "TopMaterial": weighted_sample(material_assignments.table_top)(),
             "LegMaterial": weighted_sample(material_assignments.tableware)(),
@@ -222,8 +254,11 @@ class TableDiningFactory(AssetFactory):
 
         return wrapped_params, scratch, edge_wear
 
+    def get_material_params(self):
+        return self.get_material_params_static()
+
     @staticmethod
-    def sample_parameters(dimensions):
+    def sample_geometry_parameters(dimensions):
         if dimensions is None:
             width = uniform(0.91, 1.16)
 

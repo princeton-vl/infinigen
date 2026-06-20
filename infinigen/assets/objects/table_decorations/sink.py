@@ -7,10 +7,14 @@
 # - Stamatis Alexandropoulos: taps
 # - Alexander Raistrick: placeholder, optimize detail, redo cutter
 
+from __future__ import annotations
+
+from typing import Annotated, Any, ClassVar
 
 import bpy
 import numpy as np
 from numpy.random import uniform as U
+from pydantic import Field
 
 from infinigen.assets.composition import material_assignments
 from infinigen.assets.utils import bbox_from_mesh
@@ -19,30 +23,69 @@ from infinigen.core import tagging
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import (
+    AssetParameters,
+    LegacyBridgeParameters,
+    ParameterizedAssetFactory,
+    apply_bridge_parameters,
+    legacy_init_to_parameters,
+)
 from infinigen.core.util import blender as butil
-from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import weighted_sample
 
 
-class SinkFactory(AssetFactory):
+def _sink_legacy_init(
+    inst: Any,
+    seed: int,
+    coarse: bool,
+    dimensions: list[float] | None = None,
+    upper_height: float | None = None,
+) -> None:
+    inst.dimensions = dimensions if dimensions is not None else [1.0, 1.0, 1.0]
+    inst.params = SinkFactory.sample_geometry_parameters(
+        inst.dimensions, upper_height=upper_height
+    )
+    material_params, scratch, edge_wear = SinkFactory.get_material_params_static()
+    inst.scratch = scratch
+    inst.edge_wear = edge_wear
+    inst.params.update(material_params)
+    inst.tap_factory = TapFactory(seed)
+
+
+class SinkParameters(LegacyBridgeParameters):
+    pass
+
+
+class SinkFactory(ParameterizedAssetFactory, AssetFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = SinkParameters
+
     def __init__(
         self, factory_seed, coarse=False, dimensions=[1.0, 1.0, 1.0], upper_height=None
     ):
+        self._sink_dimensions = dimensions
+        self._sink_upper_height = upper_height
         super(SinkFactory, self).__init__(factory_seed, coarse=coarse)
-
-        self.dimensions = dimensions
         self.factory_seed = factory_seed
-        with FixedSeed(factory_seed):
-            self.params = self.sample_parameters(dimensions, upper_height=upper_height)
-            self.material_params, self.scratch, self.edge_wear = (
-                self.get_material_params()
-            )
-            # TODO sink_color = colors.metal_natural_hsv()
-        self.params.update(self.material_params)
+        self.init_legacy_parameters()
 
-        self.tap_factory = TapFactory(factory_seed)
+    def _sample_init_parameters(self, seed: int) -> SinkParameters:
+        return legacy_init_to_parameters(
+            SinkParameters,
+            SinkFactory,
+            seed,
+            self.coarse,
+            self._sink_dimensions,
+            self._sink_upper_height,
+            init_fn=_sink_legacy_init,
+        )
 
-    def get_material_params(self):
+    def apply_parameters(
+        self, params: SinkParameters, *, spawn_scope: bool = True
+    ) -> None:
+        apply_bridge_parameters(self, params, spawn_scope=spawn_scope)
+
+    @staticmethod
+    def get_material_params_static():
         params = {
             "Sink": weighted_sample(material_assignments.metals)(),
             "Tap": weighted_sample(material_assignments.metals)(),
@@ -56,8 +99,11 @@ class SinkFactory(AssetFactory):
 
         return wrapped_params, scratch, edge_wear
 
+    def get_material_params(self):
+        return self.get_material_params_static()
+
     @staticmethod
-    def sample_parameters(dimensions, upper_height, use_default=False, open=False):
+    def sample_geometry_parameters(dimensions, upper_height, use_default=False, open=False):
         width = U(0.4, 1.0)
         depth = U(0.4, 0.5)
         curvature = U(1.0, 1.0)
@@ -129,43 +175,99 @@ class SinkFactory(AssetFactory):
         #     self.edge_wear.apply(assets)
 
 
-class TapFactory(AssetFactory):
+class TapParameters(AssetParameters):
+    base_width: Annotated[float, Field(ge=0.57, le=0.63, json_schema_extra={"editable": True})]
+    tap_head: Annotated[float, Field(ge=0.7, le=1.1, json_schema_extra={"editable": True})]
+    roation_z: Annotated[float, Field(ge=5.5, le=7.0, json_schema_extra={"editable": True})]
+    tap_height: Annotated[float, Field(ge=0.5, le=1.0, json_schema_extra={"editable": True})]
+    base_radius: Annotated[float, Field(ge=0.0, le=0.3, json_schema_extra={"editable": True})]
+    Switch_draw: Annotated[float, Field(ge=0.0, le=1.0, json_schema_extra={"editable": True})]
+    Y: Annotated[float, Field(ge=-0.5, le=-0.06, json_schema_extra={"editable": True})]
+    hand_type_draw: Annotated[float, Field(ge=0.0, le=1.0, json_schema_extra={"editable": True})]
+    hands_length_x: Annotated[
+        float, Field(ge=0.75, le=1.25, json_schema_extra={"editable": True})
+    ]
+    hands_length_Y: Annotated[
+        float, Field(ge=0.95, le=1.55, json_schema_extra={"editable": True})
+    ]
+    one_side_draw: Annotated[float, Field(ge=0.0, le=1.0, json_schema_extra={"editable": True})]
+    different_type_draw: Annotated[
+        float, Field(ge=0.0, le=1.0, json_schema_extra={"editable": True})
+    ]
+    length_one_side_draw: Annotated[
+        float, Field(ge=0.0, le=1.0, json_schema_extra={"editable": True})
+    ]
+    Tap: Any = Field(json_schema_extra={"editable": False})
+    scratch: Any | None = Field(default=None, json_schema_extra={"editable": False})
+    edge_wear: Any | None = Field(default=None, json_schema_extra={"editable": False})
+
+
+class TapFactory(ParameterizedAssetFactory, AssetFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = TapParameters
+
     def __init__(self, factory_seed):
         super().__init__(factory_seed)
-        with FixedSeed(factory_seed):
-            self.params, self.scratch, self.edge_wear = self.get_material_params()
+        self.init_legacy_parameters()
 
     @staticmethod
-    def tap_parameters():
-        params = {
+    def sample_geometry_parameters() -> dict[str, float]:
+        return {
             "base_width": U(0.570, 0.630),
             "tap_head": U(0.7, 1.1),
             "roation_z": U(5.5, 7.0),
             "tap_height": U(0.5, 1),
             "base_radius": U(0.0, 0.3),
-            "Switch": True if U() > 0.5 else False,
+            "Switch_draw": U(),
             "Y": U(-0.5, -0.06),
-            "hand_type": True if U() > 0.2 else False,
+            "hand_type_draw": U(),
             "hands_length_x": U(0.750, 1.25),
             "hands_length_Y": U(0.950, 1.550),
-            "one_side": True if U() > 0.5 else False,
-            "different_type": True if U() > 0.8 else False,
+            "one_side_draw": U(),
+            "different_type_draw": U(),
+            "length_one_side_draw": U(),
         }
-        return params
 
-    def get_material_params(self):
-        tap_gen_class = weighted_sample(material_assignments.metals)
-
-        tap_material_gen = tap_gen_class()
-
-        wrapped_params = {"Tap": tap_material_gen()}
-
+    def _sample_materials(self) -> tuple[dict[str, Any], Any | None, Any | None]:
+        tap_material_gen = weighted_sample(material_assignments.metals)()()
         scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
-        scratch, edge_wear = material_assignments.wear_tear
-        scratch = None if U() > scratch_prob else scratch()
-        edge_wear = None if U() > edge_wear_prob else edge_wear()
+        scratch_fn, edge_wear_fn = material_assignments.wear_tear
+        scratch = None if U() > scratch_prob else scratch_fn()
+        edge_wear = None if U() > edge_wear_prob else edge_wear_fn()
+        return {"Tap": tap_material_gen}, scratch, edge_wear
 
-        return wrapped_params, scratch, edge_wear
+    def _sample_init_parameters(self, seed: int) -> TapParameters:
+        geometry = self.sample_geometry_parameters()
+        materials, scratch, edge_wear = self._sample_materials()
+        return TapParameters(
+            seed=seed,
+            **geometry,
+            **materials,
+            scratch=scratch,
+            edge_wear=edge_wear,
+        )
+
+    def apply_parameters(
+        self, params: TapParameters, *, spawn_scope: bool = True
+    ) -> None:
+        self.params = {
+            **params.model_dump(exclude={"seed", "scratch", "edge_wear"}),
+            "Switch": params.Switch_draw > 0.5,
+            "hand_type": params.hand_type_draw > 0.2,
+            "one_side": params.one_side_draw > 0.5,
+            "different_type": params.different_type_draw > 0.8,
+            "length_one_side": params.length_one_side_draw > 0.8,
+        }
+        for draw_key in (
+            "Switch_draw",
+            "hand_type_draw",
+            "one_side_draw",
+            "different_type_draw",
+            "length_one_side_draw",
+        ):
+            self.params.pop(draw_key, None)
+        self.scratch = params.scratch
+        self.edge_wear = params.edge_wear
+        self._use_fixed_spawn_draws = spawn_scope
 
     def create_asset(self, **_):
         obj = butil.spawn_cube()

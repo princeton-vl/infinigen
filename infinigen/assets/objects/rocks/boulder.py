@@ -6,6 +6,7 @@
 
 import logging
 from functools import reduce
+from typing import Any, ClassVar
 
 import bpy
 import gin
@@ -20,6 +21,13 @@ from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement import detail
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import (
+    AssetParameters,
+    LegacyBridgeParameters,
+    ParameterizedAssetFactory,
+    apply_bridge_parameters,
+    legacy_init_to_parameters,
+)
 from infinigen.core.placement.split_in_view import split_inview
 from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
@@ -30,7 +38,27 @@ from infinigen.core.util.random import log_uniform, weighted_sample
 logger = logging.getLogger(__name__)
 
 
-class BoulderFactory(AssetFactory):
+def _boulder_legacy_init(inst: Any, seed: int, coarse: bool) -> None:
+    AssetFactory.__init__(inst, seed, coarse)
+    inst.cameras = None
+    inst.cam_meshing_max_dist = 1e7
+    inst.adapt_mesh_method = "remesh"
+    inst.octree_depth = 3
+    inst.do_voronoi = True
+    inst.weights = [0.8, 0.2]
+    inst.configs = ["boulder", "slab"]
+    with FixedSeed(seed):
+        inst.rock_surface = weighted_sample(material_assignments.rock)()
+        method = np.random.choice(inst.configs, p=inst.weights)
+        inst.has_horizontal_cut, inst.is_slab = inst.config_mappings[method]
+
+
+class BoulderParameters(LegacyBridgeParameters):
+    pass
+
+
+class BoulderFactory(ParameterizedAssetFactory, AssetFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = BoulderParameters
     config_mappings = {"boulder": [True, False], "slab": [False, True]}
 
     def __init__(
@@ -42,20 +70,26 @@ class BoulderFactory(AssetFactory):
         coarse=False,
         do_voronoi=True,
     ):
-        super(BoulderFactory, self).__init__(factory_seed, coarse)
+        self._meshing_cameras = meshing_cameras
+        self._adapt_mesh_method = adapt_mesh_method
+        self._cam_meshing_max_dist = cam_meshing_max_dist
+        self._do_voronoi = do_voronoi
+        AssetFactory.__init__(self, factory_seed, coarse)
+        self.init_legacy_parameters()
 
-        self.cameras = meshing_cameras
-        self.cam_meshing_max_dist = cam_meshing_max_dist
-        self.adapt_mesh_method = adapt_mesh_method
+    def _sample_init_parameters(self, seed: int) -> BoulderParameters:
+        return legacy_init_to_parameters(
+            BoulderParameters,
+            BoulderFactory,
+            seed,
+            self.coarse,
+            init_fn=_boulder_legacy_init,
+        )
 
-        self.octree_depth = 3
-        self.do_voronoi = do_voronoi
-        self.weights = [0.8, 0.2]
-        self.configs = ["boulder", "slab"]
-        with FixedSeed(factory_seed):
-            self.rock_surface = weighted_sample(material_assignments.rock)()
-            method = np.random.choice(self.configs, p=self.weights)
-            self.has_horizontal_cut, self.is_slab = self.config_mappings[method]
+    def apply_parameters(
+        self, params: BoulderParameters, *, spawn_scope: bool = True
+    ) -> None:
+        apply_bridge_parameters(self, params, spawn_scope=spawn_scope)
 
     @gin.configurable
     def create_placeholder(self, boulder_scale=1, **kwargs) -> bpy.types.Object:

@@ -2,6 +2,10 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Lingjie Mei
+from __future__ import annotations
+
+from typing import Any, ClassVar
+
 import bpy
 import numpy as np
 from numpy.random import uniform
@@ -9,17 +13,56 @@ from numpy.random import uniform
 import infinigen.core.util.blender as butil
 from infinigen.assets.utils.decorate import read_co, write_attribute, write_co
 from infinigen.assets.utils.object import new_cube, new_line
-from infinigen.core.util.math import FixedSeed
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import (
+    AssetParameters,
+    LegacyBridgeParameters,
+    ParameterizedAssetFactory,
+    apply_bridge_parameters,
+    legacy_init_to_parameters,
+)
 
 from .straight import StraightStaircaseFactory
 
 
+def _lshaped_legacy_init(
+    inst: Any, seed: int, coarse: bool, constants: Any = None
+) -> None:
+    from infinigen.assets.objects.elements.staircases.straight import (
+        _straight_staircase_legacy_init,
+    )
+
+    _straight_staircase_legacy_init(inst, seed, coarse, constants)
+    inst.m = int(inst.n * uniform(0.4, 0.6))
+    inst.is_rail_circular = True
+
+
+class LShapedStaircaseParameters(LegacyBridgeParameters):
+    pass
+
+
 class LShapedStaircaseFactory(StraightStaircaseFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = LShapedStaircaseParameters
+
     def __init__(self, factory_seed, coarse=False, constants=None):
-        super(LShapedStaircaseFactory, self).__init__(factory_seed, coarse, constants)
-        with FixedSeed(self.factory_seed):
-            self.m = int(self.n * uniform(0.4, 0.6))
-            self.is_rail_circular = True
+        self._constants_arg = constants
+        AssetFactory.__init__(self, factory_seed, coarse)
+        self.init_legacy_parameters()
+
+    def _sample_init_parameters(self, seed: int) -> LShapedStaircaseParameters:
+        return legacy_init_to_parameters(
+            LShapedStaircaseParameters,
+            LShapedStaircaseFactory,
+            seed,
+            self.coarse,
+            self._constants_arg,
+            init_fn=_lshaped_legacy_init,
+        )
+
+    def apply_parameters(
+        self, params: LShapedStaircaseParameters, *, spawn_scope: bool = True
+    ) -> None:
+        apply_bridge_parameters(self, params, spawn_scope=spawn_scope)
 
     def make_line(self, alpha):
         obj = new_line(self.n + 2)

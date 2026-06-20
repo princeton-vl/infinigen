@@ -9,6 +9,7 @@
 import bpy
 import numpy as np
 from numpy.random import uniform
+from typing import Any, ClassVar
 
 import infinigen.core.util.blender as butil
 from infinigen.assets.objects.creatures.util.animation.driver_repeated import (
@@ -23,6 +24,13 @@ from infinigen.core import surface
 from infinigen.core.nodes.node_utils import build_color_ramp
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import (
+    AssetParameters,
+    LegacyBridgeParameters,
+    ParameterizedAssetFactory,
+    apply_bridge_parameters,
+    legacy_init_to_parameters,
+)
 from infinigen.core.tagging import tag_object
 from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.math import FixedSeed
@@ -30,17 +38,42 @@ from infinigen.core.util.random import log_uniform
 from infinigen.infinigen_gpl.extras.diff_growth import build_diff_growth
 
 
-class SeaweedFactory(AssetFactory):
+def _seaweed_legacy_init(inst: Any, factory_seed: int, coarse: bool = False) -> None:
+    AssetFactory.__init__(inst, factory_seed, coarse)
+    with FixedSeed(factory_seed):
+        inst.base_hue = (
+            uniform(0.0, 0.1) if uniform(0, 1) < 0.5 else uniform(0.3, 0.4)
+        )
+        inst.material = surface.shaderfunc_to_material(
+            inst.shader_seaweed, inst.base_hue
+        )
+        inst.freq = 1 / log_uniform(200, 500)
+
+
+class SeaweedParameters(LegacyBridgeParameters):
+    pass
+
+
+class SeaweedFactory(ParameterizedAssetFactory, AssetFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = SeaweedParameters
+
     def __init__(self, factory_seed, coarse=False):
-        super().__init__(factory_seed, coarse)
-        with FixedSeed(factory_seed):
-            self.base_hue = (
-                uniform(0.0, 0.1) if uniform(0, 1) < 0.5 else uniform(0.3, 0.4)
-            )
-            self.material = surface.shaderfunc_to_material(
-                self.shader_seaweed, self.base_hue
-            )
-            self.freq = 1 / log_uniform(200, 500)
+        super(SeaweedFactory, self).__init__(factory_seed, coarse)
+        self.init_legacy_parameters()
+
+    def _sample_init_parameters(self, seed: int) -> SeaweedParameters:
+        return legacy_init_to_parameters(
+            SeaweedParameters,
+            SeaweedFactory,
+            seed,
+            self.coarse,
+            init_fn=_seaweed_legacy_init,
+        )
+
+    def apply_parameters(
+        self, params: SeaweedParameters, *, spawn_scope: bool = True
+    ) -> None:
+        apply_bridge_parameters(self, params, spawn_scope=spawn_scope)
 
     def create_asset(self, face_size=0.01, **params):
         growth_vec = 0, 0, uniform(3.0, 6.0)

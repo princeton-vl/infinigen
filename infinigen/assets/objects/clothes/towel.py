@@ -1,12 +1,16 @@
 # Copyright (C) 2024, Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
-import bmesh
-
 # Authors: Lingjie Mei
+from __future__ import annotations
+
+from typing import Any, ClassVar
+
+import bmesh
 import bpy
 import numpy as np
 from numpy.random import uniform
+from pydantic import Field
 from scipy.optimize import fsolve
 
 from infinigen.assets.composition import material_assignments
@@ -24,30 +28,60 @@ from infinigen.assets.utils.object import center, new_plane
 from infinigen.assets.utils.uv import wrap_sides
 from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import (
+    AssetParameters,
+    LegacyBridgeParameters,
+    ParameterizedAssetFactory,
+    apply_bridge_parameters,
+    legacy_init_to_parameters,
+)
 from infinigen.core.util import blender as butil
 from infinigen.core.util.random import log_uniform, weighted_sample
 
 
-class TowelFactory(AssetFactory):
+def _towel_legacy_init(inst: TowelFactory, factory_seed: int, coarse: bool = False) -> None:
+    AssetFactory.__init__(inst, factory_seed, coarse)
+    inst.width = log_uniform(0.3, 0.6)
+    inst.length = inst.width * log_uniform(1, 1.5)
+    inst.thickness = log_uniform(0.003, 0.01)
+    prob = np.array([2, 1])
+    inst.fold_type = np.random.choice(["fold", "roll"], p=prob / prob.sum())
+    inst.folds = np.random.randint(2, 4)
+    inst.extra_thickness = inst.thickness * uniform(0.2, 0.3)
+    inst.fold_count = 15
+    inst.roll_count = 256
+    inst.roll_total = inst.compute_roll_total()
+    surface_gen_class = weighted_sample(material_assignments.towel)
+    inst.surface_material_gen = surface_gen_class()
+    inst.surface = inst.surface_material_gen()
+    if inst.surface == ArtRug:
+        inst.surface = inst.surface(inst.factory_seed)
+
+
+class TowelParameters(LegacyBridgeParameters):
+    pass
+
+
+class TowelFactory(ParameterizedAssetFactory, AssetFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = TowelParameters
+
     def __init__(self, factory_seed, coarse=False):
         super(TowelFactory, self).__init__(factory_seed, coarse)
-        self.width = log_uniform(0.3, 0.6)
-        self.length = self.width * log_uniform(1, 1.5)
-        self.thickness = log_uniform(0.003, 0.01)
-        prob = np.array([2, 1])
-        self.fold_type = np.random.choice(["fold", "roll"], p=prob / prob.sum())
-        self.folds = np.random.randint(2, 4)
-        self.extra_thickness = self.thickness * uniform(0.2, 0.3)
-        self.fold_count = 15
-        self.roll_count = 256
-        self.roll_total = self.compute_roll_total()
+        self.init_legacy_parameters()
 
-        surface_gen_class = weighted_sample(material_assignments.towel)
-        self.surface_material_gen = surface_gen_class()
-        self.surface = self.surface_material_gen()
+    def _sample_init_parameters(self, seed: int) -> TowelParameters:
+        return legacy_init_to_parameters(
+            TowelParameters,
+            TowelFactory,
+            seed,
+            self.coarse,
+            init_fn=_towel_legacy_init,
+        )
 
-        if self.surface == ArtRug:
-            self.surface = self.surface(self.factory_seed)
+    def apply_parameters(
+        self, params: TowelParameters, *, spawn_scope: bool = True
+    ) -> None:
+        apply_bridge_parameters(self, params, spawn_scope=spawn_scope)
 
     def fold(self, obj):
         x, y, z = read_co(obj).T

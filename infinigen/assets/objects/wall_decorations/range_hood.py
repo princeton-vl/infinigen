@@ -3,9 +3,14 @@
 
 # Authors: Yiming Zuo
 
+from __future__ import annotations
+
+from typing import Annotated, Any, ClassVar
+
 import bpy
 import numpy as np
-from numpy.random import uniform
+from numpy.random import uniform as U
+from pydantic import Field
 
 import infinigen.core.util.blender as butil
 from infinigen.assets.composition import material_assignments
@@ -15,56 +20,86 @@ from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
-from infinigen.core.util.math import FixedSeed
+from infinigen.core.placement.parameters import AssetParameters, ParameterizedAssetFactory
 from infinigen.core.util.random import weighted_sample
 
 
-class RangeHoodFactory(AssetFactory):
+class RangeHoodParameters(AssetParameters):
+    Height_1: Annotated[float, Field(ge=0.05, le=0.07, json_schema_extra={"editable": True})]
+    Height_2: Annotated[float, Field(ge=0.1, le=0.3, json_schema_extra={"editable": True})]
+    Scale_2: Annotated[float, Field(ge=0.25, le=0.4, json_schema_extra={"editable": True})]
+    Height_total: float = Field(json_schema_extra={"editable": False})
+    Width: float = Field(json_schema_extra={"editable": False})
+    Depth: float = Field(json_schema_extra={"editable": False})
+    surface_material_gen: Any = Field(json_schema_extra={"editable": False})
+    scratch: Any | None = Field(default=None, json_schema_extra={"editable": False})
+    edge_wear: Any | None = Field(default=None, json_schema_extra={"editable": False})
+
+
+class RangeHoodFactory(ParameterizedAssetFactory, AssetFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = RangeHoodParameters
+
     def __init__(self, factory_seed, coarse=False, dimensions=None):
-        super(RangeHoodFactory, self).__init__(factory_seed, coarse=coarse)
-
+        super().__init__(factory_seed, coarse=coarse)
         self.dimensions = dimensions
-
-        with FixedSeed(factory_seed):
-            self.params = self.sample_parameters(dimensions)
-            self.initialize_materials()
-
-    def initialize_materials(self):
-        surface_gen_class = weighted_sample(material_assignments.metals)
-        self.surface_material_gen = surface_gen_class()
-        self.surface = self.surface_material_gen
-
-        scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
-        scratch, edge_wear = material_assignments.wear_tear
-
-        self.scratch = None if uniform() > scratch_prob else scratch()
-        self.edge_wear = None if uniform() > edge_wear_prob else edge_wear()
+        self.init_legacy_parameters()
 
     @staticmethod
-    def sample_parameters(dimensions):
-        # all in meters
+    def _default_dimensions() -> tuple[float, float, float]:
+        return 0.55, 0.75, 1.0
+
+    @staticmethod
+    def sample_geometry_parameters(
+        dimensions: tuple[float, float, float] | None = None,
+    ) -> dict[str, float]:
         if dimensions is None:
-            x = 0.55
-            y = 0.75
-            z = 1.0
-            dimensions = (x, y, z)
-
+            dimensions = RangeHoodFactory._default_dimensions()
         x, y, z = dimensions
-
-        height_1 = uniform(0.05, 0.07)
-        height_2 = uniform(0.1, 0.3)
-        scale_2 = uniform(0.25, 0.4)
-
-        parameters = {
+        return {
             "Height_total": z,
             "Width": y,
             "Depth": x,
-            "Height_1": height_1,
-            "Scale_2": scale_2,
-            "Height_2": height_2,
+            "Height_1": U(0.05, 0.07),
+            "Scale_2": U(0.25, 0.4),
+            "Height_2": U(0.1, 0.3),
         }
 
-        return parameters
+    @staticmethod
+    def sample_parameters(dimensions):
+        return RangeHoodFactory.sample_geometry_parameters(dimensions)
+
+    def _sample_materials(self) -> tuple[Any, Any | None, Any | None]:
+        surface_gen_class = weighted_sample(material_assignments.metals)
+        surface_material_gen = surface_gen_class()
+        scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
+        scratch_fn, edge_wear_fn = material_assignments.wear_tear
+        scratch = None if U() > scratch_prob else scratch_fn()
+        edge_wear = None if U() > edge_wear_prob else edge_wear_fn()
+        return surface_material_gen, scratch, edge_wear
+
+    def _sample_init_parameters(self, seed: int) -> RangeHoodParameters:
+        geometry = self.sample_geometry_parameters(self.dimensions)
+        surface_material_gen, scratch, edge_wear = self._sample_materials()
+        return RangeHoodParameters(
+            seed=seed,
+            **geometry,
+            surface_material_gen=surface_material_gen,
+            scratch=scratch,
+            edge_wear=edge_wear,
+        )
+
+    def apply_parameters(
+        self, params: RangeHoodParameters, *, spawn_scope: bool = True
+    ) -> None:
+        self.params = params.model_dump(
+            exclude={"seed", "surface_material_gen", "scratch", "edge_wear"},
+            by_alias=False,
+        )
+        self.surface_material_gen = params.surface_material_gen
+        self.surface = params.surface_material_gen
+        self.scratch = params.scratch
+        self.edge_wear = params.edge_wear
+        self._use_fixed_spawn_draws = spawn_scope
 
     def create_asset(self, **params):
         bpy.ops.mesh.primitive_plane_add(
@@ -93,8 +128,6 @@ class RangeHoodFactory(AssetFactory):
 
 
 def geometry_generate_hood(nw: NodeWrangler, **kwargs):
-    # Code generated using version 2.6.4 of the node_transpiler
-
     generatetabletop = nw.new_node(
         geometry_range_hood().name,
         input_kwargs={
@@ -108,7 +141,7 @@ def geometry_generate_hood(nw: NodeWrangler, **kwargs):
         },
     )
 
-    group_output = nw.new_node(
+    nw.new_node(
         Nodes.GroupOutput,
         input_kwargs={"Geometry": generatetabletop},
         attrs={"is_active_output": True},
@@ -119,8 +152,6 @@ def geometry_generate_hood(nw: NodeWrangler, **kwargs):
     "geometry_range_hood", singleton=False, type="GeometryNodeTree"
 )
 def geometry_range_hood(nw: NodeWrangler):
-    # Code generated using version 2.6.5 of the node_transpiler
-
     group_input = nw.new_node(
         Nodes.GroupInput,
         expose_input=[
@@ -291,7 +322,7 @@ def geometry_range_hood(nw: NodeWrangler):
         },
     )
 
-    group_output = nw.new_node(
+    nw.new_node(
         Nodes.GroupOutput,
         input_kwargs={"Geometry": transform_geometry_6},
         attrs={"is_active_output": True},

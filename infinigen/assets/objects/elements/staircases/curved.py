@@ -6,17 +6,45 @@
 # - Lingjie Mei
 # - Karhan Kayan: fix constants
 
+from __future__ import annotations
+
+from typing import Any, ClassVar
+
 import numpy as np
 
 from infinigen.assets.objects.elements.staircases.straight import (
     StraightStaircaseFactory,
 )
 from infinigen.assets.utils.decorate import read_co, write_co
-from infinigen.core.util.math import FixedSeed
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import (
+    AssetParameters,
+    LegacyBridgeParameters,
+    ParameterizedAssetFactory,
+    apply_bridge_parameters,
+    legacy_init_to_parameters,
+)
 from infinigen.core.util.random import log_uniform
 
 
+def _curved_legacy_init(
+    inst: Any, seed: int, coarse: bool, constants: Any = None
+) -> None:
+    from infinigen.assets.objects.elements.staircases.straight import (
+        _straight_staircase_legacy_init,
+    )
+
+    inst.full_angle, inst.radius, inst.theta = 0, 0, 0
+    _straight_staircase_legacy_init(inst, seed, coarse, constants)
+    inst.has_spiral = True
+
+
+class CurvedStaircaseParameters(LegacyBridgeParameters):
+    pass
+
+
 class CurvedStaircaseFactory(StraightStaircaseFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = CurvedStaircaseParameters
     support_types = (
         "weighted_choice",
         (2, "single-rail"),
@@ -29,10 +57,24 @@ class CurvedStaircaseFactory(StraightStaircaseFactory):
     handrail_types = "weighted_choice", (2, "horizontal-post"), (2, "vertical-post")
 
     def __init__(self, factory_seed, coarse=False, constants=None):
-        self.full_angle, self.radius, self.theta = 0, 0, 0
-        super(CurvedStaircaseFactory, self).__init__(factory_seed, coarse, constants)
-        with FixedSeed(self.factory_seed):
-            self.has_spiral = True
+        self._constants_arg = constants
+        AssetFactory.__init__(self, factory_seed, coarse)
+        self.init_legacy_parameters()
+
+    def _sample_init_parameters(self, seed: int) -> CurvedStaircaseParameters:
+        return legacy_init_to_parameters(
+            CurvedStaircaseParameters,
+            CurvedStaircaseFactory,
+            seed,
+            self.coarse,
+            self._constants_arg,
+            init_fn=_curved_legacy_init,
+        )
+
+    def apply_parameters(
+        self, params: CurvedStaircaseParameters, *, spawn_scope: bool = True
+    ) -> None:
+        apply_bridge_parameters(self, params, spawn_scope=spawn_scope)
 
     def build_size_config(self):
         while True:

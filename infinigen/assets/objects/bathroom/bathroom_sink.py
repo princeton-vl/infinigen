@@ -1,15 +1,22 @@
 # Copyright (C) 2024, Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
-import bmesh
-
 # Authors: Lingjie Mei
+from __future__ import annotations
+
+from typing import Any, ClassVar
+
 import bpy
+import bmesh
 import numpy as np
 from numpy.random import uniform
 
 from infinigen.assets.composition import material_assignments
-from infinigen.assets.objects.bathroom.bathtub import BathtubFactory
+from infinigen.assets.objects.bathroom.bathtub import (
+    BathtubFactory,
+    BathtubParameters,
+    _bathtub_legacy_init,
+)
 from infinigen.assets.objects.table_decorations import TapFactory
 from infinigen.assets.utils.decorate import read_co, subdivide_edge_ring, subsurf
 from infinigen.assets.utils.object import (
@@ -19,52 +26,91 @@ from infinigen.assets.utils.object import (
     new_cube,
 )
 from infinigen.core import surface
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import (
+    AssetParameters,
+    LegacyBridgeParameters,
+    ParameterizedAssetFactory,
+    apply_bridge_parameters,
+    legacy_init_to_parameters,
+)
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform, weighted_sample
 
 
-class BathroomSinkFactory(BathtubFactory):
-    def __init__(self, factory_seed, coarse=False):
-        super(BathroomSinkFactory, self).__init__(factory_seed, coarse)
-        with FixedSeed(factory_seed):
-            self.width = uniform(0.6, 0.9)
-            self.size = self.width * log_uniform(0.55, 0.8)
-            self.depth = self.width * log_uniform(0.2, 0.4)
-            self.contour_fn = self.make_box_contour
-            self.sink_types = np.random.choice(["undermount", "drop-in", "vessel"])
-            self.has_stand = False
-            match self.sink_types:
-                case "undermount":
-                    self.bathtub_type = "freestanding"
-                    self.has_extrude = uniform() < 0.7
-                case "drop-in":
-                    self.bathtub_type = "alcove"
-                    self.has_extrude = True
-                case _:
-                    self.bathtub_type = np.random.choice(["alcove", "freestanding"])
-                    self.has_extrude = uniform() < 0.7
-                    self.has_stand = True
-            self.tap_factory = TapFactory(self.factory_seed)
-            self.disp_x = [self.disp_x[0], self.disp_x[0]]
-            self.alcove_levels = 0 if uniform() < 0.5 else np.random.randint(2, 4)
-            self.thickness = 0.01 if self.has_base else uniform(0.01, 0.03)
-            self.size_extrude = uniform(0.2, 0.35)
-            self.tap_offset = uniform(0.0, 0.05)
-            self.stand_radius = self.width / 2 * log_uniform(0.15, 0.2)
-            self.stand_bottom = (
-                self.width * log_uniform(0.2, 0.3)
-                if uniform() < 0.6
-                else self.stand_radius
-            )
-            self.stand_height = uniform(0.7, 0.9) - self.depth
-            self.is_stand_circular = uniform() < 0.5
-            self.is_hole_centered = True
+def _bathroom_sink_legacy_init(inst: Any, seed: int, coarse: bool) -> None:
+    AssetFactory.__init__(inst, seed, coarse)
+    bathtub_params = legacy_init_to_parameters(
+        BathtubParameters,
+        BathtubFactory,
+        seed,
+        coarse,
+        init_fn=_bathtub_legacy_init,
+    )
+    apply_bridge_parameters(inst, bathtub_params, spawn_scope=False)
+    with FixedSeed(seed):
+        inst.width = uniform(0.6, 0.9)
+        inst.size = inst.width * log_uniform(0.55, 0.8)
+        inst.depth = inst.width * log_uniform(0.2, 0.4)
+        inst.contour_fn = inst.make_box_contour
+        inst.sink_types = np.random.choice(["undermount", "drop-in", "vessel"])
+        inst.has_stand = False
+        match inst.sink_types:
+            case "undermount":
+                inst.bathtub_type = "freestanding"
+                inst.has_extrude = uniform() < 0.7
+            case "drop-in":
+                inst.bathtub_type = "alcove"
+                inst.has_extrude = True
+            case _:
+                inst.bathtub_type = np.random.choice(["alcove", "freestanding"])
+                inst.has_extrude = uniform() < 0.7
+                inst.has_stand = True
+        inst.tap_factory = TapFactory(inst.factory_seed)
+        inst.disp_x = [inst.disp_x[0], inst.disp_x[0]]
+        inst.alcove_levels = 0 if uniform() < 0.5 else np.random.randint(2, 4)
+        inst.thickness = 0.01 if inst.has_base else uniform(0.01, 0.03)
+        inst.size_extrude = uniform(0.2, 0.35)
+        inst.tap_offset = uniform(0.0, 0.05)
+        inst.stand_radius = inst.width / 2 * log_uniform(0.15, 0.2)
+        inst.stand_bottom = (
+            inst.width * log_uniform(0.2, 0.3)
+            if uniform() < 0.6
+            else inst.stand_radius
+        )
+        inst.stand_height = uniform(0.7, 0.9) - inst.depth
+        inst.is_stand_circular = uniform() < 0.5
+        inst.is_hole_centered = True
 
-            surface_gen_class = weighted_sample(
-                material_assignments.bathroom_touchsurface
-            )
-            self.surface_material_gen = surface_gen_class()
+        surface_gen_class = weighted_sample(material_assignments.bathroom_touchsurface)
+        inst.surface_material_gen = surface_gen_class()
+
+
+class BathroomSinkParameters(LegacyBridgeParameters):
+    pass
+
+
+class BathroomSinkFactory(BathtubFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = BathroomSinkParameters
+
+    def __init__(self, factory_seed, coarse=False):
+        AssetFactory.__init__(self, factory_seed, coarse)
+        self.init_legacy_parameters()
+
+    def _sample_init_parameters(self, seed: int) -> BathroomSinkParameters:
+        return legacy_init_to_parameters(
+            BathroomSinkParameters,
+            BathroomSinkFactory,
+            seed,
+            self.coarse,
+            init_fn=_bathroom_sink_legacy_init,
+        )
+
+    def apply_parameters(
+        self, params: BathroomSinkParameters, *, spawn_scope: bool = True
+    ) -> None:
+        apply_bridge_parameters(self, params, spawn_scope=spawn_scope)
 
     def create_placeholder(self, **kwargs) -> bpy.types.Object:
         return new_bbox(
@@ -102,7 +148,6 @@ class BathroomSinkFactory(BathtubFactory):
         obj = join_objects([obj, hole])
         obj.rotation_euler[-1] = np.pi / 2
         butil.apply_transform(obj, True)
-        # self.surface.apply(obj, clear=True, metal_color="plain")
         surface.assign_material(obj, self.surface)
         if self.has_extrude:
             tap = self.tap_factory(np.random.randint(1e7))
@@ -166,9 +211,34 @@ class BathroomSinkFactory(BathtubFactory):
             self.edge_wear.apply(assets)
 
 
+def _standing_sink_legacy_init(inst: Any, seed: int, coarse: bool) -> None:
+    _bathroom_sink_legacy_init(inst, seed, coarse)
+    inst.bathtub_type = "freestanding"
+    inst.has_extrude = True
+    inst.has_stand = True
+
+
+class StandingSinkParameters(LegacyBridgeParameters):
+    pass
+
+
 class StandingSinkFactory(BathroomSinkFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = StandingSinkParameters
+
     def __init__(self, factory_seed, coarse=False):
-        super(StandingSinkFactory, self).__init__(factory_seed, coarse)
-        self.bathtub_type = "freestanding"
-        self.has_extrude = True
-        self.has_stand = True
+        AssetFactory.__init__(self, factory_seed, coarse)
+        self.init_legacy_parameters()
+
+    def _sample_init_parameters(self, seed: int) -> StandingSinkParameters:
+        return legacy_init_to_parameters(
+            StandingSinkParameters,
+            StandingSinkFactory,
+            seed,
+            self.coarse,
+            init_fn=_standing_sink_legacy_init,
+        )
+
+    def apply_parameters(
+        self, params: StandingSinkParameters, *, spawn_scope: bool = True
+    ) -> None:
+        apply_bridge_parameters(self, params, spawn_scope=spawn_scope)

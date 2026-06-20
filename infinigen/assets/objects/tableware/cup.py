@@ -2,13 +2,16 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Lingjie Mei
+from __future__ import annotations
+
+from typing import Any, ClassVar
+
 import bpy
 import numpy as np
 from numpy.random import uniform
 
 from infinigen.assets.composition import material_assignments
 from infinigen.assets.materials import text
-from infinigen.assets.objects.tableware.base import TablewareFactory
 from infinigen.assets.utils.decorate import (
     read_co,
     remove_vertices,
@@ -18,51 +21,85 @@ from infinigen.assets.utils.decorate import (
 from infinigen.assets.utils.draw import spin
 from infinigen.assets.utils.object import join_objects
 from infinigen.assets.utils.uv import wrap_sides
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import (
+    AssetParameters,
+    LegacyBridgeParameters,
+    ParameterizedAssetFactory,
+    apply_bridge_parameters,
+    legacy_init_to_parameters,
+)
 from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
-from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform, weighted_sample
 
+from .base import TablewareFactory
 
-class CupFactory(TablewareFactory):
+
+def _cup_legacy_init(inst: Any, seed: int, coarse: bool) -> None:
+    AssetFactory.__init__(inst, seed, coarse)
+    inst._init_tableware_base()
+    inst.x_end = 0.25
+    inst.is_short = uniform(0, 1) < 0.5
+    if inst.is_short:
+        inst.is_profile_straight = uniform(0, 1) < 0.2
+        inst.x_lowest = log_uniform(0.6, 0.9)
+        inst.depth = log_uniform(0.25, 0.5)
+        inst.has_guard = uniform(0, 1) < 0.8
+    else:
+        inst.is_profile_straight = True
+        inst.x_lowest = log_uniform(0.9, 1.0)
+        inst.depth = log_uniform(0.5, 1.0)
+        inst.has_guard = False
+    if inst.is_profile_straight:
+        inst.handle_location = uniform(0.45, 0.65)
+    else:
+        inst.handle_location = uniform(-0.1, 0.3)
+    inst.handle_type = "shear" if uniform(0, 1) < 0.5 else "round"
+    inst.handle_radius = inst.depth * uniform(0.2, 0.4)
+    inst.handle_inner_radius = inst.handle_radius * log_uniform(0.2, 0.3)
+    inst.handle_taper_x = uniform(0, 2)
+    inst.handle_taper_y = uniform(0, 2)
+    inst.x_lower_ratio = log_uniform(0.8, 1.0)
+    inst.thickness = log_uniform(0.01, 0.04)
+    inst.has_wrap = uniform() < 0.3
+    inst.has_wrap = True
+    inst.wrap_margin = uniform(0.1, 0.2)
+
+    inst.wrap_surface = weighted_sample(material_assignments.graphicdesign)()()
+    if inst.wrap_surface == text.Text:
+        inst.wrap_surface = text.Text(inst.factory_seed, False)
+
+    inst.has_inside = uniform(0, 1) < 0.5
+    inst.scale = log_uniform(0.15, 0.3)
+
+
+class CupParameters(LegacyBridgeParameters):
+    pass
+
+
+class CupFactory(ParameterizedAssetFactory, TablewareFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = CupParameters
     allow_transparent = True
 
     def __init__(self, factory_seed, coarse=False):
-        super().__init__(factory_seed, coarse)
-        with FixedSeed(factory_seed):
-            self.x_end = 0.25
-            self.is_short = uniform(0, 1) < 0.5
-            if self.is_short:
-                self.is_profile_straight = uniform(0, 1) < 0.2
-                self.x_lowest = log_uniform(0.6, 0.9)
-                self.depth = log_uniform(0.25, 0.5)
-                self.has_guard = uniform(0, 1) < 0.8
-            else:
-                self.is_profile_straight = True
-                self.x_lowest = log_uniform(0.9, 1.0)
-                self.depth = log_uniform(0.5, 1.0)
-                self.has_guard = False
-            if self.is_profile_straight:
-                self.handle_location = uniform(0.45, 0.65)
-            else:
-                self.handle_location = uniform(-0.1, 0.3)
-            self.handle_type = "shear" if uniform(0, 1) < 0.5 else "round"
-            self.handle_radius = self.depth * uniform(0.2, 0.4)
-            self.handle_inner_radius = self.handle_radius * log_uniform(0.2, 0.3)
-            self.handle_taper_x = uniform(0, 2)
-            self.handle_taper_y = uniform(0, 2)
-            self.x_lower_ratio = log_uniform(0.8, 1.0)
-            self.thickness = log_uniform(0.01, 0.04)
-            self.has_wrap = uniform() < 0.3
-            self.has_wrap = True
-            self.wrap_margin = uniform(0.1, 0.2)
+        AssetFactory.__init__(self, factory_seed, coarse)
+        self.init_legacy_parameters()
 
-            self.wrap_surface = weighted_sample(material_assignments.graphicdesign)()()
-            if self.wrap_surface == text.Text:
-                self.wrap_surface = text.Text(self.factory_seed, False)
+    def _sample_init_parameters(self, seed: int) -> CupParameters:
+        return legacy_init_to_parameters(
+            CupParameters,
+            CupFactory,
+            seed,
+            self.coarse,
+            init_fn=_cup_legacy_init,
+        )
 
-            self.has_inside = uniform(0, 1) < 0.5
-            self.scale = log_uniform(0.15, 0.3)
+    def apply_parameters(
+        self, params: CupParameters, *, spawn_scope: bool = True
+    ) -> None:
+        apply_bridge_parameters(self, params, spawn_scope=spawn_scope)
 
     def create_asset(self, **params) -> bpy.types.Object:
         if self.is_profile_straight:

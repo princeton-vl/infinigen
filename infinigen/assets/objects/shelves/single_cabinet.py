@@ -3,6 +3,10 @@
 
 # Authors: Beining Han
 
+from __future__ import annotations
+
+from typing import ClassVar
+
 import bpy
 import numpy as np
 from numpy.random import normal, randint, uniform
@@ -13,6 +17,13 @@ from infinigen.assets.utils.object import new_bbox
 from infinigen.core import surface, tagging
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import (
+    AssetParameters,
+    LegacyBridgeParameters,
+    ParameterizedAssetFactory,
+    apply_bridge_parameters,
+    legacy_init_to_parameters,
+)
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 
@@ -298,7 +309,40 @@ class SingleCabinetBaseFactory(AssetFactory):
         return obj
 
 
-class SingleCabinetFactory(SingleCabinetBaseFactory):
+class SingleCabinetParameters(LegacyBridgeParameters):
+    pass
+
+
+def _single_cabinet_legacy_init(inst: SingleCabinetFactory, seed: int, coarse: bool) -> None:
+    inst.shelf_params = {}
+    inst.door_params = {}
+    inst.mat_params = {}
+    inst.shelf_fac = LargeShelfBaseFactory(seed)
+    inst.door_fac = CabinetDoorBaseFactory(seed)
+    inst.sample_params()
+
+
+class SingleCabinetFactory(ParameterizedAssetFactory, SingleCabinetBaseFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = SingleCabinetParameters
+
+    def __init__(self, factory_seed, params={}, coarse=False):
+        AssetFactory.__init__(self, factory_seed, coarse=coarse)
+        self.init_legacy_parameters()
+
+    def _sample_init_parameters(self, seed: int) -> SingleCabinetParameters:
+        return legacy_init_to_parameters(
+            SingleCabinetParameters,
+            SingleCabinetFactory,
+            seed,
+            self.coarse,
+            init_fn=_single_cabinet_legacy_init,
+        )
+
+    def apply_parameters(
+        self, params: SingleCabinetParameters, *, spawn_scope: bool = True
+    ) -> None:
+        apply_bridge_parameters(self, params, spawn_scope=spawn_scope)
+
     def sample_params(self):
         params = dict()
         params["Dimensions"] = (

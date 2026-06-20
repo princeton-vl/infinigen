@@ -2,9 +2,14 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Lingjie Mei
+from __future__ import annotations
+
+from typing import Annotated, Any, ClassVar
+
 import bpy
 import numpy as np
 from numpy.random import uniform
+from pydantic import Field
 
 from infinigen.assets.composition import material_assignments
 from infinigen.assets.materials.art import ArtFabric
@@ -13,22 +18,51 @@ from infinigen.assets.utils.object import new_grid
 from infinigen.assets.utils.uv import unwrap_faces
 from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import AssetParameters, ParameterizedAssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.random import log_uniform, weighted_sample
 
 
-class BlanketFactory(AssetFactory):
+class BlanketParameters(AssetParameters):
+    width: Annotated[float, Field(ge=0.9, le=1.2, json_schema_extra={"editable": True})]
+    size: Annotated[float, Field(ge=0.4, le=0.7, json_schema_extra={"editable": True})]
+    thickness: Annotated[
+        float, Field(ge=0.004, le=0.008, json_schema_extra={"editable": True})
+    ]
+    surface: Any = Field(json_schema_extra={"editable": False})
+
+
+class BlanketFactory(ParameterizedAssetFactory, AssetFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = BlanketParameters
+
     def __init__(self, factory_seed, coarse=False):
         super(BlanketFactory, self).__init__(factory_seed, coarse)
-        self.width = log_uniform(0.9, 1.2)
-        self.size = self.width * log_uniform(0.4, 0.7)
-        self.thickness = log_uniform(0.004, 0.008)
+        self.init_legacy_parameters()
 
+    def _sample_init_parameters(self, seed: int) -> BlanketParameters:
+        width = log_uniform(0.9, 1.2)
+        size_ratio = log_uniform(0.4, 0.7)
         surface_gen_class = weighted_sample(material_assignments.blanket)
-        self.surface_material_gen = surface_gen_class()
-        self.surface = self.surface_material_gen()
-        if self.surface == ArtFabric:
-            self.surface = self.surface(self.factory_seed)
+        surface_material_gen = surface_gen_class()
+        surface_mat = surface_material_gen()
+        if surface_mat == ArtFabric:
+            surface_mat = surface_mat(seed)
+        return BlanketParameters(
+            seed=seed,
+            width=width,
+            size=size_ratio,
+            thickness=log_uniform(0.004, 0.008),
+            surface=surface_mat,
+        )
+
+    def apply_parameters(
+        self, params: BlanketParameters, *, spawn_scope: bool = True
+    ) -> None:
+        self.width = params.width
+        self.size = params.width * params.size
+        self.thickness = params.thickness
+        self.surface = params.surface
+        self._use_fixed_spawn_draws = spawn_scope
 
     def create_asset(self, **params) -> bpy.types.Object:
         obj = new_grid(

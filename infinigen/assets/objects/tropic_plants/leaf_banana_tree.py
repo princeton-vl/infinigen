@@ -4,6 +4,10 @@
 # Authors: Beining Han
 
 
+from __future__ import annotations
+
+from typing import ClassVar
+
 import bpy
 import numpy as np
 from numpy.random import normal, uniform
@@ -20,6 +24,12 @@ from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import (
+    AssetParameters,
+    LegacyBridgeParameters,
+    ParameterizedAssetFactory,
+    apply_bridge_parameters,
+)
 from infinigen.core.tagging import tag_object
 from infinigen.core.util.color import hsv2rgba
 
@@ -820,9 +830,33 @@ def geometry_plant_nodes(nw: NodeWrangler, **kwargs):
     )
 
 
-class LeafBananaTreeFactory(AssetFactory):
+class LeafBananaTreeParameters(LegacyBridgeParameters):
+    pass
+
+
+class LeafBananaTreeFactory(ParameterizedAssetFactory, AssetFactory):
+    parameters_model: ClassVar[type[LegacyBridgeParameters]] = LeafBananaTreeParameters
+
     def __init__(self, factory_seed, coarse=False):
         super(LeafBananaTreeFactory, self).__init__(factory_seed, coarse=coarse)
+        self.init_legacy_parameters()
+
+    def _sample_init_parameters(self, seed: int) -> LeafBananaTreeParameters:
+        return LeafBananaTreeParameters(seed=seed)
+
+    def _sample_spawn_parameters(
+        self, params: LeafBananaTreeParameters, seed: int, i: int
+    ) -> LeafBananaTreeParameters:
+        inst = LeafBananaTreeFactory.__new__(LeafBananaTreeFactory)
+        AssetFactory.__init__(inst, seed, self.coarse)
+        geom_kwargs = inst.update_params(**{})
+        return LeafBananaTreeParameters(seed=seed, **geom_kwargs)
+
+    def apply_parameters(
+        self, params: LeafBananaTreeParameters, *, spawn_scope: bool = True
+    ) -> None:
+        apply_bridge_parameters(self, params, spawn_scope=spawn_scope)
+        self.geom_kwargs = params.model_dump(exclude={"seed"})
 
     def get_leaf_contour(self, mode):
         if mode == "oval":
@@ -946,17 +980,20 @@ class LeafBananaTreeFactory(AssetFactory):
         )
         obj = bpy.context.active_object
 
-        params = self.update_params(**params)
+        if self._use_fixed_spawn_draws:
+            geom_params = self.geom_kwargs
+        else:
+            geom_params = self.update_params(**params)
         surface.add_geomod(
             obj,
             geometry_leaf_nodes,
             apply=True,
             attributes=["Attribute", "Coordinate", "subvein offset", "vein"],
-            input_kwargs=params,
+            input_kwargs=geom_params,
         )
         surface.add_material(
             obj,
-            lambda x: shader_leaf_material(x, stem_color_hsv=params["stem_color_hsv"]),
+            lambda x: shader_leaf_material(x, stem_color_hsv=geom_params["stem_color_hsv"]),
             selection=None,
         )
 
@@ -964,14 +1001,42 @@ class LeafBananaTreeFactory(AssetFactory):
         return obj
 
 
-class PlantBananaTreeFactory(AssetFactory):
+class PlantBananaTreeParameters(LegacyBridgeParameters):
+    pass
+
+
+class PlantBananaTreeFactory(ParameterizedAssetFactory, AssetFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = PlantBananaTreeParameters
+
     def __init__(self, factory_seed, coarse=False):
         super(PlantBananaTreeFactory, self).__init__(factory_seed, coarse=coarse)
-        self.leaf_tropical_factory = LeafBananaTreeFactory(factory_seed)
+        self.init_legacy_parameters()
+
+    def _sample_init_parameters(self, seed: int) -> PlantBananaTreeParameters:
+        return PlantBananaTreeParameters(
+            seed=seed,
+            leaf_tropical_factory=LeafBananaTreeFactory(seed, self.coarse),
+        )
+
+    def _sample_spawn_parameters(
+        self, params: PlantBananaTreeParameters, seed: int, i: int
+    ) -> PlantBananaTreeParameters:
+        inst = PlantBananaTreeFactory.__new__(PlantBananaTreeFactory)
+        AssetFactory.__init__(inst, seed, self.coarse)
+        inst.leaf_tropical_factory = params.leaf_tropical_factory
+        geom_kwargs = inst.update_params(**{})
+        return PlantBananaTreeParameters(seed=seed, **geom_kwargs)
+
+    def apply_parameters(
+        self, params: PlantBananaTreeParameters, *, spawn_scope: bool = True
+    ) -> None:
+        apply_bridge_parameters(self, params, spawn_scope=spawn_scope)
+        self.geom_kwargs = params.model_dump(
+            exclude={"seed", "leaf_tropical_factory"}, mode="python"
+        )
 
     def update_params(self, **params):
         params = self.leaf_tropical_factory.update_params(**params)
-        # Add new params update
         if params.get("plant_translation", None) is None:
             params["plant_translation"] = (0.0, 0.0, 0.0)
         if params.get("plant_z_rotate", None) is None:
@@ -982,6 +1047,10 @@ class PlantBananaTreeFactory(AssetFactory):
         return params
 
     def create_asset(self, **params):
+        if self._use_fixed_spawn_draws:
+            params = dict(self.geom_kwargs)
+        else:
+            params = self.update_params(**params)
         bpy.ops.mesh.primitive_plane_add(
             size=2,
             enter_editmode=False,

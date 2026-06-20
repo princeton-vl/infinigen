@@ -3,6 +3,10 @@
 
 # Authors: Beining Han
 
+from __future__ import annotations
+
+from typing import Any, ClassVar
+
 import bpy
 import numpy as np
 from numpy.random import uniform
@@ -21,6 +25,12 @@ from infinigen.assets.utils.object import new_bbox
 from infinigen.core import surface, tagging
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import (
+    LegacyBridgeParameters,
+    ParameterizedAssetFactory,
+    apply_bridge_parameters,
+    legacy_init_to_parameters,
+)
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 
@@ -355,13 +365,55 @@ class KitchenCabinetBaseFactory(AssetFactory):
         return obj
 
 
-class KitchenCabinetFactory(KitchenCabinetBaseFactory):
+class KitchenCabinetParameters(LegacyBridgeParameters):
+    pass
+
+
+def _kitchen_cabinet_legacy_init(
+    inst: KitchenCabinetFactory,
+    seed: int,
+    coarse: bool,
+    dimensions=None,
+    drawer_only: bool = False,
+) -> None:
+    inst.dimensions = dimensions
+    inst.drawer_only = drawer_only
+    inst.frame_params = {}
+    inst.material_params = {}
+    inst.cabinet_widths = []
+    inst.frame_fac = LargeShelfBaseFactory(seed)
+    inst.door_fac = CabinetDoorBaseFactory(seed)
+    inst.drawer_fac = CabinetDrawerBaseFactory(seed)
+    with FixedSeed(seed):
+        inst.sample_params()
+
+
+class KitchenCabinetFactory(ParameterizedAssetFactory, KitchenCabinetBaseFactory):
+    parameters_model: ClassVar[type[LegacyBridgeParameters]] = KitchenCabinetParameters
+
     def __init__(
         self, factory_seed, params={}, coarse=False, dimensions=None, drawer_only=False
     ):
-        self.dimensions = dimensions
-        super().__init__(factory_seed, params, coarse)
-        self.drawer_only = drawer_only
+        self._init_dimensions = dimensions
+        self._init_drawer_only = drawer_only
+        AssetFactory.__init__(self, factory_seed, coarse=coarse)
+        self.init_legacy_parameters()
+
+    def _sample_init_parameters(self, seed: int) -> KitchenCabinetParameters:
+        return legacy_init_to_parameters(
+            KitchenCabinetParameters,
+            KitchenCabinetFactory,
+            seed,
+            self.coarse,
+            init_fn=_kitchen_cabinet_legacy_init,
+            dimensions=self._init_dimensions,
+            drawer_only=self._init_drawer_only,
+        )
+
+    def apply_parameters(
+        self, params: KitchenCabinetParameters, *, spawn_scope: bool = True
+    ) -> None:
+        apply_bridge_parameters(self, params, spawn_scope=spawn_scope)
 
     def sample_params(self):
         params = dict()

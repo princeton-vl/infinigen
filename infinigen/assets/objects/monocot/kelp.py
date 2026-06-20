@@ -3,6 +3,9 @@
 
 # Authors: Lingjie Mei
 
+from __future__ import annotations
+
+from typing import Any, ClassVar
 
 import bpy
 import numpy as np
@@ -18,39 +21,78 @@ from infinigen.assets.utils.misc import assign_material
 from infinigen.assets.utils.object import join_objects, origin2leftmost
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core.placement.detail import remesh_with_attrs
-from infinigen.core.util.math import FixedSeed
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import (
+    AssetParameters,
+    LegacyBridgeParameters,
+    ParameterizedAssetFactory,
+    apply_bridge_parameters,
+    legacy_init_to_parameters,
+)
 from infinigen.core.util.random import log_uniform
 
 
-class KelpMonocotFactory(MonocotGrowthFactory):
+def _monocot_base_legacy_init(inst: Any, seed: int, coarse: bool) -> None:
+    base = MonocotGrowthFactory.__new__(MonocotGrowthFactory)
+    AssetFactory.__init__(base, seed, coarse)
+    MonocotGrowthFactory.__init__(base, seed, coarse)
+    for key, value in vars(base).items():
+        if key not in ("factory_seed", "coarse"):
+            setattr(inst, key, value)
+
+
+def _kelp_legacy_init(inst: Any, seed: int, coarse: bool) -> None:
+    _monocot_base_legacy_init(inst, seed, coarse)
+    inst.stem_offset = 10.0
+    inst.angle = uniform(np.pi / 6, np.pi / 4)
+    inst.z_drag = uniform(0.0, 0.2)
+    inst.min_y_angle = uniform(0, np.pi * 0.1)
+    inst.max_y_angle = inst.min_y_angle
+    inst.bend_angle = uniform(0, np.pi / 6)
+    inst.twist_angle = uniform(0, np.pi / 6)
+    inst.count = 512
+    inst.leaf_prob = uniform(0.6, 0.7)
+    inst.align_angle = uniform(np.pi / 30, np.pi / 15)
+    inst.radius = 0.02
+    inst.align_factor = inst.make_align_factor()
+    inst.align_direction = inst.make_align_direction()
+    flow_angle = uniform(0, np.pi * 2)
+    inst.align_direction = (
+        np.cos(flow_angle),
+        np.sin(flow_angle),
+        uniform(-0.2, 0.2),
+    )
+    inst.anim_freq = 1 / log_uniform(100, 200)
+    inst.anim_offset = uniform(0, 1)
+    inst.anim_seed = np.random.randint(1e5)
+
+
+class KelpMonocotParameters(LegacyBridgeParameters):
+    pass
+
+
+class KelpMonocotFactory(ParameterizedAssetFactory, MonocotGrowthFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = KelpMonocotParameters
     max_leaf_length = 1.2
     align_angle = uniform(np.pi / 24, np.pi / 12)
 
     def __init__(self, factory_seed, coarse=False):
         super(KelpMonocotFactory, self).__init__(factory_seed, coarse)
-        with FixedSeed(factory_seed):
-            self.stem_offset = 10.0
-            self.angle = uniform(np.pi / 6, np.pi / 4)
-            self.z_drag = uniform(0.0, 0.2)
-            self.min_y_angle = uniform(0, np.pi * 0.1)
-            self.max_y_angle = self.min_y_angle
-            self.bend_angle = uniform(0, np.pi / 6)
-            self.twist_angle = uniform(0, np.pi / 6)
-            self.count = 512
-            self.leaf_prob = uniform(0.6, 0.7)
-            self.align_angle = uniform(np.pi / 30, np.pi / 15)
-            self.radius = 0.02
-            self.align_factor = self.make_align_factor()
-            self.align_direction = self.make_align_direction()
-            flow_angle = uniform(0, np.pi * 2)
-            self.align_direction = (
-                np.cos(flow_angle),
-                np.sin(flow_angle),
-                uniform(-0.2, 0.2),
-            )
-            self.anim_freq = 1 / log_uniform(100, 200)
-            self.anim_offset = uniform(0, 1)
-            self.anim_seed = np.random.randint(1e5)
+        self.init_legacy_parameters()
+
+    def _sample_init_parameters(self, seed: int) -> KelpMonocotParameters:
+        return legacy_init_to_parameters(
+            KelpMonocotParameters,
+            KelpMonocotFactory,
+            seed,
+            self.coarse,
+            init_fn=_kelp_legacy_init,
+        )
+
+    def apply_parameters(
+        self, params: KelpMonocotParameters, *, spawn_scope: bool = True
+    ) -> None:
+        apply_bridge_parameters(self, params, spawn_scope=spawn_scope)
 
     def make_align_factor(self):
         def align_factor(nw: NodeWrangler):

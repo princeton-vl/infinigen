@@ -1,14 +1,19 @@
 # Copyright (C) 2023, Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
+from __future__ import annotations
+
 import math
 
 import bmesh
 
 # Authors: Lingjie Mei
+from typing import Annotated, Any, ClassVar
+
 import bpy
 import numpy as np
 from numpy.random import uniform
+from pydantic import Field
 
 from infinigen.assets.composition import material_assignments
 from infinigen.assets.materials import text
@@ -19,49 +24,117 @@ from infinigen.assets.utils.object import center, join_objects, new_bbox, new_cu
 from infinigen.assets.utils.uv import wrap_front_back_side
 from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import AssetParameters, ParameterizedAssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 
 
-class BookFactory(AssetFactory):
+class BookParameters(AssetParameters):
+    rel_scale: Annotated[float, Field(ge=1.0, le=1.5, json_schema_extra={"editable": True})]
+    skewness: Annotated[float, Field(ge=1.3, le=1.8, json_schema_extra={"editable": True})]
+    is_paperback_draw: Annotated[
+        float, Field(ge=0.0, le=1.0, json_schema_extra={"editable": True})
+    ]
+    margin: Annotated[float, Field(ge=0.005, le=0.01, json_schema_extra={"editable": True})]
+    thickness: Annotated[
+        float, Field(ge=0.002, le=0.003, json_schema_extra={"editable": True})
+    ]
+    scratch_draw: Annotated[
+        float, Field(ge=0.0, le=1.0, json_schema_extra={"editable": True})
+    ]
+    edge_wear_draw: Annotated[
+        float, Field(ge=0.0, le=1.0, json_schema_extra={"editable": True})
+    ]
+    texture_shared_draw: Annotated[
+        float, Field(ge=0.0, le=1.0, json_schema_extra={"editable": True})
+    ]
+    surface_material_gen: Any = Field(json_schema_extra={"editable": False})
+    cover_surface: Any = Field(json_schema_extra={"editable": False})
+    scratch: Any | None = Field(default=None, json_schema_extra={"editable": False})
+    edge_wear: Any | None = Field(default=None, json_schema_extra={"editable": False})
+    width: Annotated[float, Field(ge=0.08, le=0.15, json_schema_extra={"editable": True})] = (
+        0.1
+    )
+    depth: Annotated[float, Field(ge=0.01, le=0.02, json_schema_extra={"editable": True})] = (
+        0.015
+    )
+    offset: float = Field(default=0.0, json_schema_extra={"editable": False})
+
+
+class BookFactory(ParameterizedAssetFactory, AssetFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = BookParameters
+
     def __init__(self, factory_seed, coarse=False):
         super(BookFactory, self).__init__(factory_seed, coarse)
-        self.rel_scale = log_uniform(1, 1.5)
-        self.skewness = log_uniform(1.3, 1.8)
         self.unit = 0.0127
-        self.is_paperback = uniform() < 0.5
-        self.margin = uniform(0.005, 0.01)
-        self.offset = 0 if uniform() < 0.5 else log_uniform(0.002, 0.008)
-        self.thickness = uniform(0.002, 0.003)
+        self.init_legacy_parameters()
 
-        surface_gen_class = plaster.Plaster
-        self.surface_material_gen = surface_gen_class()
-
-        cover_surface_gen_class = text.Text
-        self.cover_surface_material_gen = cover_surface_gen_class()
-        self.cover_surface = self.cover_surface_material_gen()
-
-        if self.cover_surface == text.Text:
-            self.cover_surface = self.cover_surface(self.factory_seed)
-
+    def _sample_init_parameters(self, seed: int) -> BookParameters:
         scratch_prob, edge_wear_prob = material_assignments.wear_tear_prob
-        scratch, edge_wear = material_assignments.wear_tear
-        self.scratch = None if uniform() > scratch_prob else scratch()
-        self.edge_wear = None if uniform() > edge_wear_prob else edge_wear()
+        scratch_fn, edge_wear_fn = material_assignments.wear_tear
+        scratch_draw = uniform()
+        edge_wear_draw = uniform()
+        surface_material_gen = plaster.Plaster()
+        cover_surface_material_gen = text.Text()
+        cover_surface = cover_surface_material_gen()
+        if cover_surface == text.Text:
+            cover_surface = cover_surface(seed)
+        return BookParameters(
+            seed=seed,
+            rel_scale=log_uniform(1, 1.5),
+            skewness=log_uniform(1.3, 1.8),
+            is_paperback_draw=uniform(),
+            margin=uniform(0.005, 0.01),
+            thickness=uniform(0.002, 0.003),
+            scratch_draw=scratch_draw,
+            edge_wear_draw=edge_wear_draw,
+            texture_shared_draw=uniform(),
+            surface_material_gen=surface_material_gen,
+            cover_surface=cover_surface,
+            scratch=None if scratch_draw > scratch_prob else scratch_fn(),
+            edge_wear=None if edge_wear_draw > edge_wear_prob else edge_wear_fn(),
+        )
 
-        self.texture_shared = uniform() < 0.2
+    def _sample_spawn_parameters(
+        self, params: BookParameters, seed: int, i: int
+    ) -> BookParameters:
+        return params.model_copy(
+            update={
+                "width": log_uniform(0.08, 0.15),
+                "depth": uniform(0.01, 0.02),
+                "offset": 0 if uniform() < 0.5 else log_uniform(0.002, 0.008),
+            }
+        )
+
+    def apply_parameters(
+        self, params: BookParameters, *, spawn_scope: bool = True
+    ) -> None:
+        self.rel_scale = params.rel_scale
+        self.skewness = params.skewness
+        self.is_paperback = params.is_paperback_draw < 0.5
+        self.margin = params.margin
+        self.thickness = params.thickness
+        self.scratch = params.scratch
+        self.edge_wear = params.edge_wear
+        self.texture_shared = params.texture_shared_draw < 0.2
+        self.surface_material_gen = params.surface_material_gen
+        self.cover_surface = params.cover_surface
+        self._use_fixed_spawn_draws = spawn_scope
+        if spawn_scope:
+            self._width = params.width
+            self._depth = params.depth
+            self.offset = params.offset
 
     def create_asset(self, **params) -> bpy.types.Object:
         self.surface = self.surface_material_gen()
-
-        width = int(log_uniform(0.08, 0.15) * self.rel_scale / self.unit) * self.unit
+        width_raw = self._width if self._use_fixed_spawn_draws else log_uniform(0.08, 0.15)
+        depth_raw = self._depth if self._use_fixed_spawn_draws else uniform(0.01, 0.02)
+        width = int(width_raw * self.rel_scale / self.unit) * self.unit
         height = int(width * self.skewness / self.unit) * self.unit
-        depth = uniform(0.01, 0.02) * self.rel_scale
+        depth = depth_raw * self.rel_scale
         fn = self.make_paperback if self.is_paperback else self.make_hardcover
-        # noinspection PyArgumentList
         obj = fn(width, height, depth)
-
         return obj
 
     def finalize_assets(self, assets):
@@ -129,7 +202,12 @@ class BookFactory(AssetFactory):
         butil.apply_transform(obj, True)
         x, y, z = read_co(obj).T
         ratio = np.minimum(z / depth, 1 - z / depth)
-        x -= 4 * ratio * (1 - ratio) * self.offset
+        offset = (
+            self.offset
+            if self._use_fixed_spawn_draws
+            else (0 if uniform() < 0.5 else log_uniform(0.002, 0.008))
+        )
+        x -= 4 * ratio * (1 - ratio) * offset
         write_co(obj, np.stack([x, y, z]).T)
         self.make_cover(obj)
         butil.modify_mesh(obj, "SOLIDIFY", thickness=self.thickness)
@@ -145,18 +223,87 @@ class BookFactory(AssetFactory):
         butil.apply_transform(obj)
 
 
-class BookColumnFactory(AssetFactory):
+class BookColumnParameters(AssetParameters):
+    n_base_factories: Annotated[
+        int, Field(ge=1, le=3, json_schema_extra={"editable": True})
+    ]
+    n_books: Annotated[int, Field(ge=10, le=19, json_schema_extra={"editable": True})]
+    has_tilt_draw: Annotated[
+        float, Field(ge=0.0, le=1.0, json_schema_extra={"editable": True})
+    ]
+    max_angle: Annotated[
+        float, Field(ge=0.0, le=np.pi / 9, json_schema_extra={"editable": True})
+    ] = 0.0
+    base_factory_seeds: tuple[int, ...] = Field(
+        default=(), json_schema_extra={"editable": False}
+    )
+    book_factory_indices: tuple[int, ...] = Field(
+        default=(), json_schema_extra={"editable": False}
+    )
+    book_rotation_flip: tuple[bool, ...] = Field(
+        default=(), json_schema_extra={"editable": False}
+    )
+    book_rotation_angles: tuple[float, ...] = Field(
+        default=(), json_schema_extra={"editable": False}
+    )
+    base_factories: Any = Field(default=None, json_schema_extra={"editable": False})
+    max_rel_scale: float = Field(default=1.0, json_schema_extra={"editable": False})
+    max_skewness: float = Field(default=1.0, json_schema_extra={"editable": False})
+
+
+class BookColumnFactory(ParameterizedAssetFactory, AssetFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = BookColumnParameters
+
     def __init__(self, factory_seed, coarse=False):
         super(BookColumnFactory, self).__init__(factory_seed, coarse)
-        with FixedSeed(self.factory_seed):
-            self.base_factories = [
-                BookFactory(np.random.randint(1e5))
-                for _ in range(np.random.randint(1, 4))
-            ]
-            self.n_books = np.random.randint(10, 20)
-            self.max_angle = uniform(0, np.pi / 9) if uniform() < 0.7 else 0
-            self.max_rel_scale = max(f.rel_scale for f in self.base_factories)
-            self.max_skewness = max(f.skewness for f in self.base_factories)
+        self.init_legacy_parameters()
+
+    def _sample_init_parameters(self, seed: int) -> BookColumnParameters:
+        n_base = int(np.random.randint(1, 4))
+        has_tilt_draw = uniform()
+        max_angle = uniform(0, np.pi / 9) if has_tilt_draw < 0.7 else 0.0
+        base_factory_seeds = tuple(int(np.random.randint(1e5)) for _ in range(n_base))
+        base_factories = [BookFactory(s) for s in base_factory_seeds]
+        return BookColumnParameters(
+            seed=seed,
+            n_base_factories=n_base,
+            n_books=int(np.random.randint(10, 20)),
+            has_tilt_draw=has_tilt_draw,
+            max_angle=max_angle,
+            base_factory_seeds=base_factory_seeds,
+            base_factories=base_factories,
+            max_rel_scale=max(f.rel_scale for f in base_factories),
+            max_skewness=max(f.skewness for f in base_factories),
+        )
+
+    def _sample_spawn_parameters(
+        self, params: BookColumnParameters, seed: int, i: int
+    ) -> BookColumnParameters:
+        n = params.n_books
+        n_base = params.n_base_factories
+        return params.model_copy(
+            update={
+                "book_factory_indices": tuple(
+                    int(np.random.randint(0, n_base)) for _ in range(n)
+                ),
+                "book_rotation_flip": tuple(uniform() < 0.5 for _ in range(n)),
+                "book_rotation_angles": tuple(uniform(0, params.max_angle) for _ in range(n)),
+            }
+        )
+
+    def apply_parameters(
+        self, params: BookColumnParameters, *, spawn_scope: bool = True
+    ) -> None:
+        self.n_books = params.n_books
+        self.max_angle = params.max_angle
+        self.base_factories = params.base_factories
+        self.max_rel_scale = params.max_rel_scale
+        self.max_skewness = params.max_skewness
+        self._use_fixed_spawn_draws = spawn_scope
+        if spawn_scope:
+            self.book_factory_indices = params.book_factory_indices
+            self.book_rotation_flip = params.book_rotation_flip
+            self.book_rotation_angles = params.book_rotation_angles
 
     def create_placeholder(self, **kwargs) -> bpy.types.Object:
         height = 0.15 * self.max_rel_scale * self.max_skewness
@@ -174,25 +321,24 @@ class BookColumnFactory(AssetFactory):
     def create_asset(self, **params) -> bpy.types.Object:
         books = []
         for i in range(self.n_books):
-            factory = np.random.choice(self.base_factories)
+            if self._use_fixed_spawn_draws:
+                factory = self.base_factories[self.book_factory_indices[i]]
+                flip = self.book_rotation_flip[i]
+                angle = self.book_rotation_angles[i]
+            else:
+                factory = np.random.choice(self.base_factories)
+                flip = uniform() < 0.5
+                angle = uniform(0, self.max_angle)
             obj = factory.create_asset(i=i)
             x, y, z = read_co(obj).T
             obj.location = [-np.max(x), -np.min(y), -np.min(z)]
             butil.apply_transform(obj, True)
-            if uniform() < 0.5:
-                obj.rotation_euler = (
-                    np.pi / 2 - uniform(0, self.max_angle),
-                    0,
-                    np.pi / 2,
-                )
+            if flip:
+                obj.rotation_euler = (np.pi / 2 - angle, 0, np.pi / 2)
             else:
                 obj.location[-1] = -np.max(z)
                 butil.apply_transform(obj, True)
-                obj.rotation_euler = (
-                    np.pi / 2 + uniform(0, self.max_angle),
-                    0,
-                    np.pi / 2,
-                )
+                obj.rotation_euler = (np.pi / 2 + angle, 0, np.pi / 2)
             butil.apply_transform(obj)
             if i > 0:
                 obj.location[0] = 10

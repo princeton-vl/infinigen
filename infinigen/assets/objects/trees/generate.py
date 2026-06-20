@@ -4,12 +4,17 @@
 # Authors: Alexander Raistrick, Yiming Zuo, Alejandro Newell, Lingjie Mei
 
 
+from __future__ import annotations
+
 import logging
+
+from typing import Annotated, Any, ClassVar
 
 import bpy
 import gin
 import numpy as np
 from numpy.random import uniform
+from pydantic import Field
 
 from infinigen.assets.composition import material_assignments
 from infinigen.assets.objects.cloud import CloudFactory
@@ -35,6 +40,7 @@ from infinigen.assets.utils.misc import toggle_hide, toggle_show
 from infinigen.core import surface
 from infinigen.core.placement import detail
 from infinigen.core.placement.factory import AssetFactory, make_asset_collection
+from infinigen.core.placement.parameters import AssetParameters, ParameterizedAssetFactory
 from infinigen.core.placement.split_in_view import split_inview
 from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
@@ -502,49 +508,82 @@ class TreeFactory(GenericTreeFactory):
 
 
 @gin.configurable
-class BushFactory(GenericTreeFactory):
+class BushParameters(AssetParameters):
+    shrub_shape: Annotated[int, Field(ge=0, le=1, json_schema_extra={"editable": True})]
+    alpha: Annotated[float, Field(ge=0.0, le=0.3, json_schema_extra={"editable": True})]
+    leaf_width: Annotated[
+        float, Field(ge=0.1, le=0.6, json_schema_extra={"editable": True})
+    ]
+    pts: Annotated[int, Field(ge=0, le=99, json_schema_extra={"editable": True})]
+    leaf_type: str = Field(json_schema_extra={"editable": False})
+    trunk_surface: Any = Field(json_schema_extra={"editable": False})
+
+
+@gin.configurable
+class BushFactory(ParameterizedAssetFactory, GenericTreeFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = BushParameters
     n_leaf = 3
     n_twig = 3
     max_distance = 50
 
     def __init__(self, seed, coarse=False, **kwargs):
-        with FixedSeed(seed):
-            shrub_shape = np.random.randint(2)
-            trunk_surface = weighted_sample(material_assignments.bark)
-            tree_params, twig_params, leaf_params = treeconfigs.shrub(
-                shrub_shape=shrub_shape
-            )
+        self._bush_kwargs = kwargs
+        AssetFactory.__init__(self, seed, coarse)
+        self.init_legacy_parameters()
 
-        super(BushFactory, self).__init__(
-            seed,
-            tree_params,
-            child_col=None,
-            trunk_surface=trunk_surface,
-            coarse=coarse,
-            **kwargs,
+    def _sample_init_parameters(self, seed: int) -> BushParameters:
+        return BushParameters(
+            seed=seed,
+            shrub_shape=int(np.random.randint(2)),
+            alpha=float(np.random.rand() * 0.3),
+            leaf_width=float(np.random.rand() * 0.5 + 0.1),
+            pts=int(np.random.randint(100)),
+            leaf_type=str(
+                np.random.choice(["leaf_v2", "flower", "berry"], p=[0.5, 0.5, 0])
+            ),
+            trunk_surface=weighted_sample(material_assignments.bark),
         )
 
-        with FixedSeed(seed):
-            leaf_type = np.random.choice(
-                ["leaf_v2", "flower", "berry"], p=[0.5, 0.5, 0]
-            )
+    def apply_parameters(self, params: BushParameters, *, spawn_scope: bool = True) -> None:
+        self.shrub_shape = params.shrub_shape
+        self.alpha = params.alpha
+        self.leaf_width = params.leaf_width
+        self.pts = params.pts
+        self.leaf_type = params.leaf_type
+        self.trunk_surface = params.trunk_surface
+        self._use_fixed_spawn_draws = spawn_scope
 
+    def _run_post_init(self) -> None:
+        with FixedSeed(self.factory_seed):
+            tree_params, twig_params, leaf_params = treeconfigs.shrub(
+                shrub_shape=self.shrub_shape
+            )
+            leaf_params["alpha"] = self.alpha
+            leaf_params["leaf_width"] = self.leaf_width
+            GenericTreeFactory.__init__(
+                self,
+                self.factory_seed,
+                tree_params,
+                child_col=None,
+                trunk_surface=self.trunk_surface,
+                coarse=self.coarse,
+                **self._bush_kwargs,
+            )
             colname = f"assets:{self}.twigs"
             use_cached = colname in bpy.data.collections
-            if use_cached == coarse:
+            if use_cached == self.coarse:
                 logger.warning(
-                    f"In {self}, encountered {use_cached=} yet {coarse=}, unexpected since twigs are typically generated only in coarse"
+                    f"In {self}, encountered {use_cached=} yet {self.coarse=}, unexpected since twigs are typically generated only in coarse"
                 )
-
             if colname not in bpy.data.collections:
                 self.child_col = make_twig_collection(
-                    seed,
+                    self.factory_seed,
                     twig_params,
                     leaf_params,
-                    trunk_surface,
+                    self.trunk_surface,
                     self.n_leaf,
                     self.n_twig,
-                    leaf_type,
+                    self.leaf_type,
                 )
                 self.child_col.name = colname
                 assert (

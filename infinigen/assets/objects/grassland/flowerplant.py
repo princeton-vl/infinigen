@@ -3,6 +3,9 @@
 
 # Authors: Beining Han
 
+from __future__ import annotations
+
+from typing import Any, ClassVar
 
 import bpy
 import numpy as np
@@ -15,6 +18,13 @@ from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import (
+    AssetParameters,
+    LegacyBridgeParameters,
+    ParameterizedAssetFactory,
+    apply_bridge_parameters,
+    legacy_init_to_parameters,
+)
 from infinigen.core.tagging import tag_nodegroup, tag_object
 from infinigen.core.util import blender as butil
 
@@ -817,11 +827,48 @@ def geo_flowerplant(nw: NodeWrangler, **kwargs):
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": transform})
 
 
-class FlowerPlantFactory(AssetFactory):
+def _flower_plant_legacy_init(inst: Any, seed: int, coarse: bool) -> None:
+    inst.leaves_version_num = 4
+    inst.flowers_version_num = 1
+
+
+def _sample_flower_plant_spawn_fields() -> dict[str, Any]:
+    return {
+        "leaf_seeds": [int(randint(0, 1000, size=(1,))[0]) for _ in range(4)],
+        "flower_seeds": [int(randint(0, 1000, size=(1,))[0]) for _ in range(1)],
+        "flower_rads": [float(uniform(0.4, 0.7, size=(1,))[0]) for _ in range(1)],
+    }
+
+
+class FlowerPlantParameters(LegacyBridgeParameters):
+    pass
+
+
+class FlowerPlantFactory(ParameterizedAssetFactory, AssetFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = FlowerPlantParameters
+
     def __init__(self, factory_seed, coarse=False):
         super(FlowerPlantFactory, self).__init__(factory_seed, coarse=coarse)
-        self.leaves_version_num = 4
-        self.flowers_version_num = 1
+        self.init_legacy_parameters()
+
+    def _sample_init_parameters(self, seed: int) -> FlowerPlantParameters:
+        return legacy_init_to_parameters(
+            FlowerPlantParameters,
+            FlowerPlantFactory,
+            seed,
+            self.coarse,
+            init_fn=_flower_plant_legacy_init,
+        )
+
+    def _sample_spawn_parameters(
+        self, params: FlowerPlantParameters, seed: int, i: int
+    ) -> FlowerPlantParameters:
+        return params.model_copy(update=_sample_flower_plant_spawn_fields())
+
+    def apply_parameters(
+        self, params: FlowerPlantParameters, *, spawn_scope: bool = True
+    ) -> None:
+        apply_bridge_parameters(self, params, spawn_scope=spawn_scope)
 
     def create_asset(self, **params):
         bpy.ops.mesh.primitive_plane_add(
@@ -833,10 +880,26 @@ class FlowerPlantFactory(AssetFactory):
         )
         obj = bpy.context.active_object
 
-        # Make the Leaf and Delete It Later
+        if self._use_fixed_spawn_draws:
+            leaf_seeds = self.leaf_seeds
+            flower_seeds = self.flower_seeds
+            flower_rads = self.flower_rads
+        else:
+            leaf_seeds = [
+                int(randint(0, 1000, size=(1,))[0])
+                for _ in range(self.leaves_version_num)
+            ]
+            flower_seeds = [
+                int(randint(0, 1000, size=(1,))[0])
+                for _ in range(self.flowers_version_num)
+            ]
+            flower_rads = [
+                float(uniform(0.4, 0.7, size=(1,))[0])
+                for _ in range(self.flowers_version_num)
+            ]
+
         leaves = []
-        for _ in range(self.leaves_version_num):
-            lf_seed = randint(0, 1000, size=(1,))[0]
+        for lf_seed in leaf_seeds:
             leaf_model = Leaf.LeafFactory(
                 genome={"leaf_width": 0.35, "width_rand": 0.1}, factory_seed=lf_seed
             )
@@ -844,9 +907,7 @@ class FlowerPlantFactory(AssetFactory):
             leaves.append(leaf)
 
         flowers = []
-        for _ in range(self.flowers_version_num):
-            fw_seed = randint(0, 1000, size=(1,))[0]
-            rad = uniform(0.4, 0.7, size=(1,))[0]
+        for fw_seed, rad in zip(flower_seeds, flower_rads):
             flower_model = Flower.FlowerFactory(rad=rad, factory_seed=fw_seed)
             flower = flower_model.create_asset()
             flowers.append(flower)

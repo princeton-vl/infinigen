@@ -3,16 +3,21 @@
 
 # Authors: Beining Han
 
+from __future__ import annotations
+
+from typing import Annotated, Any, ClassVar, Literal
 
 import bpy
 import numpy as np
 from numpy.random import normal, randint, uniform
+from pydantic import Field
 
 from infinigen.assets.materials.plant import succulent
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import AssetParameters, ParameterizedAssetFactory
 from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 
@@ -503,10 +508,14 @@ def geometry_succulent_nodes(nw: NodeWrangler, **kwargs):
     petal_stem_curvature_scale = nw.new_node(
         Nodes.Value, label="petal_stem_curvature_scale"
     )
-    petal_stem_curvature_scale.outputs[0].default_value = np.abs(normal(0, 1.0))
+    petal_stem_curvature_scale.outputs[0].default_value = kwargs.get(
+        "petal_stem_curvature_scale", np.abs(normal(0, 1.0))
+    )
 
     petal_z_coutour_scale = nw.new_node(Nodes.Value, label="petal_z_coutour_scale")
-    petal_z_coutour_scale.outputs[0].default_value = uniform(0.4, 0.9)
+    petal_z_coutour_scale.outputs[0].default_value = kwargs.get(
+        "petal_z_coutour_scale", uniform(0.4, 0.9)
+    )
     material = kwargs["material"]
 
     for i in range(kwargs["num_bases"]):
@@ -576,121 +585,202 @@ def geometry_succulent_nodes(nw: NodeWrangler, **kwargs):
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": realized})
 
 
-class SucculentFactory(AssetFactory):
+class SucculentParameters(AssetParameters):
+    mode: Literal["thin_petal", "thick_petal"] = Field(
+        json_schema_extra={"editable": False}
+    )
+    succulent_506: Annotated[
+        float, Field(ge=-3.0, le=3.0, json_schema_extra={"editable": True})
+    ] = 0.0
+    succulent_509: Annotated[
+        float, Field(ge=0.4, le=0.9, json_schema_extra={"editable": True})
+    ] = 0.65
+    succulent_600: Annotated[
+        float, Field(ge=0.09, le=0.11, json_schema_extra={"editable": True})
+    ] = 0.1
+    contour_bit: Annotated[int, Field(ge=0, le=2, json_schema_extra={"editable": True})] = (
+        0
+    )
+    cross_x: Annotated[float, Field(ge=0.3, le=0.6, json_schema_extra={"editable": True})] = (
+        0.45
+    )
+    cross_y_bottom: Annotated[
+        float, Field(ge=0.08, le=0.25, json_schema_extra={"editable": True})
+    ] = 0.16
+    cross_y_top: Annotated[
+        float, Field(ge=-0.04, le=0.02, json_schema_extra={"editable": True})
+    ] = -0.01
+    diff_petal_scale: Annotated[
+        float, Field(ge=0.5, le=0.9, json_schema_extra={"editable": True})
+    ] = 0.7
+    init_petal_num: Annotated[int, Field(ge=5, le=14, json_schema_extra={"editable": True})] = (
+        8
+    )
+    material_bit: Annotated[int, Field(ge=0, le=2, json_schema_extra={"editable": True})] = 0
+    num_bases: Annotated[int, Field(ge=5, le=7, json_schema_extra={"editable": True})] = 6
+    base_radius: list[float] = Field(
+        default_factory=list, json_schema_extra={"editable": False}
+    )
+    petal_x_R: list[float] = Field(
+        default_factory=list, json_schema_extra={"editable": False}
+    )
+    base_petal_num: list[int] = Field(
+        default_factory=list, json_schema_extra={"editable": False}
+    )
+    base_petal_scale: list[float] = Field(
+        default_factory=list, json_schema_extra={"editable": False}
+    )
+    base_z: list[float] = Field(default_factory=list, json_schema_extra={"editable": False})
+    petal_curve_param: list[float] = Field(
+        default_factory=list, json_schema_extra={"editable": False}
+    )
+    material: Any = Field(default=None, json_schema_extra={"editable": False})
+
+
+class SucculentFactory(ParameterizedAssetFactory, AssetFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = SucculentParameters
+
     def __init__(self, factory_seed, coarse=False):
         super(SucculentFactory, self).__init__(factory_seed, coarse=coarse)
-        self.mode = np.random.choice(["thin_petal", "thick_petal"], p=[0.65, 0.35])
+        self.init_legacy_parameters()
 
-    def get_params(self, mode):
+    def _sample_init_parameters(self, seed: int) -> SucculentParameters:
+        mode = np.random.choice(["thin_petal", "thick_petal"], p=[0.65, 0.35])
+        return SucculentParameters(seed=seed, mode=mode)
+
+    def _sample_spawn_parameters(
+        self, params: SucculentParameters, seed: int, i: int
+    ) -> SucculentParameters:
+        return params.model_copy(update=self._sample_geometry(params.mode))
+
+    def apply_parameters(
+        self, params: SucculentParameters, *, spawn_scope: bool = True
+    ) -> None:
+        self.mode = params.mode
+        self._use_fixed_spawn_draws = spawn_scope
+        if spawn_scope:
+            self._geom = params
+
+    @staticmethod
+    def _sample_geometry(mode: str) -> dict[str, Any]:
         if mode == "thin_petal":
-            params = {}
-            params["cross_y_bottom"] = uniform(0.08, 0.25)
-            params["cross_y_top"] = uniform(-0.04, 0.02)
-            params["cross_x"] = uniform(0.3, 0.6)
-            # get geometry params on each base
+            cross_y_bottom = uniform(0.08, 0.25)
+            cross_y_top = uniform(-0.04, 0.02)
+            cross_x = uniform(0.3, 0.6)
             num_bases = randint(5, 8)
-            params["num_bases"] = num_bases
-            base_radius, petal_x_R, base_petal_num, base_petal_scale, base_z = (
-                [],
-                [],
-                [],
-                [],
-                [],
-            )
-            init_base_radius, diff_base_radius = uniform(0.09, 0.11), 0.1
-            init_x_R, diff_x_R = uniform(-1.2, -1.35), uniform(-0.7, -1.1)
+            init_base_radius = uniform(0.09, 0.11)
+            diff_base_radius = 0.1
+            init_x_R = uniform(-1.2, -1.35)
+            diff_x_R = uniform(-0.7, -1.1)
             init_petal_num = randint(num_bases, 15)
             diff_petal_scale = uniform(0.5, 0.9)
-            for i in range(num_bases):
-                base_radius.append(
-                    init_base_radius - (i * diff_base_radius) / num_bases
-                )
-                petal_x_R.append(init_x_R - (i * diff_x_R) / num_bases)
-                base_petal_num.append(init_petal_num - i + randint(0, 2))
-                base_petal_scale.append(1.0 - (i * diff_petal_scale) / num_bases)
-                base_z.append(0.0 + i * uniform(0.005, 0.008))
-            params["base_radius"] = base_radius
-            params["petal_x_R"] = petal_x_R
-            params["base_petal_num"] = base_petal_num
-            params["base_petal_scale"] = base_petal_scale
-            params["base_z"] = base_z
-
             contour_bit = randint(0, 3)
             material_bit = randint(0, 3)
-
-            if contour_bit == 0:
-                params["petal_curve_param"] = [0.08, 0.4, 0.46, 0.36, 0.17, 0.05]
-            elif contour_bit == 1:
-                params["petal_curve_param"] = [0.22, 0.37, 0.50, 0.49, 0.30, 0.08]
-            elif contour_bit == 2:
-                params["petal_curve_param"] = [0.21, 0.26, 0.31, 0.36, 0.29, 0.16]
-            else:
-                raise NotImplementedError
-
-            if material_bit == 0:
-                params["material"] = succulent.shader_green_transition_succulent
-            elif material_bit == 1:
-                params["material"] = succulent.shader_pink_transition_succulent
-            elif material_bit == 2:
-                params["material"] = succulent.shader_green_succulent
-            else:
-                raise NotImplementedError
-
-            return params
-
+            base_z_step = uniform(0.005, 0.008)
+            curve_options = [
+                [0.08, 0.4, 0.46, 0.36, 0.17, 0.05],
+                [0.22, 0.37, 0.50, 0.49, 0.30, 0.08],
+                [0.21, 0.26, 0.31, 0.36, 0.29, 0.16],
+            ]
+            material_options = [
+                succulent.shader_green_transition_succulent,
+                succulent.shader_pink_transition_succulent,
+                succulent.shader_green_succulent,
+            ]
         elif mode == "thick_petal":
-            params = {}
-            params["cross_y_bottom"] = uniform(0.22, 0.30)
-            params["cross_y_top"] = uniform(0.08, 0.15)
-            params["cross_x"] = uniform(0.14, 0.16)
-            # get geometry params on each base
+            cross_y_bottom = uniform(0.22, 0.30)
+            cross_y_top = uniform(0.08, 0.15)
+            cross_x = uniform(0.14, 0.16)
             num_bases = randint(3, 6)
-            params["num_bases"] = num_bases
-            base_radius, petal_x_R, base_petal_num, base_petal_scale, base_z = (
-                [],
-                [],
-                [],
-                [],
-                [],
-            )
-            init_base_radius, diff_base_radius = uniform(0.12, 0.14), 0.11
-            init_x_R, diff_x_R = uniform(-1.3, -1.4), uniform(-0.1, -1.2)
+            init_base_radius = uniform(0.12, 0.14)
+            diff_base_radius = 0.11
+            init_x_R = uniform(-1.3, -1.4)
+            diff_x_R = uniform(-0.1, -1.2)
             init_petal_num = randint(num_bases, 12)
             diff_petal_scale = uniform(0.6, 0.9)
-            for i in range(num_bases):
-                base_radius.append(
-                    init_base_radius - (i * diff_base_radius) / num_bases
-                )
-                petal_x_R.append(init_x_R - (i * diff_x_R) / num_bases)
-                base_petal_num.append(init_petal_num - i + randint(0, 2))
-                base_petal_scale.append(1.0 - (i * diff_petal_scale) / num_bases)
-                base_z.append(0.0 + i * uniform(0.005, 0.006))
-            params["base_radius"] = base_radius
-            params["petal_x_R"] = petal_x_R
-            params["base_petal_num"] = base_petal_num
-            params["base_petal_scale"] = base_petal_scale
-            params["base_z"] = base_z
-
             contour_bit = randint(0, 2)
             material_bit = randint(0, 2)
-
-            if contour_bit == 0:
-                params["petal_curve_param"] = [0.10, 0.36, 0.44, 0.45, 0.30, 0.24]
-            elif contour_bit == 1:
-                params["petal_curve_param"] = [0.16, 0.35, 0.48, 0.42, 0.30, 0.18]
-            else:
-                raise NotImplementedError
-
-            if material_bit == 0:
-                params["material"] = succulent.shader_yellow_succulent
-            elif material_bit == 1:
-                params["material"] = succulent.shader_whitish_green_succulent
-            else:
-                raise NotImplementedError
-
-            return params
+            base_z_step = uniform(0.005, 0.006)
+            curve_options = [
+                [0.10, 0.36, 0.44, 0.45, 0.30, 0.24],
+                [0.16, 0.35, 0.48, 0.42, 0.30, 0.18],
+            ]
+            material_options = [
+                succulent.shader_yellow_succulent,
+                succulent.shader_whitish_green_succulent,
+            ]
         else:
             raise NotImplementedError
+
+        base_radius, petal_x_R, base_petal_num, base_petal_scale, base_z = (
+            [],
+            [],
+            [],
+            [],
+            [],
+        )
+        for i in range(num_bases):
+            base_radius.append(init_base_radius - (i * diff_base_radius) / num_bases)
+            petal_x_R.append(init_x_R - (i * diff_x_R) / num_bases)
+            base_petal_num.append(init_petal_num - i + randint(0, 2))
+            base_petal_scale.append(1.0 - (i * diff_petal_scale) / num_bases)
+            base_z.append(0.0 + i * base_z_step)
+
+        return {
+            "succulent_506": normal(0, 1.0),
+            "succulent_509": uniform(0.4, 0.9),
+            "succulent_600": init_base_radius,
+            "contour_bit": contour_bit,
+            "cross_x": cross_x,
+            "cross_y_bottom": cross_y_bottom,
+            "cross_y_top": cross_y_top,
+            "diff_petal_scale": diff_petal_scale,
+            "init_petal_num": init_petal_num,
+            "material_bit": material_bit,
+            "num_bases": num_bases,
+            "base_radius": base_radius,
+            "petal_x_R": petal_x_R,
+            "base_petal_num": base_petal_num,
+            "base_petal_scale": base_petal_scale,
+            "base_z": base_z,
+            "petal_curve_param": curve_options[contour_bit],
+            "material": material_options[material_bit],
+        }
+
+    def _geometry_kwargs(self) -> dict[str, Any]:
+        if self._use_fixed_spawn_draws:
+            p = self._geom
+            return {
+                "cross_y_bottom": p.cross_y_bottom,
+                "cross_y_top": p.cross_y_top,
+                "cross_x": p.cross_x,
+                "num_bases": p.num_bases,
+                "base_radius": p.base_radius,
+                "petal_x_R": p.petal_x_R,
+                "base_petal_num": p.base_petal_num,
+                "base_petal_scale": p.base_petal_scale,
+                "base_z": p.base_z,
+                "petal_curve_param": p.petal_curve_param,
+                "material": p.material,
+                "petal_stem_curvature_scale": abs(p.succulent_506),
+                "petal_z_coutour_scale": p.succulent_509,
+            }
+        geom = self._sample_geometry(self.mode)
+        return {
+            "cross_y_bottom": geom["cross_y_bottom"],
+            "cross_y_top": geom["cross_y_top"],
+            "cross_x": geom["cross_x"],
+            "num_bases": geom["num_bases"],
+            "base_radius": geom["base_radius"],
+            "petal_x_R": geom["petal_x_R"],
+            "base_petal_num": geom["base_petal_num"],
+            "base_petal_scale": geom["base_petal_scale"],
+            "base_z": geom["base_z"],
+            "petal_curve_param": geom["petal_curve_param"],
+            "material": geom["material"],
+            "petal_stem_curvature_scale": abs(geom["succulent_506"]),
+            "petal_z_coutour_scale": geom["succulent_509"],
+        }
 
     def create_asset(self, **params):
         bpy.ops.mesh.primitive_plane_add(
@@ -701,23 +791,17 @@ class SucculentFactory(AssetFactory):
             scale=(1, 1, 1),
         )
         obj = bpy.context.active_object
-
-        params = self.get_params(self.mode)
-
         surface.add_geomod(
             obj,
             geometry_succulent_nodes,
             apply=True,
             attributes=[],
-            input_kwargs=params,
+            input_kwargs=self._geometry_kwargs(),
         )
-
         obj.scale = (0.2, 0.2, 0.2)
         obj.location.z += 0.01
         butil.apply_transform(obj, loc=True, scale=True)
-
         tag_object(obj, "succulent")
-
         return obj
 
 

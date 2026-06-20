@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 # Copyright (C) 2023, Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
@@ -11,6 +13,14 @@ from infinigen.assets.materials.wood.wood import shader_wood
 from infinigen.core import surface, tagging
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
+from typing import Any, ClassVar
+from infinigen.core.placement.parameters import (
+    AssetParameters,
+    LegacyBridgeParameters,
+    ParameterizedAssetFactory,
+    apply_bridge_parameters,
+    legacy_init_to_parameters,
+)
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 
@@ -476,13 +486,42 @@ class PlateBaseFactory(AssetFactory):
         return obj
 
 
-class PlateOnRackBaseFactory(AssetFactory):
-    def __init__(self, factory_seed, params={}, coarse=False):
-        super(PlateOnRackBaseFactory, self).__init__(factory_seed, coarse=coarse)
-        self.params = params
 
-        self.rack_fac = PlateRackBaseFactory(factory_seed, params=params)
-        self.plate_fac = PlateBaseFactory(factory_seed, params=params)
+def _plate_on_rack_legacy_init(inst: Any, seed: int, coarse: bool, params=None) -> None:
+    if params is None:
+        params = {}
+    inst.params = params
+    inst.rack_fac = PlateRackBaseFactory(seed, params=params)
+    inst.plate_fac = PlateBaseFactory(seed, params=params)
+
+
+class PlateOnRackBaseParameters(LegacyBridgeParameters):
+    pass
+
+class PlateOnRackBaseFactory(ParameterizedAssetFactory, AssetFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = PlateOnRackBaseParameters
+
+    def __init__(self, factory_seed, params=None, coarse=False):
+        if params is None:
+            params = {}
+        self._init_params = params
+        super(PlateOnRackBaseFactory, self).__init__(factory_seed, coarse=coarse)
+        self.init_legacy_parameters()
+
+    def _sample_init_parameters(self, seed: int) -> PlateOnRackBaseParameters:
+        return legacy_init_to_parameters(
+            PlateOnRackBaseParameters,
+            PlateOnRackBaseFactory,
+            seed,
+            self.coarse,
+            self._init_params,
+            init_fn=_plate_on_rack_legacy_init,
+        )
+
+    def apply_parameters(
+        self, params: PlateOnRackBaseParameters, *, spawn_scope: bool = True
+    ) -> None:
+        apply_bridge_parameters(self, params, spawn_scope=spawn_scope)
 
     def get_asset_params(self, i):
         if self.params.get("base_gap", None) is None:

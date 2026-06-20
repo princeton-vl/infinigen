@@ -4,15 +4,21 @@
 # Authors: Beining Han
 # Acknowledgements: This file draws inspiration from https://blenderartists.org/t/extrude-face-along-curve-with-geometry-nodes/1432653/3
 
+from __future__ import annotations
+
+from typing import Annotated, ClassVar
+
 import bpy
 import numpy as np
 from numpy.random import normal, randint, uniform
+from pydantic import Field
 
 from infinigen.assets.materials.plant import snake_plant
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import AssetParameters, ParameterizedAssetFactory
 from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 
@@ -367,9 +373,25 @@ def geometry_snake_plant_nodes(nw: NodeWrangler, **kwargs):
     )
 
 
-class SnakePlantFactory(AssetFactory):
+class SnakePlantParameters(AssetParameters):
+    num_petals: Annotated[int, Field(ge=4, le=7, json_schema_extra={"editable": True})]
+
+
+class SnakePlantFactory(ParameterizedAssetFactory, AssetFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = SnakePlantParameters
+
     def __init__(self, factory_seed, coarse=False):
         super(SnakePlantFactory, self).__init__(factory_seed, coarse=coarse)
+        self.init_legacy_parameters()
+
+    def _sample_init_parameters(self, seed: int) -> SnakePlantParameters:
+        return SnakePlantParameters(seed=seed, num_petals=int(randint(4, 8)))
+
+    def apply_parameters(
+        self, params: SnakePlantParameters, *, spawn_scope: bool = True
+    ) -> None:
+        self.num_petals = params.num_petals
+        self._use_fixed_spawn_draws = spawn_scope
 
     def create_asset(self, **params):
         bpy.ops.mesh.primitive_plane_add(
@@ -381,8 +403,9 @@ class SnakePlantFactory(AssetFactory):
         )
         obj = bpy.context.active_object
 
-        petal_num = randint(4, 8)
-        params["num_petals"] = petal_num
+        params["num_petals"] = (
+            self.num_petals if self._use_fixed_spawn_draws else int(randint(4, 8))
+        )
 
         surface.add_geomod(
             obj, geometry_snake_plant_nodes, apply=True, input_kwargs=params

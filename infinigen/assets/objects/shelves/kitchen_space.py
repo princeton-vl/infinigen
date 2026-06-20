@@ -3,9 +3,14 @@
 
 # Authors: Yiming Zuo, Stamatis Alexandropoulos
 
+from __future__ import annotations
+
+from typing import Annotated, ClassVar
+
 import bpy
 from mathutils import Vector
 from numpy.random import choice, uniform
+from pydantic import Field
 
 from infinigen.assets.materials.ceramic.marble import shader_marble
 from infinigen.assets.objects.shelves.kitchen_cabinet import KitchenCabinetFactory
@@ -16,6 +21,7 @@ from infinigen.core import surface, tagging
 from infinigen.core import tags as t
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import AssetParameters, ParameterizedAssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 
@@ -192,31 +198,69 @@ def geometry_node_to_bbox(nw: NodeWrangler):
     )
 
 
-class KitchenSpaceFactory(AssetFactory):
+class KitchenSpaceParameters(AssetParameters):
+    kitchen_space_211: Annotated[
+        float, Field(ge=1.0, le=2.0, json_schema_extra={"editable": True})
+    ] = 1.0
+    dimension_x: Annotated[float, Field(ge=0.7, le=1.0, json_schema_extra={"editable": True})]
+    dimension_y: Annotated[float, Field(ge=1.7, le=5.0, json_schema_extra={"editable": True})]
+    dimension_z: Annotated[float, Field(ge=2.3, le=2.5, json_schema_extra={"editable": True})]
+    cabinet_bottom_height: Annotated[
+        float, Field(ge=0.8, le=1.0, json_schema_extra={"editable": True})
+    ]
+    cabinet_top_height: Annotated[
+        float, Field(ge=0.8, le=1.0, json_schema_extra={"editable": True})
+    ]
+
+
+class KitchenSpaceFactory(ParameterizedAssetFactory, AssetFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = KitchenSpaceParameters
+
     def __init__(self, factory_seed, coarse=False, dimensions=None, island=False):
+        self._init_dimensions = dimensions
+        self._init_island = island
         super(KitchenSpaceFactory, self).__init__(factory_seed, coarse=coarse)
+        self.init_legacy_parameters()
 
-        with FixedSeed(factory_seed):
-            if dimensions is None:
-                dimensions = Vector(
-                    (
-                        uniform(0.7, 1),
-                        uniform(1.7, 5),
-                        uniform(2.3, 2.5),
-                    )
-                )
-
-            self.island = island
-            if self.island:
-                dimensions.x *= uniform(1.5, 2)
-
-            self.dimensions = dimensions
-
-            self.params = self.sample_parameters(dimensions)
-
-    def sample_parameters(self, dimensions):
+    def sample_geometry_parameters(self, dimensions):
         self.cabinet_bottom_height = uniform(0.8, 1.0)
         self.cabinet_top_height = uniform(0.8, 1.0)
+
+    def _sample_init_parameters(self, seed: int) -> KitchenSpaceParameters:
+        if self._init_dimensions is None:
+            dimension_x = uniform(0.7, 1)
+            dimension_y = uniform(1.7, 5)
+            dimension_z = uniform(2.3, 2.5)
+        else:
+            dimension_x = self._init_dimensions.x
+            dimension_y = self._init_dimensions.y
+            dimension_z = self._init_dimensions.z
+        kitchen_space_211 = uniform(1.5, 2.0) if self._init_island else 1.0
+        return KitchenSpaceParameters(
+            seed=seed,
+            kitchen_space_211=kitchen_space_211,
+            dimension_x=dimension_x,
+            dimension_y=dimension_y,
+            dimension_z=dimension_z,
+            cabinet_bottom_height=uniform(0.8, 1.0),
+            cabinet_top_height=uniform(0.8, 1.0),
+        )
+
+    def apply_parameters(
+        self, params: KitchenSpaceParameters, *, spawn_scope: bool = True
+    ) -> None:
+        self.island = self._init_island
+        self.dimensions = Vector(
+            (
+                params.dimension_x * params.kitchen_space_211,
+                params.dimension_y,
+                params.dimension_z,
+            )
+        )
+        self.cabinet_bottom_height = params.cabinet_bottom_height
+        self.cabinet_top_height = params.cabinet_top_height
+        self.params = {}
+        self._use_fixed_spawn_draws = spawn_scope
 
     def create_placeholder(self, **kwargs) -> bpy.types.Object:
         x, y, z = self.dimensions
@@ -314,9 +358,53 @@ class KitchenSpaceFactory(AssetFactory):
         return kitchen_space
 
 
+class KitchenIslandParameters(AssetParameters):
+    kitchen_space_211: Annotated[
+        float, Field(ge=1.5, le=2.0, json_schema_extra={"editable": True})
+    ]
+    dimension_x: Annotated[float, Field(ge=0.7, le=1.0, json_schema_extra={"editable": True})]
+    dimension_y: Annotated[float, Field(ge=1.7, le=5.0, json_schema_extra={"editable": True})]
+    dimension_z: Annotated[float, Field(ge=2.3, le=2.5, json_schema_extra={"editable": True})]
+    cabinet_bottom_height: Annotated[
+        float, Field(ge=0.8, le=1.0, json_schema_extra={"editable": True})
+    ]
+    cabinet_top_height: Annotated[
+        float, Field(ge=0.8, le=1.0, json_schema_extra={"editable": True})
+    ]
+
+
 class KitchenIslandFactory(KitchenSpaceFactory):
-    def __init__(self, factory_seed):
-        super(KitchenIslandFactory, self).__init__(
-            factory_seed=factory_seed,
-            island=True,
+    parameters_model: ClassVar[type[AssetParameters]] = KitchenIslandParameters
+
+    def __init__(self, factory_seed, coarse=False):
+        self._init_dimensions = None
+        self._init_island = True
+        AssetFactory.__init__(self, factory_seed, coarse=coarse)
+        self.init_legacy_parameters()
+
+    def _sample_init_parameters(self, seed: int) -> KitchenIslandParameters:
+        return KitchenIslandParameters(
+            seed=seed,
+            kitchen_space_211=uniform(1.5, 2.0),
+            dimension_x=uniform(0.7, 1),
+            dimension_y=uniform(1.7, 5),
+            dimension_z=uniform(2.3, 2.5),
+            cabinet_bottom_height=uniform(0.8, 1.0),
+            cabinet_top_height=uniform(0.8, 1.0),
         )
+
+    def apply_parameters(
+        self, params: KitchenIslandParameters, *, spawn_scope: bool = True
+    ) -> None:
+        self.island = True
+        self.dimensions = Vector(
+            (
+                params.dimension_x * params.kitchen_space_211,
+                params.dimension_y,
+                params.dimension_z,
+            )
+        )
+        self.cabinet_bottom_height = params.cabinet_bottom_height
+        self.cabinet_top_height = params.cabinet_top_height
+        self.params = {}
+        self._use_fixed_spawn_draws = spawn_scope

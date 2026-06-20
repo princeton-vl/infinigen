@@ -1,50 +1,83 @@
 # Copyright (C) 2024, Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
-import bmesh
-
 # Authors: Lingjie Mei
+from __future__ import annotations
+
+from typing import Any, ClassVar
+
+import bmesh
 import bpy
 import numpy as np
 from numpy.random import uniform
 
 from infinigen.assets.utils.decorate import subsurf, write_co
 from infinigen.assets.utils.object import new_grid
+from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import (
+    AssetParameters,
+    LegacyBridgeParameters,
+    ParameterizedAssetFactory,
+    apply_bridge_parameters,
+    legacy_init_to_parameters,
+)
 from infinigen.core.util import blender as butil
-from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 
 from .base import TablewareFactory
 
 
-class KnifeFactory(TablewareFactory):
+def _knife_legacy_init(inst: Any, seed: int, coarse: bool) -> None:
+    TablewareFactory.__init__(inst, seed, coarse)
+    inst.x_length = log_uniform(0.4, 0.7)
+    inst.has_guard = uniform(0, 1) < 0.7
+    if inst.has_guard:
+        inst.y_length = log_uniform(0.1, 0.5)
+        inst.y_guard = inst.y_length * log_uniform(0.2, 0.4)
+    else:
+        inst.y_length = log_uniform(0.1, 0.2)
+        inst.y_guard = inst.y_length * log_uniform(0.3, 0.5)
+    inst.x_guard = uniform(0, 0.2)
+    inst.has_tip = uniform(0, 1) < 0.7
+    inst.thickness = log_uniform(0.02, 0.03)
+    y_off_rand = uniform(0, 1)
+    inst.y_offset = (
+        0.2
+        if y_off_rand < 1 / 8
+        else 0.5
+        if y_off_rand < 1 / 4
+        else uniform(0.2, 0.6)
+    )
+    inst.guard_type = "round" if uniform(0, 1) < 0.6 else "double"
+    inst.guard_depth = log_uniform(0.2, 1.0) * inst.thickness
+    inst.scale = log_uniform(0.2, 0.3)
+
+
+class KnifeParameters(LegacyBridgeParameters):
+    pass
+
+
+class KnifeFactory(ParameterizedAssetFactory, TablewareFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = KnifeParameters
     x_end = 0.5
 
     def __init__(self, factory_seed, coarse=False):
-        super().__init__(factory_seed, coarse)
-        with FixedSeed(factory_seed):
-            self.x_length = log_uniform(0.4, 0.7)
-            self.has_guard = uniform(0, 1) < 0.7
-            if self.has_guard:
-                self.y_length = log_uniform(0.1, 0.5)
-                self.y_guard = self.y_length * log_uniform(0.2, 0.4)
-            else:
-                self.y_length = log_uniform(0.1, 0.2)
-                self.y_guard = self.y_length * log_uniform(0.3, 0.5)
-            self.x_guard = uniform(0, 0.2)
-            self.has_tip = uniform(0, 1) < 0.7
-            self.thickness = log_uniform(0.02, 0.03)
-            y_off_rand = uniform(0, 1)
-            self.y_offset = (
-                0.2
-                if y_off_rand < 1 / 8
-                else 0.5
-                if y_off_rand < 1 / 4
-                else uniform(0.2, 0.6)
-            )
-            self.guard_type = "round" if uniform(0, 1) < 0.6 else "double"
-            self.guard_depth = log_uniform(0.2, 1.0) * self.thickness
-            self.scale = log_uniform(0.2, 0.3)
+        AssetFactory.__init__(self, factory_seed, coarse)
+        self.init_legacy_parameters()
+
+    def _sample_init_parameters(self, seed: int) -> KnifeParameters:
+        return legacy_init_to_parameters(
+            KnifeParameters,
+            KnifeFactory,
+            seed,
+            self.coarse,
+            init_fn=_knife_legacy_init,
+        )
+
+    def apply_parameters(
+        self, params: KnifeParameters, *, spawn_scope: bool = True
+    ) -> None:
+        apply_bridge_parameters(self, params, spawn_scope=spawn_scope)
 
     def create_asset(self, **params) -> bpy.types.Object:
         x_anchors = np.array(

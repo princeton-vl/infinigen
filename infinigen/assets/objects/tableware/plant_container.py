@@ -2,6 +2,10 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 # Authors: Lingjie Mei
+from __future__ import annotations
+
+from typing import Any, ClassVar
+
 import bpy
 import numpy as np
 from numpy.random import uniform
@@ -26,6 +30,13 @@ from infinigen.assets.utils.decorate import (
 )
 from infinigen.assets.utils.object import join_objects, new_bbox, origin2lowest
 from infinigen.core.placement.factory import AssetFactory
+from infinigen.core.placement.parameters import (
+    AssetParameters,
+    LegacyBridgeParameters,
+    ParameterizedAssetFactory,
+    apply_bridge_parameters,
+    legacy_init_to_parameters,
+)
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform, weighted_sample
@@ -44,7 +55,22 @@ class PlantPotFactory(PotFactory):
         self.surface = weighted_sample(material_assignments.decorative_hard)()()
 
 
-class PlantContainerFactory(AssetFactory):
+def _plant_container_legacy_init(inst: Any, seed: int, coarse: bool) -> None:
+    inst.base_factory = PlantPotFactory(seed, coarse)
+    fn = np.random.choice(PlantContainerFactory.plant_factories)
+    inst.dirt_ratio = uniform(0.7, 0.8)
+    inst.plant_factory = fn(seed)
+    inst.side_size = inst.base_factory.scale * inst.base_factory.r_expand
+    inst.top_size = uniform(0.4, 0.6)
+    inst.dirt_surface = weighted_sample(material_assignments.potting_soil)()
+
+
+class PlantContainerParameters(LegacyBridgeParameters):
+    pass
+
+
+class PlantContainerFactory(ParameterizedAssetFactory, AssetFactory):
+    parameters_model: ClassVar[type[AssetParameters]] = PlantContainerParameters
     plant_factories = [
         CactusFactory,
         MushroomFactory,
@@ -56,17 +82,21 @@ class PlantContainerFactory(AssetFactory):
 
     def __init__(self, factory_seed, coarse=False):
         super(PlantContainerFactory, self).__init__(factory_seed, coarse)
-        with FixedSeed(self.factory_seed):
-            self.base_factory = PlantPotFactory(self.factory_seed, coarse)
+        self.init_legacy_parameters()
 
-            fn = np.random.choice(self.plant_factories)
+    def _sample_init_parameters(self, seed: int) -> PlantContainerParameters:
+        return legacy_init_to_parameters(
+            PlantContainerParameters,
+            PlantContainerFactory,
+            seed,
+            self.coarse,
+            init_fn=_plant_container_legacy_init,
+        )
 
-            self.dirt_ratio = uniform(0.7, 0.8)
-            self.plant_factory = fn(self.factory_seed)
-            self.side_size = self.base_factory.scale * self.base_factory.r_expand
-            self.top_size = uniform(0.4, 0.6)
-
-            self.dirt_surface = weighted_sample(material_assignments.potting_soil)()
+    def apply_parameters(
+        self, params: PlantContainerParameters, *, spawn_scope: bool = True
+    ) -> None:
+        apply_bridge_parameters(self, params, spawn_scope=spawn_scope)
 
     def create_placeholder(self, **kwargs) -> bpy.types.Object:
         return new_bbox(
@@ -125,20 +155,43 @@ class PlantContainerFactory(AssetFactory):
         return obj
 
 
+class LargePlantContainerParameters(LegacyBridgeParameters):
+    pass
+
+
+def _large_plant_container_legacy_init(
+    inst: LargePlantContainerFactory, seed: int, coarse: bool
+) -> None:
+    _plant_container_legacy_init(inst, seed, coarse)
+    with FixedSeed(seed):
+        inst.base_factory.depth = log_uniform(1.0, 1.5)
+        inst.base_factory.scale = log_uniform(0.15, 0.25)
+        inst.side_size = (
+            inst.base_factory.scale * uniform(1.5, 2.0) * inst.base_factory.r_expand
+        )
+        inst.top_size = uniform(1, 1.5)
+
+
 class LargePlantContainerFactory(PlantContainerFactory):
+    parameters_model: ClassVar[type[LegacyBridgeParameters]] = (
+        LargePlantContainerParameters
+    )
     plant_factories = [MonocotFactory]
 
     def __init__(self, factory_seed, coarse=False):
-        super(LargePlantContainerFactory, self).__init__(factory_seed, coarse)
-        with FixedSeed(self.factory_seed):
-            self.base_factory.depth = log_uniform(1.0, 1.5)
-            self.base_factory.scale = log_uniform(0.15, 0.25)
-            self.side_size = (
-                self.base_factory.scale * uniform(1.5, 2.0) * self.base_factory.r_expand
-            )
-            self.top_size = uniform(1, 1.5)
-            # if WALL_HEIGHT - 2*WALL_THICKNESS < 3:
-            #     self.top_size = uniform(1.5, WALL_HEIGHT - 2*WALL_THICKNESS)
-            # else:
-            #     self.top_size = uniform(1.5, 3)
-            # print(f"{self.side_size=} {self.top_size=} {WALL_THICKNESS=} {WALL_HEIGHT=}")
+        AssetFactory.__init__(self, factory_seed, coarse)
+        self.init_legacy_parameters()
+
+    def _sample_init_parameters(self, seed: int) -> LargePlantContainerParameters:
+        return legacy_init_to_parameters(
+            LargePlantContainerParameters,
+            LargePlantContainerFactory,
+            seed,
+            self.coarse,
+            init_fn=_large_plant_container_legacy_init,
+        )
+
+    def apply_parameters(
+        self, params: LargePlantContainerParameters, *, spawn_scope: bool = True
+    ) -> None:
+        apply_bridge_parameters(self, params, spawn_scope=spawn_scope)
