@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools", "numpy", "Cython"]
+requires = ["setuptools<81.0.0", "numpy", "Cython"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -48,6 +48,8 @@ dependencies = [
     # used by trimesh, we could specify "trimesh[easy]" but this brings more packages
     "python-fcl",
     "rtree",
+
+    "setuptools<81.0.0",
 ]
 
 [project.optional-dependencies]
@@ -56,7 +58,7 @@ terrain = [
     "pyrender<0.2.0",
     # landlab depends on `setuptools` but doesn't explicitly list it as a
     # dependency; We include it to avoid problems with newer Python versions.
-    "setuptools"
+    "setuptools<81.0.0"
 ]
 vis = [
     "einops",
