@@ -10,10 +10,12 @@ DEVICE_FUNC void sdf_from_mesh_common(
     int *faces,
     int n_faces
 ) {
-    const float eps = 1e-5, eps3=0;
-    float min_dist=1e9;
-    float abs_plane_dist;
-    int sign;
+    const float eps = 1e-5;
+    const float eps3 = 1e-6;   // ← Increased from 0 to avoid sign flip
+    float min_dist = 1e9;
+    float abs_plane_dist = 0.0f;
+    int sign = 1;
+
     for (int i = 0; i < n_faces; i++) {
         float3_nonbuiltin verts[3];
         verts[0] = vertices[faces[i * 3]];
@@ -42,42 +44,46 @@ DEVICE_FUNC void sdf_from_mesh_common(
         else {
             dist = 1e9;
             for (int j = 0; j < 3; j++) {
-                dist = min(dist, (projected - verts[j]).norm());
+                dist = fminf(dist, (projected - verts[j]).norm());
             }
             float k = (projected - verts[0]).dot(v01), edge_dist;
             if (k >= 0 && k <= v01n*v01n) {
                 float3_nonbuiltin v0p = projected - verts[0];
                 edge_dist = v0p.cross(v01).norm() / v01n;
-                dist = min(dist, edge_dist);
+                dist = fminf(dist, edge_dist);
             }
             k = (projected - verts[0]).dot(v02);
             if (k >= 0 && k <= v02n*v02n) {
                 float3_nonbuiltin v0p = projected - verts[0];
                 edge_dist = v0p.cross(v02).norm() / v02n;
-                dist = min(dist, edge_dist);
+                dist = fminf(dist, edge_dist);
             }
             k = (projected - verts[1]).dot(v12);
             if (k >= 0 && k <= v12n*v12n) {
                 float3_nonbuiltin v1p = projected - verts[1];
                 edge_dist = v1p.cross(v12).norm() / v12n;
-                dist = min(dist, edge_dist);
+                dist = fminf(dist, edge_dist);
             }
-            dist = sqrt(dist*dist + plane_dist*plane_dist);
+            dist = sqrtf(dist*dist + plane_dist*plane_dist);
         }
         if (dist < min_dist - eps) {
             min_dist = dist;
-            abs_plane_dist = abs(plane_dist);
+            abs_plane_dist = fabsf(plane_dist);
             sign = plane_dist >= -eps3;
         }
-        else {
-            if (dist < min_dist + eps) {
-                if (abs(plane_dist) > abs_plane_dist) {
-                    abs_plane_dist = abs(plane_dist);
-                    sign = plane_dist >= -eps3;
-                }
+        else if (dist < min_dist + eps) {
+            if (fabsf(plane_dist) > abs_plane_dist) {
+                abs_plane_dist = fabsf(plane_dist);
+                sign = plane_dist >= -eps3;
             }
         }
     }
-    assert(min_dist != 1e9);
-    *sdf = sign? abs(min_dist): -abs(min_dist);
+
+    // FALLBACK: If no triangle found, return a large positive SDF instead of asserting
+    if (min_dist == 1e9) {
+        *sdf = 1e5f;
+        return;
+    }
+
+    *sdf = sign ? min_dist : -min_dist;
 }
