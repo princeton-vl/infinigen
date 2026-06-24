@@ -503,13 +503,11 @@ def execute_generators(
     else:
         data["vector"] = pf.nodes.shader.geometry().position
 
-    rngs = rng.spawn(len(generators))
     realized = False
     generator_times = {}
 
-    for (generator_str, category, generator_func), rng in zip(
-        generators, rngs, strict=True
-    ):
+    for generator_str, category, generator_func in generators:
+        gen_rng, rng = rng.spawn(2)
         start_time = time.perf_counter()
 
         logger.info(f"Executing {generator_str} as {generator_func.__name__}")
@@ -535,11 +533,13 @@ def execute_generators(
             for cam_idx in data.get("camera_indices", [0]):
                 exp_data["camera"] = data["cameras"][cam_idx]
                 result = _execute_step(
-                    generator_str, category, generator_func, exp_data, rng
+                    generator_str, category, generator_func, exp_data, gen_rng
                 )
                 _unpack_by_category(category, result, data)
         else:
-            result = _execute_step(generator_str, category, generator_func, data, rng)
+            result = _execute_step(
+                generator_str, category, generator_func, data, gen_rng
+            )
             _unpack_by_category(category, result, data)
 
         if pf.context.globals.current_trace_level is None:
@@ -572,17 +572,34 @@ def resolve_pass_argument(export_type: ExportType) -> RenderPass | None:
     raise ValueError(f"No default config found for {export_type}")
 
 
+class _DebugFilter(logging.Filter):
+    """Pass records at/above base_level always; for finer (DEBUG) records, pass only
+    those from infinigen/procfunc loggers matching the -d substrings (or all if -d was
+    given with no substrings). Applied at the handler so it catches loggers created
+    lazily after configuration, which a one-shot per-logger level pass would miss."""
+
+    def __init__(self, base_level: int, substrings: list[str]):
+        super().__init__()
+        self.base_level = base_level
+        self.substrings = substrings
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        if record.levelno >= self.base_level:
+            return True
+        if not record.name.startswith(("infinigen", "procfunc")):
+            return False
+        return not self.substrings or any(s in record.name for s in self.substrings)
+
+
 def _configure_log_level(args):
     base_level = logging.getLevelNamesMapping()[args.loglevel]
-    logging.root.setLevel(base_level)
-    for name in logging.root.manager.loggerDict:
-        if not name.startswith("infinigen") and not name.startswith("procfunc"):
-            continue
-        level = base_level
-        if args.debug is not None:
-            if not args.debug or any(s in name for s in args.debug):
-                level = logging.DEBUG
-        logging.getLogger(name).setLevel(level)
+    if args.debug is None:
+        logging.root.setLevel(base_level)
+        return
+    logging.root.setLevel(logging.DEBUG)
+    debug_filter = _DebugFilter(base_level, args.debug)
+    for handler in logging.root.handlers:
+        handler.addFilter(debug_filter)
 
 
 def _main():  # noqa: C901
