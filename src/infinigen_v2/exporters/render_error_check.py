@@ -3,10 +3,15 @@ import sys
 import threading
 from collections.abc import Iterator
 from contextlib import contextmanager
+from pathlib import Path
 from typing import NamedTuple
 
 import bpy
 import numpy as np
+import procfunc as pf
+
+from infinigen_v2.exporters.util.blender_render import DisplacementMode
+from infinigen_v2.exporters.util.format import ExportType
 
 SHADER_NODE_COUNT_FAIL = 1000
 
@@ -352,3 +357,84 @@ def check_material_uv_coords(
         _layer_issue(obj.name, mat.name, layer, info, attr_names) for layer in required
     )
     return [i for i in issues if i is not None]
+
+
+def _context_meshes(objects: list[pf.MeshObject] | None) -> list[bpy.types.Object]:
+    """The realized bpy object per MeshObject, or every scene object when None."""
+    if objects is None:
+        return list(bpy.data.objects)
+    return [obj.item() for obj in objects]
+
+
+def _context_materials(objects: list[pf.MeshObject] | None) -> list[bpy.types.Material]:
+    """Materials assigned to the given objects, or every in-use material when None."""
+    if objects is None:
+        return [m for m in bpy.data.materials if m.users]
+    mats = {}
+    for obj in objects:
+        for slot in obj.item().material_slots:
+            if slot.material is not None:
+                mats[slot.material.name] = slot.material
+    return list(mats.values())
+
+
+def assert_displacement_coords_safe(
+    objects: list[pf.MeshObject] | None = None,
+    displacement_mode: DisplacementMode = DisplacementMode.DISPLACEMENT_AND_BUMP,
+):
+    """Geometric displacement (DISPLACEMENT/BOTH) silently flattens when driven by
+    named-attribute nodes; fail loudly listing the offending materials."""
+    if displacement_mode not in [
+        DisplacementMode.DISPLACEMENT,
+        DisplacementMode.DISPLACEMENT_AND_BUMP,
+    ]:
+        return
+    unsafe = unsafe_displacement_materials(_context_materials(objects))
+    if unsafe:
+        raise DisplacementCoordError(
+            "materials drive displacement from named-attribute nodes, which Cycles "
+            "does not evaluate in the displacement pass (geometry renders flat); "
+            f"use coord()/geometry() instead: {unsafe}"
+        )
+
+
+def assert_shader_complexity_ok(objects: list[pf.MeshObject] | None = None):
+    over = {
+        m.name: c
+        for m in _context_materials(objects)
+        if (c := count_material_nodes(m)) >= SHADER_NODE_COUNT_FAIL
+    }
+    if over:
+        raise ShaderTooComplexError(
+            f"materials exceed {SHADER_NODE_COUNT_FAIL} flattened nodes: {over}"
+        )
+
+
+def assert_uv_coords_satisfied(objects: list[pf.MeshObject] | None = None):
+    """Materials that sample UV coordinates absent or degenerate on the mesh render
+    flat (the wall_art-class bug); fail loudly."""
+    issues = [
+        issue
+        for obj in _context_meshes(objects)
+        if obj.type == "MESH" and getattr(obj, "material_slots", None)
+        for mat_index in range(len(obj.material_slots))
+        for issue in check_material_uv_coords(obj, mat_index=mat_index)
+    ]
+    if issues:
+        raise UVCoordError(
+            f"materials sample invalid UV coordinates (renders flat): {issues}"
+        )
+
+
+@pf.tracer.primitive
+def render_validity_check(
+    objects: list[pf.MeshObject],
+    displacement_mode: DisplacementMode = DisplacementMode.DISPLACEMENT_AND_BUMP,
+) -> dict[ExportType, list[Path]]:
+    """Run every render_cycles validity check (displacement coords, shader
+    complexity, UV coords) WITHOUT rendering, so scenes/refactors can be
+    error-checked cheaply. Raises on the first failure."""
+    assert_displacement_coords_safe(objects, displacement_mode)
+    assert_shader_complexity_ok(objects)
+    assert_uv_coords_satisfied(objects)
+    return {}

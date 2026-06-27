@@ -6,26 +6,16 @@
 # - Alexander Raistrick: refactor to procfunc/infinigen v2
 
 import math
-from functools import partial
 from typing import NamedTuple
 
 import numpy as np
 import procfunc as pf
 from procfunc.nodes import types as t
 
-from infinigen_v2.generators.shaders.composites import (
-    fabric_patterned,
-    splats_overlay,
-    wood_planks,
-)
-from infinigen_v2.generators.shaders.masks import splats
-from infinigen_v2.generators.shaders.materials import (
-    fabric,
-    glass_no_refraction,
-    metal_brushed,
-    paint,
-    plastic,
-    wood_grain,
+from infinigen_v2.generators.shaders.functionality_lists import (
+    furniture_fabric,
+    furniture_material_distribution,
+    glass_material_distribution,
 )
 from infinigen_v2.generators.util.curve import curve_to_mesh_with_uv
 
@@ -209,57 +199,6 @@ def window_dimensions_distribution(
     return pf.Vector((pf.random.uniform(rng, 0.05, 0.12), width, height))
 
 
-def window_frame_paint_distribution(rng: pf.RNG, vec) -> pf.Material:
-    value = pf.random.clip_gaussian(rng, 0.5, 0.4, 0.1, 0.9)
-    saturation = pf.random.clip_gaussian(rng, 0.1, 0.15, 0.0, 0.5)
-    hue = pf.random.uniform(rng, 0.0, 1.0)
-    color = pf.color.hsv_color(hue=hue, saturation=saturation, value=value)
-
-    displacement_pct = pf.random.uniform(rng, 0.0, 0.1)
-    return paint.paint_distribution(
-        rng, vec, base_color=color, displacement_pct=displacement_pct
-    )
-
-
-def window_frame_material_distribution(rng: pf.RNG, vec) -> pf.Material:
-    material_func = pf.control.choice(
-        rng,
-        [
-            (wood_grain.wood_grain_distribution, 1.0),
-            (wood_planks.wood_planks_distribution, 1.0),
-            (window_frame_paint_distribution, 1.0),
-            (metal_brushed.metal_brushed_linear_distribution, 1.0),
-            (plastic.plastic_grayscale_distribution, 1.0),
-        ],
-    )
-    return material_func(rng, vec)
-
-
-def curtain_fabric_distribution(
-    rng: pf.RNG,
-    vector: pf.ProcNode[pf.Vector],
-) -> pf.Material:
-    rngs = rng.spawn(2)
-    translucency = pf.random.clip_gaussian(rngs[0], 0.4, 0.2, 0.05, 0.8)
-
-    opt1 = partial(fabric.fabric_distribution, translucency=translucency)
-    opt2 = partial(
-        fabric_patterned.fabric_patterned_distribution, translucency=translucency
-    )
-    opt3 = partial(fabric.fabric_distribution, translucency=0.0)
-
-    option = pf.control.choice(
-        rngs[1],
-        [
-            (opt1, 1.5),
-            (opt2, 1.0),
-            (opt3, 1.0),
-        ],
-    )
-
-    return option(rngs[1], vector)
-
-
 class CurtainResult(NamedTuple):
     mesh: pf.MeshObject
 
@@ -274,18 +213,10 @@ def curtain_distribution(
         dimensions = window_dimensions_distribution(rng)
     vec = pf.nodes.shader.coord().uv
     if material is None:
-        material = curtain_fabric_distribution(rng, vec)
+        material = furniture_fabric(rng, vec)
 
     if rail_material is None:
-        rail_material_func = pf.control.choice(
-            rng,
-            [
-                (wood_grain.wood_grain_distribution, 1.0),
-                (plastic.plastic_grayscale_distribution, 1.0),
-                (metal_brushed.metal_brushed_linear_distribution, 1.0),
-            ],
-        )
-        rail_material = rail_material_func(rng, vec)
+        rail_material = furniture_material_distribution(rng, vec)
 
     frame_depth = pf.random.uniform(rng, 0.05, 0.1)
     depth = frame_depth * pf.random.uniform(rng, 0.3, 1.0)
@@ -698,63 +629,6 @@ def glass_pane(
     )
 
 
-def splats_gradient_window(
-    rng: pf.RNG,
-    vector: t.SocketOrVal[pf.Vector],
-    glass_height: float,
-) -> pf.ProcNode[float]:
-    uv = pf.nodes.shader.coord().uv
-
-    reach = pf.random.uniform(rng, 0.2, 0.6)
-
-    top_start = glass_height - reach * glass_height
-    other_start = reach * glass_height
-    res = pf.control.choice(
-        rng, [((top_start, glass_height), 0.5), ((other_start, 0.0), 0.5)]
-    )
-    gradient_start, gradient_end = res[0], res[1]
-    return splats.splats_mask_distribution(
-        rng=rng,
-        vector=vector,
-        allow_gradient=True,
-        gradient_fac=uv.x,
-        gradient_start=gradient_start,
-        gradient_end=gradient_end,
-    )
-
-
-def window_glass_splats_distribution(
-    rng: pf.RNG,
-    vector: t.SocketOrVal[pf.Vector],
-    glass_height: float,
-) -> pf.Material:
-    coord = pf.nodes.shader.coord()
-    splats_vector = coord.object
-
-    splats_window = partial(
-        splats_gradient_window,
-        glass_height=glass_height,
-    )
-
-    mask_fn = pf.control.choice(
-        rng,
-        [
-            (splats_window, 2),
-            (splats.splats_mask_distribution, 1.0),
-            (lambda *_, **__: splats.SplatsMaskResult(mask=0.0), 5),
-        ],
-    )
-    mask = mask_fn(rng=rng, vector=splats_vector).mask
-
-    roughness = pf.random.clip_gaussian(rng, 0.02, 0.03, 0.0, 0.3)
-    glass = glass_no_refraction.glass_no_refraction_distribution(
-        rng, vector, roughness=roughness
-    )
-    grime = splats_overlay.splats_base_material_distribution(rng, splats_vector)
-    surface = pf.nodes.shader.mix_shader(factor=mask, a=glass.surface, b=grime.surface)
-    return pf.Material(surface=surface)
-
-
 def window_distribution(
     rng: pf.RNG,
     dimensions: pf.Vector | None = None,
@@ -824,9 +698,9 @@ def window_distribution(
 
     vec = pf.nodes.shader.coord().uv
     if frame_material is None:
-        frame_material = window_frame_material_distribution(rng_frame, vec)
+        frame_material = furniture_material_distribution(rng_frame, vec)
     if glass_material is None:
-        glass_material = window_glass_splats_distribution(
+        glass_material = glass_material_distribution(
             rng_glass, vec, glass_height=dimensions.z
         )
 

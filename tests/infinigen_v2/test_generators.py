@@ -10,10 +10,21 @@ from procfunc.codegen import to_python
 from procfunc.tracer import TraceLevel
 from procfunc.util.manifest import import_item
 
+from infinigen_v2.exporters.render_error_check import (
+    assert_displacement_coords_safe,
+    assert_shader_complexity_ok,
+    assert_uv_coords_satisfied,
+)
 from infinigen_v2.generators import GENERATORS_MANIFEST
 from infinigen_v2.util.codestats import compute_stats
 
 T = TypeVar("T")
+
+
+def _assert_render_valid(objects: list[pf.MeshObject]):
+    assert_displacement_coords_safe(objects)
+    assert_shader_complexity_ok(objects)
+    assert_uv_coords_satisfied(objects)
 
 
 def _manifest_params(df, defaults: dict):
@@ -71,6 +82,10 @@ def test_generators_material(rng, pathspec, min_parameters):
     ]
     assert len(sockets) > 0, f"No sockets in {res=}"
 
+    plane = pf.ops.primitives.mesh_plane(size=1)
+    pf.ops.object.set_material(plane, material=res)
+    _assert_render_valid([plane])
+
     validate_trace_generator(material_sample, rng, min_parameters=min_parameters)
 
 
@@ -92,6 +107,9 @@ def test_generators_object(rng, pathspec, min_parameters):
     assert callable(func)
     res = func(rng=rng)
     assert isinstance(res, pf.MeshObject) or hasattr(res, "mesh"), res
+
+    mesh = res if isinstance(res, pf.MeshObject) else res.mesh
+    _assert_render_valid([mesh])
 
     validate_trace_generator(func, rng, min_parameters=min_parameters)
 

@@ -274,7 +274,19 @@ def planks_cutter_distribution(
     brick_width = pf.random.uniform(rng, 0.8, 1.2)
     brick_height = pf.random.uniform(rng, 0.08, 0.2)
     brick_scaling = pf.random.uniform(rng, 0.5, 1.5)
-    shift = pf.random.uniform(rng, 0.0, 1)
+    # shift is in brick-width units. Real wood floors use canonical staggers
+    # (1/2 running bond, 1/3 etc) — uniform(0,1) would land on visually awkward
+    # offsets where rows nearly align. Pick from discrete canonical staggers
+    # plus a wider random branch for variety.
+    shift = pf.control.choice(
+        rng,
+        [
+            (0.5, 3.0),
+            (1.0 / 3.0, 2.0),
+            (0.25, 1.0),
+            (pf.random.uniform(rng, 0.2, 0.8), 1.0),
+        ],
+    )
     irregularity = pf.control.choice(
         rng,
         [
@@ -282,7 +294,9 @@ def planks_cutter_distribution(
             (pf.random.uniform(rng, 0.3, 0.7), 1.0),
         ],
     )
-    gab = pf.random.exponential(rng, 0.015)
+    # gab is a fractional gap (relative to min(brick_width, brick_height)/2);
+    # keep it small but never absurd from the exponential tail.
+    gab = pf.random.clip_gaussian(rng, 0.03, 0.02, 0.005, 0.12)
     round_corner = pf.random.uniform(rng, 0.0, 0.2)
     warp_strength = pf.random.exponential(rng, 0.12)
     warp_size = pf.random.uniform(rng, 0, 50.0)

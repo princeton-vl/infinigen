@@ -6,16 +6,12 @@ from procfunc.nodes import types as t
 
 from infinigen_v2.generators.shaders.functionality_lists import (
     furniture_material_distribution,
+    glass_material_distribution,
 )
-from infinigen_v2.generators.shaders.materials import glass_no_refraction
 
 
 class CabinetResult(NamedTuple):
     mesh: pf.MeshObject
-
-
-def cabinet_glass_material_distribution(rng: pf.RNG, vec) -> pf.Material:
-    return glass_no_refraction.glass_no_refraction_distribution(rng, vec)
 
 
 @pf.nodes.node_function
@@ -1029,7 +1025,7 @@ def cabinet_distribution(
         panel_lower_material = furniture_material_distribution(rng, vec)
 
     if panel_upper_material is None:
-        panel_upper_material = cabinet_glass_material_distribution(rng, vec)
+        panel_upper_material = glass_material_distribution(rng, vec)
 
     side_board_thickness = pf.random.clip_gaussian(rng, 0.02, 0.002, 0.015, 0.025)
     division_board_thickness = pf.random.clip_gaussian(rng, 0.02, 0.002, 0.015, 0.025)

@@ -1,8 +1,10 @@
 import procfunc as pf
 
+from infinigen_v2.generators.shaders.masks import cracks
 from infinigen_v2.generators.shaders.masks.cracks import (
     cracks_flakes,
 )
+from infinigen_v2.generators.shaders.materials import paint as paint_material
 from infinigen_v2.generators.shaders.materials.paint import paint, paint_distribution
 
 
@@ -53,6 +55,29 @@ def paint_weartear_flakes(
     return pf.Material(
         surface=surface,
         displacement=displacement,
+    )
+
+
+def cracked_paint_overlay_distribution(
+    rng: pf.RNG,
+    vector: pf.ProcNode[pf.Vector],
+    material: pf.Material,
+) -> pf.Material:
+    """Aged paint coat over an existing material: a fresh paint layer cracks and
+    flakes away to reveal the underlying surface through the crack mask."""
+    rng_paint, rng_cracks = rng.spawn(2)
+    paint_value = pf.random.clip_gaussian(rng_paint, 0.5, 0.4, 0.1, 0.9)
+    color = paint_material.paint_color_distribution(rng_paint, value=paint_value)
+    paint_coat = paint_distribution(rng_paint, vector, base_color=color)
+    mask = cracks.cracks_distribution(
+        rng_cracks,
+        vector,
+        displacement_a=material.displacement,
+        displacement_b=paint_coat.displacement,
+        height_threshold=0.0,
+    ).mask
+    return paint_overlay_distribution(
+        rng_cracks, vector, material=material, paint=paint_coat, mask=mask
     )
 
 

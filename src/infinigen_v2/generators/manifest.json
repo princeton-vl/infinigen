@@ -9,7 +9,7 @@
   },
   {
     "category": "Exporter",
-    "name": "infinigen_v2.exporters.render_cycles.render_validity_check"
+    "name": "infinigen_v2.exporters.render_error_check.render_validity_check"
   },
   {
     "category": "Exporter",
@@ -67,10 +67,6 @@
   {
     "category": "Mask",
     "name": "infinigen_v2.generators.shaders.masks.edgewear.edgewear_distribution"
-  },
-  {
-    "category": "Mask",
-    "name": "infinigen_v2.generators.shaders.masks.scratches.scratches_distribution"
   },
   {
     "category": "Mask",
@@ -146,6 +142,22 @@
   {
     "category": "MaterialOverlay",
     "name": "infinigen_v2.generators.shaders.composites.splats_overlay.splats_overlay_distribution"
+  },
+  {
+    "category": "MaterialOverlay",
+    "name": "infinigen_v2.generators.shaders.composites.scratches_overlay.scratches_overlay_distribution"
+  },
+  {
+    "category": "Mask",
+    "name": "infinigen_v2.generators.shaders.masks.scratches.scratches_mask_distribution"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen_v2.generators.shaders.composites.scratches_overlay.scratched_wood_distribution"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen_v2.generators.shaders.composites.scratches_overlay.scratched_metal_distribution"
   },
   {
     "category": "Material",

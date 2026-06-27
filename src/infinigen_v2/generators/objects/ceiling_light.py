@@ -11,16 +11,12 @@ import procfunc as pf
 from procfunc.nodes import types as t
 
 from infinigen_v2.generators.objects.lamp import point_light_indoor_distribution
+from infinigen_v2.generators.shaders.functionality_lists import (
+    furniture_material_distribution,
+)
 from infinigen_v2.generators.shaders.materials.emissive_nonblocking import (
     lamp_bulb_nonemissive,
 )
-from infinigen_v2.generators.shaders.materials.metal_brushed import (
-    metal_brushed_radial_distribution,
-)
-from infinigen_v2.generators.shaders.materials.plastic import (
-    plastic_grayscale_distribution,
-)
-from infinigen_v2.generators.shaders.materials.wood_grain import wood_grain_distribution
 
 
 class CeilingLightGeometryResult(NamedTuple):
@@ -138,21 +134,6 @@ def black_for_reflections(
     return pf.Material(surface=surface)
 
 
-def lamp_material_distribution(
-    rng: pf.RNG,
-    vector: pf.ProcNode[pf.Vector],
-) -> pf.Material:
-    material_func = pf.control.choice(
-        rng,
-        [
-            (plastic_grayscale_distribution, 0.2),
-            (wood_grain_distribution, 0.2),
-            (metal_brushed_radial_distribution, 0.2),
-        ],
-    )
-    return material_func(rng, vector)
-
-
 def ceiling_light_distribution(
     rng: pf.RNG,
     energy: float | None = None,
@@ -168,7 +149,7 @@ def ceiling_light_distribution(
     curvature = pf.random.uniform(rng, 0.1, 0.5)
 
     vec = pf.nodes.shader.coord().uv
-    frame_shader = lamp_material_distribution(rng, vec)
+    frame_shader = furniture_material_distribution(rng, vec)
     frame_shader = black_for_reflections(frame_shader.surface)
     frame_material = frame_shader
 

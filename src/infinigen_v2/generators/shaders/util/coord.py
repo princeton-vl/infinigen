@@ -1,4 +1,3 @@
-import math
 from typing import NamedTuple
 
 import procfunc as pf
@@ -75,30 +74,4 @@ def space_warp(
     return SpaceWarpResult(
         vector=vector_1,
         fac=fac.fac,
-    )
-
-
-def uv_maybe_rotate(
-    rng: pf.RNG,
-    vector: t.SocketOrVal[pf.Vector],
-    rotation_z=None,
-):
-    if rotation_z is None:
-        rotation_z = pf.control.choice(
-            rng,
-            [
-                (0.0, 12),
-                (math.pi / 2, 1),
-                (math.pi / 4, 1),
-                (-math.pi / 2, 1),
-                (-math.pi / 4, 1),
-                (pf.random.uniform(rng, 0.0, 2 * math.pi), 4),
-            ],
-        )
-
-    return pf.nodes.shader.mapping(
-        vector=vector,
-        location=(0.0, 0.0, 0.0),
-        rotation=(0.0, 0.0, rotation_z),
-        scale=(1.0, 1.0, 1.0),
     )

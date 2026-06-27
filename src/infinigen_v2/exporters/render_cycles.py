@@ -12,6 +12,12 @@ import bpy
 import procfunc as pf
 
 from infinigen_v2.exporters.camera_pose import save_camera_poses
+from infinigen_v2.exporters.render_error_check import (
+    assert_displacement_coords_safe,
+    assert_shader_complexity_ok,
+    assert_uv_coords_satisfied,
+    detect_cycles_errors,
+)
 from infinigen_v2.exporters.util.blender_render import (
     DisplacementMode,
     configure_compositor_viewlayer_output,
@@ -24,16 +30,6 @@ from infinigen_v2.exporters.util.format import (
     ExportType,
     RenderPass,
     ensure_path_placeholders,
-)
-from infinigen_v2.exporters.util.render_error_check import (
-    SHADER_NODE_COUNT_FAIL,
-    DisplacementCoordError,
-    ShaderTooComplexError,
-    UVCoordError,
-    check_material_uv_coords,
-    count_material_nodes,
-    detect_cycles_errors,
-    unsafe_displacement_materials,
 )
 from infinigen_v2.util.camera_projection import (
     adjust_camera_sensor,
@@ -169,63 +165,6 @@ def configure_cycles_performance(
 
     system = bpy.context.preferences.system
     system.max_shader_compilation_subprocesses = pf.context.globals.num_cpu_cores
-
-
-def _assert_displacement_coords_safe(displacement_mode: DisplacementMode):
-    """Geometric displacement (DISPLACEMENT/BOTH) silently flattens when driven by
-    named-attribute nodes; fail loudly listing the offending materials."""
-    if displacement_mode not in [
-        DisplacementMode.DISPLACEMENT,
-        DisplacementMode.DISPLACEMENT_AND_BUMP,
-    ]:
-        return
-    unsafe = unsafe_displacement_materials()
-    if unsafe:
-        raise DisplacementCoordError(
-            "materials drive displacement from named-attribute nodes, which Cycles "
-            "does not evaluate in the displacement pass (geometry renders flat); "
-            f"use coord()/geometry() instead: {unsafe}"
-        )
-
-
-def _assert_shader_complexity_ok():
-    over = {
-        m.name: c
-        for m in bpy.data.materials
-        if m.users and (c := count_material_nodes(m)) >= SHADER_NODE_COUNT_FAIL
-    }
-    if over:
-        raise ShaderTooComplexError(
-            f"materials exceed {SHADER_NODE_COUNT_FAIL} flattened nodes: {over}"
-        )
-
-
-def _assert_uv_coords_satisfied():
-    """Materials that sample UV coordinates absent or degenerate on the mesh render
-    flat (the wall_art-class bug); fail loudly."""
-    issues = [
-        issue
-        for obj in bpy.data.objects
-        if obj.type == "MESH" and getattr(obj, "material_slots", None)
-        for mat_index in range(len(obj.material_slots))
-        for issue in check_material_uv_coords(obj, mat_index=mat_index)
-    ]
-    if issues:
-        raise UVCoordError(
-            f"materials sample invalid UV coordinates (renders flat): {issues}"
-        )
-
-
-def run_render_validity_checks(
-    displacement_mode: DisplacementMode = DisplacementMode.DISPLACEMENT_AND_BUMP,
-):
-    """Run every render_cycles validity check (displacement coords, shader
-    complexity, UV coords) and raise on the first failure. Shared by the
-    render_cycles path and the render_validity_check exporter so the checks
-    have a single source of truth."""
-    _assert_displacement_coords_safe(displacement_mode)
-    _assert_shader_complexity_ok()
-    _assert_uv_coords_satisfied()
 
 
 def _autorender_filepath(
@@ -433,7 +372,9 @@ def _render_cycles_impl(
     if len(render_passes) == 0:
         return result
 
-    run_render_validity_checks(displacement_mode)
+    assert_displacement_coords_safe(objects, displacement_mode)
+    assert_shader_complexity_ok(objects)
+    assert_uv_coords_satisfied(objects)
     replay = logger.getEffectiveLevel() <= logging.INFO
     with detect_cycles_errors(replay=replay):
         bpy.ops.render.render(animation=True)
@@ -598,26 +539,9 @@ def render_cycles_ground_truth(
         )
 
 
-@pf.tracer.primitive
-def render_validity_check(
-    objects: list[pf.MeshObject],
-    camera: pf.CameraObject,
-    output_folder: Path,
-    render_passes: list[RenderPass],
-    displacement_mode: DisplacementMode = DisplacementMode.DISPLACEMENT_AND_BUMP,
-) -> dict[ExportType, list[Path]]:
-    """Run every render_cycles validity check (displacement coords, shader
-    complexity, UV coords) WITHOUT rendering, so scenes/refactors can be
-    error-checked cheaply."""
-    run_render_validity_checks(displacement_mode)
-    return {}
-
-
 __all__ = [
     "render_cycles",
     "render_cycles_ground_truth",
-    "render_validity_check",
-    "run_render_validity_checks",
     "RENDER_CYCLES_PASS_TYPES",
     "RENDER_CYCLES_GT_PASS_TYPES",
 ]

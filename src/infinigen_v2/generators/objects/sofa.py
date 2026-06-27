@@ -12,11 +12,10 @@ import numpy as np
 import procfunc as pf
 from procfunc.nodes import types as t
 
-from infinigen_v2.generators.shaders.composites import fabric_patterned
 from infinigen_v2.generators.shaders.functionality_lists import (
+    furniture_fabric,
     furniture_material_distribution,
 )
-from infinigen_v2.generators.shaders.materials import fabric
 
 
 class SofaResult(NamedTuple):
@@ -617,22 +616,6 @@ def sofa(
     return geometry
 
 
-def sofa_fabric_distribution(
-    rng: pf.RNG,
-    vec: pf.ProcNode[pf.Vector],
-) -> pf.Material:
-    val = pf.random.clip_gaussian(rng, 0.4, 0.3, 0.1, 0.9)
-    color = fabric.fabric_color_distribution(rng, value=val)
-    fab = pf.control.choice(
-        rng,
-        [
-            (fabric.fabric_distribution(rng, vec, color), 1),
-            (fabric_patterned.fabric_patterned_distribution(rng, vec), 2),
-        ],
-    )
-    return fab
-
-
 def sofa_distribution(
     rng: pf.RNG,
     dimensions: pf.Vector | None = None,
@@ -678,7 +661,7 @@ def sofa_distribution(
 
     vec = pf.nodes.shader.coord().uv
     if material is None:
-        material = sofa_fabric_distribution(rng, vec)
+        material = furniture_fabric(rng, vec, translucency=0.0)
     if foot_material is None:
         foot_material = furniture_material_distribution(rng, vec)
 
@@ -710,5 +693,5 @@ def sofa_distribution(
     )
     obj = pf.nodes.to_mesh_object(res)
     pf.ops.uv.cube_project(obj, uv_name="UVMap")
-    pf.ops.modifier.subdivide_surface(obj, levels=4, _skip_apply=True)
+    pf.ops.modifier.subdivide_surface(obj, levels=5, _skip_apply=True)
     return SofaResult(mesh=obj)

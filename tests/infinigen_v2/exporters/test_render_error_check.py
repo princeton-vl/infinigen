@@ -4,7 +4,7 @@ import procfunc as pf
 import pytest
 from procfunc.util.manifest import import_item
 
-from infinigen_v2.exporters.util.render_error_check import (
+from infinigen_v2.exporters.render_error_check import (
     SHADER_NODE_COUNT_FAIL,
     DisplacementCoordError,
     check_material_uv_coords,
@@ -128,7 +128,9 @@ _FUNCTIONALITY_MATERIAL_FUNCS = [
     "material_sample", _FUNCTIONALITY_MATERIAL_FUNCS, ids=lambda f: f.__name__
 )
 def test_functionality_material_under_node_budget(material_sample):
-    _assert_material_under_node_budget(material_sample, material_sample.__name__)
+    _assert_material_under_node_budget(
+        material_sample, material_sample.__name__, seeds=range(10)
+    )
 
 
 def _bricks_material(vector):
