@@ -44,12 +44,11 @@ class LivingroomResult(NamedTuple):
     rugs: list[pf.MeshObject] | None = None
 
 
-@pf.tracer.grammar
-def livingroom_nofurniture_distribution(
-    rng: pf.RNG,
+def _livingroom_nofurniture_distribution_impl(
+    rng_room: pf.RNG,
     dimensions: pf.Vector | None = None,
 ) -> LivingroomResult:
-    rng_shape, rng_walls, rng_ceiling, rng_skirting = rng.spawn(4)
+    rng_shape, rng_walls, rng_ceiling, rng_skirting = rng_room.spawn(4)
 
     shape = room_shape_distribution(rng_shape, dimensions=dimensions)
     logger.info(f"Created room shape with {len(shape.flat_walls)} flat walls")
@@ -103,17 +102,12 @@ def livingroom_nofurniture_distribution(
     )
 
 
-@pf.tracer.grammar
-def livingroom_distribution(
-    rng: pf.RNG,
-    dimensions: pf.Vector | None = None,
-    frame_start: int = 1,
-    frame_end: int = 1,
+def _livingroom_distribution_impl(
+    result: LivingroomResult,
+    rng_furniture: pf.RNG,
+    frame_start: int,
+    frame_end: int,
 ) -> LivingroomResult:
-    rng_room, rng_furniture = rng.spawn(2)
-
-    result = livingroom_nofurniture_distribution(rng_room, dimensions=dimensions)
-
     furniture = room_furniture_distribution(
         rng_furniture,
         dimensions=result.dimensions,
@@ -147,19 +141,10 @@ def livingroom_distribution(
     )
 
 
-@pf.tracer.grammar
-def livingroom_with_smallobj_distribution(
-    rng: pf.RNG,
-    dimensions: pf.Vector | None = None,
-    frame_start: int = 1,
-    frame_end: int = 1,
+def _livingroom_with_smallobj_distribution_impl(
+    result: LivingroomResult,
+    rng_small: pf.RNG,
 ) -> LivingroomResult:
-    rng_room, rng_small = rng.spawn(2)
-
-    result = livingroom_distribution(
-        rng_room, dimensions=dimensions, frame_start=frame_start, frame_end=frame_end
-    )
-
     rng_pool, rng_place = rng_small.spawn(2)
     pool = small_objects_collection_distribution(rng_pool)
     (
@@ -254,6 +239,44 @@ def livingroom_with_smallobj_distribution(
         all_objects=all_objects,
         colliders=ccol.collision_set(all_objects, existing=result.colliders),
     )
+
+
+# Each variant splits rng the same way (lane 0 room, 1 furniture, 2 small objects)
+# and never nests the others, so spawn(3)[0] gives every variant the same room.
+@pf.tracer.grammar
+def livingroom_nofurniture_distribution(
+    rng: pf.RNG,
+    dimensions: pf.Vector | None = None,
+) -> LivingroomResult:
+    rng_room, _rng_furniture, _rng_small = rng.spawn(3)
+    return _livingroom_nofurniture_distribution_impl(rng_room, dimensions=dimensions)
+
+
+@pf.tracer.grammar
+def livingroom_distribution(
+    rng: pf.RNG,
+    dimensions: pf.Vector | None = None,
+    frame_start: int = 1,
+    frame_end: int = 1,
+) -> LivingroomResult:
+    rng_room, rng_furniture, _rng_small = rng.spawn(3)
+    result = _livingroom_nofurniture_distribution_impl(rng_room, dimensions=dimensions)
+    return _livingroom_distribution_impl(result, rng_furniture, frame_start, frame_end)
+
+
+@pf.tracer.grammar
+def livingroom_with_smallobj_distribution(
+    rng: pf.RNG,
+    dimensions: pf.Vector | None = None,
+    frame_start: int = 1,
+    frame_end: int = 1,
+) -> LivingroomResult:
+    rng_room, rng_furniture, rng_small = rng.spawn(3)
+    result = _livingroom_nofurniture_distribution_impl(rng_room, dimensions=dimensions)
+    result = _livingroom_distribution_impl(
+        result, rng_furniture, frame_start, frame_end
+    )
+    return _livingroom_with_smallobj_distribution_impl(result, rng_small)
 
 
 room_with_all_objects = livingroom_with_smallobj_distribution

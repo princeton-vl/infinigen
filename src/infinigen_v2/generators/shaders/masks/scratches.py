@@ -366,14 +366,15 @@ def scratches_layer_distribution(
 ):
     """One scratch layer: pick the linear or random pattern and sample its
     parameters fresh over the given base shader/displacement."""
+    rng_choice, rng_func = rng.spawn(2)
     func = pf.control.choice(
-        rng,
+        rng_choice,
         [
             (scratches_random_distribution, 1.0),
             (scratches_linear_distribution, 1.5),
         ],
     )
-    return func(rng, vector, base_shader, base_displacement, scratch_shader, scale)
+    return func(rng_func, vector, base_shader, base_displacement, scratch_shader, scale)
 
 
 def scratches_mask_distribution(

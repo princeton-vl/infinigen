@@ -1762,9 +1762,12 @@ def tile_mask_distribution(
     border: t.SocketOrVal[float] | None = None,
     flatness: t.SocketOrVal[float] | None = None,
 ) -> TileShapeResult:
-    params = _resolve_tile_params(rng, subtiles_number, aspect_ratio, border, flatness)
+    rng_params, rng_choice = rng.spawn(2)
+    params = _resolve_tile_params(
+        rng_params, subtiles_number, aspect_ratio, border, flatness
+    )
     func = pf.control.choice(
-        rng,
+        rng_choice,
         [
             (star, 1.0),
             (spanish_bound, 1.0),

@@ -333,7 +333,7 @@ def small_objects_collection_distribution(rng: pf.RNG) -> pf.Collection:
     primitive's origin is dropped to its base so instances sit on the surface."""
     n_pool = int(pf.random.randint(rng, 8, 17))
     meshes = []
-    for rng_mesh in rng.spawn(n_pool):
+    for i, rng_mesh in enumerate(rng.spawn(n_pool)):
         mesh = random_primitives.primitives_distribution(
             rng_mesh,
             target_size=pf.random.clip_gaussian(rng_mesh, 0.13, 0.07, 0.08, 0.3),
@@ -342,6 +342,9 @@ def small_objects_collection_distribution(rng: pf.RNG) -> pf.Collection:
         bmin, _ = pf.ops.attr.bbox_min_max(mesh, global_coords=False)
         pf.ops.object.set_transform(mesh, location=(0, 0, -bmin[2]))
         pf.ops.mesh.transform_apply(mesh)
+        # collection_info(separate_children) indexes by natural-name sort; give stable
+        # draw-order names (warp realization reuses "mesh_single_vertex", which would tie).
+        mesh.item().name = mesh.item().data.name = f"smallobj_{i:03d}"
         meshes.append(mesh)
     return pf.Collection(meshes)
 

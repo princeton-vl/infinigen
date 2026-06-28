@@ -929,28 +929,34 @@ def splats_mask_distribution(
     gradient_start: t.SocketOrVal[float] | None = None,
     gradient_end: t.SocketOrVal[float] | None = None,
 ) -> SplatsMaskResult:
+    rng_dots_initial, rng_dots_second, rng_gradient = rng.spawn(3)
+    rng_choices = rng.spawn(3)
+    rng_chosen = rng.spawn(3)
+
     if size is None:
         size = pf.random.clip_gaussian(rng, 2, 4, 0.5, 10)
 
     initial_size = size * pf.random.uniform(rng, 0.5, 1.5)
-    mask = splat_dots_distribution(rng=rng, vector=vector, size=initial_size)
-    mask = mask + splat_dots_distribution(rng=rng, vector=vector)
+    mask = splat_dots_distribution(
+        rng=rng_dots_initial, vector=vector, size=initial_size
+    )
+    mask = mask + splat_dots_distribution(rng=rng_dots_second, vector=vector)
 
     for _i in range(3):
         size = size * pf.random.uniform(rng, 0.5, 1.5)
         newmask = pf.control.choice(
-            rng,
+            rng_choices[_i],
             [
                 (splat_dots_distribution, 1.0),
                 (splats_streaks_distribution, 1.0),
                 (lambda *_, **__: 0.0, 1.0),
             ],
-        )(rng, vector, size=size)
+        )(rng_chosen[_i], vector, size=size)
         mask = mask + newmask
 
     if allow_gradient:
         gradient = uv_gradient_distribution(
-            rng=rng,
+            rng=rng_gradient,
             vector=vector,
             gradient_fac=gradient_fac,
             gradient_start=gradient_start,

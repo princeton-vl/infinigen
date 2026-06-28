@@ -723,8 +723,9 @@ def base_straight_distribution(
     rng: pf.RNG, dimensions: pf.Vector | None = None
 ) -> TableResult:
     """4-leg base with optional stretchers."""
+    rng, rng_dims = rng.spawn(2)
     if dimensions is None:
-        dimensions = table_dimensions_distribution(rng)
+        dimensions = table_dimensions_distribution(rng_dims)
     geo = base_straight(
         dimensions=dimensions,
         leg_diameter=pf.random.uniform(rng, 0.05, 0.07),
@@ -740,8 +741,9 @@ def base_single_stand_distribution(
     rng: pf.RNG, dimensions: pf.Vector | None = None
 ) -> TableResult:
     """2 pedestal legs."""
+    rng, rng_dims = rng.spawn(2)
     if dimensions is None:
-        dimensions = table_dimensions_distribution(rng)
+        dimensions = table_dimensions_distribution(rng_dims)
     geo = base_single_stand(
         dimensions=dimensions,
         leg_diameter=pf.random.uniform(rng, 0.22 * dimensions[0], 0.28 * dimensions[0]),
@@ -758,8 +760,9 @@ def base_square_distribution(
     rng: pf.RNG, dimensions: pf.Vector | None = None
 ) -> TableResult:
     """2 box-frame legs."""
+    rng, rng_dims = rng.spawn(2)
     if dimensions is None:
-        dimensions = table_dimensions_distribution(rng)
+        dimensions = table_dimensions_distribution(rng_dims)
     geo = base_square(
         dimensions=dimensions,
         leg_diameter=pf.random.uniform(rng, 0.07, 0.10),
@@ -778,8 +781,9 @@ def dining_table_distribution(
     top_material: pf.Material | None = None,
     leg_material: pf.Material | None = None,
 ) -> TableResult:
+    rng, rng_dims, rng_top_mat, rng_leg_mat, rng_base_choice, rng_base = rng.spawn(6)
     if dimensions is None:
-        dimensions = table_dimensions_distribution(rng)
+        dimensions = table_dimensions_distribution(rng_dims)
 
     x, y, z = dimensions
 
@@ -790,9 +794,9 @@ def dining_table_distribution(
 
     vec = pf.nodes.shader.geometry().position
     if top_material is None:
-        top_material = table_top_material_distribution(rng, vec)
+        top_material = table_top_material_distribution(rng_top_mat, vec)
     if leg_material is None:
-        leg_material = furniture_material_distribution(rng, vec)
+        leg_material = furniture_material_distribution(rng_leg_mat, vec)
 
     corner_frac_x = pf.random.uniform(rng, 0.1, 0.5)
     corner_frac_y = pf.random.uniform(rng, 0.1, 0.5)
@@ -820,14 +824,14 @@ def dining_table_distribution(
 
     if base is None:
         base_fn = pf.control.choice(
-            rng,
+            rng_base_choice,
             [
                 (base_straight_distribution, 2.0),
                 (base_single_stand_distribution, 1.0),
                 (base_square_distribution, 0.6),
             ],
         )
-        res = base_fn(rng=rng, dimensions=(x, y, top_height))
+        res = base_fn(rng=rng_base, dimensions=(x, y, top_height))
         base = res.mesh
 
     pf.ops.object.set_material(
@@ -852,29 +856,32 @@ def side_table_dimensions_distribution(rng: pf.RNG) -> pf.Vector:
 
 def side_table_distribution(rng: pf.RNG) -> TableResult:
     """Side table."""
-    dimensions = side_table_dimensions_distribution(rng)
+    rng, rng_dims, rng_table = rng.spawn(3)
+    dimensions = side_table_dimensions_distribution(rng_dims)
     top_thickness = pf.random.uniform(rng, 0.01, 0.04)
-    return dining_table_distribution(rng, dimensions, top_thickness=top_thickness)
+    return dining_table_distribution(rng_table, dimensions, top_thickness=top_thickness)
 
 
 def coffee_table_distribution(rng: pf.RNG) -> TableResult:
     """Low rectangular coffee table."""
+    rng, rng_table = rng.spawn(2)
     dimensions = (
         pf.random.uniform(rng, 0.6, 0.9),
         pf.random.uniform(rng, 1.0, 1.5),
         pf.random.uniform(rng, 0.3, 0.5),
     )
     top_thickness = pf.random.uniform(rng, 0.02, 0.04)
-    return dining_table_distribution(rng, dimensions, top_thickness=top_thickness)
+    return dining_table_distribution(rng_table, dimensions, top_thickness=top_thickness)
 
 
 def cocktail_table_distribution(rng: pf.RNG) -> TableResult:
     """Tall square cocktail/bar table with single pedestal base."""
+    rng, rng_base, rng_table = rng.spawn(3)
     x = pf.random.uniform(rng, 0.5, 0.8)
     height = pf.random.uniform(rng, 1.0, 1.5)
     top_height = height - 0.04  # approximate top_thickness
-    base = base_single_stand_distribution(rng, (x, x, top_height))
-    return dining_table_distribution(rng, (x, x, height), base=base.mesh)
+    base = base_single_stand_distribution(rng_base, (x, x, top_height))
+    return dining_table_distribution(rng_table, (x, x, height), base=base.mesh)
 
 
 if __name__ == "__main__":

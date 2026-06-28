@@ -316,13 +316,14 @@ def vase(
 
 def vase_material_distribution(rng: pf.RNG, vec) -> pf.Material:
     def vase_tile(rng, vector: pf.Vector) -> pf.Material:
-        grout_displacement = pf.random.uniform(rng, 0, 0.002)
+        rng_grout_disp, rng_grout, rng_scale, rng_tile = rng.spawn(4)
+        grout_displacement = pf.random.uniform(rng_grout_disp, 0, 0.002)
         grout = brick_concrete.brick_concrete_grout_distribution(
-            rng, vector, displacement_additional_height=-grout_displacement
+            rng_grout, vector, displacement_additional_height=-grout_displacement
         )
-        scale = pf.random.uniform(rng, 15, 25)
+        scale = pf.random.uniform(rng_scale, 15, 25)
         return tiles.tile_indoor_wall_distribution(
-            rng, vector, grout=grout, scale=scale
+            rng_tile, vector, grout=grout, scale=scale
         )
 
     def vase_hammered(rng, _vector: pf.Vector) -> pf.Material:
@@ -330,8 +331,9 @@ def vase_material_distribution(rng: pf.RNG, vec) -> pf.Material:
             rng, pf.nodes.shader.coord().generated
         )
 
+    rng_choice, rng_func = rng.spawn(2)
     material_func = pf.control.choice(
-        rng,
+        rng_choice,
         [
             (ceramic.ceramic_distribution, 1.0),
             (metal_brushed.metal_brushed_linear_distribution, 1.0),
@@ -343,10 +345,11 @@ def vase_material_distribution(rng: pf.RNG, vec) -> pf.Material:
             (granite.granite_smooth_distribution, 1.0),
         ],
     )
-    return material_func(rng, vec)
+    return material_func(rng_func, vec)
 
 
 def vase_distribution(rng: pf.RNG) -> VaseResult:
+    rng, rng_radius_choice, rng_radius_val, rng_mat = rng.spawn(4)
     z = pf.random.uniform(rng, 0.17, 0.5)
     x = z * pf.random.uniform(rng, 0.3, 0.6)
 
@@ -355,7 +358,8 @@ def vase_distribution(rng: pf.RNG) -> VaseResult:
     neck_scale = pf.random.uniform(rng, 0.2, 0.8)
 
     profile_inner_radius = pf.control.choice(
-        rng, [(1.0, 0.5), (pf.random.uniform(rng, 0.8, 1.0), 0.5)]
+        rng_radius_choice,
+        [(1.0, 0.5), (pf.random.uniform(rng_radius_val, 0.8, 1.0), 0.5)],
     )
     profile_star_points = pf.random.randint(rng, 16, u_resolution // 2 + 1)
     top_scale = neck_scale * pf.random.uniform(rng, 0.8, 1.2)
@@ -384,7 +388,7 @@ def vase_distribution(rng: pf.RNG) -> VaseResult:
     )
 
     uv = pf.nodes.shader.coord().uv
-    mat_result = vase_material_distribution(rng, uv)
+    mat_result = vase_material_distribution(rng_mat, uv)
     geo = pf.nodes.geo.set_material(geo, mat_result)
 
     obj = pf.nodes.to_mesh_object(geo)

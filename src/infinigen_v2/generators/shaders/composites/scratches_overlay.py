@@ -29,14 +29,15 @@ def _bright_scratch_shader_distribution(rng: pf.RNG) -> pf.ProcNode[pf.Shader]:
 
 
 def scratch_shader_distribution(rng: pf.RNG) -> pf.ProcNode[pf.Shader]:
+    rng_choice, rng_func = rng.spawn(2)
     func = pf.control.choice(
-        rng,
+        rng_choice,
         [
             (_dark_scratch_shader_distribution, 1.0),
             (_bright_scratch_shader_distribution, 1.0),
         ],
     )
-    return func(rng)
+    return func(rng_func)
 
 
 def _scratches_one_layer(rng, vector, material, scratch_shader, scale):
@@ -66,35 +67,35 @@ def scratches_overlay_distribution(
     scratch_shader: t.SocketOrVal[pf.Shader] | None = None,
     scale: float | None = None,
 ) -> pf.Material:
-    rng_shader, rng_layers = rng.spawn(2)
+    rng_shader, rng_layers_choice, rng_layers_func = rng.spawn(3)
 
     if scratch_shader is None:
         scratch_shader = scratch_shader_distribution(rng_shader)
 
     func = pf.control.choice(
-        rng_layers,
+        rng_layers_choice,
         [
             (_scratches_one_layer, 1.0),
             (_scratches_two_layers, 2.0),
             (_scratches_three_layers, 2.0),
         ],
     )
-    return func(rng_layers, vector, material, scratch_shader, scale)
+    return func(rng_layers_func, vector, material, scratch_shader, scale)
 
 
 def scratched_wood_distribution(
     rng: pf.RNG,
     vector: t.SocketOrVal[pf.Vector],
 ) -> pf.Material:
-    rng_base, rng_overlay = rng.spawn(2)
+    rng_base_choice, rng_base_func, rng_overlay = rng.spawn(3)
     base_func = pf.control.choice(
-        rng_base,
+        rng_base_choice,
         [
             (wood_grain.wood_grain_distribution, 1.0),
             (wood_planks.wood_planks_distribution, 1.5),
         ],
     )
-    material = base_func(rng_base, vector)
+    material = base_func(rng_base_func, vector)
     return scratches_overlay_distribution(rng_overlay, vector, material)
 
 
@@ -102,13 +103,13 @@ def scratched_metal_distribution(
     rng: pf.RNG,
     vector: t.SocketOrVal[pf.Vector],
 ) -> pf.Material:
-    rng_base, rng_overlay = rng.spawn(2)
+    rng_base_choice, rng_base_func, rng_overlay = rng.spawn(3)
     base_func = pf.control.choice(
-        rng_base,
+        rng_base_choice,
         [
             (metal_brushed.metal_brushed_linear_distribution, 1.0),
             (metal_brushed.metal_brushed_radial_distribution, 1.0),
         ],
     )
-    material = base_func(rng_base, vector)
+    material = base_func(rng_base_func, vector)
     return scratches_overlay_distribution(rng_overlay, vector, material)

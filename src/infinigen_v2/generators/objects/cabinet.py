@@ -1017,15 +1017,25 @@ def cabinet_distribution(
         height = pf.random.uniform(rng, 0.9, 1.8)
         dimensions = pf.Vector((depth, width, height))
 
+    (
+        rng_frame_mat,
+        rng_panel_lower_mat,
+        rng_panel_upper_mat,
+        rng_short_door_choice,
+        rng_short_door_call,
+        rng_panel_branch,
+        rng_cabinet,
+    ) = rng.spawn(7)
+
     vec = pf.nodes.shader.coord().uv
     if frame_material is None:
-        frame_material = furniture_material_distribution(rng, vec)
+        frame_material = furniture_material_distribution(rng_frame_mat, vec)
 
     if panel_lower_material is None:
-        panel_lower_material = furniture_material_distribution(rng, vec)
+        panel_lower_material = furniture_material_distribution(rng_panel_lower_mat, vec)
 
     if panel_upper_material is None:
-        panel_upper_material = glass_material_distribution(rng, vec)
+        panel_upper_material = glass_material_distribution(rng_panel_upper_mat, vec)
 
     side_board_thickness = pf.random.clip_gaussian(rng, 0.02, 0.002, 0.015, 0.025)
     division_board_thickness = pf.random.clip_gaussian(rng, 0.02, 0.002, 0.015, 0.025)
@@ -1055,16 +1065,21 @@ def cabinet_distribution(
 
     num_vertical_cells = max(1, np.floor((dimensions.z - bottom_board_height) / 0.3))
     force_short_door = pf.control.choice(
-        rng,
+        rng_short_door_choice,
         [
-            (lambda: pf.control.choice(rng, [(True, 0.5), (False, 0.5)]), 1.0),
+            (
+                lambda: pf.control.choice(
+                    rng_short_door_call, [(True, 0.5), (False, 0.5)]
+                ),
+                1.0,
+            ),
             (lambda: False, 1.0),
         ],
         chosen_idx=0 if num_vertical_cells > 4 else 1,
     )()
 
     panel_material = _door_and_attach_material_branch(
-        rng=rng,
+        rng=rng_panel_branch,
         frame_material=frame_material,
         panel_lower_material=panel_lower_material,
         panel_upper_material=panel_upper_material,
@@ -1073,7 +1088,7 @@ def cabinet_distribution(
 
     return CabinetResult(
         mesh=cabinet(
-            rng=rng,
+            rng=rng_cabinet,
             dimensions=dimensions,
             frame_material=frame_material,
             panel_material=panel_material,

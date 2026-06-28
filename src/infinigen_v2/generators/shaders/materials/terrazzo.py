@@ -6,6 +6,8 @@
 # from https://www.youtube.com/watch?v=ggYnU1iOMUc
 # by Ryan King Art
 
+import functools
+
 import numpy as np
 import procfunc as pf
 from procfunc.nodes import types as t
@@ -459,12 +461,13 @@ def _random_color_shade(
     Returns RGBA tuple for use in color_ramp points.
     """
 
-    value_factor = rng.uniform(value_factor_low, value_factor_high)
-    hue_shift = rng.uniform(hue_shift_low, hue_shift_high)
+    rv, rh = rng.spawn(2)
+    value_factor = pf.random.uniform(rv, value_factor_low, value_factor_high)
+    hue_shift = pf.random.uniform(rh, hue_shift_low, hue_shift_high)
     return pf.color.hsv_color(
-        hue=(base_color.h + hue_shift) % 1.0,  # hue (wrapped)
-        saturation=base_color.s,  # saturation unchanged
-        value=np.clip(base_color.v * value_factor, 0.0, 1.0),  # value (brightness)
+        hue=(base_color.h + hue_shift) % 1.0,
+        saturation=base_color.s,
+        value=np.clip(base_color.v * value_factor, 0.0, 1.0),
     )
 
 
@@ -489,96 +492,110 @@ def terrazzo_multicolor_distribution(
     for black/dark terrazzo.
     """
 
+    r = rng.spawn(25)
+
     if large_chip_scale is None:
-        large_chip_scale = pf.random.uniform(rng, 3, 50)
+        large_chip_scale = pf.random.uniform(r[0], 3, 50)
     if medium_chip_scale is None:
-        medium_chip_scale = pf.random.uniform(rng, 5, 100)
+        medium_chip_scale = pf.random.uniform(r[1], 5, 100)
     if small_chip_scale is None:
-        small_chip_scale = pf.random.uniform(rng, 5, 250)
+        small_chip_scale = pf.random.uniform(r[2], 5, 250)
 
     if big_chip_detail is None:
-        big_chip_detail = pf.random.uniform(rng, 0, 1.2)
+        big_chip_detail = pf.random.uniform(r[3], 0, 1.2)
     if medium_chip_detail is None:
-        medium_chip_detail = pf.random.uniform(rng, 0.0, 1)
+        medium_chip_detail = pf.random.uniform(r[4], 0.0, 1)
     if small_chip_detail is None:
-        small_chip_detail = pf.random.uniform(rng, 0.0, 1)
+        small_chip_detail = pf.random.uniform(r[5], 0.0, 1)
 
-    big_chip_roughness = pf.random.uniform(rng, 0, 1)
-    medium_chip_roughness = pf.random.uniform(rng, 0, 1)
-    small_chip_roughness = pf.random.uniform(rng, 0, 1)
+    big_chip_roughness = pf.random.uniform(r[6], 0, 1)
+    medium_chip_roughness = pf.random.uniform(r[7], 0, 1)
+    small_chip_roughness = pf.random.uniform(r[8], 0, 1)
 
-    concrete_noise_scale = pf.random.uniform(rng, 0, 200)
-    concrete_noise_detail = pf.random.uniform(rng, 0, 10)
-    concrete_noise_roughness = pf.random.uniform(rng, 0.5, 1)
+    concrete_noise_scale = pf.random.uniform(r[9], 0, 200)
+    concrete_noise_detail = pf.random.uniform(r[10], 0, 10)
+    concrete_noise_roughness = pf.random.uniform(r[11], 0.5, 1)
 
-    chip_noise_scale = pf.random.uniform(rng, 0, 200)
-    chip_noise_detail = pf.random.uniform(rng, 0, 10)
-    chip_noise_roughness = pf.random.uniform(rng, 0.5, 1)
+    chip_noise_scale = pf.random.uniform(r[12], 0, 200)
+    chip_noise_detail = pf.random.uniform(r[13], 0, 10)
+    chip_noise_roughness = pf.random.uniform(r[14], 0.5, 1)
 
-    large_chip_lacunarity = pf.random.uniform(rng, 0, 4)
+    large_chip_lacunarity = pf.random.uniform(r[15], 0, 4)
 
-    large_chip_frequency_cutoff = pf.random.uniform(rng, 0.1, 0.2)
-    medium_chip_frequency_cutoff = pf.random.uniform(rng, 0.2, 0.4)
-    small_chip_frequency_cutoff = pf.random.uniform(rng, 0.2, 0.4)
+    large_chip_frequency_cutoff = pf.random.uniform(r[16], 0.1, 0.2)
+    medium_chip_frequency_cutoff = pf.random.uniform(r[17], 0.2, 0.4)
+    small_chip_frequency_cutoff = pf.random.uniform(r[18], 0.2, 0.4)
 
-    # Default to white terrazzo settings
     if concrete_black_threshold is None:
-        concrete_black_threshold = pf.random.uniform(rng, 0, 0.5)
+        concrete_black_threshold = pf.random.uniform(r[19], 0, 0.5)
     if concrete_white_threshold is None:
-        concrete_white_threshold = pf.random.uniform(rng, concrete_black_threshold, 1)
+        concrete_white_threshold = pf.random.uniform(r[20], concrete_black_threshold, 1)
     if concrete_base_color is None:
         concrete_base_color = (
-            pf.random.clip_gaussian(rng, mean=1.0, std=0.15, low=0.0, high=1.0),
-            pf.random.clip_gaussian(rng, mean=1.0, std=0.15, low=0.0, high=1.0),
-            pf.random.clip_gaussian(rng, mean=1.0, std=0.15, low=0.0, high=1.0),
+            pf.random.clip_gaussian(r[21], mean=1.0, std=0.15, low=0.0, high=1.0),
+            pf.random.clip_gaussian(r[21], mean=1.0, std=0.15, low=0.0, high=1.0),
+            pf.random.clip_gaussian(r[21], mean=1.0, std=0.15, low=0.0, high=1.0),
         )
 
-    # Default to colorful chips (white terrazzo)
     if small_base_color is None:
-        small_base_color = random_base_color(rng)
+        small_base_color = random_base_color(r[22])
     if medium_base_color is None:
-        medium_base_color = random_base_color(rng)
+        medium_base_color = random_base_color(r[23])
     if large_base_color is None:
-        large_base_color = random_base_color(rng)
+        large_base_color = random_base_color(r[24])
 
-    # Generate coherent color palettes with shades of the base color (no loops)
+    rs = r[22].spawn(8)
     small_chip_colors = [
-        (0.0, _random_color_shade(rng, small_base_color)),
-        (pf.random.uniform(rng, 0.2, 0.4), _random_color_shade(rng, small_base_color)),
-        (pf.random.uniform(rng, 0.5, 0.8), _random_color_shade(rng, small_base_color)),
-        (1.0, _random_color_shade(rng, small_base_color)),
+        (0.0, _random_color_shade(rs[0], small_base_color)),
+        (
+            pf.random.uniform(rs[1], 0.2, 0.4),
+            _random_color_shade(rs[2], small_base_color),
+        ),
+        (
+            pf.random.uniform(rs[3], 0.5, 0.8),
+            _random_color_shade(rs[4], small_base_color),
+        ),
+        (1.0, _random_color_shade(rs[5], small_base_color)),
     ]
 
+    rm = r[23].spawn(12)
     medium_chip_colors = [
-        (0.0, _random_color_shade(rng, medium_base_color)),
+        (0.0, _random_color_shade(rm[0], medium_base_color)),
         (
-            pf.random.uniform(rng, 0.05, 0.15),
-            _random_color_shade(rng, medium_base_color),
+            pf.random.uniform(rm[1], 0.05, 0.15),
+            _random_color_shade(rm[2], medium_base_color),
         ),
         (
-            pf.random.uniform(rng, 0.25, 0.4),
-            _random_color_shade(rng, medium_base_color),
+            pf.random.uniform(rm[3], 0.25, 0.4),
+            _random_color_shade(rm[4], medium_base_color),
         ),
         (
-            pf.random.uniform(rng, 0.45, 0.55),
-            _random_color_shade(rng, medium_base_color),
+            pf.random.uniform(rm[5], 0.45, 0.55),
+            _random_color_shade(rm[6], medium_base_color),
         ),
         (
-            pf.random.uniform(rng, 0.6, 0.75),
-            _random_color_shade(rng, medium_base_color),
+            pf.random.uniform(rm[7], 0.6, 0.75),
+            _random_color_shade(rm[8], medium_base_color),
         ),
-        (1.0, _random_color_shade(rng, medium_base_color)),
+        (1.0, _random_color_shade(rm[9], medium_base_color)),
     ]
 
+    rl = r[24].spawn(10)
     large_chip_colors = [
-        (0.0, _random_color_shade(rng, large_base_color)),
-        (pf.random.uniform(rng, 0.2, 0.35), _random_color_shade(rng, large_base_color)),
-        (pf.random.uniform(rng, 0.4, 0.6), _random_color_shade(rng, large_base_color)),
+        (0.0, _random_color_shade(rl[0], large_base_color)),
         (
-            pf.random.uniform(rng, 0.65, 0.85),
-            _random_color_shade(rng, large_base_color),
+            pf.random.uniform(rl[1], 0.2, 0.35),
+            _random_color_shade(rl[2], large_base_color),
         ),
-        (1.0, _random_color_shade(rng, large_base_color)),
+        (
+            pf.random.uniform(rl[3], 0.4, 0.6),
+            _random_color_shade(rl[4], large_base_color),
+        ),
+        (
+            pf.random.uniform(rl[5], 0.65, 0.85),
+            _random_color_shade(rl[6], large_base_color),
+        ),
+        (1.0, _random_color_shade(rl[7], large_base_color)),
     ]
 
     terrazzo_result = terrazzo_multicolor_node(
@@ -626,31 +643,33 @@ def terrazzo_black_multicolor_distribution(
     medium_chip_detail: t.SocketOrVal[float] | None = None,
     small_chip_detail: t.SocketOrVal[float] | None = None,
 ) -> pf.Material:
-    concrete_black_threshold = pf.random.uniform(rng, 0.5, 1)
-    concrete_white_threshold = pf.random.uniform(rng, concrete_black_threshold, 1)
+    r = rng.spawn(7)
+    concrete_black_threshold = pf.random.uniform(r[0], 0.5, 1)
+    concrete_white_threshold = pf.random.uniform(r[1], concrete_black_threshold, 1)
     concrete_base_color = (
-        pf.random.clip_gaussian(rng, mean=0.15, std=0.1, low=0.0, high=1.0),
-        pf.random.clip_gaussian(rng, mean=0.15, std=0.1, low=0.0, high=1.0),
-        pf.random.clip_gaussian(rng, mean=0.15, std=0.1, low=0.0, high=1.0),
+        pf.random.clip_gaussian(r[2], mean=0.15, std=0.1, low=0.0, high=1.0),
+        pf.random.clip_gaussian(r[2], mean=0.15, std=0.1, low=0.0, high=1.0),
+        pf.random.clip_gaussian(r[2], mean=0.15, std=0.1, low=0.0, high=1.0),
     )
 
-    # For black terrazzo, choose between grayscale or brown chips
+    rbrown = r[3].spawn(3)
+    rgray = r[4].spawn(3)
     chip_colors = pf.control.choice(
-        rng,
+        r[5],
         [
             (
                 (
-                    random_brown_color(rng),
-                    random_brown_color(rng),
-                    random_brown_color(rng),
+                    random_brown_color(rbrown[0]),
+                    random_brown_color(rbrown[1]),
+                    random_brown_color(rbrown[2]),
                 ),
                 0.1,
             ),
             (
                 (
-                    random_grayscale_color(rng),
-                    random_grayscale_color(rng),
-                    random_grayscale_color(rng),
+                    random_grayscale_color(rgray[0]),
+                    random_grayscale_color(rgray[1]),
+                    random_grayscale_color(rgray[2]),
                 ),
                 0.9,
             ),
@@ -661,7 +680,7 @@ def terrazzo_black_multicolor_distribution(
     large_base_color = chip_colors[2]
 
     return terrazzo_multicolor_distribution(
-        rng=rng,
+        rng=r[6],
         vector=vector,
         large_chip_scale=large_chip_scale,
         medium_chip_scale=medium_chip_scale,
@@ -793,31 +812,34 @@ def terrazzo_black_monocolor_distribution(
     medium_chip_detail: t.SocketOrVal[float] | None = None,
     small_chip_detail: t.SocketOrVal[float] | None = None,
 ) -> pf.Material:
-    concrete_black_threshold = pf.random.uniform(rng, 0.5, 1)
-    concrete_white_threshold = pf.random.uniform(rng, concrete_black_threshold, 1)
+    r = rng.spawn(7)
+    concrete_black_threshold = pf.random.uniform(r[0], 0.5, 1)
+    concrete_white_threshold = pf.random.uniform(r[1], concrete_black_threshold, 1)
     concrete_base_color = (
-        pf.random.clip_gaussian(rng, mean=0.15, std=0.1, low=0.0, high=1.0),
-        pf.random.clip_gaussian(rng, mean=0.15, std=0.1, low=0.0, high=1.0),
-        pf.random.clip_gaussian(rng, mean=0.15, std=0.1, low=0.0, high=1.0),
+        pf.random.clip_gaussian(r[2], mean=0.15, std=0.1, low=0.0, high=1.0),
+        pf.random.clip_gaussian(r[2], mean=0.15, std=0.1, low=0.0, high=1.0),
+        pf.random.clip_gaussian(r[2], mean=0.15, std=0.1, low=0.0, high=1.0),
     )
 
+    rbrown = r[3].spawn(3)
+    rgray = r[4].spawn(3)
     # For black terrazzo, choose between grayscale or brown chips
     chip_colors = pf.control.choice(
-        rng,
+        r[5],
         [
             (
                 (
-                    random_brown_color(rng),
-                    random_brown_color(rng),
-                    random_brown_color(rng),
+                    random_brown_color(rbrown[0]),
+                    random_brown_color(rbrown[1]),
+                    random_brown_color(rbrown[2]),
                 ),
                 0.1,
             ),
             (
                 (
-                    random_grayscale_color(rng),
-                    random_grayscale_color(rng),
-                    random_grayscale_color(rng),
+                    random_grayscale_color(rgray[0]),
+                    random_grayscale_color(rgray[1]),
+                    random_grayscale_color(rgray[2]),
                 ),
                 0.9,
             ),
@@ -828,7 +850,7 @@ def terrazzo_black_monocolor_distribution(
     large_chip_color = chip_colors[2]
 
     return terrazzo_monocolor_distribution(
-        rng=rng,
+        rng=r[6],
         vector=vector,
         large_chip_scale=large_chip_scale,
         medium_chip_scale=medium_chip_scale,
@@ -855,17 +877,22 @@ def terrazzo_distribution(
     medium_chip_detail: t.SocketOrVal[float] | None = None,
     small_chip_detail: t.SocketOrVal[float] | None = None,
 ) -> pf.Material:
+    rc, rv = rng.spawn(2)
+    options = [
+        (terrazzo_multicolor_distribution, 0.56),  # 0.8 * 0.7
+        (terrazzo_black_multicolor_distribution, 0.14),  # 0.2 * 0.7
+        (terrazzo_monocolor_distribution, 0.24),  # 0.8 * 0.3
+        (terrazzo_black_monocolor_distribution, 0.06),  # 0.2 * 0.3
+    ]
+    ropts = rv.spawn(len(options))
     func = pf.control.choice(
-        rng,
+        rc,
         [
-            (terrazzo_multicolor_distribution, 0.56),  # 0.8 * 0.7
-            (terrazzo_black_multicolor_distribution, 0.14),  # 0.2 * 0.7
-            (terrazzo_monocolor_distribution, 0.24),  # 0.8 * 0.3
-            (terrazzo_black_monocolor_distribution, 0.06),  # 0.2 * 0.3
+            (functools.partial(distrib, rng=ropts[i]), w)
+            for i, (distrib, w) in enumerate(options)
         ],
     )
     return func(
-        rng=rng,
         vector=vector,
         large_chip_scale=large_chip_scale,
         medium_chip_scale=medium_chip_scale,

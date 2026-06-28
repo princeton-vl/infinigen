@@ -1170,8 +1170,9 @@ def wall_decoration_distribution(
             rng, wall, wall_material, wall_thickness=wall_thickness
         )
 
+    rng_choice, rng_feature = rng.spawn(2)
     option = pf.control.choice(
-        rng,
+        rng_choice,
         [
             (plain, 0.5),
             (windows, 3.0),
@@ -1187,7 +1188,7 @@ def wall_decoration_distribution(
             (full_wall_window, 1.0),
         ],
     )
-    return option(rng=rng, wall=wall, wall_material=wall_material)
+    return option(rng=rng_feature, wall=wall, wall_material=wall_material)
 
 
 class WallFeaturesResult(NamedTuple):
@@ -1395,8 +1396,10 @@ def wall_feature_distribution(
 ) -> WallFeaturesResult:
     vec_wall = pf.nodes.shader.coord().uv
 
-    wall_material_1 = wall_material_distribution(rng, vec_wall)
-    wall_material_2 = wall_material_distribution(rng, vec_wall)
+    rng_materials, rng_window, rng_walls = rng.spawn(3)
+    rng_mat_1, rng_mat_2 = rng_materials.spawn(2)
+    wall_material_1 = wall_material_distribution(rng_mat_1, vec_wall)
+    wall_material_2 = wall_material_distribution(rng_mat_2, vec_wall)
 
     wall_back = extrude_for_thickness(shape.walls, wall_thickness)
     wall_back.item().name = "room_wall_back"
@@ -1412,18 +1415,18 @@ def wall_feature_distribution(
     edge_gap = edge_gap_pct * shape.dimensions.z
     usable_height = shape.dimensions.z - 2.0 * edge_gap
     window_height_pct = pf.random.clip_gaussian(
-        rng, 0.75, 0.2, 0.6, 1.0 - 2.0 * edge_gap_pct
+        rng_window, 0.75, 0.2, 0.6, 1.0 - 2.0 * edge_gap_pct
     )
     window_height = shape.dimensions.z * window_height_pct
     # squared uniform biases width narrow
     max_window_width = max(2.0, max(shape.dimensions.x, shape.dimensions.y) - 0.5)
     window_width = (
-        1.0 + (max_window_width - 1.0) * pf.random.uniform(rng, 0.0, 1.0) ** 2
+        1.0 + (max_window_width - 1.0) * pf.random.uniform(rng_window, 0.0, 1.0) ** 2
     )
     window_dimensions = window.window_dimensions_distribution(
-        rng, width=window_width, height=window_height
+        rng_window, width=window_width, height=window_height
     )
-    window_result = window.window_distribution(rng, dimensions=window_dimensions)
+    window_result = window.window_distribution(rng_window, dimensions=window_dimensions)
     window_obj = window_result.mesh
     window_portal = window_result.light
 
@@ -1435,9 +1438,9 @@ def wall_feature_distribution(
     _width, _height, _depth = window_obj.item().dimensions
     wmin, _wmax = pf.ops.attr.bbox_min_max(window_obj)
     free_height = usable_height - _height
-    window_bottom_pct = pf.random.clip_gaussian(rng, 0.7, 0.15, 0.35, 0.85)
+    window_bottom_pct = pf.random.clip_gaussian(rng_window, 0.7, 0.15, 0.35, 0.85)
     window_bottom = edge_gap + free_height * window_bottom_pct - wmin[1]
-    window_spacing = pf.random.uniform(rng, 0.1, 0.25) * _width
+    window_spacing = pf.random.uniform(rng_window, 0.1, 0.25) * _width
 
     wall_planes = []
     backs = [wall_back]
@@ -1448,13 +1451,16 @@ def wall_feature_distribution(
 
     # cull decorations against those on other walls (seed empty; walls are coincident)
     colliders = ccol.collision_set([])
-    for wall in shape.flat_walls:
+    for wall, rng_wall in zip(
+        shape.flat_walls, rng_walls.spawn(len(shape.flat_walls)), strict=True
+    ):
+        rng_wall_mat, rng_wall_dec = rng_wall.spawn(2)
         mat = pf.control.choice(
-            rng,
+            rng_wall_mat,
             [(wall_material_1, 3), (wall_material_2, 1)],
         )
         result = wall_decoration_distribution(
-            rng,
+            rng_wall_dec,
             wall,
             window_obj,
             window_portal,
@@ -1703,7 +1709,9 @@ def ceiling_feature_distribution(
 ) -> CeilingFeaturesResult:
     vec_pos = pf.nodes.shader.geometry().position
 
-    floor_mat = floor_material_distribution(rng, vec_pos)
+    rng_floor_mat, rng_ceiling_mat, rng_choice, rng_feature = rng.spawn(4)
+
+    floor_mat = floor_material_distribution(rng_floor_mat, vec_pos)
     pf.ops.object.set_material(
         shape.floor,
         surface=floor_mat.surface,
@@ -1711,7 +1719,7 @@ def ceiling_feature_distribution(
     )
     pf.ops.modifier.subdivide_surface(shape.floor, levels=8, _skip_apply=True)
 
-    ceiling_mat = ceiling_material_distribution(rng, vec_pos)
+    ceiling_mat = ceiling_material_distribution(rng_ceiling_mat, vec_pos)
     pf.ops.object.set_material(
         shape.ceiling,
         surface=ceiling_mat.surface,
@@ -1739,14 +1747,14 @@ def ceiling_feature_distribution(
         )
 
     option = pf.control.choice(
-        rng,
+        rng_choice,
         [
             (ceiling_plain_with_lights, 3.0),
             (ceiling_skylights, 1.0),
             (ceiling_light_bars, 1.0),
         ],
     )
-    ceiling_geom, backs, sills, light_meshes, ceiling_lights = option(rng)
+    ceiling_geom, backs, sills, light_meshes, ceiling_lights = option(rng_feature)
 
     return CeilingFeaturesResult(
         floor=shape.floor,
@@ -1764,13 +1772,14 @@ def skirting_distribution(
     walls: list[pf.MeshObject],
 ) -> list[pf.MeshObject]:
     vec_wall = pf.nodes.shader.coord().uv
-    skirt_mat = skirt_material_distribution(rng, vec_wall)
+    rng_mat, rng_choice, rng_skirt = rng.spawn(3)
+    skirt_mat = skirt_material_distribution(rng_mat, vec_wall)
     skirt_option = pf.control.choice(
-        rng,
+        rng_choice,
         [(skirting_on_walls_distribution, 0.85), (lambda *_, **__: [], 0.15)],
     )
     return skirt_option(
-        rng,
+        rng_skirt,
         walls=walls,
         material=skirt_mat,
     )

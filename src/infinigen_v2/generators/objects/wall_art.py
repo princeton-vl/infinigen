@@ -161,30 +161,33 @@ def wall_art_distribution(
     panel_material: pf.Material | None = None,
     frame_material: pf.Material | None = None,
 ) -> WallArtResult:
+    r_dims, r_frame_w, r_panel_d, r_frame_mat, r_panel_choice, r_panel_mat = rng.spawn(
+        6
+    )
     if dimensions is None:
-        height = pf.random.log_uniform(rng, 0.4, 2.0)
-        aspect = pf.random.uniform(rng, 0.7, 2.0)
-        depth = pf.random.uniform(rng, 0.02, 0.05)
+        height = pf.random.log_uniform(r_dims, 0.4, 2.0)
+        aspect = pf.random.uniform(r_dims, 0.7, 2.0)
+        depth = pf.random.uniform(r_dims, 0.02, 0.05)
         width = height / aspect
         dimensions = pf.Vector((depth, width, height))
 
-    frame_width = pf.random.uniform(rng, 0.02, 0.1)
-    panel_depth_pct = pf.random.uniform(rng, 0.2, 1.2)
+    frame_width = pf.random.uniform(r_frame_w, 0.02, 0.1)
+    panel_depth_pct = pf.random.uniform(r_panel_d, 0.2, 1.2)
 
     if frame_material is None:
         vec = pf.nodes.shader.geometry().position
-        frame_material = furniture_material_distribution(rng, vec)
+        frame_material = furniture_material_distribution(r_frame_mat, vec)
 
     if panel_material is None:
         vec = pf.nodes.shader.coord().uv
         panel_material_fn = pf.control.choice(
-            rng,
+            r_panel_choice,
             [
                 (art_pattern_material_distribution, 1000),
                 (terrazzo.terrazzo_distribution, 0.5),
             ],
         )
-        panel_material = panel_material_fn(rng, vec)
+        panel_material = panel_material_fn(r_panel_mat, vec)
 
     geo = art_frame(
         dimensions=dimensions,
@@ -202,10 +205,11 @@ def wall_art_distribution(
 def mirror_distribution(
     rng: pf.RNG, dimensions: pf.Vector | None = None
 ) -> WallArtResult:
+    r_mat, r_art = rng.spawn(2)
     vec = pf.nodes.shader.geometry().position
-    material = mirror_surface_material_distribution(rng, vec)
+    material = mirror_surface_material_distribution(r_mat, vec)
     return wall_art_distribution(
-        rng,
+        r_art,
         dimensions=dimensions,
         panel_material=material,
     )

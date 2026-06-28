@@ -1,3 +1,4 @@
+import functools
 from typing import NamedTuple
 
 import procfunc as pf
@@ -385,8 +386,9 @@ def carpet_noisy_distribution(
     color_1: t.SocketOrVal[pf.Color],
     color_2: t.SocketOrVal[pf.Color],
 ):
+    rng, rng_weaver, rng_noise_type = rng.spawn(3)
     weaver_result = carpet_weaver_distribution(
-        rng,
+        rng_weaver,
         vector=vector,
         warp_warp_color=warp_warp_color,
         weft_weft_color=weft_weft_color,
@@ -402,7 +404,9 @@ def carpet_noisy_distribution(
         color_settings_color_2=color_2,
         color_settings_spread=pf.random.uniform(rng, 0.3, 0.5),
         color_settings_blending=pf.random.uniform(rng, 0.05, 0.2),
-        noise_settings_type=pf.control.choice(rng, [(1.0, 1), (2.0, 1), (3.0, 1)]),
+        noise_settings_type=pf.control.choice(
+            rng_noise_type, [(1.0, 1), (2.0, 1), (3.0, 1)]
+        ),
         noise_settings_seed=pf.random.uniform(rng, 0.0, 5.3),
         noise_settings_size=pf.random.uniform(rng, 0.001, 0.00625),
         noise_settings_stretch=(1.0, 1.0, 1.0),
@@ -470,8 +474,9 @@ def carpet_streaks_short_distribution(
     color_1: t.SocketOrVal[pf.Color],
     color_2: t.SocketOrVal[pf.Color],
 ):
+    rng, rng_weaver, rng_noise_type = rng.spawn(3)
     weaver_result = carpet_weaver_distribution(
-        rng,
+        rng_weaver,
         vector=vector,
         warp_warp_color=warp_warp_color,
         weft_weft_color=weft_weft_color,
@@ -489,7 +494,7 @@ def carpet_streaks_short_distribution(
         color_settings_color_2=color_2,
         color_settings_spread=pf.random.uniform(rng, 0.14, 0.3),
         color_settings_blending=pf.random.uniform(rng, 0.0001, 0.1),
-        noise_settings_type=pf.control.choice(rng, [(1.0, 1), (3.0, 2)]),
+        noise_settings_type=pf.control.choice(rng_noise_type, [(1.0, 1), (3.0, 2)]),
         noise_settings_seed=pf.random.uniform(rng, 0.0, 5.3),
         noise_settings_size=pf.random.uniform(rng, 0.01, 0.03),
         noise_settings_stretch=(1.0, 1.0, 1.0),
@@ -947,58 +952,63 @@ def carpet_distribution(
     rng: pf.RNG,
     vector: t.SocketOrVal[pf.Vector],
 ):
+    rng, rng_style_choice, rb0, rb1, rb2, rb3 = rng.spawn(6)
+    # Dedicated rngs per independent draw so codegen can't reorder them across consumers
+    r_cw0, r_cw1, r_cw2, r_sat, r_hue, r_wsat, r_wval, r_weftval, r_pv1, r_pv2 = (
+        rng.spawn(10)
+    )
+    r_rough, r_sheenw, r_sheenr = rng.spawn(3)
     # Shared coord_warps — all 3 scales run for every style with randomized strengths
     coord_warp_result = coord_warp(
         vector=vector,
         size=0.0014,
-        strength=pf.random.uniform(rng, 0.0, 3.0),
+        strength=pf.random.uniform(r_cw0, 0.0, 3.0),
         detail=2.0,
         phase=0.0,
     )
     coord_warp_result = coord_warp(
         vector=coord_warp_result.vector,
         size=0.005,
-        strength=pf.random.uniform(rng, 0.0, 3.0),
+        strength=pf.random.uniform(r_cw1, 0.0, 3.0),
         detail=4.0,
         phase=0.0,
     )
     coord_warp_result = coord_warp(
         vector=coord_warp_result.vector,
         size=0.04,
-        strength=pf.random.uniform(rng, 0.0, 0.3),
+        strength=pf.random.uniform(r_cw2, 0.0, 0.3),
         detail=2.0,
         phase=0.0,
     )
 
     # Hue: gaussian centered on ~40° (orange-yellow), clipped to [0, 1]
-    sat_base = pf.random.clip_gaussian(rng, 0.0, 0.25, 0.02, 0.95)
-    hue = pf.random.clip_gaussian(rng, 40.0 / 360.0, 25.0 / 360.0, 0.0, 1.0)
+    sat_base = pf.random.clip_gaussian(r_sat, 0.0, 0.25, 0.02, 0.95)
+    hue = pf.random.clip_gaussian(r_hue, 40.0 / 360.0, 25.0 / 360.0, 0.0, 1.0)
 
     # Warp/weft: dark backing threads, low saturation
-    warp_sat = pf.random.uniform(rng, 0.0, 0.4)
-    warp_val = pf.random.uniform(rng, 0.02, 0.15)
+    warp_sat = pf.random.uniform(r_wsat, 0.0, 0.4)
+    warp_val = pf.random.uniform(r_wval, 0.02, 0.15)
     warp_warp_color = pf.color.hsv_color(hue=hue, saturation=warp_sat, value=warp_val)
-    weft_val = pf.random.uniform(rng, 0.02, 0.08)
+    weft_val = pf.random.uniform(r_weftval, 0.02, 0.08)
     weft_weft_color = pf.color.hsv_color(hue=hue, saturation=warp_sat, value=weft_val)
 
     # Pattern colors: color_1 is notably brighter than color_2 so noise pops visually
     pattern_sat = 0.4 + 0.5 * sat_base
-    pattern_val_1 = (1 - 0.6 * sat_base) * pf.random.uniform(rng, 0.35, 0.85)
-    pattern_val_2 = pf.random.uniform(rng, 0.02, 0.12)
+    pattern_val_1 = (1 - 0.6 * sat_base) * pf.random.uniform(r_pv1, 0.35, 0.85)
+    pattern_val_2 = pf.random.uniform(r_pv2, 0.02, 0.12)
     color_1 = pf.color.hsv_color(hue=hue, saturation=pattern_sat, value=pattern_val_1)
     color_2 = pf.color.hsv_color(hue=hue, saturation=pattern_sat, value=pattern_val_2)
 
     style_fn = pf.control.choice(
-        rng,
+        rng_style_choice,
         [
-            (carpet_noisy_distribution, 1.0),
-            (carpet_streaks_faint_distribution, 1.0),
-            (carpet_streaks_right_angle_distribution, 1.0),
-            (carpet_streaks_short_distribution, 1.0),
+            (functools.partial(carpet_noisy_distribution, rb0), 1.0),
+            (functools.partial(carpet_streaks_faint_distribution, rb1), 1.0),
+            (functools.partial(carpet_streaks_right_angle_distribution, rb2), 1.0),
+            (functools.partial(carpet_streaks_short_distribution, rb3), 1.0),
         ],
     )
     style_result = style_fn(
-        rng,
         coord_warp_result.vector,
         warp_warp_color,
         weft_weft_color,
@@ -1009,9 +1019,9 @@ def carpet_distribution(
     alpha = style_result[1]
     height = style_result[2]
 
-    roughness = pf.random.clip_gaussian(rng, 0.868182, 0.1, 0.0, 1.0)
-    sheen_weight = pf.random.clip_gaussian(rng, 0.168182, 0.1, 0.0, 1.0)
-    sheen_roughness = pf.random.clip_gaussian(rng, 0.640909, 0.1, 0.0, 1.0)
+    roughness = pf.random.clip_gaussian(r_rough, 0.868182, 0.1, 0.0, 1.0)
+    sheen_weight = pf.random.clip_gaussian(r_sheenw, 0.168182, 0.1, 0.0, 1.0)
+    sheen_roughness = pf.random.clip_gaussian(r_sheenr, 0.640909, 0.1, 0.0, 1.0)
     principled = pf.nodes.shader.principled_bsdf(
         base_color=final_color,
         roughness=roughness,

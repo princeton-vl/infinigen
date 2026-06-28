@@ -47,15 +47,16 @@ def rug_material_distribution(
     rng: pf.RNG,
     vector: t.SocketOrVal[pf.Vector],
 ) -> pf.Material:
+    rng_choice, rng_func = rng.spawn(2)
     func = pf.control.choice(
-        rng,
+        rng_choice,
         [
             (fabric_patterned_distribution, 3.0),
             (fabric_distribution, 1.0),
             (lambda rng, vector, **_: carpet.carpet_distribution(rng, vector), 2.0),
         ],
     )
-    return func(rng, vector, translucency=0.0)
+    return func(rng_func, vector, translucency=0.0)
 
 
 def rug_distribution(

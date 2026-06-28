@@ -55,8 +55,9 @@ def all_materials_distribution(
     rng: pf.RNG,
     vector: t.SocketOrVal[pf.Vector],
 ) -> pf.Material:
+    rng_choice, rng_func = rng.spawn(2)
     func = pf.control.choice(
-        rng,
+        rng_choice,
         [
             (brick_concrete.brick_concrete_distribution, 1.0),
             (bricks.bricks_distribution, 1.0),
@@ -84,7 +85,7 @@ def all_materials_distribution(
             (wood_planks.wood_planks_distribution, 2.0),
         ],
     )
-    return func(rng, vector)
+    return func(rng_func, vector)
 
 
 def _end_fill_type_distribution(rng: pf.RNG) -> str:
@@ -213,8 +214,9 @@ def _noise_warp(
 
 
 def _base_primitive(rng: pf.RNG) -> pf.MeshObject:
+    rng_choice, rng_func = rng.spawn(2)
     func = pf.control.choice(
-        rng,
+        rng_choice,
         [
             (_circle_distribution, 0.2),
             (_cone_distribution, 1.5),
@@ -228,7 +230,7 @@ def _base_primitive(rng: pf.RNG) -> pf.MeshObject:
             (_uv_sphere_distribution, 1.0),
         ],
     )
-    obj = func(rng)
+    obj = func(rng_func)
     obj.item().name = func.__name__.removeprefix("_")
     return obj
 
@@ -258,11 +260,12 @@ def _effect_bevel(rng: pf.RNG) -> _EffectResult:
 
 
 def _effect_wireframe(rng: pf.RNG) -> _EffectResult:
-    obj = _base_primitive(rng)
+    rng_base, rng_choice = rng.spawn(2)
+    obj = _base_primitive(rng_base)
     pf.ops.modifier.wireframe(
         obj,
         thickness=pf.random.uniform(rng, 0.02, 0.1),
-        use_replace=pf.control.choice(rng, [(True, 1.0), (False, 1.0)]),
+        use_replace=pf.control.choice(rng_choice, [(True, 1.0), (False, 1.0)]),
     )
     return _EffectResult(mesh=obj, subsurf_levels=3)
 
@@ -319,9 +322,10 @@ def _effect_fractal_jitter(rng: pf.RNG) -> _EffectResult:
 
 
 def _effect_twist(rng: pf.RNG) -> _EffectResult:
-    obj = _base_primitive(rng)
+    rng_base, rng_choice = rng.spawn(2)
+    obj = _base_primitive(rng_base)
     pf.ops.mesh.subdivide(obj, number_cuts=4)
-    sign = pf.control.choice(rng, [(1.0, 1.0), (-1.0, 1.0)])
+    sign = pf.control.choice(rng_choice, [(1.0, 1.0), (-1.0, 1.0)])
     warped = _twist_warp(obj, rate=sign * pf.random.uniform(rng, 0.4, 1.5))
     return _EffectResult(mesh=pf.nodes.to_mesh_object(warped), subsurf_levels=3)
 
@@ -360,8 +364,18 @@ def primitives_distribution(
     rng: pf.RNG,
     target_size: float | None = None,
 ) -> PrimitivesResult:
+    (
+        rng_effect_choice,
+        rng_effect,
+        rng_crease,
+        rng_aspect,
+        rng_rot,
+        rng_scale,
+        rng_mat_choice,
+        rng_mat,
+    ) = rng.spawn(8)
     effect_func = pf.control.choice(
-        rng,
+        rng_effect_choice,
         [
             (_effect_none, 2.0),
             (_effect_bevel, 1.0),
@@ -376,11 +390,11 @@ def primitives_distribution(
             (_effect_noise_warp, 1.0),
         ],
     )
-    result = effect_func(rng)
+    result = effect_func(rng_effect)
     obj = result.mesh
 
     creased = pf.control.choice(
-        rng,
+        rng_crease,
         [
             (
                 lambda obj: pf.nodes.to_mesh_object(
@@ -395,9 +409,9 @@ def primitives_distribution(
         obj, levels=result.subsurf_levels, _skip_apply=True
     )
 
-    aspect_x = pf.random.uniform(rng, 0.6, 1.6)
-    aspect_y = pf.random.uniform(rng, 0.6, 1.6)
-    aspect_z = pf.random.uniform(rng, 0.6, 1.6)
+    aspect_x = pf.random.uniform(rng_aspect, 0.6, 1.6)
+    aspect_y = pf.random.uniform(rng_aspect, 0.6, 1.6)
+    aspect_z = pf.random.uniform(rng_aspect, 0.6, 1.6)
     s = 1.0
     if target_size is not None:
         dims = obj.item().dimensions
@@ -410,16 +424,16 @@ def primitives_distribution(
 
     rotation = pf.Vector(
         (
-            pf.random.uniform(rng, 0, 2 * math.pi),
-            pf.random.uniform(rng, 0, 2 * math.pi),
-            pf.random.uniform(rng, 0, 2 * math.pi),
+            pf.random.uniform(rng_rot, 0, 2 * math.pi),
+            pf.random.uniform(rng_rot, 0, 2 * math.pi),
+            pf.random.uniform(rng_rot, 0, 2 * math.pi),
         )
     )
     scale = pf.Vector(
         (
-            pf.random.clip_gaussian(rng, 1.0, 0.1, 0.3, 3.0),
-            pf.random.clip_gaussian(rng, 1.0, 0.1, 0.3, 3.0),
-            pf.random.clip_gaussian(rng, 1.0, 0.1, 0.3, 3.0),
+            pf.random.clip_gaussian(rng_scale, 1.0, 0.1, 0.3, 3.0),
+            pf.random.clip_gaussian(rng_scale, 1.0, 0.1, 0.3, 3.0),
+            pf.random.clip_gaussian(rng_scale, 1.0, 0.1, 0.3, 3.0),
         )
     )
 
@@ -429,9 +443,10 @@ def primitives_distribution(
         scale=scale,
     )
     mat_func = pf.control.choice(
-        rng, [(bsdf_simple_distribution, 1.0), (all_materials_distribution, 2.0)]
+        rng_mat_choice,
+        [(bsdf_simple_distribution, 1.0), (all_materials_distribution, 2.0)],
     )
-    mat = mat_func(rng, vec)
+    mat = mat_func(rng_mat, vec)
     pf.ops.object.set_material(
         obj,
         surface=getattr(mat, "surface", None),

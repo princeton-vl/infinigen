@@ -1718,10 +1718,11 @@ def grain_to_shader_distribution(
 
 
 def grain_layer_color_distribution(rng: pf.RNG, base_color: pf.Color) -> pf.Color:
-    hue_offset = pf.random.clip_gaussian(rng, 0, 0.04, -0.2, 0.2)
+    rng_h, rng_s, rng_v = rng.spawn(3)
+    hue_offset = pf.random.clip_gaussian(rng_h, 0, 0.04, -0.2, 0.2)
     h = (base_color.h + hue_offset) % 1.0
-    s = pf.random.clip_gaussian(rng, base_color.s, 0.07, 0.0, 0.95)
-    v = pf.random.clip_gaussian(rng, base_color.v, 0.2, 0.0, 0.95)
+    s = pf.random.clip_gaussian(rng_s, base_color.s, 0.07, 0.0, 0.95)
+    v = pf.random.clip_gaussian(rng_v, base_color.v, 0.2, 0.0, 0.95)
     return pf.color.hsv_color(hue=h, saturation=s, value=v)
 
 
@@ -1735,29 +1736,31 @@ def grain_layer_distribution(
     grain = 0.0
     layer_count = 0.0
 
-    grain_color = grain_layer_color_distribution(rng, base_layer_color)
+    rng_color, rng_draws, rng_invert = rng.spawn(3)
+
+    grain_color = grain_layer_color_distribution(rng_color, base_layer_color)
     rotation_offset = pf.Vector(
         (
-            pf.random.clip_gaussian(rng, 0.0, 0.06, -0.2, 0.2),
-            pf.random.clip_gaussian(rng, 0.0, 0.06, -0.2, 0.2),
+            pf.random.clip_gaussian(rng_draws, 0.0, 0.06, -0.2, 0.2),
+            pf.random.clip_gaussian(rng_draws, 0.0, 0.06, -0.2, 0.2),
             0.0,
         )
     )
     grain_rotation = base_rotation + rotation_offset
 
-    opacity = pf.random.uniform(rng, 0.526786, 1.0)
-    grain_type = pf.random.randint(rng, 1, 5 + 1)
-    mix_mode = pf.random.randint(rng, 1, 3 + 1)
-    grain_size = pf.random.uniform(rng, 0.34, 5.21)
-    grain_stretch = pf.random.uniform(rng, 1.0, 30.099998)
-    grain_spread = pf.random.uniform(rng, 0.647321, 0.928571)
-    random_spread = pf.random.uniform(rng, 0.0, 0.142857)
-    grain_smoothness = pf.random.uniform(rng, 0.086834, 0.64487)
-    distortion_strength = pf.random.uniform(rng, 0.42, 33.059998)
-    distortion_size = pf.random.uniform(rng, 0.3, 1.0)
-    distortion_details = pf.random.uniform(rng, 0.0, 8.0)
-    seed = pf.random.uniform(rng, 0.0, 10.0)
-    invert = pf.control.choice(rng, [(0.0, 0.5), (1.0, 0.5)])
+    opacity = pf.random.uniform(rng_draws, 0.526786, 1.0)
+    grain_type = pf.random.randint(rng_draws, 1, 5 + 1)
+    mix_mode = pf.random.randint(rng_draws, 1, 3 + 1)
+    grain_size = pf.random.uniform(rng_draws, 0.34, 5.21)
+    grain_stretch = pf.random.uniform(rng_draws, 1.0, 30.099998)
+    grain_spread = pf.random.uniform(rng_draws, 0.647321, 0.928571)
+    random_spread = pf.random.uniform(rng_draws, 0.0, 0.142857)
+    grain_smoothness = pf.random.uniform(rng_draws, 0.086834, 0.64487)
+    distortion_strength = pf.random.uniform(rng_draws, 0.42, 33.059998)
+    distortion_size = pf.random.uniform(rng_draws, 0.3, 1.0)
+    distortion_details = pf.random.uniform(rng_draws, 0.0, 8.0)
+    seed = pf.random.uniform(rng_draws, 0.0, 10.0)
+    invert = pf.control.choice(rng_invert, [(0.0, 0.5), (1.0, 0.5)])
     grain_layer_result = grain_layer(
         vector=vector,
         base_color=base_color,
@@ -1809,10 +1812,12 @@ def marble_distribution(
         )
     )
 
+    rng_g1, rng_g2, rng_g3, rng_shader = rng.spawn(4)
+
     # 5 layers flattens to ~1168 Cycles nodes per material and overflows the
     # SVM stack on CUDA/OPTIX. 3 keeps us comfortably under the 1000-node ceiling.
-    g = grain_layer_distribution(rng, vector, base_color, layer_color, rotation)
-    g = grain_layer_distribution(rng, g.vector, g.color, layer_color, rotation)
-    g = grain_layer_distribution(rng, g.vector, g.color, layer_color, rotation)
-    shader = grain_to_shader_distribution(rng, g.color, g.grain)
+    g = grain_layer_distribution(rng_g1, vector, base_color, layer_color, rotation)
+    g = grain_layer_distribution(rng_g2, g.vector, g.color, layer_color, rotation)
+    g = grain_layer_distribution(rng_g3, g.vector, g.color, layer_color, rotation)
+    shader = grain_to_shader_distribution(rng_shader, g.color, g.grain)
     return pf.Material(shader.bsdf, shader.displacement, None)

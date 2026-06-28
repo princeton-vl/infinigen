@@ -33,11 +33,12 @@ def glass_colored_distribution(
     roughness: t.SocketOrVal[float] | None = None,
 ) -> pf.Material:
     del vector
+    rng_choice, rng_color = rng.spawn(2)
     if color is None:
         color = pf.control.choice(
-            rng,
+            rng_choice,
             [
-                (glass_colored_color_distribution(rng), 0.7),
+                (glass_colored_color_distribution(rng_color), 0.7),
                 (pf.color.hsv_color(hue=0.0, saturation=0.0, value=1.0), 0.3),
             ],
         )

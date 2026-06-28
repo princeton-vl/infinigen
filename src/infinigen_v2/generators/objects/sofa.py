@@ -622,6 +622,7 @@ def sofa_distribution(
     material: pf.Material | None = None,
     foot_material: pf.Material | None = None,
 ) -> SofaResult:
+    rng, rng_fabric, rng_foot = rng.spawn(3)
     if dimensions is None:
         dimensions = (
             pf.random.uniform(rng, 0.85, 1.0),
@@ -661,9 +662,9 @@ def sofa_distribution(
 
     vec = pf.nodes.shader.coord().uv
     if material is None:
-        material = furniture_fabric(rng, vec, translucency=0.0)
+        material = furniture_fabric(rng_fabric, vec, translucency=0.0)
     if foot_material is None:
-        foot_material = furniture_material_distribution(rng, vec)
+        foot_material = furniture_material_distribution(rng_foot, vec)
 
     res = sofa(
         dimensions=dimensions,

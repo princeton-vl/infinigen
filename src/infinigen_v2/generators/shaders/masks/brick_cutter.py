@@ -219,11 +219,12 @@ def brick_cutter(
 def brick_shift_distribution(
     rng: pf.RNG,
 ) -> t.SocketOrVal[float]:
+    rng_choice, rng_val = rng.spawn(2)
     shift = pf.control.choice(
-        rng,
+        rng_choice,
         [
             (0.5, 2.0),  # vast majority of realworld bricks are half-overlapping
-            (pf.random.uniform(rng, 0.0, 1.0), 0.5),
+            (pf.random.uniform(rng_val, 0.0, 1.0), 0.5),
         ],
     )
     return shift

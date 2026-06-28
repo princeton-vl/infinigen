@@ -74,18 +74,19 @@ def metal_splats_distribution(
     rng: pf.RNG,
     vector: t.SocketOrVal[pf.Vector],
 ) -> pf.Material:
+    rng_choice, rng_metal, rng_overlay = rng.spawn(3)
     base_metal_func = pf.control.choice(
-        rng,
+        rng_choice,
         [
             (metal_brushed.metal_brushed_linear_distribution, 1.0),
             (metal_brushed.metal_brushed_radial_distribution, 1.0),
             (metal_simple_distribution, 3.0),
         ],
     )
-    material = base_metal_func(rng=rng, vector=vector)
+    material = base_metal_func(rng=rng_metal, vector=vector)
 
     return splats_overlay_distribution(
-        rng=rng,
+        rng=rng_overlay,
         vector=vector,
         material=material,
     )

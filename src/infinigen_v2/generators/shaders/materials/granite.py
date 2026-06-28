@@ -3,6 +3,7 @@
 
 # Authors: Karhan Kayan
 
+import functools
 from typing import NamedTuple
 
 import numpy as np
@@ -1373,14 +1374,15 @@ def _granite_yellow_distribution(
     max_roughness: float | None = None,
 ) -> pf.Material:
     """Granite yellow style - warm background dominates (uses gradient)."""
+    rng, rng_c0, rng_c1, rng_c2, rng_c3, rng_rough, rng_spec = rng.spawn(7)
     if w is None:
         w = pf.random.uniform(rng, 0.0, 100.0)
     # Sample colors
-    base_warm = _warm_color_distribution(rng)
-    hornblende_color = _create_gradient_color(rng, vector, base_warm)
-    mica_color = _dark_accent_color_distribution(rng)
-    quartz_color = _light_accent_color_distribution(rng)
-    feldspar_color = _light_accent_color_distribution(rng)
+    base_warm = _warm_color_distribution(rng_c0)
+    hornblende_color = _create_gradient_color(rng_c1, vector, base_warm)
+    mica_color = _dark_accent_color_distribution(rng_c2)
+    quartz_color = _light_accent_color_distribution(rng_c3)
+    feldspar_color = _light_accent_color_distribution(rng_c3)
 
     # Sample parameters around template anchors
     # Anchor values from granite_yellow
@@ -1389,9 +1391,9 @@ def _granite_yellow_distribution(
         mean_roughness_min = pf.random.uniform(rng, 0.1, 0.3)
         mean_roughness_max = pf.random.uniform(rng, mean_roughness_min, 0.5)
         min_roughness, max_roughness = _sample_pair_bounded(
-            rng, mean_roughness_min, mean_roughness_max, std=0.05
+            rng_rough, mean_roughness_min, mean_roughness_max, std=0.05
         )
-    min_spec, max_spec = _sample_pair_bounded(rng, 0.1, 0.1, std=0.05)
+    min_spec, max_spec = _sample_pair_bounded(rng_spec, 0.1, 0.1, std=0.05)
     height_scale = pf.random.log_normal(rng, 0.05, 0.3)
 
     hornblende_size = pf.random.log_normal(rng, 0.3, 0.25)
@@ -1707,21 +1709,22 @@ def _granite_cobble_distribution(
     max_roughness: float | None = None,
 ) -> pf.Material:
     """Granite cobble_gray style - rough, weathered (simple colors)."""
+    rng, rng_c0, rng_c1, rng_c2, rng_c3, rng_rough, rng_spec = rng.spawn(7)
     if w is None:
         w = pf.random.uniform(rng, 0.0, 100.0)
     # Sample colors
-    hornblende_color = _dark_accent_color_distribution(rng)
-    mica_color = _cool_color_distribution(rng)
-    quartz_color = _light_accent_color_distribution(rng)
-    feldspar_color = _light_accent_color_distribution(rng)
+    hornblende_color = _dark_accent_color_distribution(rng_c0)
+    mica_color = _cool_color_distribution(rng_c1)
+    quartz_color = _light_accent_color_distribution(rng_c2)
+    feldspar_color = _light_accent_color_distribution(rng_c3)
 
     # Sample parameters
     size = pf.random.log_normal(rng, 7.0, 0.25)
     if min_roughness is None or max_roughness is None:
         min_roughness, max_roughness = _sample_pair_bounded(
-            rng, 0.5013, 0.8333, std=0.1
+            rng_rough, 0.5013, 0.8333, std=0.1
         )
-    min_spec, max_spec = _sample_pair_bounded(rng, 0.0538, 0.0753, std=0.02)
+    min_spec, max_spec = _sample_pair_bounded(rng_spec, 0.0538, 0.0753, std=0.02)
     height_scale = pf.random.log_normal(rng, 0.25, 0.3)
 
     hornblende_color_variation = pf.random.clip_gaussian(rng, 0.4355, 0.15)
@@ -1944,24 +1947,27 @@ def granite_distribution(
     - Scale params (size, heights): log-normal with ~25% relative std
     - Bounded params (roughness, spread, smoothness, variation): clipped normal
     """
-    # Select template function and call it
+    options = [
+        (_granite_yellow_distribution, 1.0),
+        (_granite_white_brown_distribution, 1.0),
+        (_granite_no_displacement_distribution, 1.0),
+        (_granite_crystals_distribution, 1.0),
+        (_granite_cobble_distribution, 1.0),
+        (_granite_masonry_distribution, 1.0),
+        (_granite_sandy_distribution, 1.0),
+    ]
+    rng_choice, *rng_branches = rng.spawn(1 + len(options))
     func = pf.control.choice(
-        rng,
+        rng_choice,
         [
-            (_granite_yellow_distribution, 1.0),
-            (_granite_white_brown_distribution, 1.0),
-            (_granite_no_displacement_distribution, 1.0),
-            (_granite_crystals_distribution, 1.0),
-            (_granite_cobble_distribution, 1.0),
-            (_granite_masonry_distribution, 1.0),
-            (_granite_sandy_distribution, 1.0),
+            (functools.partial(fn, rng=rng_branches[i]), weight)
+            for i, (fn, weight) in enumerate(options)
         ],
     )
 
     result = func(
         vector=vector,
         w=w,
-        rng=rng,
         min_roughness=min_roughness,
         max_roughness=max_roughness,
     )
@@ -1976,9 +1982,10 @@ def granite_smooth_distribution(
     max_roughness: float | None = None,
 ) -> pf.Material:
     """Granite distribution with smooth roughness and no displacement."""
+    rng, rng_pair = rng.spawn(2)
     if min_roughness is None or max_roughness is None:
         min_roughness, max_roughness = _sample_pair_bounded(
-            rng, 0.0824, 0.1522, std=0.05
+            rng_pair, 0.0824, 0.1522, std=0.05
         )
     result = granite_distribution(
         rng=rng,

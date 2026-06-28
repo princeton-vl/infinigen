@@ -23,11 +23,12 @@ def ceramic_colored_distribution(
     rng: pf.RNG,
     vector: pf.ProcNode[pf.Vector],
 ) -> pf.Material:
-    hue = pf.random.uniform(rng, 0.0, 1.0)
-    saturation = pf.random.clip_gaussian(rng, 0.6, 0.32, 0.0, 0.7)
-    value = pf.random.clip_gaussian(rng, 0.6, 0.3, 0.0, 1.0)
+    rng_color, rng_ceramic = rng.spawn(2)
+    hue = pf.random.uniform(rng_color, 0.0, 1.0)
+    saturation = pf.random.clip_gaussian(rng_color, 0.6, 0.32, 0.0, 0.7)
+    value = pf.random.clip_gaussian(rng_color, 0.6, 0.3, 0.0, 1.0)
     color = pf.color.hsv_color(hue=hue, saturation=saturation, value=value)
-    return ceramic.ceramic_distribution(rng, vector, color=color)
+    return ceramic.ceramic_distribution(rng_ceramic, vector, color=color)
 
 
 def tile_indoor_wall_material_distribution(
@@ -45,8 +46,9 @@ def tile_indoor_wall_material_distribution(
         pf.Material: The material shader.
     """
 
+    rng_choice, rng_func = rng.spawn(2)
     func = pf.control.choice(
-        rng,
+        rng_choice,
         [
             (marble.marble_distribution, 2.0),
             (terrazzo.terrazzo_distribution, 0.1),
@@ -57,7 +59,7 @@ def tile_indoor_wall_material_distribution(
             (granite.granite_smooth_distribution, 1.0),
         ],
     )
-    return func(rng, vector)
+    return func(rng_func, vector)
 
 
 def tile_indoor_ground_material_distribution(
@@ -74,8 +76,9 @@ def tile_indoor_ground_material_distribution(
     Returns:
         pf.Material: The material shader.
     """
+    rng_choice, rng_func = rng.spawn(2)
     func = pf.control.choice(
-        rng,
+        rng_choice,
         [
             (marble.marble_distribution, 2.5),
             (terrazzo.terrazzo_black_monocolor_distribution, 1.0),
@@ -87,7 +90,7 @@ def tile_indoor_ground_material_distribution(
             (granite.granite_distribution, 0.5),
         ],
     )
-    return func(rng, vector)
+    return func(rng_func, vector)
 
 
 def tile_outdoor_wall_material_distribution(
@@ -104,8 +107,9 @@ def tile_outdoor_wall_material_distribution(
     Returns:
         pf.Material: The material shader.
     """
+    rng_choice, rng_func = rng.spawn(2)
     func = pf.control.choice(
-        rng,
+        rng_choice,
         [
             (granite.granite_distribution, 1.0),
             (concrete.concrete_distribution, 1.0),
@@ -114,7 +118,7 @@ def tile_outdoor_wall_material_distribution(
             (stone_smooth.stone_smooth_distribution, 0.5),
         ],
     )
-    return func(rng, vector)
+    return func(rng_func, vector)
 
 
 def tile_outdoor_ground_material_distribution(
@@ -131,8 +135,9 @@ def tile_outdoor_ground_material_distribution(
     Returns:
         pf.Material: The material shader.
     """
+    rng_choice, rng_func = rng.spawn(2)
     func = pf.control.choice(
-        rng,
+        rng_choice,
         [
             (granite.granite_distribution, 1.0),
             (concrete.concrete_distribution, 1.0),
@@ -141,7 +146,7 @@ def tile_outdoor_ground_material_distribution(
             (stone_smooth.stone_smooth_distribution, 1.0),
         ],
     )
-    return func(rng, vector)
+    return func(rng_func, vector)
 
 
 def tile_material_distribution(

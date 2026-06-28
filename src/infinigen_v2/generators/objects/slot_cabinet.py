@@ -378,17 +378,19 @@ def slot_cabinet_distribution(
     row_divider_width = pf.random.uniform(rng, 0.015, 0.05)
     col_divider_width = pf.random.uniform(rng, 0.01, 0.04)
     if back_width is None:
+        rng_choice, rng_back = rng.spawn(2)
         back_width = pf.control.choice(
-            rng,
+            rng_choice,
             [
                 (0.0, 0.25),
-                (pf.random.uniform(rng, 0.01, 0.04), 0.75),
+                (pf.random.uniform(rng_back, 0.01, 0.04), 0.75),
             ],
         )
 
     vec = pf.nodes.shader.coord().uv
     if frame_material is None:
-        frame_material = furniture_material_distribution(rng, vec)
+        (rng_mat,) = rng.spawn(1)
+        frame_material = furniture_material_distribution(rng_mat, vec)
 
     geo = shelf(
         dimensions=dimensions,
