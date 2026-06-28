@@ -18,4 +18,6 @@ def lamp_bulb_nonemissive(
         a=transparent,
         b=translucent,
     )
-    return pf.Material(surface=surface)
+    return pf.Material(
+        surface=surface, displacement=pf.nodes.math.constant((0.0, 0.0, 0.0))
+    )

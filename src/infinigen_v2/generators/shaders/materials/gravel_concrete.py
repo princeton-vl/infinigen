@@ -85,6 +85,7 @@ def small_gravel(
     )
 
     hue_saturation = pf.nodes.color.hue_saturation(
+        fac=1.0,
         hue=color_b_hue.x,
         saturation=color_b_hue.y,
         value=color_b_hue.z,
@@ -249,6 +250,7 @@ def large_gravel(
     )
 
     hue_saturation = pf.nodes.color.hue_saturation(
+        fac=1.0,
         hue=color_b_hue.x,
         saturation=color_b_hue.y,
         value=color_b_hue.z,

@@ -23,7 +23,7 @@ dependencies = [
     # NOTE: many less-than dependencies could likely be loosened
     #   we attempted to restrict to only versions that are known to be working
     "bpy==4.2.0",
-    "procfunc>=0.31,<0.32",
+    "procfunc>=0.34,<0.35",
     "coacd",
     "gin_config>=0.5.0",
     "imageio<2.32.0", # e.g. 2.31.1

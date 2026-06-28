@@ -283,6 +283,7 @@ def wood_grain_generator(
     grain_map_base_value = pf.nodes.math.vector_length(grain_map_numerator_value_vector)
     grain_map_b_a = grain_settings_grain_size * 2.0
     grain_random_noise = pf.nodes.texture.noise(
+        vector=None,
         noise_dimensions="4D",
         scale=1.0 / grain_map_b_a,
         roughness=0.0,

@@ -938,6 +938,7 @@ def granite_no_displacement(
     )
     return pf.Material(
         surface=granite_result.surface,
+        displacement=pf.nodes.math.constant((0.0, 0.0, 0.0)),
     )
 
 
@@ -1610,6 +1611,7 @@ def _granite_no_displacement_distribution(
     )
     return pf.Material(
         surface=granite_result.surface,
+        displacement=pf.nodes.math.constant((0.0, 0.0, 0.0)),
     )
 
 
@@ -1987,6 +1989,7 @@ def granite_smooth_distribution(
     )
     return pf.Material(
         surface=result.surface,
+        displacement=pf.nodes.math.constant((0.0, 0.0, 0.0)),
     )
 
 

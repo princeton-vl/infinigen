@@ -13,7 +13,10 @@ def glass_colored(
         ior=1.5,
         transmission_weight=1.0,
     )
-    return pf.Material(surface=surface)
+    return pf.Material(
+        surface=surface,
+        displacement=pf.nodes.math.constant((0.0, 0.0, 0.0)),
+    )
 
 
 def glass_colored_color_distribution(rng: pf.RNG) -> pf.Color:

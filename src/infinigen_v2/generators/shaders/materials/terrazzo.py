@@ -208,7 +208,7 @@ def terrazzo_multicolor_node(
         b=result_0_base_color_3,
     )
     result_0_base_color_1 = pf.nodes.color.hue_saturation(
-        value=2.0, color=result_0_base_color_2
+        fac=1.0, value=2.0, color=result_0_base_color_2
     )
     result_0_base_color = pf.nodes.color.mix_rgb(
         factor=result_0_base_color_factor.color.astype(dtype=float),
@@ -378,7 +378,7 @@ def terrazzo_monocolor_node(
         b=result_0_base_color_3,
     )
     result_0_base_color_1 = pf.nodes.color.hue_saturation(
-        value=2.0, color=result_0_base_color_2
+        fac=1.0, value=2.0, color=result_0_base_color_2
     )
     result_0_base_color = pf.nodes.color.mix_rgb(
         factor=result_0_base_color_factor.color.astype(dtype=float),
@@ -408,6 +408,7 @@ def terrazzo_multicolor(vector):
     )
     return pf.Material(
         surface=terrazzo_result,
+        displacement=pf.nodes.math.constant((0.0, 0.0, 0.0)),
     )
 
 
@@ -419,6 +420,7 @@ def terrazzo_monocolor(vector):
     )
     return pf.Material(
         surface=terrazzo_001_result,
+        displacement=pf.nodes.math.constant((0.0, 0.0, 0.0)),
     )
 
 
@@ -610,6 +612,7 @@ def terrazzo_multicolor_distribution(
 
     return pf.Material(
         surface=terrazzo_result,
+        displacement=pf.nodes.math.constant((0.0, 0.0, 0.0)),
     )
 
 
@@ -776,6 +779,7 @@ def terrazzo_monocolor_distribution(
 
     return pf.Material(
         surface=terrazzo_result,
+        displacement=pf.nodes.math.constant((0.0, 0.0, 0.0)),
     )
 
 

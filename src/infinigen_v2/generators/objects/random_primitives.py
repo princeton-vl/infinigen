@@ -204,7 +204,9 @@ def _noise_warp(
     phase: t.SocketOrVal[float],
 ) -> pf.ProcNode[pf.MeshObject]:
     # unconnected noise vector samples position implicitly in geometry nodes
-    noise = pf.nodes.texture.noise(scale=scale, noise_dimensions="4D", w=phase)
+    noise = pf.nodes.texture.noise(
+        vector=None, scale=scale, noise_dimensions="4D", w=phase
+    )
     centered = pf.nodes.math.vector_subtract(noise.color, (0.5, 0.5, 0.5))
     offset = pf.nodes.math.vector_scale(vector=centered, scale=strength)
     return pf.nodes.geo.set_position(geometry=mesh, offset=offset)

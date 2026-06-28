@@ -140,11 +140,12 @@ def concrete(
         normalize=False,
     )
     surface_factor = pf.nodes.color.mix_rgb(
+        factor=0.5,
         a=surface_factor_1.fac.astype(dtype=pf.Color),
         b=pf.Color((0.5, 0.5, 0.5)),
     )
 
-    color_color_1 = pf.nodes.color.hue_saturation(value=0.6, color=base_color)
+    color_color_1 = pf.nodes.color.hue_saturation(fac=1.0, value=0.6, color=base_color)
 
     displacement_factor_2 = pf.nodes.texture.noise(
         vector=vector,
@@ -164,10 +165,11 @@ def concrete(
         normalize=False,
     )
     displacement_factor = pf.nodes.color.mix_rgb(
+        factor=0.5,
         a=displacement_factor_2.fac.astype(dtype=pf.Color),
         b=displacement_factor_1.fac.astype(dtype=pf.Color),
     )
-    displacement_6 = pf.nodes.color.hue_saturation(value=1.4, color=base_color)
+    displacement_6 = pf.nodes.color.hue_saturation(fac=1.0, value=1.4, color=base_color)
     displacement_5 = pf.nodes.math.mix(
         factor=displacement_factor.astype(dtype=float),
         a=base_color,
@@ -184,7 +186,9 @@ def concrete(
         fac=color_variation,
         color=base_color_color,
     )
-    base_color_1 = pf.nodes.color.hue_saturation(value=crack_darkness, color=base_color)
+    base_color_1 = pf.nodes.color.hue_saturation(
+        fac=1.0, value=crack_darkness, color=base_color
+    )
 
     surface_base_color = pf.nodes.color.mix_rgb(
         factor=base_color_factor, a=base_color_2, b=base_color_1

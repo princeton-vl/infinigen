@@ -87,4 +87,5 @@ def shader_vase_ceramic():
     )
     return pf.Material(
         surface=surface,
+        displacement=pf.nodes.math.constant((0.0, 0.0, 0.0)),
     )

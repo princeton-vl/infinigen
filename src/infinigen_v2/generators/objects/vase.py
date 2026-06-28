@@ -307,7 +307,7 @@ def vase(
 
     geo = pf.nodes.geo.delete_geometry(
         geometry=lofting_result.geometry,
-        selection=lofting_result.top,
+        selection=lofting_result.bottom,
         domain="FACE",
     )
 

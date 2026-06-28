@@ -660,7 +660,7 @@ requires-dist = [
     { name = "openexr" },
     { name = "pandas" },
     { name = "pre-commit", marker = "extra == 'dev'" },
-    { name = "procfunc", specifier = ">=0.31,<0.32" },
+    { name = "procfunc", specifier = ">=0.34,<0.35" },
     { name = "psutil" },
     { name = "pyglet", marker = "extra == 'vis'", specifier = "<2" },
     { name = "pyrender", marker = "extra == 'terrain'", specifier = "<0.2.0" },
@@ -1141,16 +1141,16 @@ wheels = [
 
 [[package]]
 name = "procfunc"
-version = "0.31.0"
+version = "0.34.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "bpy" },
     { name = "numpy" },
     { name = "pandas" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e5/40/9e460acf0b45837683de42ef8c8d95cd5484644dfce2980cd4c5d15dae10/procfunc-0.31.0.tar.gz", hash = "sha256:bea8e7d10f9d655b567bc1d60da08b5b0e5c67028db206edaeaa68c425e76046", size = 278488, upload-time = "2026-05-12T11:19:41.25Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c9/a6/79892c729702622ade421a4fd735f2eba8f8965c1722f2b1af7d5bfa7ef1/procfunc-0.34.0.tar.gz", hash = "sha256:443fc1e950658f9773a110712c3d727a13c719674c734b371b8b26d5cb5226f5", size = 300167, upload-time = "2026-06-28T19:33:16.198Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/be/ba/06ff908eff76b2186a43bdc748605d70d7173a1b7ba7ac659a87254c72e6/procfunc-0.31.0-py3-none-any.whl", hash = "sha256:09e91a5bd398f74793c77b38622eae966dd0d85fd593589b410bcccb0d8c7422", size = 298122, upload-time = "2026-05-12T11:19:42.785Z" },
+    { url = "https://files.pythonhosted.org/packages/8c/d6/0680c11f0f131a94f7daa6f0d9a8022946bf2d8649ec869f4ea1748b6e64/procfunc-0.34.0-py3-none-any.whl", hash = "sha256:99b84a9b90f94b9344b62a6f85ed7164b98831d2efa40b350219cf374ec694e7", size = 317291, upload-time = "2026-06-28T19:33:15.062Z" },
 ]
 
 [[package]]

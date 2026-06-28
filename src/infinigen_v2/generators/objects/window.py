@@ -178,7 +178,7 @@ def curtain(
         material=curtain_frame_material,
     )
 
-    join_3 = pf.nodes.geo.join_geometry([boolean, set_material_1])
+    join_3 = pf.nodes.geo.join_geometry([boolean.mesh, set_material_1])
 
     set_shade_smooth = pf.nodes.geo.set_shade_smooth(
         geometry=join_3, shade_smooth=False

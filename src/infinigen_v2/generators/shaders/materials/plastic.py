@@ -286,11 +286,13 @@ def plastic_opaque_distribution(
 
     color_1_value = pf.random.uniform(rng, 0.5, 1.0)
     color_1 = pf.nodes.color.hue_saturation(
+        fac=1.0,
         color=color,
         value=color_1_value,
     )
     color_2_value = pf.random.uniform(rng, 0.9, 1.3)
     color_2 = pf.nodes.color.hue_saturation(
+        fac=1.0,
         color=color,
         value=color_2_value,
     )
@@ -342,6 +344,7 @@ def bumpy_rubber(
         to_max=1.4,
     )
     varied_color = pf.nodes.color.hue_saturation(
+        fac=1.0,
         color=base_color,
         value=color_variation,
     )
@@ -517,6 +520,7 @@ def _bumpy_rubber_distribution(
         s_offset = pf.random.uniform(rng, -0.1, 0.1)
         v_offset = pf.random.uniform(rng, -0.15, 0.15)
         base_color = pf.nodes.color.hue_saturation(
+            fac=1.0,
             color=base_color,
             hue=h_offset + 0.5,
             saturation=s_offset + 1.0,
@@ -679,6 +683,7 @@ def _plastic_black_rubberized_distribution(
             s_offset = pf.random.uniform(rng, -0.03, 0.03)
             v_offset = pf.random.uniform(rng, -0.05, 0.05)
             color_1 = pf.nodes.color.hue_saturation(
+                fac=1.0,
                 color=color_1,
                 hue=h_offset + 0.5,
                 saturation=s_offset + 1.0,
@@ -692,6 +697,7 @@ def _plastic_black_rubberized_distribution(
             s_offset = pf.random.uniform(rng, -0.03, 0.03)
             v_offset = pf.random.uniform(rng, -0.05, 0.05)
             color_2 = pf.nodes.color.hue_saturation(
+                fac=1.0,
                 color=color_2,
                 hue=h_offset + 0.5,
                 saturation=s_offset + 1.0,
@@ -785,6 +791,7 @@ def _plastic_black_translucent_distribution(
         s_offset = pf.random.uniform(rng, -0.05, 0.05)
         v_offset = pf.random.uniform(rng, -0.05, 0.05)
         color = pf.nodes.color.hue_saturation(
+            fac=1.0,
             color=color,
             hue=h_offset + 0.5,
             saturation=s_offset + 1.0,
@@ -867,6 +874,7 @@ def _plastic_soft_touch_distribution(
         s_offset = pf.random.uniform(rng, -0.1, 0.1)
         v_offset = pf.random.uniform(rng, -0.15, 0.15)
         color = pf.nodes.color.hue_saturation(
+            fac=1.0,
             color=color,
             hue=h_offset + 0.5,
             saturation=s_offset + 1.0,
@@ -952,6 +960,7 @@ def _plastic_sandblasted_distribution(
         s_offset = pf.random.uniform(rng, -0.1, 0.1)
         v_offset = pf.random.uniform(rng, -0.15, 0.15)
         color = pf.nodes.color.hue_saturation(
+            fac=1.0,
             color=color,
             hue=h_offset + 0.5,
             saturation=s_offset + 1.0,
@@ -1039,6 +1048,7 @@ def _plastic_high_gloss_distribution(
         s_offset = pf.random.uniform(rng, -0.1, 0.1)
         v_offset = pf.random.uniform(rng, -0.15, 0.15)
         color = pf.nodes.color.hue_saturation(
+            fac=1.0,
             color=color,
             hue=h_offset + 0.5,
             saturation=s_offset + 1.0,
@@ -1125,6 +1135,7 @@ def _plastic_translucent_bumps_distribution(
         s_offset = pf.random.uniform(rng, -0.1, 0.1)
         v_offset = pf.random.uniform(rng, -0.15, 0.15)
         color = pf.nodes.color.hue_saturation(
+            fac=1.0,
             color=color,
             hue=h_offset + 0.5,
             saturation=s_offset + 1.0,
@@ -1213,6 +1224,7 @@ def _plastic_white_textured_distribution(
         s_offset = pf.random.uniform(rng, -0.1, 0.1)
         v_offset = pf.random.uniform(rng, -0.1, 0.1)
         color = pf.nodes.color.hue_saturation(
+            fac=1.0,
             color=color,
             hue=h_offset + 0.5,
             saturation=s_offset + 1.0,

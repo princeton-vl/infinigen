@@ -22,4 +22,6 @@ def glass_no_refraction_distribution(
         alpha=alpha,
         metallic=0.0,
     )
-    return pf.Material(surface=surface)
+    return pf.Material(
+        surface=surface, displacement=pf.nodes.math.constant((0.0, 0.0, 0.0))
+    )

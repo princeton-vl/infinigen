@@ -301,6 +301,7 @@ def splats_metal_gradient(vector: t.SocketOrVal[pf.Vector]):
     mix_shader = pf.nodes.shader.mix_shader(factor=mask, a=principled, b=diffuse)
     return pf.Material(
         surface=mix_shader,
+        displacement=pf.nodes.math.constant((0.0, 0.0, 0.0)),
     )
 
 
@@ -403,6 +404,7 @@ def splats_cookware(vector: t.SocketOrVal[pf.Vector]):
     mix_shader = pf.nodes.shader.mix_shader(factor=mask, a=principled, b=diffuse)
     return pf.Material(
         surface=mix_shader,
+        displacement=pf.nodes.math.constant((0.0, 0.0, 0.0)),
     )
 
 
@@ -464,6 +466,7 @@ def splats_spots(vector: t.SocketOrVal[pf.Vector]):
     mix_shader = pf.nodes.shader.mix_shader(factor=mask, a=principled, b=diffuse)
     return pf.Material(
         surface=mix_shader,
+        displacement=pf.nodes.math.constant((0.0, 0.0, 0.0)),
     )
 
 
@@ -760,6 +763,7 @@ def splats_streaks(vector: t.SocketOrVal[pf.Vector]):
     mix_shader = pf.nodes.shader.mix_shader(factor=mask, a=principled, b=diffuse)
     return pf.Material(
         surface=mix_shader,
+        displacement=pf.nodes.math.constant((0.0, 0.0, 0.0)),
     )
 
 
@@ -805,6 +809,7 @@ def metal_splats_presets(rng: pf.RNG, vector):
     mix_shader = pf.nodes.shader.mix_shader(factor=mask, a=metal, b=diffuse)
     return pf.Material(
         surface=mix_shader,
+        displacement=pf.nodes.math.constant((0.0, 0.0, 0.0)),
     )
 
 

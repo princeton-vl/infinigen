@@ -23,6 +23,7 @@ def splats_base_material_distribution(
     )
     return pf.Material(
         surface=principled,
+        displacement=pf.nodes.math.constant((0.0, 0.0, 0.0)),
     )
 
 
@@ -65,6 +66,7 @@ def metal_simple_distribution(
     )
     return pf.Material(
         surface=principled,
+        displacement=pf.nodes.math.constant((0.0, 0.0, 0.0)),
     )
 
 

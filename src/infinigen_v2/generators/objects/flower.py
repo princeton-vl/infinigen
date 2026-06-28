@@ -492,7 +492,9 @@ def flower(
 
     petals_realized = pf.nodes.geo.realize_instances(petals_instance)
 
-    petal_noise = pf.nodes.texture.noise(scale=3.73, detail=5.41, distortion=-1.0)
+    petal_noise = pf.nodes.texture.noise(
+        vector=None, scale=3.73, detail=5.41, distortion=-1.0
+    )
 
     petal_offset = pf.nodes.math.vector_scale(
         vector=pf.nodes.math.vector_subtract(

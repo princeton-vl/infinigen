@@ -222,7 +222,7 @@ def metal_brushed_linear_distribution(
         base_color = metal_any_color_distribution(r1)
 
     # Placeholder parameters (to be filled later)
-    brush_type = pf.random.clip_gaussian(r2, 0.0, 0.2, 0.0, 0.05)
+    brush_type = pf.random.uniform(r2, 0.0, 0.05)
     brush_size = pf.random.clip_gaussian(r2, 3, 3, 0.0, 8.5)
     stretch_factor = pf.random.uniform(r2, 0.5727, 0.9)
     brush_rotation = (np.pi / 2, 0.0, np.pi / 2)  # (0.0, np.pi/2, 0.0)

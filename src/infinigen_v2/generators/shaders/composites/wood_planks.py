@@ -46,11 +46,13 @@ def wood_planks_deck(
     )
 
     displacement_grains_color_1 = pf.nodes.color.mix_rgb(
+        factor=0.5,
         blend_type="SOFT_LIGHT",
         a=pf.Color((0.142, 0.119, 0.086)),
         b=brick_cutter_result.random.astype(dtype=pf.Vector).x.astype(dtype=pf.Color),
     )
     displacement_grains_color = pf.nodes.color.mix_rgb(
+        factor=0.5,
         blend_type="SOFT_LIGHT",
         a=pf.Color((0.387, 0.321, 0.229)),
         b=brick_cutter_result.random.astype(dtype=pf.Vector).y.astype(dtype=pf.Color),
@@ -103,11 +105,13 @@ def wood_planks_brown(
     )
 
     displacement_grains_color_1 = pf.nodes.color.mix_rgb(
+        factor=0.5,
         blend_type="SOFT_LIGHT",
         a=pf.Color((0.021, 0.014, 0.005)),
         b=brick_cutter_result.random.astype(dtype=pf.Vector).x.astype(dtype=pf.Color),
     )
     displacement_grains_color = pf.nodes.color.mix_rgb(
+        factor=0.5,
         blend_type="SOFT_LIGHT",
         a=pf.Color((0.249, 0.103, 0.035)),
         b=brick_cutter_result.random.astype(dtype=pf.Vector).y.astype(dtype=pf.Color),
@@ -160,11 +164,13 @@ def wood_planks_blonde(
     )
 
     surface_b_grains_color_1 = pf.nodes.color.mix_rgb(
+        factor=0.5,
         blend_type="SOFT_LIGHT",
         a=pf.Color((0.432, 0.254, 0.069)),
         b=brick_cutter_result.random.astype(dtype=pf.Vector).x.astype(dtype=pf.Color),
     )
     surface_b_grains_color = pf.nodes.color.mix_rgb(
+        factor=0.5,
         blend_type="SOFT_LIGHT",
         a=pf.Color((0.549, 0.359, 0.122)),
         b=brick_cutter_result.random.astype(dtype=pf.Vector).y.astype(dtype=pf.Color),
@@ -244,11 +250,13 @@ def wood_planks_flaky(
     )
 
     wood_shader_grains_color_1 = pf.nodes.color.mix_rgb(
+        factor=0.5,
         a=pf.Color((0.142, 0.119, 0.086)),
         b=brick_cutter_result.random.astype(dtype=pf.Vector).x.astype(dtype=pf.Color),
         blend_type="SOFT_LIGHT",
     )
     wood_shader_grains_color = pf.nodes.color.mix_rgb(
+        factor=0.5,
         a=pf.Color((0.387, 0.321, 0.229)),
         b=brick_cutter_result.random.astype(dtype=pf.Vector).y.astype(dtype=pf.Color),
         blend_type="SOFT_LIGHT",
@@ -274,10 +282,8 @@ def planks_cutter_distribution(
     brick_width = pf.random.uniform(rng, 0.8, 1.2)
     brick_height = pf.random.uniform(rng, 0.08, 0.2)
     brick_scaling = pf.random.uniform(rng, 0.5, 1.5)
-    # shift is in brick-width units. Real wood floors use canonical staggers
-    # (1/2 running bond, 1/3 etc) — uniform(0,1) would land on visually awkward
-    # offsets where rows nearly align. Pick from discrete canonical staggers
-    # plus a wider random branch for variety.
+    # canonical staggers (1/2 running bond, 1/3, ...) plus a random branch;
+    # uniform(0,1) lands on awkward near-aligned offsets.
     shift = pf.control.choice(
         rng,
         [
@@ -294,8 +300,7 @@ def planks_cutter_distribution(
             (pf.random.uniform(rng, 0.3, 0.7), 1.0),
         ],
     )
-    # gab is a fractional gap (relative to min(brick_width, brick_height)/2);
-    # keep it small but never absurd from the exponential tail.
+    # fractional gap; keep small but bounded away from the exponential tail.
     gab = pf.random.clip_gaussian(rng, 0.03, 0.02, 0.005, 0.12)
     round_corner = pf.random.uniform(rng, 0.0, 0.2)
     warp_strength = pf.random.exponential(rng, 0.12)
@@ -350,11 +355,13 @@ def wood_planks_distribution(
     )
 
     grains_color_1 = pf.nodes.color.mix_rgb(
+        factor=0.5,
         blend_type="SOFT_LIGHT",
         a=color_1,
         b=brick_cutter_result.random.astype(dtype=pf.Vector).x.astype(dtype=pf.Color),
     )
     grains_color_2 = pf.nodes.color.mix_rgb(
+        factor=0.5,
         blend_type="SOFT_LIGHT",
         a=color_2,
         b=brick_cutter_result.random.astype(dtype=pf.Vector).y.astype(dtype=pf.Color),

@@ -654,7 +654,9 @@ def marble_yellow(vector: pf.ProcNode[pf.Vector]):
         specularity=0.238753,
         height=0.0,
     )
-    return pf.Material(grain_to_shader_result.bsdf, None, None)
+    return pf.Material(
+        grain_to_shader_result.bsdf, pf.nodes.math.constant((0.0, 0.0, 0.0)), None
+    )
 
 
 def marble_white_striped(vector: pf.ProcNode[pf.Vector]):
@@ -780,7 +782,9 @@ def marble_white_striped(vector: pf.ProcNode[pf.Vector]):
         specularity=0.238753,
         height=0.0,
     )
-    return pf.Material(grain_to_shader_result.bsdf, None, None)
+    return pf.Material(
+        grain_to_shader_result.bsdf, pf.nodes.math.constant((0.0, 0.0, 0.0)), None
+    )
 
 
 def marble_white(vector: pf.ProcNode[pf.Vector]):
@@ -906,7 +910,9 @@ def marble_white(vector: pf.ProcNode[pf.Vector]):
         specularity=0.238753,
         height=0.0,
     )
-    return pf.Material(grain_to_shader_result.bsdf, None, None)
+    return pf.Material(
+        grain_to_shader_result.bsdf, pf.nodes.math.constant((0.0, 0.0, 0.0)), None
+    )
 
 
 def marble_orange(vector: pf.ProcNode[pf.Vector]):
@@ -1031,7 +1037,9 @@ def marble_orange(vector: pf.ProcNode[pf.Vector]):
         specularity=0.238753,
         height=0.0,
     )
-    return pf.Material(grain_to_shader_result.bsdf, None, None)
+    return pf.Material(
+        grain_to_shader_result.bsdf, pf.nodes.math.constant((0.0, 0.0, 0.0)), None
+    )
 
 
 def marble_navy(vector: pf.ProcNode[pf.Vector]):
@@ -1156,7 +1164,9 @@ def marble_navy(vector: pf.ProcNode[pf.Vector]):
         specularity=0.238753,
         height=-0.003,
     )
-    return pf.Material(grain_to_shader_result.bsdf, None, None)
+    return pf.Material(
+        grain_to_shader_result.bsdf, pf.nodes.math.constant((0.0, 0.0, 0.0)), None
+    )
 
 
 def marble_gray(vector: pf.ProcNode[pf.Vector]):
@@ -1281,7 +1291,9 @@ def marble_gray(vector: pf.ProcNode[pf.Vector]):
         specularity=0.366071,
         height=0.005,
     )
-    return pf.Material(grain_to_shader_result.bsdf, None, None)
+    return pf.Material(
+        grain_to_shader_result.bsdf, pf.nodes.math.constant((0.0, 0.0, 0.0)), None
+    )
 
 
 def marble_gold(vector: pf.ProcNode[pf.Vector]):
@@ -1406,7 +1418,9 @@ def marble_gold(vector: pf.ProcNode[pf.Vector]):
         specularity=0.238753,
         height=0.0,
     )
-    return pf.Material(grain_to_shader_result.bsdf, None, None)
+    return pf.Material(
+        grain_to_shader_result.bsdf, pf.nodes.math.constant((0.0, 0.0, 0.0)), None
+    )
 
 
 def marble_black_spots(vector: pf.ProcNode[pf.Vector]):
@@ -1659,7 +1673,9 @@ def marble_black(vector: pf.ProcNode[pf.Vector]):
         specularity=0.118217,
         height=0.0,
     )
-    return pf.Material(grain_to_shader_result.bsdf, None, None)
+    return pf.Material(
+        grain_to_shader_result.bsdf, pf.nodes.math.constant((0.0, 0.0, 0.0)), None
+    )
 
 
 def marble_presets(rng: pf.RNG, vector: t.SocketOrVal[pf.Vector]):
