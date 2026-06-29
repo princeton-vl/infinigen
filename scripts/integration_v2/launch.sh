@@ -16,6 +16,11 @@ if ! [ -z "$PARALLEL_JOBS" ]; then
     XARGS="$XARGS -P $PARALLEL_JOBS"
 fi
 
+# Materials are tiny sphere renders, so pack more per slot than heavy scenes.
+# Peak concurrent material jobs = slots * MATERIAL_PARALLEL.
+MATERIAL_PARALLEL=${MATERIAL_PARALLEL:-1}
+MATERIAL_XARGS="-t -I {} -P $MATERIAL_PARALLEL"
+
 MATERIALS=${MATERIALS-$(uv run python -m infinigen_v2.list $LIST_ARGS --categories Material --missing_values drop --columns shortname $REST_ARGS)}
 OBJECTS=${OBJECTS-$(uv run python -m infinigen_v2.list $LIST_ARGS --categories Object --missing_values drop --columns shortname $REST_ARGS)}
 SCENES=${SCENES-$(uv run python -m infinigen_v2.list $LIST_ARGS --categories Scene --missing_values drop --columns shortname $REST_ARGS)}
@@ -51,25 +56,25 @@ fi
 
 # MATERIALS VISUAL CHECK
 for i in {0..5}; do
-    echo "$MATERIALS" | xargs $XARGS "${RENDER_RUNNER_ARGS[@]}" {} material_sphere render_cycles \
+    echo "$MATERIALS" | xargs $MATERIAL_XARGS "${RENDER_RUNNER_ARGS[@]}" {} material_sphere render_cycles \
         $GEN_ARGS --output $OUTPUT_PATH/material-{}-sphere-cycles-$i --seed $i \
-        --passes rgb --displacement_mode DISPLACEMENT_AND_BUMP -r 384 384 -s 128
+        --passes rgb --displacement_mode DISPLACEMENT_AND_BUMP -r 192 192 -s 128
 
 done
 
 # MATERIALS DISPLACEMENT TEST (Cycles: BUMP, DISPLACEMENT_AND_BUMP, REALIZE_MESH)
 for disp in BUMP DISPLACEMENT_AND_BUMP REALIZE_MESH; do
-    echo "$MATERIALS" | xargs $XARGS "${RENDER_RUNNER_ARGS[@]}" \
+    echo "$MATERIALS" | xargs $MATERIAL_XARGS "${RENDER_RUNNER_ARGS[@]}" \
         {} material_sphere render_cycles render_cycles_ground_truth visualize_gt \
         $GEN_ARGS --output $OUTPUT_PATH/material-{}-sphere-cycles-$disp \
-        --seed 0 --passes rgb surface-normal --displacement_mode $disp -r 384 384 -s 128
+        --seed 0 --passes rgb surface-normal --displacement_mode $disp -r 192 192 -s 128
 done
 
 # MATERIALS DISPLACEMENT TEST (Eevee: DISPLACEMENT_AND_BUMP only)
-echo "$MATERIALS" | xargs $XARGS "${RENDER_RUNNER_ARGS[@]}" \
+echo "$MATERIALS" | xargs $MATERIAL_XARGS "${RENDER_RUNNER_ARGS[@]}" \
     {} material_sphere render_eevee render_eevee_ground_truth visualize_gt \
     $GEN_ARGS --output $OUTPUT_PATH/material-{}-sphere-eevee-DISPLACEMENT_AND_BUMP \
-    --seed 0 --passes rgb surface-normal --displacement_mode DISPLACEMENT_AND_BUMP -r 384 384 -s 128
+    --seed 0 --passes rgb surface-normal --displacement_mode DISPLACEMENT_AND_BUMP -r 192 192 -s 128
 
 # MASKS VISUAL CHECK (black/white pattern renders on a flat UV plane)
 for i in {0..5}; do
@@ -89,5 +94,5 @@ done
 for i in {0..5}; do
     echo "$SCENES" | xargs $XARGS "${RENDER_RUNNER_ARGS[@]}" {} render_cycles \
         $GEN_ARGS --output $OUTPUT_PATH/scene-{}-demo-cycles-$i --seed $i \
-        --passes rgb -r 600 600 -s 256
+        --passes rgb -r 480 480 -s 256
 done

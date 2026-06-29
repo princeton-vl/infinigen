@@ -78,6 +78,7 @@ jobs:
         env:
           GPU_MEM_USED_MAX_MB: 10000
           GIT_BRANCH_OVERRIDE: ${{ github.head_ref || github.ref_name }}
+          MATERIAL_PARALLEL: 4
           MATERIAL_LIMIT: -1
           OBJECT_LIMIT: -1
           SCENE_LIMIT: -1
