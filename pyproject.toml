@@ -153,6 +153,7 @@ ignore = [
     "E501", # over-length lines, formatter should handle it
     "E741", # ambigous variable name
     "F841", # local variable is assigned to but never used
+    "B905" # disable "zip must have strict parameter"
 ]
 
 [tool.ruff.lint.per-file-ignores]

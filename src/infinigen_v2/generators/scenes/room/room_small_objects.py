@@ -288,7 +288,7 @@ def _row_on_target(
     by a per-shelf fullness so shelves range from sparse to nearly packed."""
     child, extents = _pick_child(rng, pool)
     max_xy = max(max(e[:2]) for e in extents)
-    fullness = pf.random.clip_gaussian(rng, 1.0, 0.35, 0.05, 2.0)
+    fullness = pf.random.clip_gaussian(rng, 2.0, 0.7, 0.1, 4.0)
     obj_size = max_xy / fullness
 
     diag = sum(e * e for e in _clamped_extent(parent)) ** 0.5

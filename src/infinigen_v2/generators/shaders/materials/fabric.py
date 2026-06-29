@@ -28,7 +28,6 @@ def fabric(
     metallic: t.SocketOrVal[float] = 0.0,
     specular: t.SocketOrVal[float] = 0.25,
     roughness: t.SocketOrVal[float] = 0.3773,
-    translucency: t.SocketOrVal[float] = 0.5,
     sheen_weight: t.SocketOrVal[float] = 0.5409,
     sheen_roughness: t.SocketOrVal[float] = 0.1409,
     gab: t.SocketOrVal[float] = 0.0,
@@ -149,7 +148,7 @@ def fabric(
         roughness=roughness,
         ior=1.45,
         alpha=alpha,
-        transmission_weight=translucency,
+        transmission_weight=0.0,
         subsurface_weight=0.0,
         subsurface_anisotropy=0.0,
         specular_ior_level=specular,
@@ -212,7 +211,6 @@ def fabric_coarse(
         color_variation=0.2,
         specular=0.2,
         roughness=0.75,
-        translucency=0.3,
     )
     return pf.Material(
         surface=fabric_result.surface,
@@ -258,13 +256,9 @@ def fabric_distribution(
     rng: pf.RNG,
     vector: t.SocketOrVal[pf.Vector],
     base_color: t.SocketOrVal[pf.Color] | None = None,
-    translucency: float | None = None,
 ):
     if base_color is None:
         base_color = fabric_color_distribution(rng)
-
-    if translucency is None:
-        translucency = 0.0
 
     size = pf.random.uniform(rng, 0.5, 2)
     size_variation = pf.random.uniform(rng, 0.0, 0.9)
@@ -290,7 +284,6 @@ def fabric_distribution(
         metallic=metallic,
         specular=specular,
         roughness=roughness,
-        translucency=translucency,
         sheen_weight=sheen_weight,
         sheen_roughness=sheen_roughness,
         gab=gab,
@@ -299,3 +292,19 @@ def fabric_distribution(
         surface=fabric_result.surface,
         displacement=fabric_result.displacement,
     )
+
+
+def fabric_translucent_distribution(
+    rng: pf.RNG,
+    vector: t.SocketOrVal[pf.Vector],
+    base_color: t.SocketOrVal[pf.Color] | None = None,
+    translucency: float = 0.5,
+) -> pf.Material:
+    if base_color is None:
+        base_color = fabric_color_distribution(rng)
+    material = fabric_distribution(rng, vector, base_color=base_color)
+    translucent = pf.nodes.shader.translucent_bsdf(color=base_color)
+    surface = pf.nodes.shader.mix_shader(
+        factor=translucency, a=material.surface, b=translucent
+    )
+    return pf.Material(surface=surface, displacement=material.displacement)

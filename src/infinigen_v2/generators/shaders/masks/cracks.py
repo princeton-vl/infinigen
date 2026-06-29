@@ -372,6 +372,9 @@ def cracks_distribution(
         e.g. bricks use this to only have wear/tear on the raised parts
     """
 
+    overall_scale = pf.random.clip_gaussian(rng, 0.5, 0.25, 0.1, 1.1)
+    vector = vector * overall_scale
+
     blend_distance = 0.001
     random_seed = 0.0
 

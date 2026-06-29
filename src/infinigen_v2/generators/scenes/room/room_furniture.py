@@ -628,7 +628,7 @@ def room_furniture_distribution(
             storage[i],
             colliders,
             snap_back_front,
-            attempts=11,
+            attempts=12,
             parents=wall_planes,
             margin=wall_margins[i],
             accept_fn=lambda m, margin=wall_margins[i]: back_face_grounded(
@@ -651,7 +651,12 @@ def room_furniture_distribution(
     side_tables = [table.side_table_distribution(rngs[i]) for i in range(n)]
     side_tables = [
         retry_place(
-            rngs[i], side_tables[i], colliders, snap_side_by_side, parents=sofa_meshes
+            rngs[i],
+            side_tables[i],
+            colliders,
+            snap_side_by_side,
+            parents=sofa_meshes,
+            attempts=12,
         )
         for i in range(n)
     ]
@@ -660,7 +665,7 @@ def room_furniture_distribution(
 
     # FLOOR LAMPS beside seating / floor storage (not wall-mounted storage)
     big_meshes = sofa_meshes + [r.mesh for r in storage_objects]
-    n = min(pf.random.randint(rng_lamp, 1, 3), len(big_meshes))
+    n = min(pf.random.randint(rng_lamp, 0, 3), len(big_meshes))
     rngs = rng_lamp.spawn(n)
     floor_lamps = [
         lamp.lamp_distribution(rngs[i], pf.random.uniform(rngs[i], 1.0, 2.0))
@@ -695,7 +700,7 @@ def room_furniture_distribution(
     logger.info(f"Placed {len(decorations)} decoration objects out of {n} attempts")
 
     # table lamps only on side tables, never dining/coffee tables
-    side_table_meshes = [r.mesh for r in side_tables]
+    side_table_meshes = [r.mesh for r in side_tables + storage_objects]
     n = min(pf.random.randint(rng_table_lamp, 1, 3), len(side_table_meshes))
     rngs = rng_table_lamp.spawn(n)
     table_lamps = [lamp.desk_lamp_distribution(rngs[i]) for i in range(n)]

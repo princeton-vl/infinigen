@@ -380,7 +380,7 @@ def wall_board_shelf_distribution(
     wall_width = wall_uvs[:, 0].max() - wall_uvs[:, 0].min()
     wall_height = wall_uvs[:, 1].max() - wall_uvs[:, 1].min()
 
-    shelf_depth = pf.random.uniform(rng, 0.225, 0.45)
+    shelf_depth = pf.random.uniform(rng, 0.27, 0.675)
     shelf_thickness = pf.random.uniform(rng, 0.02, 0.05)
     spacing_x = pf.random.uniform(rng, 0.03, 0.25)
     spacing_y = pf.random.uniform(rng, 0.5, 0.65)
@@ -1180,12 +1180,12 @@ def wall_decoration_distribution(
             # (vertical_split, 0.0),
             # (horizontal_split, 0.0),
             (painting_grid, 1.0),
-            (board_shelf, 1.0),
+            (board_shelf, 1.5),
             # (storage_shelf, 0.0),
             (storage_flush, 1.0),
             (cubby, 0.5),
             (doors, 0.2),
-            (full_wall_window, 1.0),
+            (full_wall_window, 0.6),
         ],
     )
     return option(rng=rng_feature, wall=wall, wall_material=wall_material)
@@ -1211,7 +1211,6 @@ class CeilingFeaturesResult(NamedTuple):
     lights: list[pf.LightObject]
 
 
-@pf.tracer.grammar
 @pf.tracer.grammar
 def skirting_on_walls_distribution(
     rng: pf.RNG,

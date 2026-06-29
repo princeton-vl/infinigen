@@ -66,7 +66,6 @@ def fabric_patterned_distribution(
     color3: t.SocketOrVal[pf.Color] | None = None,
     tile_mask: TileShapeResult | None = None,
     scale: float = 20.0,
-    translucency: float | None = None,
 ) -> pf.Material:
     rngs = rng.spawn(9)
 
@@ -94,9 +93,7 @@ def fabric_patterned_distribution(
         ],
     )
 
-    res = fabric_distribution(
-        rngs[8], vector=vector, base_color=color, translucency=translucency
-    )
+    res = fabric_distribution(rngs[8], vector=vector, base_color=color)
 
     displacement = res.displacement + pf.nodes.shader.displacement(
         height=displacement_offset, midlevel=0.0
@@ -106,6 +103,28 @@ def fabric_patterned_distribution(
         surface=res.surface,
         displacement=displacement,
     )
+
+
+def fabric_patterned_translucent_distribution(
+    rng: pf.RNG,
+    vector: t.SocketOrVal[pf.Vector],
+    color1: t.SocketOrVal[pf.Color] | None = None,
+    color2: t.SocketOrVal[pf.Color] | None = None,
+    color3: t.SocketOrVal[pf.Color] | None = None,
+    scale: float = 20.0,
+    translucency: float = 0.5,
+) -> pf.Material:
+    # rng goes straight to the base call (no spawn) so consumption matches the
+    # opaque distribution exactly and downstream placement rng stays in sync.
+    material = fabric_patterned_distribution(
+        rng, vector, color1=color1, color2=color2, color3=color3, scale=scale
+    )
+    tint = color1 if color1 is not None else pf.Color((0.7, 0.7, 0.7))
+    translucent = pf.nodes.shader.translucent_bsdf(color=tint)
+    surface = pf.nodes.shader.mix_shader(
+        factor=translucency, a=material.surface, b=translucent
+    )
+    return pf.Material(surface=surface, displacement=material.displacement)
 
 
 def fabric_color_plain_distribution(

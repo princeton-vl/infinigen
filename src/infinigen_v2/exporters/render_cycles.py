@@ -148,6 +148,8 @@ def configure_cycles_performance(
     diffuse_bounces: int,
     glossy_bounces: int,
     sample_clamp_indirect: float,
+    sample_clamp_direct: float,
+    transmission_bounces: int,
 ):
     cycles = bpy.context.scene.cycles
     cycles.samples = max_samples
@@ -161,7 +163,9 @@ def configure_cycles_performance(
     cycles.max_bounces = max_bounces
     cycles.diffuse_bounces = diffuse_bounces
     cycles.glossy_bounces = glossy_bounces
+    cycles.transmission_bounces = transmission_bounces
     cycles.sample_clamp_indirect = sample_clamp_indirect
+    cycles.sample_clamp_direct = sample_clamp_direct
 
     system = bpy.context.preferences.system
     system.max_shader_compilation_subprocesses = pf.context.globals.num_cpu_cores
@@ -217,16 +221,18 @@ def _render_cycles_impl(
     render_skip_existing: bool = False,
     min_samples: int = 32,
     max_samples: int = 256,
-    samples_adaptive_threshold: float = 0.02,
+    samples_adaptive_threshold: float = 0.01,
     film_exposure: float = 1.0,
     volume_step_rate: float = 0.1,
     volume_preview_step_rate: float = 0.1,
     volume_max_steps: int = 32,
     volume_bounces: int = 4,
-    max_bounces: int = 5,
+    max_bounces: int = 4,
     diffuse_bounces: int = 4,
     glossy_bounces: int = 4,
     sample_clamp_indirect: float = 10.0,
+    sample_clamp_direct: float = 10.0,
+    transmission_bounces: int = 2,
     render_output_subdir: str | None = None,
 ) -> dict[ExportType, list[Path]]:
     render_passes = [ensure_path_placeholders(rp) for rp in render_passes]
@@ -274,6 +280,8 @@ def _render_cycles_impl(
         diffuse_bounces=diffuse_bounces,
         glossy_bounces=glossy_bounces,
         sample_clamp_indirect=sample_clamp_indirect,
+        sample_clamp_direct=sample_clamp_direct,
+        transmission_bounces=transmission_bounces,
     )
 
     # DEPTH OF FIELD
@@ -417,16 +425,18 @@ def render_cycles(
     render_skip_existing: bool = False,
     min_samples: int = 32,
     max_samples: int = 256,
-    samples_adaptive_threshold: float = 0.02,
+    samples_adaptive_threshold: float = 0.01,
     film_exposure: float = 1.0,
     volume_step_rate: float = 0.1,
     volume_preview_step_rate: float = 0.1,
     volume_max_steps: int = 32,
     volume_bounces: int = 4,
-    max_bounces: int = 5,
+    max_bounces: int = 4,
     diffuse_bounces: int = 4,
     glossy_bounces: int = 4,
     sample_clamp_indirect: float = 10.0,
+    sample_clamp_direct: float = 10.0,
+    transmission_bounces: int = 2,
 ) -> dict[ExportType, list[Path]]:
     unsupported = [
         rp for rp in render_passes if rp.type not in RENDER_CYCLES_PASS_TYPES
@@ -465,6 +475,8 @@ def render_cycles(
         diffuse_bounces=diffuse_bounces,
         glossy_bounces=glossy_bounces,
         sample_clamp_indirect=sample_clamp_indirect,
+        sample_clamp_direct=sample_clamp_direct,
+        transmission_bounces=transmission_bounces,
     )
 
 
@@ -486,16 +498,18 @@ def render_cycles_ground_truth(
     render_skip_existing: bool = False,
     min_samples: int = 32,
     max_samples: int = 256,
-    samples_adaptive_threshold: float = 0.02,
+    samples_adaptive_threshold: float = 0.01,
     film_exposure: float = 1.0,
     volume_step_rate: float = 0.1,
     volume_preview_step_rate: float = 0.1,
     volume_max_steps: int = 32,
     volume_bounces: int = 4,
-    max_bounces: int = 5,
+    max_bounces: int = 4,
     diffuse_bounces: int = 4,
     glossy_bounces: int = 4,
     sample_clamp_indirect: float = 10.0,
+    sample_clamp_direct: float = 10.0,
+    transmission_bounces: int = 2,
 ) -> dict[ExportType, list[Path]]:
     unsupported = [
         rp for rp in render_passes if rp.type not in RENDER_CYCLES_GT_PASS_TYPES
@@ -536,6 +550,8 @@ def render_cycles_ground_truth(
             diffuse_bounces=diffuse_bounces,
             glossy_bounces=glossy_bounces,
             sample_clamp_indirect=sample_clamp_indirect,
+            sample_clamp_direct=sample_clamp_direct,
+            transmission_bounces=transmission_bounces,
         )
 
 

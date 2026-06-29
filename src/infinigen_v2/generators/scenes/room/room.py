@@ -165,11 +165,13 @@ def _livingroom_with_smallobj_distribution_impl(
         )
     small_objects: list = []
 
+    """
     placed, colliders = objects_scattered_on_surface(
         rng_coffee, result.coffee_tables, pool, colliders, skip_prob=2 / 3
     )
     small_objects += placed
     logger.info(f"Placed {len(placed)} small objects on coffee tables")
+    """
 
     placed, colliders = objects_scattered_on_surface(
         rng_side, result.side_tables, pool, colliders
@@ -223,7 +225,7 @@ def _livingroom_with_smallobj_distribution_impl(
         result.wall_shelves or [],
         pool,
         colliders,
-        skip_prob=1 / 3,
+        skip_prob=0.0,
     )
     small_objects += placed
     logger.info(f"Placed {len(placed)} small objects on wall shelves")

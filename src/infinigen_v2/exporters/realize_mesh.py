@@ -1,3 +1,5 @@
+import logging
+
 import bpy
 
 # TODO: remove infinigen dependency
@@ -5,6 +7,10 @@ import bpy
 from infinigen.core.nodes.node_wrangler import (
     geometry_node_group_empty_new,
 )
+
+from infinigen_v2.exporters.render_cycles import configure_cycles_devices
+
+logger = logging.getLogger(__name__)
 
 
 def bake_displacement_to_vcols(obj, vcol_name="Displacement"):
@@ -17,7 +23,7 @@ def bake_displacement_to_vcols(obj, vcol_name="Displacement"):
         "view": scn.view_settings.view_transform,
     }
     scn.render.engine = "CYCLES"
-    scn.cycles.device = "GPU"
+    configure_cycles_devices()
     scn.cycles.samples = 1
     scn.view_settings.view_transform = "Standard"
 
@@ -32,9 +38,13 @@ def bake_displacement_to_vcols(obj, vcol_name="Displacement"):
     patched = []
     for slot in obj.material_slots:
         mat = slot.material
+        if not mat or not mat.node_tree:
+            continue
         nt = mat.node_tree
         nodes, links = nt.nodes, nt.links
 
+        if "Material Output" not in nodes:
+            continue
         out = nodes["Material Output"]
 
         disp_input = out.inputs["Displacement"]

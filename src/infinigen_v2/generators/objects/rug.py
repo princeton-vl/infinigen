@@ -56,7 +56,7 @@ def rug_material_distribution(
             (lambda rng, vector, **_: carpet.carpet_distribution(rng, vector), 2.0),
         ],
     )
-    return func(rng_func, vector, translucency=0.0)
+    return func(rng_func, vector)
 
 
 def rug_distribution(

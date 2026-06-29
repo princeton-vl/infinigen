@@ -185,11 +185,14 @@ def furniture_fabric(
     color = fabric.fabric_color_distribution(rng_color, value=value)
 
     plain = partial(
-        fabric.fabric_distribution, base_color=color, translucency=translucency
+        fabric.fabric_translucent_distribution,
+        base_color=color,
+        translucency=translucency,
     )
-    opaque = partial(fabric.fabric_distribution, base_color=color, translucency=0.0)
+    opaque = partial(fabric.fabric_distribution, base_color=color)
     patterned = partial(
-        fabric_patterned.fabric_patterned_distribution, translucency=translucency
+        fabric_patterned.fabric_patterned_translucent_distribution,
+        translucency=translucency,
     )
     material_func = pf.control.choice(
         rng_choice,
@@ -270,7 +273,18 @@ def wall_material_distribution(
     rng: pf.RNG, vector: pf.ProcNode[pf.Vector]
 ) -> pf.Material:
     rng_uv, rng_nonbrick, rng_brick, rng_choice, rng_func = rng.spawn(5)
-    vector = uv_maybe_rotate(rng_uv, vector)
+    # walls: horizontal 60%, vertical 30% (split +/-), 45-deg snaps 10% (split +/-)
+    rotation_z = pf.control.choice(
+        rng_uv,
+        [
+            (0.0, 3.0),
+            (math.pi / 2, 0.75),
+            (-math.pi / 2, 0.75),
+            (math.pi / 4, 0.25),
+            (-math.pi / 4, 0.25),
+        ],
+    )
+    vector = uv_maybe_rotate(rng_uv, vector, rotation_z=rotation_z)
     non_brick = pf.control.choice(
         rng_nonbrick,
         [

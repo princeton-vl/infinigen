@@ -1,5 +1,4 @@
 import enum
-import itertools
 import logging
 import shutil
 from contextlib import contextmanager
@@ -438,37 +437,45 @@ def postprocess_renderpass_paths(
     return frame_paths_new
 
 
-@contextmanager
-def override_shading_for_gt(objects: list[pf.MeshObject]):
-    restore_links = []
-
-    # Material transparency and volumes can cause issues with GT.
-    # We remove them here, and restore them later.
-
-    targets = [
+def material_output_targets(objects: list[pf.MeshObject]):
+    """(node_tree, Material Output node) for every node-based material slot."""
+    return [
         (slot.material.node_tree, slot.material.node_tree.nodes.get("Material Output"))
         for obj in objects
         for slot in obj.item().material_slots
         if slot is not None and slot.material is not None and slot.material.use_nodes
     ]
 
-    if bpy.context.scene.world is not None and bpy.context.scene.world.use_nodes:
-        world_tree = bpy.context.scene.world.node_tree
-        targets += [(world_tree, world_tree.nodes.get("World Output"))]
 
-    for target_nodetree, output in targets:
+def disconnect_output_links(targets, socket_names):
+    """Remove the links feeding the named sockets of each (node_tree, output) pair,
+    returning the removed links for relink_output_links to restore."""
+    removed = []
+    for nt, output in targets:
         if output is None:
             continue
-        for link in list(
-            itertools.chain(
-                output.inputs["Volume"].links, output.inputs["Surface"].links
-            )
-        ):
-            restore_links.append((target_nodetree, link.from_socket, link.to_socket))
-            target_nodetree.links.remove(link)
+        for name in socket_names:
+            for link in list(output.inputs[name].links):
+                removed.append((nt, link.from_socket, link.to_socket))
+                nt.links.remove(link)
+    return removed
 
+
+def relink_output_links(removed):
+    for nt, from_socket, to_socket in removed:
+        nt.links.new(from_socket, to_socket)
+
+
+@contextmanager
+def override_shading_for_gt(objects: list[pf.MeshObject]):
+    # Material transparency and volumes can cause issues with GT; drop the
+    # surface/volume links (and the world's) here, restore them on exit.
+    targets = material_output_targets(objects)
+    if bpy.context.scene.world is not None and bpy.context.scene.world.use_nodes:
+        world_tree = bpy.context.scene.world.node_tree
+        targets = targets + [(world_tree, world_tree.nodes.get("World Output"))]
+    removed = disconnect_output_links(targets, ("Volume", "Surface"))
     try:
         yield
     finally:
-        for nt, from_socket, to_socket in restore_links:
-            nt.links.new(from_socket, to_socket)
+        relink_output_links(removed)

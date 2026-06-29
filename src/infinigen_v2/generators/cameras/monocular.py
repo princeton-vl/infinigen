@@ -104,7 +104,7 @@ def linear_pan_camera_distribution(
     speed: float = 0.04,
     footprint_frac: float = 0.4,
     forward_clearance: float = 0.75,
-    max_tries: int = 100,
+    max_tries: int = 200,
 ) -> list[pf.CameraObject]:
     """Dolly travelling in a straight line between two points drawn uniformly in
     the room interior, at up to `speed` metres/frame, holding a random fixed yaw

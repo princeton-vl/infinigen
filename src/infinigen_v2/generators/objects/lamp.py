@@ -11,6 +11,9 @@ from infinigen_v2.generators.shaders.functionality_lists import (
 from infinigen_v2.generators.shaders.materials import fabric
 from infinigen_v2.generators.util.curve import curve_to_mesh_with_uv
 
+# head-local z of the bulb-rack inner ring (where the bulb socket sits)
+BULB_HUB_HEIGHT = 0.015
+
 
 def point_light_indoor_distribution(
     rng: pf.RNG,
@@ -183,7 +186,7 @@ def lamp_head(
         amount=3,
         inner_radius=geometries_2_scale * 0.15,
         outer_radius=top_radius,
-        inner_height=0.015,
+        inner_height=BULB_HUB_HEIGHT,
         outer_height=bulb_rack_outer_height,
     )
 
@@ -332,21 +335,21 @@ def lampshade_fabric_distribution(
     translucency = pf.random.uniform(rngs[0], 0.0, 0.9)
 
     lamp_fabric_fullcolor = partial(
-        fabric.fabric_distribution,
+        fabric.fabric_translucent_distribution,
         translucency=translucency,
         base_color=lampshade_color_distribution(rng),
     )
     lamp_fabric_patterned = partial(
-        fabric_patterned.fabric_patterned_distribution,
+        fabric_patterned.fabric_patterned_translucent_distribution,
         translucency=translucency,
     )
     lamp_fabric_lampcolor = partial(
-        fabric.fabric_distribution,
+        fabric.fabric_translucent_distribution,
         base_color=lampshade_color_distribution(rng),
         translucency=translucency,
     )
     lamp_fabric_patterned_lampcolor = partial(
-        fabric_patterned.fabric_patterned_distribution,
+        fabric_patterned.fabric_patterned_translucent_distribution,
         color1=lampshade_color_distribution(rng),
         color2=lampshade_color_distribution(rng),
         color3=lampshade_color_distribution(rng),
@@ -422,13 +425,13 @@ def lamp_distribution(
 
     if energy is None:
         energy = pf.random.clip_gaussian(rng, 7, 4, 5, 18)
+    bulb_radius = 0.02
     point_light = point_light_indoor_distribution(
-        rng, temperature=temperature, energy=energy
+        rng, temperature=temperature, energy=energy, shadow_soft_size=bulb_radius
     )
-    # Sit the emitter at the open rim plane (not recessed deep in the shade cup)
-    # so light escapes through the opening instead of being absorbed by the
-    # fabric shade walls.
-    point_light.item().location.z = height - 0.25 * shade_height
+    # Sit the bulb just above the stem top (the head mounts at z=height) so its
+    # radius clears the post mesh by 5% instead of intersecting it.
+    point_light.item().location.z = height + 1.05 * bulb_radius
     point_light.item().parent = lamp.item()
 
     return LampResult(mesh=lamp, light=point_light)
