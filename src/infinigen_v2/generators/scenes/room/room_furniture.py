@@ -571,9 +571,19 @@ def room_furniture_distribution(
 
     room_dimensions = dimensions
 
-    sun_elevation_deg = pf.random.uniform(rng_sky, 5, 80)
-    _sky_shader = sky_lighting.nishita_sky_distribution(
-        rng_sky, sun_elevation_deg=sun_elevation_deg
+    # dedicated lanes so the sun angle/intensity are identical across sky models
+    # (Nishita vs Hosek-Wilkie+lamp) for the same seed; only model-specific params differ
+    rng_elev, rng_rot, rng_intensity, rng_size, rng_sky_model = rng_sky.spawn(5)
+    sun_elevation_deg = pf.random.uniform(rng_elev, 5, 80)
+    sun_rotation_deg = pf.random.uniform(rng_rot, 0, 360)
+    sun_intensity = pf.random.uniform(rng_intensity, 0.8, 1.0)
+    sun_size_deg = pf.random.clip_gaussian(rng_size, 0.5, 0.3, 0.25, 5)
+    _sky_shader, sun_lamp = sky_lighting.hosek_wilkie_sky_with_sun_lamp_distribution(
+        rng_sky_model,
+        sun_elevation_deg=sun_elevation_deg,
+        sun_rotation_deg=sun_rotation_deg,
+        sun_intensity=sun_intensity,
+        sun_size_deg=sun_size_deg,
     )
 
     if extra_colliders is None:
@@ -680,7 +690,7 @@ def room_furniture_distribution(
     floor_lamps, colliders = keep_non_colliding(floor_lamps, colliders)
     logger.info(f"Placed {len(floor_lamps)} floor lamps out of {n} attempts")
     floor_lamp_lights = [r.light for r in floor_lamps if r.light is not None]
-    lights: list[pf.LightObject] = []
+    lights: list[pf.LightObject] = [sun_lamp]
     lights += pf.control.choice(rng_lamp, [(floor_lamp_lights, 2), ([], 1)])
 
     # vases/lamps sit on the tops of all tables and storage units
