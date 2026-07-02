@@ -10,6 +10,15 @@ from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util.color import hsv2rgba
 
+__all__ = [
+    "Succulent",
+    "shader_green_transition_succulent",
+    "shader_pink_transition_succulent",
+    "shader_green_succulent",
+    "shader_yellow_succulent",
+    "shader_whitish_green_succulent",
+]
+
 
 def shader_green_transition_succulent(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler

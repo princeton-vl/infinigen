@@ -31,6 +31,8 @@ from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform, weighted_sample
 from infinigen.core.util.random import random_general as rg
 
+__all__ = ["ChairFactory"]
+
 
 class ChairFactory(AssetFactory):
     back_types = (

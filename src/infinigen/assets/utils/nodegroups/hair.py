@@ -8,6 +8,16 @@ from infinigen.assets.utils.nodegroups.math import nodegroup_vector_bezier
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = [
+    "nodegroup_comb_direction",
+    "nodegroup_hair_position",
+    "nodegroup_comb_hairs",
+    "nodegroup_strand_noise",
+    "nodegroup_duplicate_to_clumps",
+    "nodegroup_hair_length_rescale",
+    "nodegroup_snap_roots_to_surface",
+]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_comb_direction", singleton=True, type="GeometryNodeTree"

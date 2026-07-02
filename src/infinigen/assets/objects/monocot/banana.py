@@ -19,6 +19,8 @@ from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 
+__all__ = ["BananaMonocotFactory", "TaroMonocotFactory"]
+
 
 class BananaMonocotFactory(MonocotGrowthFactory):
     def __init__(self, factory_seed, coarse=False):

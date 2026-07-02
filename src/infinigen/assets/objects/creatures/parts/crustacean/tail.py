@@ -19,6 +19,8 @@ from infinigen.assets.utils.object import join_objects
 from infinigen.core.surface import write_attr_data
 from infinigen.core.util.random import log_uniform
 
+__all__ = ["CrustaceanTailFactory"]
+
 
 class CrustaceanTailFactory(PartFactory):
     tags = ["body"]

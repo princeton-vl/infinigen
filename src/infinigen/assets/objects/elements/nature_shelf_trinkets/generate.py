@@ -16,6 +16,8 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 
+__all__ = ["NatureShelfTrinketsFactory"]
+
 
 class NatureShelfTrinketsFactory(AssetFactory):
     factories = [

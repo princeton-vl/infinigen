@@ -21,10 +21,10 @@ fi
 MATERIAL_PARALLEL=${MATERIAL_PARALLEL:-1}
 MATERIAL_XARGS="-t -I {} -P $MATERIAL_PARALLEL"
 
-MATERIALS=${MATERIALS-$(uv run python -m infinigen_v2.list $LIST_ARGS --categories Material --missing_values drop --columns shortname $REST_ARGS)}
-OBJECTS=${OBJECTS-$(uv run python -m infinigen_v2.list $LIST_ARGS --categories Object --missing_values drop --columns shortname $REST_ARGS)}
-SCENES=${SCENES-$(uv run python -m infinigen_v2.list $LIST_ARGS --categories Scene --missing_values drop --columns shortname $REST_ARGS)}
-MASKS=${MASKS-$(uv run python -m infinigen_v2.list $LIST_ARGS --categories Mask --missing_values drop --columns shortname $REST_ARGS)}
+MATERIALS=${MATERIALS-$(uv run python -m infinigen2.list $LIST_ARGS --categories Material --missing_values drop --columns shortname $REST_ARGS)}
+OBJECTS=${OBJECTS-$(uv run python -m infinigen2.list $LIST_ARGS --categories Object --missing_values drop --columns shortname $REST_ARGS)}
+SCENES=${SCENES-$(uv run python -m infinigen2.list $LIST_ARGS --categories Scene --missing_values drop --columns shortname $REST_ARGS)}
+MASKS=${MASKS-$(uv run python -m infinigen2.list $LIST_ARGS --categories Mask --missing_values drop --columns shortname $REST_ARGS)}
 
 # store git info (for display purposes)
 mkdir -p "$OUTPUT_PATH"
@@ -45,19 +45,19 @@ if [ ! -f "$OUTPUT_PATH/git_info.toml" ]; then
 fi
 
 # store manifest.json; this is necessary since there may be differences between branches
-cp src/infinigen_v2/generators/manifest.json $OUTPUT_PATH
+cp src/infinigen2/generators/manifest.json $OUTPUT_PATH
 
 GEN_ARGS="--loglevel WARNING"
 if [ -n "${RENDER_RUNNER:-}" ]; then
     read -r -a RENDER_RUNNER_ARGS <<< "$RENDER_RUNNER"
 else
-    RENDER_RUNNER_ARGS=(uv run infinigen_v2)
+    RENDER_RUNNER_ARGS=(uv run infinigen)
 fi
 
 # MATERIALS VISUAL CHECK
 for i in {0..5}; do
-    echo "$MATERIALS" | xargs $MATERIAL_XARGS "${RENDER_RUNNER_ARGS[@]}" {} material_sphere render_cycles \
-        $GEN_ARGS --output $OUTPUT_PATH/material-{}-sphere-cycles-$i --seed $i \
+    echo "$MATERIALS" | xargs $MATERIAL_XARGS "${RENDER_RUNNER_ARGS[@]}" {} material_cube render_cycles \
+        $GEN_ARGS --output $OUTPUT_PATH/material-{}-cube-cycles-$i --seed $i \
         --passes rgb --displacement_mode DISPLACEMENT_AND_BUMP -r 192 192 -s 128
 
 done
@@ -65,15 +65,15 @@ done
 # MATERIALS DISPLACEMENT TEST (Cycles: BUMP, DISPLACEMENT_AND_BUMP, REALIZE_MESH)
 for disp in BUMP DISPLACEMENT_AND_BUMP REALIZE_MESH; do
     echo "$MATERIALS" | xargs $MATERIAL_XARGS "${RENDER_RUNNER_ARGS[@]}" \
-        {} material_sphere render_cycles render_cycles_ground_truth visualize_gt \
-        $GEN_ARGS --output $OUTPUT_PATH/material-{}-sphere-cycles-$disp \
+        {} material_cube render_cycles render_cycles_ground_truth visualize_gt \
+        $GEN_ARGS --output $OUTPUT_PATH/material-{}-cube-cycles-$disp \
         --seed 0 --passes rgb surface-normal --displacement_mode $disp -r 192 192 -s 128
 done
 
 # MATERIALS DISPLACEMENT TEST (Eevee: DISPLACEMENT_AND_BUMP only)
 echo "$MATERIALS" | xargs $MATERIAL_XARGS "${RENDER_RUNNER_ARGS[@]}" \
-    {} material_sphere render_eevee render_eevee_ground_truth visualize_gt \
-    $GEN_ARGS --output $OUTPUT_PATH/material-{}-sphere-eevee-DISPLACEMENT_AND_BUMP \
+    {} material_cube render_eevee render_eevee_ground_truth visualize_gt \
+    $GEN_ARGS --output $OUTPUT_PATH/material-{}-cube-eevee-DISPLACEMENT_AND_BUMP \
     --seed 0 --passes rgb surface-normal --displacement_mode DISPLACEMENT_AND_BUMP -r 192 192 -s 128
 
 # MASKS VISUAL CHECK (black/white pattern renders on a flat UV plane)
@@ -96,3 +96,14 @@ for i in {0..5}; do
         $GEN_ARGS --output $OUTPUT_PATH/scene-{}-demo-cycles-$i --seed $i \
         --passes rgb -r 480 480 -s 256
 done
+
+# DOCS LANDING DEMOS (bricks on torus + patterned fabric on monkey; scratched
+# metal on cube already renders above via the main materials loop). Published by
+# scripts/docs/publish_manifest_images.py to <www-root>/<slug>/landing/.
+"${RENDER_RUNNER_ARGS[@]}" bricks_rand material_torus_uv render_cycles \
+    $GEN_ARGS --output $OUTPUT_PATH/landing-bricks_rand-torus-cycles-0 --seed 0 \
+    --passes rgb -r 512 512 -s 128
+
+"${RENDER_RUNNER_ARGS[@]}" fabric_patterned_rand material_monkey render_cycles \
+    $GEN_ARGS --output $OUTPUT_PATH/landing-fabric_patterned_rand-monkey-cycles-0 --seed 0 \
+    --passes rgb -r 512 512 -s 128

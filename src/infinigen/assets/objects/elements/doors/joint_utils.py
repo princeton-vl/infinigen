@@ -13,6 +13,14 @@ import bpy
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = [
+    "nodegroup_symmetry_along_y",
+    "nodegroup_arc_on_door_warper",
+    "nodegroup_door_frame_warper",
+    "nodegroup_hinge_joint",
+    "nodegroup_sliding_joint",
+]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_add_jointed_geometry_metadata", singleton=False, type="GeometryNodeTree"

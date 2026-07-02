@@ -27,6 +27,8 @@ from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core.tagging import tag_object
 
+__all__ = ["FanBaseCoralFactory"]
+
 
 class FanBaseCoralFactory(BaseCoralFactory):
     tentacle_prob = 0.0

@@ -25,6 +25,8 @@ from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj, select_none
 
+__all__ = ["HollowTreeFactory"]
+
 
 class HollowTreeFactory(BaseDeformedTreeFactory):
     @staticmethod

@@ -15,6 +15,8 @@ from infinigen.assets.utils.decorate import read_co, write_co
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 
+__all__ = ["CurvedStaircaseFactory"]
+
 
 class CurvedStaircaseFactory(StraightStaircaseFactory):
     support_types = (

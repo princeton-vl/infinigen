@@ -14,6 +14,8 @@ from infinigen.assets.utils.geometry import nurbs as nurbs_util
 from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 
+__all__ = ["Beak", "BirdBeak", "FlyingBirdBeak"]
+
 
 def square(x):
     return x * x

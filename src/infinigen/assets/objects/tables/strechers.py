@@ -8,6 +8,8 @@ from infinigen.assets.objects.tables.table_utils import nodegroup_n_gon_cylinder
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = ["nodegroup_strecher"]
+
 
 @node_utils.to_nodegroup("nodegroup_strecher", singleton=False, type="GeometryNodeTree")
 def nodegroup_strecher(nw: NodeWrangler):

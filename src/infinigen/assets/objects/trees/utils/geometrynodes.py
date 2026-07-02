@@ -12,6 +12,8 @@ from infinigen.core.nodes.node_wrangler import Nodes
 from . import helper, mesh
 from .materials import new_link
 
+__all__ = ["coll_distribute", "set_tree_radius"]
+
 C = bpy.context
 D = bpy.data
 

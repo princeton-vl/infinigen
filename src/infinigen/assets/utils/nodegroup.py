@@ -14,6 +14,8 @@ from infinigen.core import surface
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 
+__all__ = ["geo_radius", "geo_selection", "geo_base_selection", "align_tilt"]
+
 
 def build_curve(nw: NodeWrangler, positions, circular=False, handle="VECTOR"):
     length = 1

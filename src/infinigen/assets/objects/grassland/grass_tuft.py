@@ -14,6 +14,8 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 
+__all__ = ["GrassTuftFactory"]
+
 
 class GrassTuftFactory(AssetFactory):
     def __init__(self, seed):

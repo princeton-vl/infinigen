@@ -16,6 +16,8 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.random import random_general as rg
 
+__all__ = ["FloatingObjectPlacement"]
+
 logger = logging.getLogger(__name__)
 
 

@@ -10,6 +10,8 @@ from numpy.random import uniform
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = ["MarbleRegular", "shader_marble_regular"]
+
 
 def shader_marble_regular(nw: NodeWrangler):
     # Code generated using version 2.6.4 of the node_transpiler

@@ -30,6 +30,18 @@ from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.logging import Timer
 
+__all__ = [
+    "find_available_cache",
+    "create_liquid_domain",
+    "create_liquid_flow",
+    "add_field",
+    "create_gas_domain",
+    "create_gas_flow",
+    "obj_bb_minmax",
+    "set_obj_on_fire",
+    "set_fire_to_assets",
+]
+
 logger = logging.getLogger(__name__)
 
 FLUID_INITIALIZED = False

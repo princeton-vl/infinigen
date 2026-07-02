@@ -10,6 +10,13 @@ from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util.color import hsv2rgba
 
+__all__ = [
+    "LampShade",
+    "shader_lampshade",
+    "shader_lamp_bulb_nonemissive",
+    "shader_black",
+]
+
 
 def shader_lampshade(nw: NodeWrangler):
     # Code generated using version 2.6.5 of the node_transpiler

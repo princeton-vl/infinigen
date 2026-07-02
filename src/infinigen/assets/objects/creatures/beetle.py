@@ -28,6 +28,8 @@ from infinigen.core.tagging import tag_object
 from infinigen.core.util.math import FixedSeed, clip_gaussian, lerp
 from infinigen.core.util.random import weighted_sample
 
+__all__ = ["BeetleFactory", "AntSwarmFactory"]
+
 logger = logging.getLogger(__name__)
 
 

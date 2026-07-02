@@ -13,6 +13,8 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util.math import FixedSeed
 
+__all__ = ["BranchFactory"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_surface_bump", singleton=False, type="GeometryNodeTree"

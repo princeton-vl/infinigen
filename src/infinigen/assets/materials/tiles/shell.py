@@ -10,6 +10,8 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
 from .utils import nodegroup_scalar_positive_modulo
 
+__all__ = ["nodegroup_shell"]
+
 
 @node_utils.to_nodegroup("nodegroup_half_shell", singleton=False, type="ShaderNodeTree")
 def nodegroup_half_shell(nw: NodeWrangler):

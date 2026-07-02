@@ -19,6 +19,8 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 
+__all__ = ["DoorCasingFactory"]
+
 
 class DoorCasingFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False, constants=None):

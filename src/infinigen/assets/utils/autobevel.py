@@ -10,6 +10,8 @@ from numpy.random import uniform
 
 from infinigen.core.util import blender as butil
 
+__all__ = ["BevelSharp"]
+
 
 class BevelSharp:
     def __init__(

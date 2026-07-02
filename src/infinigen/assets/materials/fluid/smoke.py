@@ -9,6 +9,8 @@ from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes
 from infinigen.core.util.random import random_color_neighbour
 
+__all__ = ["Smoke"]
+
 
 def smoke_material(nw):
     # Code generated using version 2.3.2 of the node_transpiler

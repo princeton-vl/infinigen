@@ -11,6 +11,8 @@ from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = ["nodegroup_dragonfly_wing", "shader_wing_shader"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_dragonfly_wing", singleton=False, type="GeometryNodeTree"

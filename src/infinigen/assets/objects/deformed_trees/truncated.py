@@ -16,6 +16,8 @@ from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 
+__all__ = ["TruncatedTreeFactory"]
+
 
 class TruncatedTreeFactory(FallenTreeFactory):
     @staticmethod

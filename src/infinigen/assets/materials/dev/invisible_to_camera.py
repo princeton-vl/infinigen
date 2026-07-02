@@ -10,6 +10,8 @@ from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util import blender as butil
 
+__all__ = ["InvisibleToCamera", "shader_invisible"]
+
 
 def shader_invisible(nw: NodeWrangler):
     # Code generated using version 2.6.5 of the node_transpiler

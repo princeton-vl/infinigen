@@ -14,6 +14,8 @@ from infinigen.core.surface import read_attr_data, write_attr_data
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 
+__all__ = ["PanelDoorFactory", "GlassPanelDoorFactory"]
+
 
 class PanelDoorFactory(BaseDoorFactory):
     def __init__(self, factory_seed, coarse=False, constants=None):

@@ -13,6 +13,8 @@ from infinigen.assets.utils.decorate import read_co
 from infinigen.assets.utils.object import join_objects
 from infinigen.core.util import blender as butil
 
+__all__ = ["CantileverStaircaseFactory"]
+
 
 class CantileverStaircaseFactory(StraightStaircaseFactory):
     support_types = "wall"

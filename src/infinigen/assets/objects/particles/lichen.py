@@ -20,6 +20,9 @@ from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 from infinigen.core.util.color import hsv2rgba
 
+
+__all__ = ["LichenFactory"]
+
 # infinigen_gpl is an optional GPL-licensed dependency, not required by v2
 try:
     from infinigen.infinigen_gpl.extras.diff_growth import build_diff_growth

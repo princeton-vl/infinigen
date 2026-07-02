@@ -12,6 +12,8 @@ from infinigen.assets.utils.draw import leaf
 from infinigen.core.surface import write_attr_data
 from infinigen.core.util import blender as butil
 
+__all__ = ["CrustaceanFinFactory"]
+
 
 class CrustaceanFinFactory(PartFactory):
     tags = ["body"]

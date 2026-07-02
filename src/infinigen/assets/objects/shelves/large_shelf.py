@@ -20,6 +20,8 @@ from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
 
+__all__ = ["LargeShelfBaseFactory", "LargeShelfFactory"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_screw_head", singleton=False, type="GeometryNodeTree"

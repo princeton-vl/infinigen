@@ -17,6 +17,8 @@ from infinigen.terrain.land_process.erosion import run_erosion
 from infinigen.terrain.land_process.snowfall import run_snowfall
 from infinigen.terrain.utils import random_nat, smooth
 
+__all__ = ["ant_landscape_asset"]
+
 require_blender_addon("antlandscape", fail="warn")
 
 

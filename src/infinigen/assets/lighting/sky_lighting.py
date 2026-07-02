@@ -15,6 +15,8 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util.math import clip_gaussian
 from infinigen.core.util.random import random_general as rg
 
+__all__ = ["add_lighting"]
+
 
 @gin.configurable
 def nishita_lighting(

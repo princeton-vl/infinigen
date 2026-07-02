@@ -13,6 +13,8 @@ from infinigen.assets.utils.object import mesh2obj
 from infinigen.core import surface
 from infinigen.core.tagging import tag_object
 
+__all__ = ["CauliflowerBaseCoralFactory"]
+
 
 class CauliflowerBaseCoralFactory(BaseCoralFactory):
     tentacle_prob = 0.4

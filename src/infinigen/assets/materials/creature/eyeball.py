@@ -11,6 +11,8 @@ from infinigen.assets.materials.utils.surface_utils import sample_color
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = ["Eyeball", "shader_eyeball", "shader_eyeball_old"]
+
 
 def shader_eyeball(nw: NodeWrangler, rand=True, coord="X", **input_kwargs):
     # Code generated using version 2.4.3 of the node_transpiler

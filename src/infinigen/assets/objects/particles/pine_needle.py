@@ -13,6 +13,8 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 
+__all__ = ["PineNeedleFactory", "shader_material"]
+
 
 def shader_material(nw: NodeWrangler):
     # Code generated using version 2.6.3 of the node_transpiler

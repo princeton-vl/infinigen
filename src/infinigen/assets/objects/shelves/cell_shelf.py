@@ -24,6 +24,8 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import weighted_sample
 
+__all__ = ["CellShelfBaseFactory", "CellShelfFactory", "TVStandFactory"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_screw_head", singleton=False, type="GeometryNodeTree"

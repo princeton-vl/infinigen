@@ -12,6 +12,8 @@ from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = ["GalvanizedMetal", "shader_galvanized_metal"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_galvanized_metal", singleton=False, type="ShaderNodeTree"

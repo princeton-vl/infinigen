@@ -17,6 +17,31 @@ from infinigen.core.util.random import (
     wrap_gaussian,
 )
 
+__all__ = [
+    "leather_hsv",
+    "petal_hsv",
+    "gem_hsv",
+    "plant_green",
+    "plant_white",
+    "plant_red",
+    "plant_yellow",
+    "tree_petal_hsv",
+    "fog_hsv",
+    "water_hsv",
+    "eye_schlera_hsv",
+    "eye_pupil_hsv",
+    "pine_needle_hsv",
+    "wet_sand_hsv",
+    "dry_sand_hsv",
+    "concrete_hsv",
+    "textile_hsv",
+    "fabric_hsv",
+    "bark_hsv",
+    "metal_natural_hsv",
+    "metal_hsv",
+    "white_hsv",
+]
+
 
 def sofa_fabric_hsv():
     return mixture_of_gaussian(

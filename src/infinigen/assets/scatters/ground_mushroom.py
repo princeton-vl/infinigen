@@ -11,6 +11,8 @@ from infinigen.assets.objects.mushroom import MushroomFactory
 from infinigen.core.placement.factory import make_asset_collection
 from infinigen.core.placement.instance_scatter import scatter_instances
 
+__all__ = ["Mushrooms", "apply"]
+
 
 class Mushrooms:
     def __init__(self, n=10):

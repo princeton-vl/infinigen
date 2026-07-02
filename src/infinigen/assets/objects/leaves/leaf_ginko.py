@@ -22,6 +22,8 @@ from infinigen.core.util import blender as butil
 from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.math import FixedSeed
 
+__all__ = ["LeafFactoryGinko", "shader_material"]
+
 
 def deg2rad(deg):
     return deg / 180.0 * np.pi

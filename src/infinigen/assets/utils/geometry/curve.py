@@ -8,6 +8,8 @@ import bpy
 
 from infinigen.core.util import blender as butil
 
+__all__ = ["Curve"]
+
 
 class Curve:
     def __init__(

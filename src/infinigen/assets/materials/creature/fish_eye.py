@@ -14,6 +14,8 @@ from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = ["FishEye", "shader_eyeball_fish"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_rotate2_d_002", singleton=False, type="ShaderNodeTree"

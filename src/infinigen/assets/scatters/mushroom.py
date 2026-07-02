@@ -17,6 +17,8 @@ from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util import blender as butil
 
+__all__ = ["Mushroom", "apply"]
+
 
 def geo_skeleton(nw: NodeWrangler, base_obj, selection, threshold=0.05):
     geometry = nw.new_node(

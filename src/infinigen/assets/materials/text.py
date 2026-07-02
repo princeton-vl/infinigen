@@ -42,6 +42,8 @@ from infinigen.core.util.math import clip_gaussian
 from infinigen.core.util.random import log_uniform
 from infinigen.core.util.random import random_general as rg
 
+__all__ = ["Text", "TextGeneral", "TextNoBarcode", "make_sphere"]
+
 logger = logging.getLogger(__name__)
 
 font_dir = module_parent_path() / "infinigen/assets/fonts"

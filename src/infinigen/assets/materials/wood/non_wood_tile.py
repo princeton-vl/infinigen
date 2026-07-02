@@ -7,6 +7,8 @@ import numpy as np
 from infinigen.assets.materials.ceramic import tile
 from infinigen.assets.materials.wood.wood import shader_wood
 
+__all__ = ["NonWoodTile"]
+
 
 class NonWoodTile:
     def generate(self, shader_func=None, shape=None):

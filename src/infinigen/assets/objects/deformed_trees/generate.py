@@ -13,6 +13,8 @@ from infinigen.assets.objects.deformed_trees.truncated import TruncatedTreeFacto
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util.math import FixedSeed
 
+__all__ = ["DeformedTreeFactory"]
+
 
 class DeformedTreeFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False):

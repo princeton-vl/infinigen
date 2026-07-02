@@ -4,6 +4,8 @@
 # Authors: Lingjie Mei
 import numpy as np
 
+__all__ = ["WoodTiles"]
+
 
 def get_wood_tiles():
     from . import (

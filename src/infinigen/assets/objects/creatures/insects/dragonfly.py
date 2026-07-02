@@ -25,6 +25,8 @@ from .parts.tail.dragonfly_tail import nodegroup_dragonfly_tail
 from .parts.wing.dragonfly_wing import nodegroup_dragonfly_wing
 from .utils.geom_utils import nodegroup_symmetric_clone
 
+__all__ = ["DragonflyFactory"]
+
 
 def geometry_dragonfly(nw: NodeWrangler, **kwargs):
     # Code generated using version 2.4.3 of the node_transpiler

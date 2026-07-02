@@ -10,6 +10,15 @@ from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util.color import hsv2rgba
 
+__all__ = [
+    "nodegroup_nodegroup_leaf_gen",
+    "nodegroup_nodegroup_move_to_origin",
+    "nodegroup_nodegroup_leaf_rotate_x",
+    "nodegroup_nodegroup_sub_vein",
+    "nodegroup_nodegroup_leaf_shader",
+    "shader_stem_material",
+]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_node_group", singleton=False, type="GeometryNodeTree"

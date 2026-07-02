@@ -20,6 +20,8 @@ from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core.tagging import tag_object
 from infinigen.core.util.blender import deep_clone_obj
 
+__all__ = ["StarBaseCoralFactory"]
+
 
 class StarBaseCoralFactory(BaseCoralFactory):
     tentacle_prob = 1.0

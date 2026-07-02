@@ -20,6 +20,8 @@ from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import weighted_sample
 
+__all__ = ["BottleFactory"]
+
 
 class BottleFactory(AssetFactory):
     z_neck_offset = 0.05

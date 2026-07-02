@@ -16,6 +16,8 @@ from infinigen.core.placement.factory import AssetFactory, make_asset_collection
 from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 
+__all__ = ["GlowingRocksFactory", "shader_glowrock"]
+
 
 def shader_glowrock(nw: NodeWrangler, transparent_for_bounce=True):
     object_info = nw.new_node(Nodes.ObjectInfo_Shader)

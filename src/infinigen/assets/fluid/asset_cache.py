@@ -18,6 +18,8 @@ from infinigen.assets.fluid import cached_factory_wrappers
 from infinigen.assets.fluid.fluid import find_available_cache, set_obj_on_fire
 from infinigen.core.util import blender as butil
 
+__all__ = ["FireCachingSystem"]
+
 logger = logging.getLogger(__name__)
 
 RAND_SEED_MAX = 1e5

@@ -15,6 +15,8 @@ from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util.color import hsv2rgba
 
+__all__ = ["Tiger", "shader_tiger_attr"]
+
 
 @node_utils.to_nodegroup("nodegroup_tiger_fac", singleton=False, type="ShaderNodeTree")
 def nodegroup_tiger_fac(nw: NodeWrangler):

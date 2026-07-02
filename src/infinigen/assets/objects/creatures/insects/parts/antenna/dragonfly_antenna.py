@@ -10,6 +10,8 @@ from infinigen.assets.objects.creatures.insects.utils.geom_utils import (
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = ["nodegroup_dragonfly_antenna"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_dragonfly_antenna", singleton=False, type="GeometryNodeTree"

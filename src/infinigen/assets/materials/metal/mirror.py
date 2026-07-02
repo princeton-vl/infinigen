@@ -6,6 +6,8 @@ from infinigen.assets.materials.utils import common
 from infinigen.core import surface
 from infinigen.core.nodes import Nodes, NodeWrangler
 
+__all__ = ["Mirror", "shader_mirror"]
+
 
 def shader_mirror(nw: NodeWrangler, **kwargs):
     glossy_bsdf = nw.new_node(

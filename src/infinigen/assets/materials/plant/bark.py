@@ -14,6 +14,8 @@ from infinigen.assets.materials.utils.surface_utils import (
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = ["Bark", "shader_bark"]
+
 
 def shader_bark(nw, rand=False, **input_kwargs):
     texture_coordinate = nw.new_node(Nodes.TextureCoord)

@@ -14,6 +14,8 @@ from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
 
+__all__ = ["SimpleBookcaseBaseFactory", "SimpleBookcaseFactory"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_attach_gadget", singleton=False, type="GeometryNodeTree"

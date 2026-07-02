@@ -12,6 +12,8 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 
+__all__ = ["LeafFactory"]
+
 
 class LeafFactory(AssetFactory):
     scale = 0.3

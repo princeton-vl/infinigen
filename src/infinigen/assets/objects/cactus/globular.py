@@ -17,6 +17,8 @@ from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core.util import blender as butil
 from infinigen.core.util.random import log_uniform
 
+__all__ = ["GlobularBaseCactusFactory"]
+
 
 class GlobularBaseCactusFactory(BaseCactusFactory):
     spike_distance = 0.08

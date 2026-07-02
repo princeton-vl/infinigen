@@ -23,6 +23,8 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 
+__all__ = ["Hoof", "HoofClaw", "HoofAnkle"]
+
 
 def square(x):
     return x * x

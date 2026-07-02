@@ -26,6 +26,8 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.tagging import tag_nodegroup, tag_object
 from infinigen.core.util.math import clip_gaussian
 
+__all__ = ["BirdTail", "BirdWing", "FlyingBirdTail", "FlyingBirdWing"]
+
 
 @node_utils.to_nodegroup("nodegroup_feather", singleton=False, type="GeometryNodeTree")
 def nodegroup_feather(nw: NodeWrangler):

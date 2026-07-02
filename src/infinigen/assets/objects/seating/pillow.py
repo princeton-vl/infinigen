@@ -29,6 +29,8 @@ from infinigen.core.util import blender as butil
 from infinigen.core.util.random import log_uniform, weighted_sample
 from infinigen.core.util.random import random_general as rg
 
+__all__ = ["PillowFactory"]
+
 
 class PillowFactory(AssetFactory):
     shapes = (

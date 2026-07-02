@@ -10,6 +10,8 @@ from numpy.random import uniform as U
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = ["Nose", "shader_nose"]
+
 
 def shader_nose(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler

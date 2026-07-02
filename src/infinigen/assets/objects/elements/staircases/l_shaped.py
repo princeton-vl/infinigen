@@ -13,6 +13,8 @@ from infinigen.core.util.math import FixedSeed
 
 from .straight import StraightStaircaseFactory
 
+__all__ = ["LShapedStaircaseFactory"]
+
 
 class LShapedStaircaseFactory(StraightStaircaseFactory):
     def __init__(self, factory_seed, coarse=False, constants=None):

@@ -13,6 +13,8 @@ from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
 
+__all__ = ["TriangleShelfBaseFactory", "TriangleShelfFactory"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_table_profile", singleton=False, type="GeometryNodeTree"

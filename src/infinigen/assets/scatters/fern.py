@@ -12,6 +12,8 @@ from infinigen.core.placement.factory import make_asset_collection
 from infinigen.core.placement.instance_scatter import scatter_instances
 from infinigen.core.util.random import random_general as rg
 
+__all__ = ["Fern", "apply"]
+
 
 def apply(obj, selection=None, density=("uniform", 1, 6), **kwargs):
     fern_col = make_asset_collection(

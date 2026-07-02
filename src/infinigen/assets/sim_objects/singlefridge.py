@@ -20,6 +20,12 @@ from infinigen.core.util import blender as butil
 from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.paths import blueprint_path_completion
 
+__all__ = [
+    "SinglefridgeFactory",
+    "nodegroup_multi_drawer_top",
+    "nodegroup_singlefridge",
+]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_sliding_joint", singleton=False, type="GeometryNodeTree"

@@ -19,6 +19,8 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import weighted_sample
 
+__all__ = ["VaseFactory"]
+
 
 class VaseFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False, dimensions=None):

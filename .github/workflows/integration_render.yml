@@ -24,7 +24,7 @@ env:
 
 jobs:
   render:
-    if: github.event.pull_request.draft == false
+    if: github.repository == 'princeton-vl/infinigen_internal' && github.event.pull_request.draft == false
     runs-on: [self-hosted, renderbot]
 
     steps:

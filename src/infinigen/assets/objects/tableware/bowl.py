@@ -14,6 +14,8 @@ from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 
+__all__ = ["BowlFactory"]
+
 
 class BowlFactory(TablewareFactory):
     allow_transparent = True

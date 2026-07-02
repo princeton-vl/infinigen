@@ -10,6 +10,16 @@ from mathutils import Vector
 
 from . import helper
 
+__all__ = [
+    "init_mesh",
+    "finalize_obj",
+    "vtx2cds",
+    "sample_vtxs",
+    "get_pts_from_shape",
+    "select_vtx_by_idx",
+    "subsample_vertices",
+]
+
 C = bpy.context
 D = bpy.data
 

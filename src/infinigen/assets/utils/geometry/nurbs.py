@@ -13,6 +13,8 @@ import numpy as np
 
 from infinigen.core.util import blender as butil
 
+__all__ = ["compute_cylinder_topology", "blender_mesh_from_pydata", "nurbs"]
+
 logger = logging.getLogger(__name__)
 
 try:

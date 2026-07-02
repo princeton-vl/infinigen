@@ -23,6 +23,8 @@ from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.random import random_general as rg
 
+__all__ = ["CountertopFactory"]
+
 
 class CountertopFactory(AssetFactory):
     surfaces = "weighted_choice", (5, marble), (2, ceramic), (2, wood_tile)

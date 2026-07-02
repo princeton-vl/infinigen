@@ -22,6 +22,8 @@ from infinigen.core.tagging import tag_object
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.random import log_uniform
 
+__all__ = ["BoulderPileFactory"]
+
 
 class BoulderPileFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False):

@@ -11,6 +11,8 @@ from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core.util.color import hsv2rgba
 
+__all__ = ["Glass", "shader_glass"]
+
 
 def shader_glass(nw: NodeWrangler, color=None, is_window=False, **kwargs):
     # Code generated using version 2.6.5 of the node_transpiler

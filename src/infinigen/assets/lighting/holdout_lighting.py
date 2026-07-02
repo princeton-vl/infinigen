@@ -13,6 +13,8 @@ from numpy.random import uniform
 from infinigen.core.nodes import Nodes, NodeWrangler
 from infinigen.core.util.random import random_general as rg
 
+__all__ = ["add_lighting"]
+
 HOLDOUT_RESOURCES = f"{os.getcwd()}/resources/holdout"
 
 

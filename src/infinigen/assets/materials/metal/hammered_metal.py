@@ -13,6 +13,8 @@ from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util.random import log_uniform
 
+__all__ = ["HammeredMetal", "shader_hammered_metal"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_hammered_metal", singleton=False, type="ShaderNodeTree"

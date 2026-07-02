@@ -15,6 +15,8 @@ from infinigen.core.util.random import weighted_sample
 
 from .chopped_trees import approx_settle_transform
 
+__all__ = ["GroundTwigs", "apply"]
+
 
 def apply(obj, selection=None, n_leaf=0, n_twig=10, **kwargs):
     (_, twig_params, leaf_params), _ = random_species(season="winter")

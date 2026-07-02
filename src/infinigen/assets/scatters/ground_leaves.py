@@ -9,6 +9,8 @@ from numpy.random import uniform as U
 from infinigen.assets.objects.trees.generate import random_leaf_collection
 from infinigen.core.placement.instance_scatter import scatter_instances
 
+__all__ = ["GroundLeaves", "apply"]
+
 
 def apply(obj, selection=None, density=70, season=None, **kwargs):
     leaf_col = random_leaf_collection(season=season)

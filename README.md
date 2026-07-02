@@ -13,51 +13,53 @@
 | [**Contributing**](#contributing)
 
 <div align="center">
-<a href="https://youtu.be/6tgspeI-GHY"> <img src="docs/images/video_thumbnail.png" width="500"></a>
+<a href="https://youtu.be/6tgspeI-GHY"> <img src="docs/images/infinigen_teaser.png" width="100%"></a>
 </div>
 
 ## Getting Started
 
-First, follow our [Installation Instructions](docs/Installation.md).
-
 ### Getting Started with Infinigen V2
 
-<!-- TODO: add V2 preview images (single line, width≈210), e.g. docs/images/hello_v2/*.png -->
 <p align="center">
-  <img src="docs/images/video_thumbnail.png" width="210" />
+  <img src="docs/images/hello_v2/brick_sphere_0.png" width="13%" />
+  <img src="docs/images/hello_v2/brick_sphere_2.png" width="13%" />
+  <img src="docs/images/hello_v2/sofa_2.png" width="13%" />
+  <img src="docs/images/hello_v2/sofa_4.png" width="13%" />
+  <img src="docs/images/hello_v2/livingroom_rgb.png" width="13%" />
+  <img src="docs/images/hello_v2/livingroom_depth.png" width="13%" />
 </p>
 
-See instructions for Infinigen-V2 in the [`main2` branch README](https://github.com/princeton-vl/infinigen_internal/blob/main2/README.md)
+See getting-started instructions for Infinigen-V2 in our [hosted documentation](https://infinigen.cs.princeton.edu/docs/latest/index.html)
 
 ### Generate Articulated Sim Assets: Getting Started with Infinigen Articulated
 
 <p align="center">
-  <img src="docs/images/infinigen_articulated.gif" width="500" />
+  <img src="docs/images/infinigen_articulated.gif" width="80%" />
 </p>
 
-See instructions for Infinigen-Articulated in [Exporting to Simulators](docs/simulation/ExportingToSimulators.md)
+See Installation and Exporting-to-Simulators instructions on our [articulated-stable](https://github.com/princeton-vl/infinigen/blob/articulated-stable/README.md) version, or on [initial release](https://github.com/princeton-vl/infinigen/blob/articulated-initial/README.md) or [latest](docs/simulation/ExportingToSimulators.md)
 
 ### Hello Room: Getting Started with Infinigen Indoors
 
 <p align="center">
-  <img src="docs/images/hello_room/dining_blender.png" width="210" />
-  <img src="docs/images/hello_room/dining.png" width="210" />
-  <img src="docs/images/hello_room/dining_depth.png" width="210" />
-  <img src="docs/images/hello_room/dining_obj.png" width="210" />
+  <img src="docs/images/hello_room/dining_blender.png" width="19.5%" />
+  <img src="docs/images/hello_room/dining.png" width="19.5%" />
+  <img src="docs/images/hello_room/dining_depth.png" width="19.5%" />
+  <img src="docs/images/hello_room/dining_obj.png" width="19.5%" />
 </p>
 
-See instructions for Infinigen-Indoors in [HelloRoom.md](docs/HelloRoom.md)
+See Installation and Hello-Room instructions on our [indoors-stable](https://github.com/princeton-vl/infinigen/blob/indoors-stable/README.md) version, or on [initial release](https://github.com/princeton-vl/infinigen/blob/indoors-initial/README.md) or [latest](docs/HelloRoom.md)
 
 ### Hello World: Getting Started with Infinigen Nature
 
 <p align="center">
-  <img src="docs/images/hello_world/Image0048_00_00.png" width="210" />
-  <img src="docs/images/hello_world/Depth0048_00_00.png" width="210" />
-  <img src="docs/images/hello_world/SurfaceNormal_0001_00_00.png" width="210" />
-  <img src="docs/images/hello_world/InstanceSegmentation_0001_00_00.png" width="210" />
+  <img src="docs/images/hello_world/Image0048_00_00.png" width="19.5%" />
+  <img src="docs/images/hello_world/Depth0048_00_00.png" width="19.5%" />
+  <img src="docs/images/hello_world/SurfaceNormal_0001_00_00.png" width="19.5%" />
+  <img src="docs/images/hello_world/InstanceSegmentation_0001_00_00.png" width="19.5%" />
 </p>
 
-See instructions for Infinigen-Nature in [HelloWorld.md](docs/HelloWorld.md)
+See Installation and Hello-World instructions on our [nature-stable](https://github.com/princeton-vl/infinigen/blob/nature-stable/README.md) version, or on [initial release](https://github.com/princeton-vl/infinigen/blob/nature-initial/README.md) or [latest](docs/HelloWorld.md)
 
 ## Papers
 
@@ -86,7 +88,7 @@ Conference on Computer Vision and Pattern Recognition (CVPR) 2023
 </p>
 
 ```
-@inproceedings{infinigen023infinite,
+@inproceedings{infinigen2023infinite,
   title={Infinite Photorealistic Worlds Using Procedural Generation},
   author={Raistrick, Alexander and Lipson, Lahav and Ma, Zeyu and Mei, Lingjie and Wang, Mingzhe and Zuo, Yiming and Kayan, Karhan and Wen, Hongyu and Han, Beining and Wang, Yihan and Newell, Alejandro and Law, Hei and Goyal, Ankit and Yang, Kaiyu and Deng, Jia},
   booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition},
@@ -115,7 +117,7 @@ Conference on Computer Vision and Pattern Recognition (CVPR) 2023
 </p>
 
 ```
-@inproceedings{infinigen024indoors,
+@inproceedings{infinigen2024indoors,
     author    = {Raistrick, Alexander and Mei, Lingjie and Kayan, Karhan and Yan, David and Zuo, Yiming and Han, Beining and Wen, Hongyu and Parakh, Meenal and Alexandropoulos, Stamatis and Lipson, Lahav and Ma, Zeyu and Deng, Jia},
     title     = {Infinigen Indoors: Photorealistic Indoor Scenes using Procedural Generation},
     booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
@@ -158,6 +160,36 @@ Conference on Computer Vision and Pattern Recognition (CVPR) 2023
       archivePrefix={arXiv},
       primaryClass={cs.RO},
       url={https://arxiv.org/abs/2505.10755}, 
+}
+```
+
+<h3 align="center">
+  <a href="https://arxiv.org/abs/2604.26943">ProcFunc: Function-Oriented Abstractions for Procedural 3D Generation in Python</a>
+</h3>
+<p align="center">
+  <a href="http://araistrick.com/">Alexander Raistrick</a>, 
+  <a href="https://kkayan.com/">Karhan Kayan</a>, 
+  <a href="https://pvl.cs.princeton.edu/people.html">Jack Nugent</a>, 
+  <a href="https://david-yan1.github.io/">David Yan</a>, 
+  <a href="https://www.cs.princeton.edu/~lm5483/">Lingjie Mei</a>, 
+  <a href="https://scholar.google.com/citations?user=q38OfTQAAAAJ&hl=en">Meenal Parakh</a>, <br>
+  <a href="https://hermera.github.io/">Hongyu Wen</a>, 
+  <a href="https://pvl.cs.princeton.edu/people.html">Dylan Li</a>, 
+  <a href="https://zuoym15.github.io/">Yiming Zuo</a>, 
+  <a href="https://pvl.cs.princeton.edu/people.html">Erich Liang</a>, 
+  <a href="http://www.cs.princeton.edu/~jiadeng">Jia Deng</a><br>
+  arXiv 2026
+</p>
+
+```
+@misc{raistrick2026procfunc,
+      title={ProcFunc: Function-Oriented Abstractions for Procedural 3D Generation in Python}, 
+      author={Alexander Raistrick and Karhan Kayan and Jack Nugent and David Yan and Lingjie Mei and Meenal Parakh and Hongyu Wen and Dylan Li and Yiming Zuo and Erich Liang and Jia Deng},
+      year={2026},
+      eprint={2604.26943},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV},
+      url={https://arxiv.org/abs/2604.26943}, 
 }
 ```
 

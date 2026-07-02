@@ -11,6 +11,8 @@ from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes
 from infinigen.core.util.color import hsv2rgba
 
+__all__ = ["BasicBSDF", "shader_basic_bsdf"]
+
 
 def shader_basic_bsdf(nw, hsv=None):
     if hsv is None:

@@ -23,6 +23,8 @@ from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.paths import blueprint_path_completion
 from infinigen.core.util.random import weighted_sample
 
+__all__ = ["ToasterFactory"]
+
 
 def nodegroup_carriage_flat(nw: NodeWrangler):
     # Code generated using version 2.6.5 of the node_transpiler

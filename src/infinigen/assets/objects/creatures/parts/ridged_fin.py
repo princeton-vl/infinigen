@@ -16,6 +16,8 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler, ng_outputs
 from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 
+__all__ = ["FishFin"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_mix2_values", singleton=True, type="GeometryNodeTree"

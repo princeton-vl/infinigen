@@ -7,6 +7,8 @@
 
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = ["shader_marble", "shader_wood"]
+
 
 def shader_marble(nw: NodeWrangler, **kwargs):
     # Code generated using version 2.6.4 of the node_transpiler

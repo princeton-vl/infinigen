@@ -12,6 +12,8 @@ import numpy as np
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import FixedSeed, random_general
 
+__all__ = ["WindEffector", "TurbulenceEffector"]
+
 
 @gin.configurable
 class WindEffector(AssetFactory):

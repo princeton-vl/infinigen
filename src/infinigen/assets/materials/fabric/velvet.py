@@ -11,6 +11,8 @@ from infinigen.assets.materials.utils import common
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = ["Velvet", "shader_velvet"]
+
 
 def shader_velvet(nw: NodeWrangler, **kwargs):
     # Code generated using version 2.6.5 of the node_transpiler

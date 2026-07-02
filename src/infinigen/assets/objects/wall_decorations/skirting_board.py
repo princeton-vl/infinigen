@@ -29,6 +29,8 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.math import FixedSeed
 
+__all__ = ["make_skirting_board"]
+
 logger = logging.getLogger(__name__)
 
 

@@ -11,6 +11,8 @@ import numpy as np
 
 from infinigen.core.util import blender as butil
 
+__all__ = ["MBallStructure"]
+
 
 class MBallStructure:
     def __init__(self, name, resolution=0.1):

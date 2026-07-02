@@ -8,6 +8,14 @@ from infinigen.assets.objects.creatures import CarnivoreFactory
 from infinigen.assets.objects.rocks.boulder import BoulderFactory
 from infinigen.assets.objects.trees import BushFactory, TreeFactory
 
+__all__ = [
+    "CachedBoulderFactory",
+    "CachedCactusFactory",
+    "CachedCreatureFactory",
+    "CachedBushFactory",
+    "CachedTreeFactory",
+]
+
 
 class CachedBoulderFactory(BoulderFactory):
     pass

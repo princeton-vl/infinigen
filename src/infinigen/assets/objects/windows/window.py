@@ -22,6 +22,16 @@ from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.math import FixedSeed, clip_gaussian
 from infinigen.core.util.random import weighted_sample
 
+__all__ = [
+    "WindowFactory",
+    "shader_window_glass",
+    "shader_glass_material",
+    "shader_curtain_material",
+    "shader_curtain_frame_material",
+    "shader_frame_material",
+    "shader_wood",
+]
+
 
 def shader_window_glass(nw: NodeWrangler):
     """Non-refractive glass shader, since windows consist of a one-sided mesh currently and would not properly

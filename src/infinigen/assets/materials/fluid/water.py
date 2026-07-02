@@ -20,6 +20,8 @@ from infinigen.core.util.random import random_general as rg
 from infinigen.terrain.assets.ocean import spatial_size
 from infinigen.terrain.utils import drive_param
 
+__all__ = ["Water", "shader"]
+
 type = SurfaceTypes.BlenderDisplacement
 mod_name = "geo_water"
 name = "water"

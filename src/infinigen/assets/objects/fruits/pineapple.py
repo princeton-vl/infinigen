@@ -10,6 +10,8 @@ from numpy.random import normal, randint, uniform
 from infinigen.assets.objects.fruits.general_fruit import FruitFactoryGeneralFruit
 from infinigen.core.util.color import hsv2rgba
 
+__all__ = ["FruitFactoryPineapple"]
+
 
 class FruitFactoryPineapple(FruitFactoryGeneralFruit):
     def __init__(self, factory_seed, scale=1.0, coarse=False):

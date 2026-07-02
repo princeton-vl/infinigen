@@ -20,6 +20,8 @@ from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import weighted_sample
 
+__all__ = ["OfficeChairFactory"]
+
 
 def geometry_assemble_chair(nw: NodeWrangler, **kwargs):
     # Code generated using version 2.6.4 of the node_transpiler

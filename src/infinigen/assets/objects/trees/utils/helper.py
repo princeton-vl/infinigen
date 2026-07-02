@@ -9,6 +9,8 @@ import numpy as np
 
 from infinigen.core.util.logging import Suppress
 
+__all__ = ["set_active_obj", "compute_dists", "rodrigues_rot"]
+
 C = bpy.context
 D = bpy.data
 

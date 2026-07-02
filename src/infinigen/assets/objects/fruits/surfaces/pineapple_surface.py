@@ -18,6 +18,8 @@ from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = ["nodegroup_pineapple_surface", "shader_needle", "shader_cell"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_pineapple_surface", singleton=False, type="GeometryNodeTree"

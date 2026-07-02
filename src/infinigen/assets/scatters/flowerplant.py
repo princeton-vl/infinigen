@@ -11,6 +11,8 @@ from infinigen.assets.scatters.utils.wind import wind
 from infinigen.core.placement.factory import make_asset_collection
 from infinigen.core.placement.instance_scatter import scatter_instances
 
+__all__ = ["Flowerplant", "apply"]
+
 
 def apply(obj, selection=None, density=1.0):
     flowerplant_col = make_asset_collection(

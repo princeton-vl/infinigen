@@ -13,6 +13,8 @@ from infinigen.core.placement.factory import make_asset_collection
 from infinigen.core.placement.instance_scatter import scatter_instances
 from infinigen.core.util.random import random_general as rg
 
+__all__ = ["Seashells", "apply"]
+
 
 def apply(obj, density=("uniform", 0.2, 1.0), n=10, selection=None):
     n_species = np.random.randint(4, 6)

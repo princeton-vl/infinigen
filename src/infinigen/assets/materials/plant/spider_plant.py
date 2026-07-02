@@ -9,6 +9,8 @@ from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util.color import hsv2rgba
 
+__all__ = ["SpiderPlant", "shader_spider_plant"]
+
 
 def shader_spider_plant(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler

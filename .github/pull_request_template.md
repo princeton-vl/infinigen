@@ -23,7 +23,7 @@ List ALL sources consulted to implement the PR that were not written by you, e.g
 *We will not merge if your branch does not show green checkmark*
 It will fail if you have bad linting or formatting, but these should already be checked locally by `pre-commit`
 
-Please run `uv run pytest tests/infinigen_v2` if you changed any core tools (outside of a specific asset)
+Please run `uv run pytest tests/infinigen2` if you changed any core tools (outside of a specific asset)
 
 ### Results
 

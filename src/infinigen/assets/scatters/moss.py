@@ -13,6 +13,8 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import make_asset_collection
 from infinigen.core.placement.instance_scatter import scatter_instances
 
+__all__ = ["MossCover", "apply"]
+
 
 class MossCover:
     def __init__(self):

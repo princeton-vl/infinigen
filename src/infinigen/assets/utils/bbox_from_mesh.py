@@ -12,6 +12,8 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 
+__all__ = ["box_from_corners", "bbox_mesh_from_hipoly"]
+
 
 @node_utils.to_nodegroup("nodegroup_cube_from_corners", singleton=True)
 def nodegroup_cube_from_corners(nw: NodeWrangler):

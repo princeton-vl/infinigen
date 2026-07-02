@@ -15,7 +15,7 @@ python -m infinigen.tools.download_pregenerated_data outputs/my_download --relea
 
 ## Using Infinigen data with a Pytorch-style dataset class
 
-We provide an example pytorch-style dataset class ([dataset_loader.py](../infinigen/tools)) to help load data in our format. 
+We provide an example pytorch-style dataset class ([dataset_loader.py](../../src/infinigen/tools/dataset_loader.py)) to help load data in our format. 
 
 If you create a python script in the root of the repo, you can use the following snippet to load your downloaded data. You may need to replace `outputs/my_download` and `data_types` with the values used during download. 
 python

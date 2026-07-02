@@ -12,6 +12,8 @@ from infinigen.core import tags as t
 from infinigen.core.surface import read_attr_data
 from infinigen.core.util.math import FixedSeed
 
+__all__ = ["apply", "get_selection"]
+
 
 def apply(obj, shader_func, selection=None, *args, **kwargs):
     if not isinstance(obj, Iterable):

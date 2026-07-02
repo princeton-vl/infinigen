@@ -16,6 +16,8 @@ from .lite import LiteDoorFactory
 from .louver import LouverDoorFactory
 from .panel import GlassPanelDoorFactory, PanelDoorFactory
 
+__all__ = ["DoorFactory", "random_door_factory"]
+
 
 def random_door_factory():
     door_factories = [

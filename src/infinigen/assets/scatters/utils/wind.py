@@ -9,6 +9,8 @@ from numpy.random import normal as N
 
 from infinigen.core.nodes.node_wrangler import Nodes
 
+__all__ = ["wind"]
+
 
 def wind_rotation(nw, speed=1.0, direction=None, scale=1.0, strength=30):
     if direction is None:

@@ -12,6 +12,8 @@ from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.organization import SurfaceTypes
 from infinigen.core.util.random import random_color_neighbour
 
+__all__ = ["Ice", "shader_ice"]
+
 type = SurfaceTypes.SDFPerturb
 mod_name = "geo_ice"
 name = "ice"

@@ -14,6 +14,12 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.paths import blueprint_path_completion
 
+__all__ = [
+    "DoublefridgeFactory",
+    "nodegroup_multi_drawer_top",
+    "nodegroup_doublefridge",
+]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_round_quad", singleton=False, type="GeometryNodeTree"

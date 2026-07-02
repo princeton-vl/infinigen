@@ -21,6 +21,46 @@ from infinigen.core.surface import write_attr_data
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import normalize
 
+__all__ = [
+    "multi_res",
+    "geo_extension",
+    "subsurface2face_size",
+    "read_selected",
+    "read_co",
+    "read_edges",
+    "read_edge_center",
+    "read_edge_direction",
+    "read_edge_length",
+    "read_center",
+    "read_normal",
+    "read_area",
+    "read_loop_vertices",
+    "read_loop_edges",
+    "read_uv",
+    "write_uv",
+    "read_base_co",
+    "write_co",
+    "read_material_index",
+    "read_loop_starts",
+    "read_loop_totals",
+    "write_material_index",
+    "set_shade_smooth",
+    "displace_vertices",
+    "remove_vertices",
+    "remove_edges",
+    "remove_faces",
+    "select_vertices",
+    "select_edges",
+    "select_faces",
+    "write_attribute",
+    "distance2boundary",
+    "mirror",
+    "subsurf",
+    "subdivide_edge_ring",
+    "solidify",
+    "decimate",
+]
+
 
 def multi_res(obj):
     multi_res = obj.modifiers.new(name="multires", type="MULTIRES")

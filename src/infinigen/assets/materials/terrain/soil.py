@@ -14,6 +14,8 @@ from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.organization import SurfaceTypes
 from infinigen.core.util.random import random_color_neighbour
 
+__all__ = ["Soil", "shader_soil"]
+
 type = SurfaceTypes.SDFPerturb
 mod_name = "geometry_soil"
 name = "soil"

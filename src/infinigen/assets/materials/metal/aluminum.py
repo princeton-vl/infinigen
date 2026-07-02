@@ -12,6 +12,8 @@ from infinigen.assets.materials.utils.surface_utils import (
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = ["Aluminum", "shader_aluminumdisp2tut"]
+
 
 def shader_aluminumdisp2tut(nw: NodeWrangler, rand=False, **input_kwargs):
     # Code generated using version 2.4.3 of the node_transpiler

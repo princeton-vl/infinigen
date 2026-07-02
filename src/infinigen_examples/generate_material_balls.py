@@ -16,8 +16,9 @@ from pathlib import Path
 from numpy.random import uniform
 from tqdm import tqdm
 
-from infinigen.assets.materials import tile
-from infinigen.assets.materials.ceramic import shader_ceramic
+from infinigen import module_parent_path
+from infinigen.assets.materials.ceramic import tile
+from infinigen.assets.materials.ceramic.ceramic import shader_ceramic
 
 # ruff: noqa: E402
 # NOTE: logging config has to be before imports that use logging
@@ -39,7 +40,7 @@ from infinigen.assets.lighting import (
 )
 from infinigen.assets.utils.decorate import read_base_co
 from infinigen.assets.utils.misc import subclasses
-from infinigen.core import init
+from infinigen.core import init, surface
 from infinigen.core.placement import factory
 
 # noinspection PyUnresolvedReferences
@@ -61,6 +62,13 @@ logging.basicConfig(
 scale = 0.4
 
 
+def apply_material(asset, mat_gen, **kwargs):
+    if hasattr(mat_gen, "apply"):
+        mat_gen.apply(asset, **kwargs)
+    else:
+        surface.assign_material(asset, mat_gen(**kwargs))
+
+
 def build_scene_surface(factory_name, idx):
     try:
         with gin.unlock_config():
@@ -69,7 +77,9 @@ def build_scene_surface(factory_name, idx):
                     f"infinigen.assets.materials.{factory_name}"
                 )
             except ImportError:
-                for subdir in os.listdir("infinigen/assets/materials"):
+                for subdir in os.listdir(
+                    module_parent_path() / "infinigen/assets/materials"
+                ):
                     if not subdir.endswith(".py"):
                         with gin.unlock_config():
                             module = importlib.import_module(
@@ -80,8 +90,7 @@ def build_scene_surface(factory_name, idx):
                             break
                 else:
                     raise Exception(f"{factory_name} not Found.")
-            if type(template) is type:
-                template = template(idx)
+            mat_gen = template() if type(template) is type else template
 
             bpy.ops.mesh.primitive_ico_sphere_add(radius=scale, subdivisions=7)
             asset = bpy.context.active_object
@@ -92,16 +101,7 @@ def build_scene_surface(factory_name, idx):
             )
 
             with FixedSeed(idx):
-                if "metal" in factory_name or "sofa_fabric" in factory_name:
-                    template.apply(asset, scale=0.1)
-                elif "hardwood" in factory_name:
-                    template.apply(asset, rotation=(np.pi / 2, 0, 0))
-                elif "brick" in factory_name:
-                    template.apply(asset, height=uniform(0.25, 0.3))
-                elif "tile" in factory_name:
-                    template.apply(asset, alternating=idx % 4 in [0, 1])
-                else:
-                    template.apply(asset)
+                apply_material(asset, mat_gen)
     except ModuleNotFoundError:
         raise Exception(f"{factory_name} not Found.")
     return asset
@@ -139,7 +139,9 @@ def build_scene(path, factory_names, args):
     asset = bpy.context.active_object
     asset.scale = [scale * len(assets) / size * 4] * 3
     asset.location = (len(assets) // size - 1) * margin / 2, size // 2 * margin * 0.8, 0
-    tile.apply(asset, shader_func=shader_ceramic, alternating=True)
+    surface.assign_material(
+        asset, tile.Tile()(shader_func=shader_ceramic, alternating=True)
+    )
 
     with FixedSeed(args.lighting):
         if args.hdri:
@@ -179,15 +181,17 @@ def build_scene(path, factory_names, args):
 def main(args):
     bpy.context.window.workspace = bpy.data.workspaces["Geometry Nodes"]
 
-    init.apply_gin_configs("infinigen_examples/configs_indoor", skip_unknown=True)
-
-    extras = "[%(filename)s:%(lineno)d] " if args.loglevel == logging.DEBUG else ""
-    logging.basicConfig(
-        format=f"[%(asctime)s.%(msecs)03d] [%(name)s] [%(levelname)s] {extras}| %(message)s",
-        level=args.loglevel,
-        datefmt="%H:%M:%S",
+    init.apply_gin_configs(
+        ["infinigen_examples/configs_indoor", "infinigen_examples/configs_nature"],
+        skip_unknown=True,
     )
-    logging.getLogger("infinigen").setLevel(args.loglevel)
+
+    if args.debug is not None:
+        for name in logging.root.manager.loggerDict:
+            if not name.startswith("infinigen"):
+                continue
+            if len(args.debug) == 0 or any(name.endswith(x) for x in args.debug):
+                logging.getLogger(name).setLevel(logging.DEBUG)
 
     if ".txt" in args.factories[0]:
         name = args.factories[0].split(".")[-2].split("/")[-1]
@@ -207,7 +211,10 @@ def main(args):
         factories += [f.stem for f in Path("surfaces/scatters").iterdir()]
         factories.remove("ALL_SCATTERS")
     elif "ALL_MATERIALS" in factories:
-        factories += [f.stem for f in Path("infinigen/assets/materials").iterdir()]
+        factories += [
+            f.stem
+            for f in (module_parent_path() / "infinigen/assets/materials").iterdir()
+        ]
         factories.remove("ALL_MATERIALS")
     elif ".txt" in factories[0]:
         factories = [

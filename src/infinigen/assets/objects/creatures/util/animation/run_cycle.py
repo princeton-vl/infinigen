@@ -16,6 +16,8 @@ from numpy.random import uniform as U
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import clip_gaussian, lerp
 
+__all__ = ["follow_path", "animate_run"]
+
 logger = logging.getLogger(__name__)
 
 

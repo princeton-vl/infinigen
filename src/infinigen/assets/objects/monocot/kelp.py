@@ -21,6 +21,8 @@ from infinigen.core.placement.detail import remesh_with_attrs
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 
+__all__ = ["KelpMonocotFactory"]
+
 
 class KelpMonocotFactory(MonocotGrowthFactory):
     max_leaf_length = 1.2

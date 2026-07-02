@@ -13,6 +13,8 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.organization import SurfaceTypes
 
+__all__ = ["Mud", "shader_mud"]
+
 type = SurfaceTypes.SDFPerturb
 mod_name = "geo_mud"
 name = "mud"

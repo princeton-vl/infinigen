@@ -26,6 +26,8 @@ from infinigen.core.util import math as mutil
 from infinigen.core.util.math import randomspacing, rotate_match_directions
 from infinigen.core.util.random import weighted_sample
 
+__all__ = ["ChoppedTrees", "approx_settle_transform", "apply"]
+
 logger = logging.getLogger(__name__)
 
 

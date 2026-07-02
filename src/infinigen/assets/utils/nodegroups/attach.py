@@ -14,6 +14,8 @@ from .curve import (
 )
 from .math import nodegroup_deg2_rad
 
+__all__ = ["nodegroup_surface_muscle", "nodegroup_attach_part"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_part_surface", singleton=True, type="GeometryNodeTree"

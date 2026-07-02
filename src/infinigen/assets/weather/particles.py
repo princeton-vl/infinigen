@@ -18,6 +18,16 @@ from infinigen.core.placement import AssetFactory, make_asset_collection, partic
 from infinigen.core.util import butil
 from infinigen.core.util.random import log_uniform
 
+__all__ = [
+    "FallingParticles",
+    "spawn_emitter",
+    "rain_param_distribution",
+    "falling_leaf_param_distribution",
+    "floating_dust_param_distribution",
+    "marine_snow_param_distribution",
+    "snow_param_distribution",
+]
+
 logger = logging.getLogger(__name__)
 
 

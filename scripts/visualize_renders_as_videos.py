@@ -2,6 +2,8 @@
 # Copyright (C) 2025, Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
+# Authors: Alexander Raistrick
+
 import argparse
 import json
 import logging
@@ -16,8 +18,8 @@ import cvdpack
 import cvdpack.pack_frames as cvd_pack_frames
 import numpy as np
 
-from infinigen_v2.exporters.util.format import ExportType
-from infinigen_v2.exporters.visualize_gt import visualize_any_frametype
+from infinigen2.exporters.util.format import ExportType
+from infinigen2.exporters.visualize_gt import visualize_any_frametype
 
 logger = logging.getLogger(__name__)
 

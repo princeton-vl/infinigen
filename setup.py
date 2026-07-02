@@ -31,7 +31,13 @@ is_build_step = not any(x in sys.argv[1] for x in dont_build_steps)
 def ensure_submodules():
     # Inspired by https://github.com/pytorch/pytorch/blob/main/setup.py
 
-    with (cwd / ".gitmodules").open() as f:
+    gitmodules = cwd / ".gitmodules"
+    if not gitmodules.exists():
+        # submodules were removed; optional components (OcMesher, infinigen_gpl,
+        # customgt dependencies) are now cloned manually if needed
+        return
+
+    with gitmodules.open() as f:
         submodule_folders = [
             cwd / line.split("=", 1)[1].strip()
             for line in f.readlines()

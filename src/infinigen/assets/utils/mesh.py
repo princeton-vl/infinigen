@@ -23,6 +23,21 @@ from infinigen.assets.utils.shapes import dissolve_limited
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import normalize
 
+__all__ = [
+    "build_convex_mesh",
+    "polygon_angles",
+    "longest_ray",
+    "treeify",
+    "convert2ls",
+    "fix_tree",
+    "bevel",
+    "canonicalize_ls",
+    "canonicalize_mls",
+    "separate_selected",
+    "snap_mesh",
+    "prepare_for_boolean",
+]
+
 
 def build_prism_mesh(n=6, r_min=1.0, r_max=1.5, height=0.3, tilt=0.3):
     angles = polygon_angles(n)

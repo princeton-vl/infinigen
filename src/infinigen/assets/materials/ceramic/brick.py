@@ -14,6 +14,8 @@ from infinigen.core.util import blender as butil
 from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.random import log_uniform
 
+__all__ = ["Brick", "shader_brick"]
+
 
 def shader_brick(nw: NodeWrangler, height=None, **kwargs):
     if height is None:

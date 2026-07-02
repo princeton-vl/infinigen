@@ -11,6 +11,8 @@ from infinigen.assets.objects.corals.generate import CoralFactory, TableCoralFac
 from infinigen.core.placement.factory import make_asset_collection
 from infinigen.core.placement.instance_scatter import scatter_instances
 
+__all__ = ["CoralReef", "apply"]
+
 
 def apply(obj, scale=1, density=5.0, n=12, selection=None, horizontal=False, **kwargs):
     if horizontal:

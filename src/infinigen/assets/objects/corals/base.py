@@ -8,6 +8,8 @@ import bpy
 
 from infinigen.core.placement.factory import AssetFactory
 
+__all__ = ["BaseCoralFactory"]
+
 
 class BaseCoralFactory(AssetFactory):
     tentacle_distance = 0.05

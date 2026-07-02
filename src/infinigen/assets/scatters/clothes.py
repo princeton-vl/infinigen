@@ -16,6 +16,8 @@ from infinigen.core.placement.factory import make_asset_collection
 from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
 
+__all__ = ["ClothesCover", "cloth_sim", "apply"]
+
 
 def cloth_sim(clothes, obj=None, end_frame=50, **kwargs):
     with (

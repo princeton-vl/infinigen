@@ -33,6 +33,8 @@ from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed, clip_gaussian
 from infinigen.core.util.random import random_general, weighted_sample
 
+__all__ = ["LizardFactory", "FrogFactory", "SnakeFactory", "ChameleonFactory"]
+
 
 def dinosaur():
     open_mouth = U() > 0

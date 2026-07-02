@@ -25,6 +25,8 @@ from infinigen.core.util.logging import Timer
 from infinigen.core.util.organization import AssetFile, LandTile, Materials, Process
 from infinigen.terrain.utils import Mesh
 
+__all__ = ["make_still_water", "make_beach", "make_river", "make_tilted_river"]
+
 
 def get_objs_inside_domain(dom, objects):
     ls = []

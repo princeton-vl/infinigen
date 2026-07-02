@@ -13,6 +13,8 @@ from infinigen.assets.materials.utils.surface_utils import (
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes
 
+__all__ = ["TwoColorZ", "shader_twocolorz"]
+
 
 def shader_twocolorz(nw, rand=True, **input_kwargs):
     texture_coordinate = nw.new_node(Nodes.TextureCoord)

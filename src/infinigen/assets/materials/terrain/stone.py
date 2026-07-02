@@ -17,6 +17,8 @@ from infinigen.core.util.organization import SurfaceTypes
 
 from .mountain import geo_MOUNTAIN_general
 
+__all__ = ["Stone", "shader_stone"]
+
 type = SurfaceTypes.SDFPerturb
 mod_name = "geo_stone"
 name = "stone"

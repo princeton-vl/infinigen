@@ -30,18 +30,20 @@ import bpy
 import numpy as np
 from PIL import Image
 
+from infinigen import module_parent_path
 from infinigen.assets.lighting import (
-    CeilingLightFactory,
     hdri_lighting,
     holdout_lighting,
     sky_lighting,
     three_point_lighting,
 )
-from infinigen.assets.materials.wood import non_wood_tile, wood_tile
+from infinigen.assets.materials.wood.non_wood_tile import NonWoodTile
+from infinigen.assets.materials.wood.tiled_wood import TiledWood
+from infinigen.assets.objects.lamp import CeilingLightFactory
 from infinigen.assets.utils.decorate import read_base_co, read_co, read_normal
 from infinigen.assets.utils.misc import subclasses
 from infinigen.assets.utils.object import center, new_cube, origin2lowest
-from infinigen.core import init
+from infinigen.core import init, surface
 from infinigen.core.init import configure_cycles_devices
 from infinigen.core.placement import factory
 from infinigen.core.surface import write_attr_data
@@ -130,8 +132,8 @@ def build_scene_asset(args, factory_name, idx):
             write_attr_data(plane, "ground", normal[:, -1] < -0.5, "INT", "FACE")
             idx = parameters[factory_name]["scene_idx"]
             with FixedSeed(idx):
-                wood_tile.apply(plane, selection="ground")
-                non_wood_tile.apply(plane, selection="!ground", vertical=True)
+                surface.assign_material(plane, TiledWood()())
+                surface.assign_material(plane, NonWoodTile()(), selection="!ground")
                 factory = CeilingLightFactory(0)
                 factory.light_factory.params["Wattage"] = (
                     factory.light_factory.params["Wattage"] * 20
@@ -303,15 +305,17 @@ def make_grid(args, path, n):
 def main(args):
     bpy.context.window.workspace = bpy.data.workspaces["Geometry Nodes"]
 
-    init.apply_gin_configs("infinigen_examples/configs_indoor", skip_unknown=True)
-
-    extras = "[%(filename)s:%(lineno)d] " if args.loglevel == logging.DEBUG else ""
-    logging.basicConfig(
-        format=f"[%(asctime)s.%(msecs)03d] [%(name)s] [%(levelname)s] {extras}| %(message)s",
-        level=args.loglevel,
-        datefmt="%H:%M:%S",
+    init.apply_gin_configs(
+        ["infinigen_examples/configs_indoor", "infinigen_examples/configs_nature"],
+        skip_unknown=True,
     )
-    logging.getLogger("infinigen").setLevel(args.loglevel)
+
+    if args.debug is not None:
+        for name in logging.root.manager.loggerDict:
+            if not name.startswith("infinigen"):
+                continue
+            if len(args.debug) == 0 or any(name.endswith(x) for x in args.debug):
+                logging.getLogger(name).setLevel(logging.DEBUG)
 
     if ".txt" in args.factories[0]:
         name = args.factories[0].split(".")[-2].split("/")[-1]
@@ -328,7 +332,10 @@ def main(args):
         factories += [f.stem for f in Path("surfaces/scatters").iterdir()]
         factories.remove("ALL_SCATTERS")
     if "ALL_MATERIALS" in factories:
-        factories += [f.stem for f in Path("infinigen/assets/materials").iterdir()]
+        factories += [
+            f.stem
+            for f in (module_parent_path() / "infinigen/assets/materials").iterdir()
+        ]
         factories.remove("ALL_MATERIALS")
     if ".txt" in factories[0]:
         factories = [

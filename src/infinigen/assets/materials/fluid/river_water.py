@@ -9,6 +9,8 @@ from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util.random import random_color_neighbour
 
+__all__ = ["RiverWater", "shader_river_water"]
+
 
 def shader_river_water(nw: NodeWrangler):
     # Code generated using version 2.6.3 of the node_transpiler

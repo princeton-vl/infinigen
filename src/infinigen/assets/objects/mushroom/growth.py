@@ -20,6 +20,8 @@ from infinigen.core.util.random import log_uniform
 from .cap import MushroomCapFactory
 from .stem import MushroomStemFactory
 
+__all__ = ["MushroomGrowthFactory"]
+
 
 class MushroomGrowthFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False):

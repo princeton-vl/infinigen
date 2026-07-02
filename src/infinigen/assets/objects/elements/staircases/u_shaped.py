@@ -17,6 +17,8 @@ from infinigen.core.util.random import log_uniform
 
 from .straight import StraightStaircaseFactory
 
+__all__ = ["UShapedStaircaseFactory"]
+
 
 class UShapedStaircaseFactory(StraightStaircaseFactory):
     def __init__(self, factory_seed, coarse=False, constants=None):

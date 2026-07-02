@@ -20,7 +20,7 @@ pip install ".[vis]"
 
 Infinigen can produce some dense annotations using Blender's built-in render passes. Users may prefer to use these annotations over our extended annotation system's since it requires only the bare-minimum installation. It is also able to run without a GPU.
 
-These annotations are produced when using the `--pipeline_configs blender_gt` ground truth extraction config in [manage_jobs.py](/README.md#generate-images-in-one-command), or can be done manually as shown in the final step of the [Hello-World](/README.md#generate-a-scene-step-by-step) example.
+These annotations are produced when using the `--pipeline_configs blender_gt` ground truth extraction config in [manage_jobs.py](./HelloWorld.md#generate-scenes-in-one-command), or can be done manually as shown in the final step of the [Hello-World](./HelloWorld.md#generate-a-scene-step-by-step) example.
 
 ## Advanced Annotation Pipeline :large_blue_diamond:
 
@@ -30,10 +30,17 @@ This will allow you to use our own `--pipeline_configs opengl_gt` ground truth e
 
 ### Installation
 
-To ensure all submodule dependencies have been properly cloned, run:
+First clone the C++ dependencies (these were previously git submodules):
 ```
-git submodule init
-git submodule update
+cd src/infinigen/datagen/customgt/dependencies
+git clone https://gitlab.com/libeigen/eigen.git
+git clone https://github.com/p-ranav/argparse.git
+git clone https://github.com/rogersce/cnpy.git
+git clone https://github.com/g-truc/glm.git
+git clone https://github.com/nlohmann/json.git
+git clone https://github.com/nothings/stb.git
+git clone https://github.com/glfw/glfw.git
+cd -
 ```
 
 On Ubuntu, run
@@ -72,7 +79,7 @@ To generate the hello-world scene using our custom annotation system, run:
 python -m infinigen.datagen.manage_jobs --output_folder outputs/hello_world/0 --num_scenes 1 --specific_seed 0 \
 --configs desert.gin simple.gin --pipeline_configs local_16GB.gin monocular.gin opengl_gt.gin --pipeline_overrides LocalScheduleHandler.use_gpu=False
 ```
-This is the [the previous manage_datagen_jobs command](https://github.com/princeton-vl/infinigen_internal/blob/oc16_update_docs/docs/HelloWorld.md#generate-images-in-one-command), but replacing `blender_gt.gin` with `opengl_gt.gin`
+This is the [the previous manage_datagen_jobs command](./HelloWorld.md#generate-scenes-in-one-command), but replacing `blender_gt.gin` with `opengl_gt.gin`
 
 ## Specification
 
@@ -142,7 +149,7 @@ It is similar to Optical Flow and its Occlusion, except that it computes the flo
 
 To visualize point trajectories for a scene, run:
 ```
-python infinigen/tools/results/visualize_traj.py path/to/your/scene/frames
+python -m infinigen.tools.results.visualize_traj path/to/your/scene/frames
 ```
 
 ### Camera Pose

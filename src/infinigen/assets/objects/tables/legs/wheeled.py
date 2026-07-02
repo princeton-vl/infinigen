@@ -15,6 +15,8 @@ from infinigen.assets.objects.tables.table_utils import (
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = ["nodegroup_wheeled_leg"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_chair_wheel", singleton=False, type="GeometryNodeTree"

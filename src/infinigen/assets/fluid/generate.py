@@ -16,6 +16,8 @@ from infinigen.assets.fluid.fluid import (
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 
+__all__ = ["FluidFactory", "FlipFluidFactory"]
+
 
 @gin.configurable
 class FluidFactory(AssetFactory):

@@ -306,12 +306,16 @@ toml = [
 
 [[package]]
 name = "cvdpack"
-version = "0.5.2a0"
-source = { git = "https://github.com/princeton-vl/cvdpack?rev=5adcffce9f419d7b8deb07a0ab4c768489c913fa#5adcffce9f419d7b8deb07a0ab4c768489c913fa" }
+version = "0.5.2"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "numpy" },
     { name = "opencv-python" },
     { name = "tqdm" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/8f/1f/86a23b65b326c817b622fecc37e8cb2135b10774de682427c98b54e6d6a5/cvdpack-0.5.2.tar.gz", hash = "sha256:0a7ac7ea27a240363767db24e567cb24db3fe13d192b059912236aa71ce8a37f", size = 71929, upload-time = "2026-07-02T13:10:46.988Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2f/ae/865abb857d3d6060623bacb32c517df5984d5a7dd038b583fd22cbfd1847/cvdpack-0.5.2-py3-none-any.whl", hash = "sha256:f9bb3aa3c5111c358de319a842c3610b0aeca53faf63572ca03d4d5b569ab043", size = 30175, upload-time = "2026-07-02T13:10:45.905Z" },
 ]
 
 [[package]]
@@ -461,6 +465,14 @@ wheels = [
 ]
 
 [[package]]
+name = "geomdl"
+version = "5.4.0"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/0c/7c/0160d6956236bbbd5f2fbe832110cf7237efa4c717bb888817b2a939a537/geomdl-5.4.0-py3-none-any.whl", hash = "sha256:026464f3caa87465928205aa014113f5134846d1f23d501127829cdba36f110f", size = 148012, upload-time = "2025-05-23T05:32:03.193Z" },
+]
+
+[[package]]
 name = "gin-config"
 version = "0.5.0"
 source = { registry = "https://pypi.org/simple" }
@@ -567,7 +579,6 @@ wheels = [
 
 [[package]]
 name = "infinigen"
-version = "2.0.0a1"
 source = { editable = "." }
 dependencies = [
     { name = "bpy" },
@@ -623,6 +634,16 @@ terrain = [
     { name = "pyrender" },
     { name = "setuptools" },
 ]
+v1 = [
+    { name = "einops" },
+    { name = "geomdl" },
+    { name = "landlab" },
+    { name = "numba" },
+    { name = "pyglet" },
+    { name = "pyrender" },
+    { name = "scikit-image" },
+    { name = "setuptools" },
+]
 vis = [
     { name = "einops" },
     { name = "numba" },
@@ -642,11 +663,13 @@ requires-dist = [
     { name = "bpy", specifier = "==4.2.0" },
     { name = "coacd" },
     { name = "coacd", marker = "extra == 'sim'" },
-    { name = "cvdpack", git = "https://github.com/princeton-vl/cvdpack?rev=5adcffce9f419d7b8deb07a0ab4c768489c913fa" },
+    { name = "cvdpack", specifier = ">=0.5.2" },
     { name = "einops", marker = "extra == 'vis'" },
     { name = "flask", marker = "extra == 'dev'" },
+    { name = "geomdl", marker = "extra == 'v1'" },
     { name = "gin-config", specifier = ">=0.5.0" },
     { name = "imageio", specifier = "<2.32.0" },
+    { name = "infinigen", extras = ["terrain", "vis"], marker = "extra == 'v1'" },
     { name = "isort", marker = "extra == 'dev'" },
     { name = "jinja2", marker = "extra == 'dev'" },
     { name = "landlab", marker = "extra == 'terrain'", specifier = "==2.6.0" },
@@ -672,9 +695,10 @@ requires-dist = [
     { name = "rapidfuzz", marker = "extra == 'dev'" },
     { name = "rtree" },
     { name = "ruff", marker = "extra == 'dev'", specifier = "==0.14.5" },
+    { name = "scikit-image", marker = "extra == 'v1'", specifier = "<0.20.0" },
     { name = "scikit-learn", specifier = "<1.4.0" },
     { name = "scipy" },
-    { name = "setuptools", marker = "extra == 'terrain'" },
+    { name = "setuptools", marker = "extra == 'terrain'", specifier = "<81" },
     { name = "shapely", specifier = "<=2.0.5" },
     { name = "sphinx", marker = "extra == 'dev'" },
     { name = "sphinx-argparse", marker = "extra == 'dev'" },
@@ -688,7 +712,7 @@ requires-dist = [
     { name = "wandb", specifier = ">=0.21.0" },
     { name = "wandb", marker = "extra == 'wandb'" },
 ]
-provides-extras = ["terrain", "vis", "dev", "sim", "wandb"]
+provides-extras = ["terrain", "vis", "dev", "sim", "wandb", "v1"]
 
 [package.metadata.requires-dev]
 dev = [{ name = "wandb", specifier = ">=0.21.0" }]
@@ -1414,6 +1438,25 @@ wheels = [
 ]
 
 [[package]]
+name = "pywavelets"
+version = "1.9.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/5a/75/50581633d199812205ea8cdd0f6d52f12a624886b74bf1486335b67f01ff/pywavelets-1.9.0.tar.gz", hash = "sha256:148d12203377772bea452a59211d98649c8ee4a05eff019a9021853a36babdc8", size = 3938340, upload-time = "2025-08-04T16:20:04.978Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/bd/8b/ca700d0c174c3a4eec1fbb603f04374d1fed84255c2a9f487cfaa749c865/pywavelets-1.9.0-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:54662cce4d56f0d6beaa6ebd34b2960f3aa4a43c83c9098a24729e9dc20a4be2", size = 4323640, upload-time = "2025-08-04T16:18:51.683Z" },
+    { url = "https://files.pythonhosted.org/packages/b5/f3/0fa57b6407ea9c4452b0bc182141256b9481b479ffbfc9d7fdb73afe193b/pywavelets-1.9.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:0d8ed4b4d1eab9347e8fe0c5b45008ce5a67225ce5b05766b8b1fa923a5f8b34", size = 4294938, upload-time = "2025-08-04T16:18:53.818Z" },
+    { url = "https://files.pythonhosted.org/packages/ea/95/a998313c8459a57e488ff2b18e24be9e836aedda3aa3a1673197deeaa59a/pywavelets-1.9.0-cp311-cp311-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:862be65481fdfecfd84c6b0ca132ba571c12697a082068921bca5b5e039f1371", size = 4472829, upload-time = "2025-08-04T16:18:55.508Z" },
+    { url = "https://files.pythonhosted.org/packages/d8/8c/f316a153f7f89d2753df8a7371d15d0faab87e709fe02715dbc297c79385/pywavelets-1.9.0-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:d76b7fa8fc500b09201d689b4f15bf5887e30ffbe2e1f338eb8470590eb4521a", size = 4524936, upload-time = "2025-08-04T16:18:57.146Z" },
+    { url = "https://files.pythonhosted.org/packages/24/f7/89fdc1caef4b384a341a8e149253e23f36c1702bbb986a26123348624854/pywavelets-1.9.0-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:aa859d0b686a697c87a47e29319aebe44125f114a4f8c7e444832b921f52de5a", size = 4481475, upload-time = "2025-08-04T16:18:58.725Z" },
+    { url = "https://files.pythonhosted.org/packages/82/53/b733fbfb71853e4a5c430da56e325a763562d65241dd785f0fadb67aed6a/pywavelets-1.9.0-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:20e97b84a263003e2c7348bcf72beba96edda1a6169f072dc4e4d4ee3a6c7368", size = 4527994, upload-time = "2025-08-04T16:18:59.917Z" },
+    { url = "https://files.pythonhosted.org/packages/ed/15/5f6a6e9fdad8341e42642ed622a5f3033da4ea9d426cc3e574ae418b4726/pywavelets-1.9.0-cp311-cp311-win32.whl", hash = "sha256:f8330cdbfa506000e63e79525716df888998a76414c5cd6ecd9a7e371191fb05", size = 4136109, upload-time = "2025-08-04T16:19:01.511Z" },
+    { url = "https://files.pythonhosted.org/packages/fd/33/62dbb4aea86ec9d79b283127c42cc896f4d4ff265a9aeb1337a7836dd550/pywavelets-1.9.0-cp311-cp311-win_amd64.whl", hash = "sha256:ed10959a17df294ef55948dcc76367d59ec7b6aad67e38dd4e313d2fe3ad47b2", size = 4228321, upload-time = "2025-08-04T16:19:03.164Z" },
+]
+
+[[package]]
 name = "pyyaml"
 version = "6.0.2"
 source = { registry = "https://pypi.org/simple" }
@@ -1552,6 +1595,22 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/3b/9d/7c0a255d21e0912114784e4a96bf62af0618e2190cae468cd82b13625ad2/ruff-0.14.5-py3-none-win_amd64.whl", hash = "sha256:9d55d7af7166f143c94eae1db3312f9ea8f95a4defef1979ed516dbb38c27621", size = 14331546, upload-time = "2025-11-13T19:58:45.691Z" },
     { url = "https://files.pythonhosted.org/packages/e5/80/69756670caedcf3b9be597a6e12276a6cf6197076eb62aad0c608f8efce0/ruff-0.14.5-py3-none-win_arm64.whl", hash = "sha256:4b700459d4649e2594b31f20a9de33bc7c19976d4746d8d0798ad959621d64a4", size = 13433331, upload-time = "2025-11-13T19:58:48.434Z" },
 ]
+
+[[package]]
+name = "scikit-image"
+version = "0.19.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "imageio" },
+    { name = "networkx" },
+    { name = "numpy" },
+    { name = "packaging" },
+    { name = "pillow" },
+    { name = "pywavelets" },
+    { name = "scipy" },
+    { name = "tifffile" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/00/d4/6682033d02917b10a2024dbe5a0636d2338b0799f7bd1885508fb114aec9/scikit-image-0.19.3.tar.gz", hash = "sha256:24b5367de1762da6ee126dd8f30cc4e7efda474e0d7d70685433f0e3aa2ec450", size = 22232287, upload-time = "2022-06-12T18:12:38.169Z" }
 
 [[package]]
 name = "scikit-learn"
@@ -1825,6 +1884,18 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/b7/4d/08c89e34946fce2aec4fbb45c9016efd5f4d7f24af8e5d93296e935631d8/threadpoolctl-3.6.0.tar.gz", hash = "sha256:8ab8b4aa3491d812b623328249fab5302a68d2d71745c8a4c719a2fcaba9f44e", size = 21274, upload-time = "2025-03-13T13:49:23.031Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/32/d5/f9a850d79b0851d1d4ef6456097579a9005b31fea68726a4ae5f2d82ddd9/threadpoolctl-3.6.0-py3-none-any.whl", hash = "sha256:43a0b8fd5a2928500110039e43a5eed8480b918967083ea48dc3ab9f13c4a7fb", size = 18638, upload-time = "2025-03-13T13:49:21.846Z" },
+]
+
+[[package]]
+name = "tifffile"
+version = "2026.3.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/c5/cb/2f6d79c7576e22c116352a801f4c3c8ace5957e9aced862012430b62e14f/tifffile-2026.3.3.tar.gz", hash = "sha256:d9a1266bed6f2ee1dd0abde2018a38b4f8b2935cb843df381d70ac4eac5458b7", size = 388745, upload-time = "2026-03-03T19:14:38.134Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/1a/e4/e804505f87627cd8cdae9c010c47c4485fd8c1ce31a7dd0ab7fcc4707377/tifffile-2026.3.3-py3-none-any.whl", hash = "sha256:e8be15c94273113d31ecb7aa3a39822189dd11c4967e3cc88c178f1ad2fd1170", size = 243960, upload-time = "2026-03-03T19:14:35.808Z" },
 ]
 
 [[package]]

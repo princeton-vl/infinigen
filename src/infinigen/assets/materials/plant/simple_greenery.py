@@ -10,6 +10,8 @@ from infinigen.assets import colors
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = ["SimpleGreenery", "shader_simple_greenery"]
+
 
 def shader_simple_greenery(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler

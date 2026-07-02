@@ -30,6 +30,8 @@ from infinigen.core.surface import NoApply
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import weighted_sample
 
+__all__ = ["TableCocktailFactory", "geometry_create_legs"]
+
 
 @node_utils.to_nodegroup(
     "geometry_create_legs", singleton=False, type="GeometryNodeTree"

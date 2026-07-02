@@ -13,6 +13,19 @@ from infinigen.assets.utils.decorate import read_co, read_normal, select_faces, 
 from infinigen.assets.utils.object import data2mesh, join_objects, mesh2obj, new_circle
 from infinigen.core.util import blender as butil
 
+__all__ = [
+    "is_valid_polygon",
+    "simplify_polygon",
+    "cut_polygon_by_line",
+    "safe_polygon2obj",
+    "polygon2obj",
+    "point_normal_up",
+    "dissolve_limited",
+    "obj2polygon",
+    "buffer",
+    "segment_filter",
+]
+
 
 def is_valid_polygon(p):
     if isinstance(p, Polygon) and p.area > 0 and p.is_valid:

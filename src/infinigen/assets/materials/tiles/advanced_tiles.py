@@ -27,6 +27,8 @@ from .spanish_bound import nodegroup_spanish_bound
 from .star import nodegroup_star
 from .triangle import nodegroup_triangle
 
+__all__ = ["shader_raw_tiles", "apply"]
+
 tile_pattern_dict = {
     "basket_weave": nodegroup_basket_weave,
     "brick": nodegroup_brick,

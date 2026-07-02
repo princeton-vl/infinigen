@@ -26,6 +26,8 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.random import weighted_sample
 
+__all__ = ["LampFactory", "shader_fine_knit_fabric_colored"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_bulb_003_gp", singleton=False, type="GeometryNodeTree"

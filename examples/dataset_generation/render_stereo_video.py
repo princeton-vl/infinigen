@@ -21,17 +21,17 @@ logging.basicConfig(
 
 import procfunc as pf
 
-from infinigen_v2.exporters.render_cycles import (
+from infinigen2.exporters.render_cycles import (
     render_cycles,
     render_cycles_ground_truth,
 )
-from infinigen_v2.exporters.util.format import ExportType, RenderPass
-from infinigen_v2.generators.animations.random_walk import RandomWalkSampler, walk_loop
-from infinigen_v2.generators.cameras import stereo
-from infinigen_v2.generators.scenes import floating_objects
-from infinigen_v2.generators.scenes.room import room, room_shape
-from infinigen_v2.util.render_metadata import time_step, write_render_metadata
-from infinigen_v2.util.scene_cleanup import cleanup_except
+from infinigen2.exporters.util.format import ExportType, RenderPass
+from infinigen2.animations.random_walk import RandomWalkSampler, walk_loop
+from infinigen2.cameras import stereo
+from infinigen2.scenes import floating_objects
+from infinigen2.scenes.room import room, room_shape
+from infinigen2.util.render_metadata import time_step, write_render_metadata
+from infinigen2.util.scene_cleanup import cleanup_except
 
 logger = logging.getLogger(__name__)
 

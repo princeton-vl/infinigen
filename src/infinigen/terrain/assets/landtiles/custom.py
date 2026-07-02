@@ -19,6 +19,13 @@ from infinigen.terrain.land_process.erosion import run_erosion
 from infinigen.terrain.land_process.snowfall import run_snowfall
 from infinigen.terrain.utils import grid_distance, perlin_noise, random_int
 
+__all__ = [
+    "coast_params",
+    "multi_mountains_params",
+    "multi_mountains_asset",
+    "coast_asset",
+]
+
 coast_params_ = {}
 multi_mountains_params_ = {}
 

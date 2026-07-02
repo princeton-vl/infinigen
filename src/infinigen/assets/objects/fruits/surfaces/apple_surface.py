@@ -9,6 +9,8 @@ from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = ["shader_apple_shader", "nodegroup_apple_surface"]
+
 
 def shader_apple_shader(nw: NodeWrangler, color1, color2, random_seed):
     # Code generated using version 2.4.3 of the node_transpiler

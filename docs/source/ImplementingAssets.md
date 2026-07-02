@@ -10,7 +10,7 @@ The workflow described in this guide requires some knowledge of python *and* the
    - You may have success trying out this guide anyway. If you can navigate the Blender UI (either by trial and error, or via the many great [online resources](https://www.youtube.com/watch?v=nIoXOplUvAw&t=34s)), this tutorial will help you use Blender as a powerful visual debugging tool to repeatedly test code you write in your usual IDE. 
    - Ultimately you can work on Infinigen by only manipulating code/text files. The best approach to get started on this at present is to read the many existing python files in the repo. We will work on better documentation and APIs for python developers. 
 
-This guide does not cover how to add new elements to the terrain marching cubes mesh. This guide also does not cover adding different lighting, although you can use a similar node-based workflow to modify [the already existing lighting assets](infinigen/assets/lighting) in the repo.
+This guide does not cover how to add new elements to the terrain marching cubes mesh. This guide also does not cover adding different lighting, although you can use a similar node-based workflow to modify [the already existing lighting assets](../../src/infinigen/assets/lighting) in the repo.
 
 ## Setting up the Blender UI for interactive development
 

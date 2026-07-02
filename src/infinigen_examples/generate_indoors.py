@@ -316,7 +316,11 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
         pholder_objs = butil.get_collection("placeholders")
 
         obj_fac_names = load_txt_list(
-            module_parent_path() / "tests" / "assets" / "list_indoor_meshes.txt"
+            module_parent_path().parent
+            / "tests"
+            / "infinigen"
+            / "assets"
+            / "list_indoor_meshes.txt"
         )
         facs = [import_item(path) for path in obj_fac_names]
 

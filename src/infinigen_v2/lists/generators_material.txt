@@ -1,2 +1,0 @@
-infinigen_v2.generators.shaders.wood.sample_wood_material
-infinigen_v2.generators.shaders.ice.sample_ice_material

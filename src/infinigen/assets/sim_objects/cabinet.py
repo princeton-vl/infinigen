@@ -11,6 +11,8 @@ from numpy.random import uniform
 
 from infinigen.assets.objects.shelves.cabinet import CabinetBaseFactory
 
+__all__ = ["CabinetFactory"]
+
 
 class CabinetFactory(CabinetBaseFactory):
     extra_exclude = {("link_1", "link_2")}

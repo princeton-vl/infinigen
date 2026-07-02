@@ -13,6 +13,8 @@ from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import clip_gaussian
 
+__all__ = ["PointLampFactory", "shader_blackbody_temp"]
+
 
 def shader_blackbody_temp(nw, params):
     blackbody = nw.new_node(

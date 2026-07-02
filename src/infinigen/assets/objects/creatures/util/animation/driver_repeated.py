@@ -9,6 +9,8 @@ from numpy.random import uniform
 
 from infinigen.core.util.math import FixedSeed, int_hash
 
+__all__ = ["repeated_driver", "bend_bones_lerp"]
+
 
 def repeated_driver(start, end, freq, off=None, seed=None):
     if off is None:

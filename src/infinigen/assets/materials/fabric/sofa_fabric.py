@@ -9,6 +9,8 @@ from infinigen.core import surface
 from infinigen.core.nodes import Nodes, NodeWrangler
 from infinigen.core.util.random import log_uniform
 
+__all__ = ["SofaFabric", "shader_sofa_fabric"]
+
 
 def shader_sofa_fabric(nw: NodeWrangler, scale=1, strength=0.01, **kwargs):
     # Code generated using version 2.6.4 of the node_transpiler

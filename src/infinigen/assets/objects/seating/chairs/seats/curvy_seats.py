@@ -12,6 +12,8 @@ from infinigen.assets.objects.tables.table_utils import nodegroup_bent
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = ["generate_curvy_seats"]
+
 # TODO: set material automatically
 
 

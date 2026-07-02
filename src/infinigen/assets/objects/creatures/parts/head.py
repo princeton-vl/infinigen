@@ -33,6 +33,8 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.tagging import tag_object
 from infinigen.core.util.math import clip_gaussian
 
+__all__ = ["Neck", "CarnivoreHead", "CarnivoreJaw", "BirdHead", "FlyingBirdHead"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_carnivore_jaw", singleton=True, type="GeometryNodeTree"

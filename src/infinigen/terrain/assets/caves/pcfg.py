@@ -11,6 +11,8 @@ from pathlib import Path
 
 import numpy as np
 
+__all__ = ["generate_string"]
+
 CONFIG_FILE = Path(__file__).parent / "cfg.txt"
 assert CONFIG_FILE.exists(), CONFIG_FILE.resolve()
 

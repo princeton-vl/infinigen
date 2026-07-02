@@ -93,7 +93,7 @@ print(f\"{round(s['blend_build_sec'])}sec CPU for .blend, {round(s['render_sec_p
     # bottom bar: generation command left, runtime right
     BL="fontcolor=white:fontsize=$FS:box=1:boxcolor=black@0.65:boxborderw=6:x=16:y=h-th-16"
     BR="fontcolor=white:fontsize=$FS:box=1:boxcolor=black@0.65:boxborderw=6:x=w-tw-16:y=h-th-16"
-    DT="drawtext=text='uv run infinigen2 livingroom_with_smallobj_rand linear_pan_camera_rand render_cycles --seed $seed':$BL,drawtext=text='$runtime':$BR"
+    DT="drawtext=text='uv run infinigen livingroom_with_smallobj_rand linear_pan_camera_rand render_cycles --seed $seed':$BL,drawtext=text='$runtime':$BR"
 
     clip="$TMP/scene_$(printf '%03d' "$scene_idx").mp4"
     ffmpeg -nostdin -y -loglevel error -f concat -safe 0 -i "$seg_list" \

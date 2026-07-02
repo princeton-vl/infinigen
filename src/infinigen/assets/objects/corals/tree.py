@@ -19,6 +19,8 @@ from infinigen.core import surface
 from infinigen.core.tagging import tag_object
 from infinigen.core.util.math import FixedSeed
 
+__all__ = ["TreeBaseCoralFactory", "TwigBaseCoralFactory", "BushBaseCoralFactory"]
+
 
 class TreeBaseCoralFactory(BaseCoralFactory):
     default_scale = [1] * 3

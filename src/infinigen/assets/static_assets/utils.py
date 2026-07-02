@@ -7,6 +7,8 @@ import bpy
 
 from infinigen.core.util import blender as butil
 
+__all__ = ["collapse_hierarchy"]
+
 
 def create_empty_mesh_object(name, parent=None):
     mesh = bpy.data.meshes.new(name=f"{name}_mesh")

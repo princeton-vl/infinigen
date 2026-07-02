@@ -14,6 +14,8 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util.color import hex2rgba
 from infinigen.core.util.random import clip_gaussian
 
+__all__ = ["TiledWood", "shader_wood_tiled"]
+
 
 @node_utils.to_nodegroup("nodegroup_tiling", singleton=False, type="ShaderNodeTree")
 def nodegroup_tiling(nw: NodeWrangler):

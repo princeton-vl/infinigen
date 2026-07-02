@@ -31,6 +31,8 @@ from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.paths import blueprint_path_completion
 from infinigen.core.util.random import weighted_sample
 
+__all__ = ["MultifridgeFactory"]
+
 
 def get_all_metal_shaders(color):
     metal_shaders_list = [

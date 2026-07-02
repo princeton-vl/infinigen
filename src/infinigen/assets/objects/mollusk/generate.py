@@ -36,6 +36,17 @@ from .snail import (
     VoluteBaseFactory,
 )
 
+__all__ = [
+    "MolluskFactory",
+    "ScallopFactory",
+    "ClamFactory",
+    "MusselFactory",
+    "ConchFactory",
+    "AugerFactory",
+    "VoluteFactory",
+    "NautilusFactory",
+]
+
 
 class MolluskFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False, factory_method=None):

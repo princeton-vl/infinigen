@@ -7,6 +7,8 @@
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = ["apply"]
+
 
 def geometry_geometry_nodes(nw: NodeWrangler, obj):
     # Code generated using version 2.4.3 of the node_transpiler

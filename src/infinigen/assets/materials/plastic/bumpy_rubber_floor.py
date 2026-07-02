@@ -12,6 +12,8 @@ from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util.color import hsv2rgba
 
+__all__ = ["BumpyRubberFloor", "shader_bumpy_rubber"]
+
 
 @node_utils.to_nodegroup("nodegroup_node_group", singleton=False, type="ShaderNodeTree")
 def nodegroup_node_group(nw: NodeWrangler):

@@ -54,6 +54,8 @@ from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 
+__all__ = ["FruitFactoryGeneralFruit"]
+
 crosssectionlib = {
     "circle_cross_section": nodegroup_circle_cross_section,
     "star_cross_section": nodegroup_star_cross_section,

@@ -27,6 +27,8 @@ from infinigen.core.placement.factory import make_asset_collection
 from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 
+__all__ = ["KalidiumBaseCactusFactory"]
+
 
 class KalidiumBaseCactusFactory(BaseCactusFactory):
     cap_percentage = 0.0

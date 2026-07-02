@@ -17,6 +17,8 @@ from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util.random import log_uniform
 
+__all__ = ["WoodOld", "shader_wood_old"]
+
 
 def shader_wood_old(nw: NodeWrangler, scale=1, offset=None, rotation=None, **kwargs):
     # Code generated using version 2.4.3 of the node_transpiler

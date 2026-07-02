@@ -18,6 +18,8 @@ from infinigen.assets.utils.geometry import nurbs
 from infinigen.core.nodes.node_wrangler import ng_outputs
 from infinigen.core.util import blender as butil
 
+__all__ = ["nodegroup_to_part", "nurbs_to_part", "rdict_comb", "random_convex_coord"]
+
 
 def nodegroup_to_part(
     nodegroup_func, params, kwargs=None, base_obj=None, split_extras=False

@@ -23,6 +23,8 @@ from infinigen.assets.objects.elements.doors.panel import (
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util.math import FixedSeed
 
+__all__ = ["SimDoorFactory"]
+
 
 def random_door_factory():
     door_factories = [

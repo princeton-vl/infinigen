@@ -10,6 +10,8 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
 from .utils import nodegroup_scalar_positive_modulo
 
+__all__ = ["nodegroup_hexagon"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_distance_to_axis", singleton=False, type="ShaderNodeTree"

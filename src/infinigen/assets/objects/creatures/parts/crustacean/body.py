@@ -27,6 +27,8 @@ from infinigen.core.surface import read_attr_data, write_attr_data
 from infinigen.core.util import blender as butil
 from infinigen.core.util.random import log_uniform
 
+__all__ = ["CrabBodyFactory", "LobsterBodyFactory"]
+
 
 class CrabBodyFactory(PartFactory):
     tags = ["body"]

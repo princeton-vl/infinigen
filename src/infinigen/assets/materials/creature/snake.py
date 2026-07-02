@@ -13,6 +13,15 @@ from infinigen.assets.materials.utils.surface_utils import (
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = [
+    "Snake",
+    "shader_black_white_snake",
+    "shader_brown",
+    "shader_golden",
+    "shader_green",
+    "shader_shining_golden",
+]
+
 
 def shader_black_white_snake(nw: NodeWrangler, rand=True):
     # Code generated using version 2.4.3 of the node_transpiler

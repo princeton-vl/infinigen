@@ -10,6 +10,8 @@ import bmesh
 import numpy as np
 from numpy.random import normal, uniform
 
+__all__ = ["reaction_diffusion", "feed2kill", "make_periodic_weight_fn"]
+
 
 def reaction_diffusion(
     obj,

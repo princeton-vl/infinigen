@@ -8,6 +8,8 @@
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = ["nodegroup_scalar_positive_modulo", "nodegroup_u_v_recenter"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_scalar_positive_modulo", singleton=False, type="ShaderNodeTree"

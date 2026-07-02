@@ -12,6 +12,8 @@ from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core.placement.factory import make_asset_collection
 from infinigen.core.placement.instance_scatter import scatter_instances
 
+__all__ = ["Jellyfish", "apply"]
+
 
 def apply(obj, scale=1, density=1.0, n=6, selection=None):
     n_species = np.random.randint(2, 3)

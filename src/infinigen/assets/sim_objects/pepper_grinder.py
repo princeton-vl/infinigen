@@ -20,6 +20,8 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.random import weighted_sample
 
+__all__ = ["PepperGrinderFactory"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_node_group_009", singleton=False, type="GeometryNodeTree"

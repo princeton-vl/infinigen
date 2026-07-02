@@ -11,6 +11,8 @@ import numpy as np
 
 from infinigen.core.util import blender as butil
 
+__all__ = ["animate_wiggle_bones"]
+
 logger = logging.getLogger(__name__)
 
 

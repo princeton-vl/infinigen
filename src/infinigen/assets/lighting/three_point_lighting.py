@@ -9,6 +9,8 @@ from numpy.random import uniform
 
 from infinigen.assets.utils.object import center
 
+__all__ = ["add_lighting"]
+
 
 def add_lighting(asset):
     dimension = asset.dimensions * asset.scale

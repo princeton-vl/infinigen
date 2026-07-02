@@ -19,6 +19,8 @@ from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
 
+__all__ = ["SimpleDeskBaseFactory", "SimpleDeskFactory", "SidetableDeskFactory"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_table_legs", singleton=False, type="GeometryNodeTree"

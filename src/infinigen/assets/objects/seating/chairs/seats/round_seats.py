@@ -10,6 +10,8 @@ from infinigen.assets.objects.tables.table_top import nodegroup_capped_cylinder
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = ["generate_round_seats"]
+
 
 @node_utils.to_nodegroup(
     "generate_round_seats", singleton=False, type="GeometryNodeTree"

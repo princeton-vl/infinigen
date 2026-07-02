@@ -12,6 +12,8 @@ from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = ["shader_starfruit_shader", "nodegroup_starfruit_surface"]
+
 
 def shader_starfruit_shader(nw: NodeWrangler, base_color, ridge_color):
     # Code generated using version 2.4.3 of the node_transpiler

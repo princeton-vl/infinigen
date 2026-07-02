@@ -24,6 +24,13 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 
+__all__ = [
+    "CabinetDoorBaseFactory",
+    "CabinetDoorIkeaFactory",
+    "CabinetBaseFactory",
+    "CabinetFactory",
+]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_node_group", singleton=False, type="GeometryNodeTree"

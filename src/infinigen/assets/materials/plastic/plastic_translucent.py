@@ -14,6 +14,8 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.random import log_uniform
 
+__all__ = ["PlasticTranslucent", "shader_translucent_plastic"]
+
 
 def shader_translucent_plastic(nw: NodeWrangler, clear=False, **input_kwargs):
     # Code generated using version 2.4.3 of the node_transpiler

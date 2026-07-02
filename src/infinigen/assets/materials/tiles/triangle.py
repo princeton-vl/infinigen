@@ -10,6 +10,8 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
 from .utils import nodegroup_scalar_positive_modulo
 
+__all__ = ["nodegroup_triangle"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_triangle_single", singleton=False, type="ShaderNodeTree"

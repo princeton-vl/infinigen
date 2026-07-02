@@ -10,6 +10,8 @@ from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core.util.color import hsv2rgba
 
+__all__ = ["GlassVolume", "shader_glass_volume"]
+
 
 def shader_glass_volume(nw: NodeWrangler, color=None, density=100.0, **kwargs):
     # Code generated using version 2.6.4 of the node_transpiler

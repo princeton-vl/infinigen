@@ -17,6 +17,8 @@ from infinigen.assets.utils.decorate import displace_vertices
 from infinigen.assets.utils.object import join_objects
 from infinigen.core.util.random import log_uniform
 
+__all__ = ["LobsterAntennaFactory", "SpinyLobsterAntennaFactory"]
+
 
 class LobsterAntennaFactory(CrabLegFactory):
     tag = ["claw"]

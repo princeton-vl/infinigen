@@ -20,6 +20,12 @@ from infinigen.core import surface
 from infinigen.core.tagging import tag_object
 from infinigen.core.util.math import FixedSeed
 
+__all__ = [
+    "ReactionDiffusionBaseCoralFactory",
+    "BrainBaseCoralFactory",
+    "HoneycombBaseCoralFactory",
+]
+
 
 class ReactionDiffusionBaseCoralFactory(BaseCoralFactory):
     tentacle_prob = 0.0

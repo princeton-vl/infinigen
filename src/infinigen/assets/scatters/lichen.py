@@ -11,6 +11,8 @@ from infinigen.assets.objects.particles import LichenFactory
 from infinigen.core.placement.factory import make_asset_collection
 from infinigen.core.placement.instance_scatter import scatter_instances
 
+__all__ = ["Lichen", "apply"]
+
 
 class Lichen:
     def __init__(self):

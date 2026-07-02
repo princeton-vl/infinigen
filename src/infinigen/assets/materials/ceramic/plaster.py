@@ -16,6 +16,8 @@ from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.random import log_uniform
 
+__all__ = ["Plaster", "shader_plaster"]
+
 
 def shader_plaster(nw: NodeWrangler, plaster_colored, **kwargs):
     hue = uniform(0, 1)

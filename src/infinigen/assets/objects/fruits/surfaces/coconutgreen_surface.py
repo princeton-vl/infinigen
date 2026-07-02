@@ -15,6 +15,8 @@ from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = ["shader_coconut_green_shader", "nodegroup_coconutgreen_surface"]
+
 
 def shader_coconut_green_shader(nw: NodeWrangler, basic_color, bottom_color):
     # Code generated using version 2.4.3 of the node_transpiler

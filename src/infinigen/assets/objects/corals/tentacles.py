@@ -18,6 +18,13 @@ from infinigen.core.tagging import COMBINED_ATTR_NAME
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.color import hsv2rgba
 
+__all__ = [
+    "make_radius_points_fn",
+    "make_upward_points_fn",
+    "shader_tentacles",
+    "apply",
+]
+
 
 def build_tentacles(**kwargs):
     n_branch = 5

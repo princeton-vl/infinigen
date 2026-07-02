@@ -15,6 +15,8 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 
+__all__ = ["HookBaseFactory", "SpatulaBaseFactory", "SpatulaOnHookBaseFactory"]
+
 
 def hook_geometry_nodes(nw: NodeWrangler, **kwargs):
     # Code generated using version 2.6.5 of the node_transpiler

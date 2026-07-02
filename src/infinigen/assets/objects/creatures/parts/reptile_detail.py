@@ -16,6 +16,24 @@ from infinigen.assets.objects.creatures.util.genome import IKParams, Joint
 from infinigen.assets.utils.geometry import nurbs as nurbs_util
 from infinigen.core import surface
 
+__all__ = [
+    "nurbs_ReptileTail",
+    "nurbs_ReptileUpperHead",
+    "nurbs_ReptileLowerHead",
+    "nurbs_ReptileHead",
+    "nurbs_LizardFrontLeg",
+    "nurbs_LizardBackLeg",
+    "nurbs_LizardToe",
+    "nurbs_ReptileBody",
+    "ReptileHeadBody",
+    "ReptileBody",
+    "ReptileUpperHead",
+    "ReptileLowerHead",
+    "LizardFrontLeg",
+    "LizardBackLeg",
+    "LizardToe",
+]
+
 logger = logging.getLogger(__name__)
 
 

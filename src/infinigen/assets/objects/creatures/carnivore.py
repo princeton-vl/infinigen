@@ -23,6 +23,8 @@ from infinigen.core.util import blender as butil
 from infinigen.core.util.math import clip_gaussian
 from infinigen.core.util.random import weighted_sample
 
+__all__ = ["CarnivoreFactory"]
+
 
 def tiger_hair_params():
     mat_roughness = U(0.4, 0.7)

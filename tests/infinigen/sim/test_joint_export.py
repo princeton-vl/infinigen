@@ -32,7 +32,7 @@ FILE_FORMATS = ["mjcf", "urdf", "usd"]
 @pytest.mark.parametrize("format", FILE_FORMATS)
 def test_sim_export(test_asset_id, format):
     # temporary path
-    joint_test_path = Path("tests/sim/joint_tests")
+    joint_test_path = Path("tests/infinigen/sim/joint_tests")
 
     asset_name = f"test_{test_asset_id}"
     seed = 42

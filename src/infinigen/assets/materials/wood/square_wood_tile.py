@@ -8,6 +8,8 @@ from infinigen.assets.materials.ceramic import tile
 
 from .wood import shader_wood
 
+__all__ = ["SquareWoodTile"]
+
 
 class SquareWoodTile:
     def generate(self):

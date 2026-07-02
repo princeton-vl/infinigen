@@ -6,7 +6,7 @@ This documentation details how to generate fire and water simulations like those
 
 Before you can generate fluids, you must run an additional installation step: `bash scripts/install/compile_flip_fluids.sh`, which will compile and install the flip fluids addon. This step has to be completed after having already installed the rest of infinigen.
 
-:warning: Generating fire simulations requires you to first complete the interactive blender intallation in [Installation.md](/docs/Installation.md#installing-infinigen-as-a-blender-python-script). This is because Headless Blender seems to throw a Mantaflow error when baking fire simulations (see [here](https://github.com/princeton-vl/infinigen/issues/318)). Thus, fire simulations should be run with interactive Blender as shown in this document, i.e. using `python -m infinigen.launch_blender`. 
+:warning: Generating fire simulations requires you to first complete the interactive blender intallation in [Installation.md](./Installation.md#installing-infinigen-into-blenders-internal-python-interpreter). This is because Headless Blender seems to throw a Mantaflow error when baking fire simulations (see [here](https://github.com/princeton-vl/infinigen/issues/318)). Thus, fire simulations should be run with interactive Blender as shown in this document, i.e. using `python -m infinigen.launch_blender`. 
 
 ## Example Commands
 

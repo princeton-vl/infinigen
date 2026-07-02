@@ -21,6 +21,8 @@ from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
 
+__all__ = ["FallenTreeFactory"]
+
 
 class FallenTreeFactory(BaseDeformedTreeFactory):
     @staticmethod

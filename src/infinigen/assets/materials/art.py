@@ -16,6 +16,8 @@ from .fabric.fine_knit_fabric import shader_fine_knit_fabric
 from .fabric.leather import shader_leather
 from .fabric.sofa_fabric import shader_sofa_fabric
 
+__all__ = ["Art", "DarkArt", "ArtComposite", "ArtRug", "ArtFabric", "ArtGeneral"]
+
 fabric_shader_list = (
     "weighted_choice",
     (1, shader_coarse_knit_fabric),

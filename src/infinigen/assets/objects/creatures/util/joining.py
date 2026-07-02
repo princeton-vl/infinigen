@@ -18,6 +18,8 @@ from infinigen.core.util.logging import Suppress, Timer
 
 from . import genome
 
+__all__ = ["get_parts", "join_and_rig_parts"]
+
 logger = logging.getLogger(__name__)
 
 

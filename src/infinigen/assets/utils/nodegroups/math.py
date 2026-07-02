@@ -7,6 +7,17 @@
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = [
+    "nodegroup_floor_ceil",
+    "nodegroup_clamp_or_wrap",
+    "nodegroup_polar_to_cart",
+    "nodegroup_switch4",
+    "nodegroup_deg2_rad",
+    "nodegroup_aspect_to_dim",
+    "nodegroup_vector_sum",
+    "nodegroup_vector_bezier",
+]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_floor_ceil", singleton=False, type="GeometryNodeTree"

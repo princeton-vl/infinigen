@@ -7,6 +7,12 @@
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = [
+    "shader_black_w_noise_shader",
+    "nodegroup_add_noise",
+    "nodegroup_color_noise",
+]
+
 
 def shader_black_w_noise_shader(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler

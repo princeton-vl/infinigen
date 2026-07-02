@@ -16,6 +16,8 @@ from infinigen.core.util.random import log_uniform
 
 from .base import TablewareFactory
 
+__all__ = ["KnifeFactory"]
+
 
 class KnifeFactory(TablewareFactory):
     x_end = 0.5

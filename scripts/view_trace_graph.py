@@ -1,3 +1,8 @@
+# Copyright (C) 2026, Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
+
+# Authors: Alexander Raistrick
+
 """Generate an interactive HTML visualization of a graph.json trace file."""
 
 import argparse
@@ -27,7 +32,7 @@ CATEGORIES = [
     ("nodes", ["procfunc.nodes"], "#4a90d9", 0.0),
     ("ops", ["procfunc.ops"], "#e8923f", 0.0),
     ("choice", ["procfunc.control"], "#9b59b6", 1.0),
-    ("generators", ["infinigen_v2.generators"], "#f39c12", 1.0),
+    ("generators", ["infinigen2"], "#f39c12", 1.0),
 ]
 
 MODULE_COLORS = [
@@ -35,12 +40,12 @@ MODULE_COLORS = [
     ("procfunc.ops", "#e8923f"),
     ("procfunc.control", "#9b59b6"),
     ("procfunc.color", "#e74c3c"),
-    ("infinigen_v2.generators.objects", "#2ecc71"),
-    ("infinigen_v2.generators.shaders", "#f39c12"),
-    ("infinigen_v2.generators.scenes", "#1abc9c"),
-    ("infinigen_v2.generators.cameras", "#3498db"),
-    ("infinigen_v2.generators.lighting", "#f1c40f"),
-    ("infinigen_v2.exporters", "#e67e22"),
+    ("infinigen2.objects", "#2ecc71"),
+    ("infinigen2.shaders", "#f39c12"),
+    ("infinigen2.scenes", "#1abc9c"),
+    ("infinigen2.cameras", "#3498db"),
+    ("infinigen2.lighting", "#f1c40f"),
+    ("infinigen2.exporters", "#e67e22"),
     ("procfunc.random", "#7f8c8d"),
     ("_operator.", "#95a5a6"),
     ("operator.", "#95a5a6"),

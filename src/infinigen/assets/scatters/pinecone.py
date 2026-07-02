@@ -12,6 +12,8 @@ from infinigen.assets.scatters.chopped_trees import approx_settle_transform
 from infinigen.core.placement.factory import make_asset_collection
 from infinigen.core.placement.instance_scatter import scatter_instances
 
+__all__ = ["Pinecone", "apply"]
+
 
 def apply(obj, n=5, selection=None):
     n_species = np.random.randint(2, 3)

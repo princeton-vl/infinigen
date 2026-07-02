@@ -19,6 +19,19 @@ from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 
+__all__ = [
+    "LeafFactoryV2",
+    "shader_nodegroup_sub_vein",
+    "shader_nodegroup_midrib",
+    "shader_nodegroup_vein_coord",
+    "shader_nodegroup_shape",
+    "shader_nodegroup_apply_vein_midrib",
+    "shader_nodegroup_leaf_gen",
+    "nodegroup_apply_wave",
+    "nodegroup_move_to_origin",
+    "shader_leaf_new",
+]
+
 
 @node_utils.to_nodegroup(
     "shader_nodegroup_sub_vein", singleton=False, type="ShaderNodeTree"

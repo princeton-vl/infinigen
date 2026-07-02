@@ -12,6 +12,8 @@ import bpy
 from infinigen.assets.static_assets.utils import collapse_hierarchy
 from infinigen.core.placement.factory import AssetFactory
 
+__all__ = ["StaticAssetFactory"]
+
 
 class StaticAssetFactory(AssetFactory):
     import_map: Dict[str, Callable] = {

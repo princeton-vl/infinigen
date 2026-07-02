@@ -41,7 +41,7 @@ python -m infinigen.datagen.manage_jobs --output_folder outputs/video_dynamic_in
 --warmup_sec 2000 --cleanup big_files --overwrite
 ```
 
-In order to create dynamic and varied camera motion, use the `rrt_cam_indoors.gin` and `rrt_cam_nature.gin` configuration files for indoor scenes and nature scenes respectively. This will animate cameras using the animation policy found in [rrt.py](../infinigen/core/util/rrt.py/.py). There are three customizable components used to create such a motion:
+In order to create dynamic and varied camera motion, use the `rrt_cam_indoors.gin` and `rrt_cam_nature.gin` configuration files for indoor scenes and nature scenes respectively. This will animate cameras using the animation policy found in [rrt.py](../../src/infinigen/core/util/rrt.py). There are three customizable components used to create such a motion:
 
 - `RRT`: This class can generate a path of nodes between pairs of start and goal nodes that avoids obstacles using the [RRT* algorithm](https://en.wikipedia.org/wiki/Rapidly_exploring_random_tree).
 

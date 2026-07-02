@@ -15,6 +15,8 @@ from infinigen.core.nodes import Nodes, NodeWrangler
 from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.random import log_uniform
 
+__all__ = ["Wood", "get_color", "shader_wood"]
+
 
 def get_color():
     h, s, v = colors.bark_hsv()

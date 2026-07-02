@@ -24,6 +24,8 @@ from infinigen.core.util.random import log_uniform
 
 from .base import TablewareFactory
 
+__all__ = ["PanFactory"]
+
 
 class PanFactory(TablewareFactory):
     def __init__(self, factory_seed, coarse=False):

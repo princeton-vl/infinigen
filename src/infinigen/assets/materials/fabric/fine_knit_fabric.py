@@ -19,6 +19,8 @@ from numpy.random import uniform
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = ["FineKnitFabric", "shader_material", "shader_fine_knit_fabric"]
+
 
 def get_texture_params():
     return {

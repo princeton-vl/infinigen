@@ -5,6 +5,13 @@
 
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = [
+    "shader_black_medal_002",
+    "shader_glass_002",
+    "shader_metal_002",
+    "shader_white_metal_002",
+]
+
 
 def default_shader(nw: NodeWrangler):
     principled_bsdf = nw.new_node(Nodes.PrincipledBSDF)

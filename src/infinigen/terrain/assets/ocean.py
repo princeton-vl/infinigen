@@ -16,6 +16,8 @@ from infinigen.core.util.logging import Timer
 from infinigen.core.util.random import random_general as rg
 from infinigen.terrain.utils import random_int
 
+__all__ = ["ocean_asset"]
+
 spatial_size = 40
 resolution = 64
 buffered_frames = 10

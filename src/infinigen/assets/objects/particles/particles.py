@@ -15,6 +15,9 @@ from infinigen.core.nodes.node_wrangler import Nodes
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.tagging import tag_object
 
+
+__all__ = ["RaindropFactory", "DustMoteFactory", "SnowflakeFactory", "shader_raindrop"]
+
 # infinigen_gpl is an optional GPL-licensed dependency, not required by v2
 try:
     from infinigen.infinigen_gpl.surfaces import snow

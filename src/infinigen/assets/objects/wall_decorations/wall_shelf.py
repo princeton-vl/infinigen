@@ -28,6 +28,8 @@ from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.random import log_uniform
 from infinigen.core.util.random import random_general as rg
 
+__all__ = ["WallShelfFactory"]
+
 
 class WallShelfFactory(AssetFactory):
     support_sides_ = (

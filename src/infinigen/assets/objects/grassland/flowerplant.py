@@ -18,6 +18,8 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.tagging import tag_nodegroup, tag_object
 from infinigen.core.util import blender as butil
 
+__all__ = ["FlowerPlantFactory"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_stem_branch_leaf_s_r", singleton=False, type="GeometryNodeTree"

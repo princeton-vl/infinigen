@@ -30,6 +30,8 @@ from infinigen.terrain.elements.core import Element
 from infinigen.terrain.elements.mountains import Mountains
 from infinigen.terrain.utils import read
 
+__all__ = ["upsidedown_mountains_asset", "assets_to_data"]
+
 
 @gin.configurable
 def upsidedown_mountains_asset(

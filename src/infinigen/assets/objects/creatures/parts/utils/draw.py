@@ -13,6 +13,8 @@ from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core.util import blender as butil
 
+__all__ = ["make_segments", "decorate_segment", "geo_symmetric_texture"]
+
 
 def make_segments(x_cuts, y_cuts, x_anchors, y_anchors, params):
     x_length, y_length, z_length = map(params.get, ["x_length", "y_length", "z_length"])

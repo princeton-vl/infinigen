@@ -23,6 +23,8 @@ from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import weighted_sample
 
+__all__ = ["SinkFactory", "TapFactory"]
+
 
 class SinkFactory(AssetFactory):
     def __init__(

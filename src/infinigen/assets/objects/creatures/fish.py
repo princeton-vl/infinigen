@@ -34,6 +34,8 @@ from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed, clip_gaussian
 from infinigen.core.util.random import weighted_sample
 
+__all__ = ["FishFactory", "FishSchoolFactory"]
+
 
 def fin_params(scale=(1, 1, 1), dorsal=False):
     # scale = np.array((0.2, 1, 0.4)) * np.array((l / l_mean, 1, rad/r_mean)) * np.array(scale)

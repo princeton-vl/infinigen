@@ -80,6 +80,25 @@ This avoids building any C++ or installing dependencies which are sometimes prob
 INFINIGEN_MINIMAL_INSTALL=True uv pip install -e .
 ```
 
+### Legacy (1.0) generation
+
+The legacy `infinigen_examples.generate_nature` / `generate_indoors` pipelines need
+extra dependencies and native builds (terrain, the `marching_cubes` extension, git
+submodules) that the default 2.0 install omits. 1.0 installs via `pip` (not `uv`); make
+sure the system dependencies from the [Dependencies](#dependencies) section above are
+installed, then:
+
+```bash
+git clone --recurse-submodules https://github.com/princeton-vl/infinigen.git
+cd infinigen
+conda create --name infinigen python=3.11
+conda activate infinigen
+INFINIGEN_MINIMAL_INSTALL=False INFINIGEN_INSTALL_TERRAIN=True pip install -e ".[v1]"
+```
+
+To additionally build the OpenGL ground-truth annotator, also set
+`INFINIGEN_INSTALL_CUSTOMGT=True` in the `pip install` command above.
+
 :exclamation: If you encounter any issues with the above, please add `-vv > logs.txt 2>&1` to the end of your command and run again, then provide the resulting logs.txt file as an attachment when making a Github Issue.
 
 ## Installing Infinigen into Blender's internal Python interpreter

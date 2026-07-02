@@ -16,6 +16,12 @@ from infinigen.assets.utils.geometry.nurbs import (
 )
 from infinigen.core.util import blender as butil
 
+__all__ = [
+    "compute_intersection_curve",
+    "create_bevel_connection",
+    "smooth_around_line",
+]
+
 
 def invert_line(line, point, eps=1e-4):
     """

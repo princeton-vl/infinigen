@@ -19,6 +19,8 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 
+__all__ = ["FernFactory"]
+
 
 def random_pinnae_level2_curvature():
     z_max_curvature = uniform(0.3, 0.45, (1,))[0]

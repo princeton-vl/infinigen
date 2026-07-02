@@ -18,6 +18,8 @@ from infinigen.assets.objects.creatures.util.genome import IKParams, Joint
 from infinigen.core.util import blender as butil
 from infinigen.core.util import math as mutil
 
+__all__ = ["creature_rig"]
+
 logger = logging.getLogger(__name__)
 
 IK_TARGET_PREFIX = "ik_target"

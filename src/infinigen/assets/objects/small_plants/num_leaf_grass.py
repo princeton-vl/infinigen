@@ -18,6 +18,8 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.tagging import tag_nodegroup, tag_object
 from infinigen.core.util import blender as butil
 
+__all__ = ["NumLeafGrassFactory"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_leafon_stem", singleton=False, type="GeometryNodeTree"

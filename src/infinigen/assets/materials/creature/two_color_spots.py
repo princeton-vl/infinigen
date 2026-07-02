@@ -11,6 +11,8 @@ from infinigen.assets.materials.utils.surface_utils import (
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes
 
+__all__ = ["TwoColorSpots", "shader_two_color_spots"]
+
 
 def shader_two_color_spots(nw, rand=True, **input_kwargs):
     attribute = nw.new_node(Nodes.Attribute, attrs={"attribute_name": "offset"})

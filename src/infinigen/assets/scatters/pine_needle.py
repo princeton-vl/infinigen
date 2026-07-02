@@ -11,6 +11,8 @@ from infinigen.assets.objects.particles import PineNeedleFactory
 from infinigen.core.placement.factory import make_asset_collection
 from infinigen.core.placement.instance_scatter import scatter_instances
 
+__all__ = ["PineNeedle", "apply"]
+
 
 def apply(obj, scale=1, density=2e3, n=3, selection=None):
     n_species = np.random.randint(2, 3)

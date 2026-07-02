@@ -7,6 +7,23 @@
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = [
+    "nodegroup_random_rotation_scale",
+    "nodegroup_surface_bump",
+    "nodegroup_point_on_mesh",
+    "nodegroup_instance_on_points",
+    "nodegroup_shape_quadratic",
+    "nodegroup_add_dent",
+    "nodegroup_add_crater",
+    "nodegroup_add_noise_scalar",
+    "nodegroup_attach_to_nearest",
+    "nodegroup_manhattan",
+    "nodegroup_rot_semmetry",
+    "nodegroup_scale_mesh",
+    "nodegroup_hair",
+    "nodegroup_align_top_to_horizon",
+]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_random_rotation_scale", singleton=False, type="GeometryNodeTree"

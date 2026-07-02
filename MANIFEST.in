@@ -10,7 +10,7 @@ recursive-include tests *.*
 recursive-include docs *.*
 
 prune */__pycache__
-prune src/infinigen_old/datagen/customgt/build/*
-prune src/infinigen_old/datagen/customgt/dependencies/*
+prune src/infinigen/datagen/customgt/build/*
+prune src/infinigen/datagen/customgt/dependencies/*
 
 global-exclude *.o *.so *.pyc .git  *.png

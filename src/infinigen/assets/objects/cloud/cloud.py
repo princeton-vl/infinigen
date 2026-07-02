@@ -24,6 +24,15 @@ from infinigen.core import surface
 from infinigen.core.util import blender as butil
 from infinigen.core.util.logging import Suppress
 
+__all__ = [
+    "Cumulus",
+    "Cumulonimbus",
+    "Stratocumulus",
+    "Altocumulus",
+    "LinkObject",
+    "create_3d_grid",
+]
+
 
 def set_curves(curve, points):
     curve.points[0].location = points[0]

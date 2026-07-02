@@ -8,6 +8,13 @@ from infinigen.assets.objects.fruits.fruit_utils import nodegroup_rot_semmetry
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = [
+    "nodegroup_circle_cross_section",
+    "nodegroup_star_cross_section",
+    "nodegroup_cylax_cross_section",
+    "nodegroup_coconut_cross_section",
+]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_circle_cross_section", singleton=False, type="GeometryNodeTree"

@@ -13,6 +13,8 @@ from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util import blender as butil
 
+__all__ = ["nodegroup_tagged_cube"]
+
 
 def get_nodegroup_assets(func, params):
     bpy.ops.mesh.primitive_plane_add(

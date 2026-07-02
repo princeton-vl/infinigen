@@ -9,6 +9,8 @@ from numpy.random import uniform
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = ["LinedFabric", "shader_lined_fur_base", "shader_lined_fur_random"]
+
 
 def get_texture_params():
     return {

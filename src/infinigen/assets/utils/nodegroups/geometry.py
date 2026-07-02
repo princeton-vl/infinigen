@@ -7,6 +7,8 @@
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = ["nodegroup_symmetric_clone", "nodegroup_solidify", "nodegroup_taper"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_symmetric_instance", singleton=True, type="GeometryNodeTree"

@@ -23,18 +23,18 @@ logging.basicConfig(
 
 import procfunc as pf
 
-from infinigen_v2.exporters.render_cycles import (
-    DenoiseMode,
+from infinigen2.exporters.render_cycles import (
     render_cycles,
     render_cycles_ground_truth,
+    DenoiseMode,
 )
-from infinigen_v2.exporters.render_cycles_clay import render_cycles_clay
-from infinigen_v2.exporters.util.blender_render import DisplacementMode
-from infinigen_v2.exporters.util.format import ExportType, RenderPass
-from infinigen_v2.generators.cameras import monocular
-from infinigen_v2.generators.scenes.room import room, room_shape
-from infinigen_v2.util.render_metadata import time_step, write_render_metadata
-from infinigen_v2.util.scene_cleanup import cleanup_except
+from infinigen2.exporters.render_cycles_clay import render_cycles_clay
+from infinigen2.exporters.util.blender_render import DisplacementMode
+from infinigen2.exporters.util.format import ExportType, RenderPass
+from infinigen2.cameras import monocular
+from infinigen2.scenes.room import room, room_shape
+from infinigen2.util.render_metadata import time_step, write_render_metadata
+from infinigen2.util.scene_cleanup import cleanup_except
 
 logger = logging.getLogger(__name__)
 

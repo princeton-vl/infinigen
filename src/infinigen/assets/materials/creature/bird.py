@@ -17,6 +17,16 @@ from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = [
+    "Bird",
+    "shader_bird_body",
+    "shader_bird_feather",
+    "shader_wave_feather",
+    "shader_bird_beak",
+    "shader_bird_eyeball",
+    "shader_bird_claw",
+]
+
 
 @node_utils.to_nodegroup("nodegroup_l_inear", singleton=False, type="ShaderNodeTree")
 def nodegroup_l_inear(nw: NodeWrangler):

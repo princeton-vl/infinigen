@@ -18,6 +18,8 @@ from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import clip_gaussian, weighted_sample
 
+__all__ = ["SofaFactory", "ArmChairFactory"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_array_fill_line", singleton=False, type="GeometryNodeTree"

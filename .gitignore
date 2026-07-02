@@ -13,6 +13,11 @@ optix7cache.db
 optix7cache.db-shm
 optix7cache.db-wal
 
+# optional components, cloned manually (formerly git submodules)
+src/infinigen/OcMesher/
+src/infinigen/infinigen_gpl/
+src/infinigen/datagen/customgt/dependencies/
+
 render.png
 render.jpg
 output.png
@@ -106,3 +111,8 @@ MUJOCO_LOG.TXT
 mjcf/
 urdf/
 usd/
+
+# Auto-generated (at docs build time) infinigen2 API reference stubs
+docs/source/api/infinigen2*.rst
+docs/source/api/modules.rst
+docs/source/api/

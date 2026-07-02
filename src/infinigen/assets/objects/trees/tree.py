@@ -18,6 +18,16 @@ from infinigen.core.util import blender as butil
 from .utils import geometrynodes as gn
 from .utils import helper, mesh
 
+__all__ = [
+    "TreeVertices",
+    "TreeParams",
+    "FineTreeVertices",
+    "tree_skeleton",
+    "skin_tree",
+    "add_tree_children",
+    "build_radius_tree",
+]
+
 C = bpy.context
 D = bpy.data
 

@@ -21,6 +21,8 @@ from infinigen.core import surface
 from infinigen.core.nodes import Nodes, NodeWrangler, node_utils
 from infinigen.core.placement.factory import AssetFactory
 
+__all__ = ["LeafPalmPlantFactory", "shader_leaf_material"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_nodegroup_apply_wave", singleton=False, type="GeometryNodeTree"

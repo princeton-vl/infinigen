@@ -23,6 +23,8 @@ from infinigen.core.surface import shaderfunc_to_material
 from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 
+__all__ = ["LeafFactoryIvy", "Ivy", "apply"]
+
 
 def geo_leaf(nw: NodeWrangler, leaves):
     leaf_up_prob = uniform(0.0, 0.2)

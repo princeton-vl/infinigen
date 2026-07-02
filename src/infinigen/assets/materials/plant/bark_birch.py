@@ -16,6 +16,8 @@ from .bark_random import (
     nodegroup_shader_canonical_coord,
 )
 
+__all__ = ["BarkBirch", "shader_birch_mat"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_birch_mat_helper", singleton=False, type="ShaderNodeTree"

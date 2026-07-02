@@ -17,6 +17,8 @@ from infinigen.terrain.utils import Mesh
 from .geometry_utils import increment_step, pitch_up, yaw_clockwise
 from .pcfg import generate_string
 
+__all__ = ["Cave", "caves_asset", "assets_to_data"]
+
 
 def get_all_verts():
     if bpy.ops.mesh.select_all.poll():

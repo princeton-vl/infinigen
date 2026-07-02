@@ -17,6 +17,8 @@ except ImportError:
 
 from infinigen.assets.utils.object import data2mesh
 
+__all__ = ["build_laplacian_3d"]
+
 
 def mesh_grid(n, sizes):
     shapes = [int((h - l) * n) + 1 for l, h in sizes]

@@ -18,6 +18,8 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 
+__all__ = ["CausticsLampFactory", "shader_caustic_lamp"]
+
 
 @node_utils.to_nodegroup("nodegroup_caustics", singleton=False, type="ShaderNodeTree")
 def nodegroup_caustics(nw: NodeWrangler):

@@ -27,6 +27,19 @@ from infinigen.core.placement.detail import sharp_remesh_with_attrs
 from infinigen.core.surface import read_attr_data
 from infinigen.core.util import blender as butil
 
+__all__ = [
+    "shape_by_angles",
+    "shape_by_xs",
+    "surface_from_func",
+    "bezier_curve",
+    "align_bezier",
+    "remesh_fill",
+    "spin",
+    "leaf",
+    "cut_plane",
+    "make_circular_interp",
+]
+
 
 def shape_by_angles(obj, angles, scales=None, displacements=None, method="quadratic"):
     x, y, z = read_co(obj).T

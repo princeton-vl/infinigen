@@ -17,6 +17,8 @@ from infinigen.assets.fluid.cached_factory_wrappers import (
 from infinigen.core.placement import density, placement
 from infinigen.core.util.pipeline import RandomStageExecutor
 
+__all__ = ["cached_fire_scenecomp_options"]
+
 
 def cached_fire_scenecomp_options(
     p: RandomStageExecutor, terrain_mesh, params, tree_species_params

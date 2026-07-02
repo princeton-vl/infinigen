@@ -363,8 +363,10 @@ def main():
     for category, records in path_lookups.items():
         print(category, len(records))
 
-    jenv = jinja2.Environment(loader=jinja2.FileSystemLoader("."))
-    template = jenv.get_template("tests/integration/template.html")
+    jenv = jinja2.Environment(
+        loader=jinja2.FileSystemLoader(str(Path(__file__).parent))
+    )
+    template = jenv.get_template("template.html")
 
     # Render the template with the data
     html_content = template.render(
@@ -378,6 +380,7 @@ def main():
     if output_path is None:
         output_path = views_folder / name
     print("Writing to ", output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(html_content)
 
 

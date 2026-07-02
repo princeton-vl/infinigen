@@ -14,6 +14,8 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util.random import random_general as rg
 from infinigen.terrain.utils import drive_param
 
+__all__ = ["add_kole_clouds"]
+
 
 @gin.configurable
 def kole_clouds_shader(

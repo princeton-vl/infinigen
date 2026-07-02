@@ -17,6 +17,13 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 
+__all__ = [
+    "CeilingClassicLampFactory",
+    "shader_lamp_material",
+    "shader_inside_metal",
+    "shader_cable",
+]
+
 
 def shader_lamp_material(nw: NodeWrangler):
     # Code generated using version 2.6.5 of the node_transpiler

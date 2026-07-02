@@ -19,6 +19,8 @@ from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = ["shader_dragonfly_tail_shader", "nodegroup_dragonfly_tail"]
+
 
 def shader_dragonfly_tail_shader(nw: NodeWrangler, base_color, v, ring_length):
     # Code generated using version 2.4.3 of the node_transpiler

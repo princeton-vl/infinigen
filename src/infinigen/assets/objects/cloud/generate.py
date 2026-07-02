@@ -25,6 +25,14 @@ from .cloud import (
     create_3d_grid,
 )
 
+__all__ = [
+    "CloudFactory",
+    "CumulonimbusFactory",
+    "CumulusFactory",
+    "StratocumulusFactory",
+    "AltocumulusFactory",
+]
+
 
 @gin.configurable
 class CloudFactory(AssetFactory):

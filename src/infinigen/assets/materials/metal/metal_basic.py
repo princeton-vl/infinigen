@@ -10,6 +10,8 @@ from infinigen.core import surface
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 
+__all__ = ["MetalBasic", "shader_metal"]
+
 
 def shader_metal(nw: NodeWrangler, color_hsv=None, **kwargs):
     position = nw.new_node(Nodes.TextureCoord).outputs["Object"]

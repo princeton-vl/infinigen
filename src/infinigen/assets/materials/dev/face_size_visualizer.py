@@ -9,6 +9,8 @@ import bpy
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = ["FaceSizeVisualizer", "shader_material"]
+
 
 def shader_material(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler

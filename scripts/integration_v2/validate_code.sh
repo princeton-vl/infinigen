@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Code-level CI checks for infinigen_v2. Run from the repo root.
+# Code-level CI checks for infinigen2. Run from the repo root.
 set -euo pipefail
 
 # Commits from dead/force-overwritten lineages that must never be merged.

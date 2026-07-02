@@ -26,6 +26,19 @@ from infinigen.assets.utils.decorate import (
 from infinigen.core import surface
 from infinigen.core.util import blender as butil
 
+__all__ = [
+    "face_corner2faces",
+    "unwrap_faces",
+    "compute_uv_direction",
+    "wrap_sides",
+    "wrap_front_back",
+    "wrap_top_bottom",
+    "wrap_front_back_side",
+    "wrap_four_sides",
+    "wrap_six_sides",
+    "unwrap_normal",
+]
+
 logger = logging.getLogger(__name__)
 
 

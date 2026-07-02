@@ -7,6 +7,8 @@ from infinigen.assets.materials.ceramic import tile
 
 from .wood import shader_wood
 
+__all__ = ["CompositeWoodTile"]
+
 
 class CompositeWoodTile:
     def generate(self):

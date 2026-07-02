@@ -15,6 +15,8 @@ from infinigen.core.surface import attribute_to_vertex_group
 from infinigen.core.util import blender as butil
 from infinigen.core.util.logging import Timer
 
+__all__ = ["local_pos_rigity_mask", "bake_cloth"]
+
 logger = logging.getLogger(__name__)
 
 

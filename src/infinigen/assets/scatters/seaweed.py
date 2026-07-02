@@ -11,6 +11,8 @@ from infinigen.assets.objects.underwater.seaweed import SeaweedFactory
 from infinigen.core.placement.factory import make_asset_collection
 from infinigen.core.placement.instance_scatter import scatter_instances
 
+__all__ = ["Seaweed", "apply"]
+
 
 def apply(obj, scale=1, density=1.0, n=5, selection=None, **kwargs):
     n_species = np.random.randint(2, 5)

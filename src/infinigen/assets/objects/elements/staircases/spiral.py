@@ -18,6 +18,8 @@ from infinigen.core import surface
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 
+__all__ = ["SpiralStaircaseFactory"]
+
 
 class SpiralStaircaseFactory(CurvedStaircaseFactory):
     support_types = "column"

@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+# Copyright (C) 2026, Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
+
+# Authors: Jack Nugent
+
 import argparse
 import json
 import subprocess

@@ -9,6 +9,8 @@ from infinigen.core import surface
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 
+__all__ = ["geo_shortest_path"]
+
 
 def geo_shortest_path(
     nw: NodeWrangler,

@@ -1,0 +1,575 @@
+[
+  {
+    "category": "Exporter",
+    "name": "infinigen2.exporters.render_cycles.render_cycles"
+  },
+  {
+    "category": "Exporter",
+    "name": "infinigen2.exporters.render_cycles.render_cycles_ground_truth"
+  },
+  {
+    "category": "Exporter",
+    "name": "infinigen2.exporters.render_error_check.render_validity_check"
+  },
+  {
+    "category": "Exporter",
+    "name": "infinigen2.exporters.render_eevee.render_eevee"
+  },
+  {
+    "category": "Exporter",
+    "name": "infinigen2.exporters.render_eevee.render_eevee_ground_truth"
+  },
+  {
+    "category": "Exporter",
+    "name": "infinigen2.exporters.render_workbench.render_workbench"
+  },
+  {
+    "category": "Exporter",
+    "name": "infinigen2.exporters.visualize_gt.visualize_gt"
+  },
+  {
+    "category": "Exporter",
+    "name": "infinigen2.exporters.imu.save_imu"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.composites.bricks.bricks_rand"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.composites.bricks.bricks_pristine_rand"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.composites.bricks.bricks_paint_rand"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.composites.bricks.bricks_presets",
+    "min_parameters": 0
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.composites.bricks.bricks_masonry_rand"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.composites.fabric_patterned.fabric_patterned_rand"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.composites.fabric_patterned.fabric_patterned_translucent_rand"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.materials.brick_concrete.brick_concrete_rand"
+  },
+  {
+    "category": "Mask",
+    "name": "infinigen2.shaders.masks.cracks.cracks_rand"
+  },
+  {
+    "category": "Mask",
+    "name": "infinigen2.shaders.masks.edgewear.edgewear_rand"
+  },
+  {
+    "category": "Mask",
+    "name": "infinigen2.shaders.masks.tile_shapes.tile_mask_rand"
+  },
+  {
+    "category": "Mask",
+    "name": "infinigen2.shaders.masks.brick_cutter.brick_cutter_rand"
+  },
+  {
+    "category": "Mask",
+    "name": "infinigen2.shaders.masks.cracks.cracks_presets",
+    "min_parameters": 0
+  },
+  {
+    "category": "Mask",
+    "name": "infinigen2.shaders.masks.splats.splats_mask_rand"
+  },
+  {
+    "category": "Mask",
+    "name": "infinigen2.shaders.masks.splats.splats_mask_presets",
+    "min_parameters": 0
+  },
+  {
+    "category": "Mask",
+    "name": "infinigen2.shaders.masks.tile_shapes.triangle_rand"
+  },
+  {
+    "category": "Mask",
+    "name": "infinigen2.shaders.masks.tile_shapes.star_rand"
+  },
+  {
+    "category": "Mask",
+    "name": "infinigen2.shaders.masks.tile_shapes.spanish_bound_rand"
+  },
+  {
+    "category": "Mask",
+    "name": "infinigen2.shaders.masks.tile_shapes.shell_rand"
+  },
+  {
+    "category": "Mask",
+    "name": "infinigen2.shaders.masks.tile_shapes.hexagon_rand"
+  },
+  {
+    "category": "Mask",
+    "name": "infinigen2.shaders.masks.tile_shapes.herringbone_rand"
+  },
+  {
+    "category": "Mask",
+    "name": "infinigen2.shaders.masks.tile_shapes.diamond_rand"
+  },
+  {
+    "category": "Mask",
+    "name": "infinigen2.shaders.masks.tile_shapes.chevron_rand"
+  },
+  {
+    "category": "Mask",
+    "name": "infinigen2.shaders.masks.tile_shapes.brick_rand"
+  },
+  {
+    "category": "Mask",
+    "name": "infinigen2.shaders.masks.tile_shapes.basket_weave_rand"
+  },
+  {
+    "category": "Mask",
+    "name": "infinigen2.shaders.masks.tile_shapes.square_rand"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.masks.splats.metal_splats_presets",
+    "min_parameters": 0
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.materials.glass_no_refraction.glass_no_refraction_rand"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.composites.splats_overlay.glass_no_refraction_splats_rand"
+  },
+  {
+    "category": "MaterialOverlay",
+    "name": "infinigen2.shaders.composites.splats_overlay.splats_overlay_rand"
+  },
+  {
+    "category": "MaterialOverlay",
+    "name": "infinigen2.shaders.composites.scratches_overlay.scratches_overlay_rand"
+  },
+  {
+    "category": "Mask",
+    "name": "infinigen2.shaders.masks.scratches.scratches_mask_rand"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.composites.scratches_overlay.scratched_wood_rand"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.composites.scratches_overlay.scratched_metal_rand"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.materials.glass_colored.glass_colored_rand"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.composites.splats_overlay.metal_splats_rand"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.materials.concrete.concrete_rand"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.materials.granite.granite_presets",
+    "min_parameters": 0
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.materials.granite.granite_rand"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.materials.granite.granite_smooth_rand"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.materials.marble.marble_rand"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.materials.marble.marble_presets",
+    "min_parameters": 0
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.materials.stone_smooth.stone_smooth_rand"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.materials.stone_smooth.stone_smooth_presets",
+    "min_parameters": 0
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.materials.paint.paint_rand"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.materials.paint.paint_presets",
+    "min_parameters": 0
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.materials.gravel_concrete.gravel_concrete_presets",
+    "min_parameters": 0
+  },
+  {
+    "category": "MaterialOverlay",
+    "name": "infinigen2.shaders.composites.paint_overlay.paint_overlay_rand"
+  },
+  {
+    "category": "MaterialOverlay",
+    "name": "infinigen2.shaders.composites.paint_overlay.cracked_paint_overlay_rand"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.materials.fabric.fabric_rand"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.materials.fabric.fabric_translucent_rand"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.materials.fabric.fabric_presets",
+    "min_parameters": 0
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.materials.carpet.carpet_rand"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.materials.carpet.carpet_presets",
+    "min_parameters": 0
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.materials.metal_brushed.metal_brushed_linear_rand"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.materials.metal_brushed.metal_brushed_radial_rand"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.materials.metal_hammered.metal_hammered_rand"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.materials.terrazzo.terrazzo_rand"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.materials.terrazzo.terrazzo_monocolor_rand"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.materials.terrazzo.terrazzo_multicolor_rand"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.materials.terrazzo.terrazzo_black_monocolor_rand"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.materials.terrazzo.terrazzo_black_multicolor_rand"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.composites.tiles.tile_rand"
+  },
+  {
+    "original_proj": "Procfunc",
+    "category": "Material",
+    "name": "infinigen2.shaders.composites.tiles.tile_indoor_wall_rand"
+  },
+  {
+    "original_proj": "Procfunc",
+    "category": "Material",
+    "name": "infinigen2.shaders.composites.tiles.tile_indoor_ground_rand"
+  },
+  {
+    "original_proj": "Procfunc",
+    "category": "Material",
+    "name": "infinigen2.shaders.composites.tiles.tile_outdoor_wall_rand"
+  },
+  {
+    "original_proj": "Procfunc",
+    "category": "Material",
+    "name": "infinigen2.shaders.composites.tiles.tile_outdoor_ground_rand"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.materials.wood_grain.wood_grain_rand"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.materials.wood_grain.wood_grain_presets",
+    "min_parameters": 0
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.composites.wood_planks.wood_planks_rand"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.composites.wood_planks.wood_planks_presets",
+    "min_parameters": 0
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.materials.ceramic.ceramic_rand"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.functionality_lists.paint_wall_rand"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.functionality_lists.paint_flaked_rand"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.functionality_lists.wall_material_rand"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.functionality_lists.skirt_material_rand"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.functionality_lists.floor_material_rand"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.functionality_lists.ceiling_material_rand"
+  },
+  {
+    "category": "Scene",
+    "name": "infinigen2.scenes.asset_demo.material_sphere"
+  },
+  {
+    "category": "Scene",
+    "name": "infinigen2.scenes.asset_demo.material_torus_uv"
+  },
+  {
+    "category": "Scene",
+    "name": "infinigen2.scenes.asset_demo.material_banana"
+  },
+  {
+    "category": "Scene",
+    "name": "infinigen2.scenes.asset_demo.material_monkey"
+  },
+  {
+    "category": "Scene",
+    "name": "infinigen2.scenes.asset_demo.material_cube"
+  },
+  {
+    "category": "Scene",
+    "name": "infinigen2.scenes.asset_demo.material_plane_uv"
+  },
+  {
+    "category": "Scene",
+    "name": "infinigen2.scenes.asset_demo.material_plane_orthographic"
+  },
+  {
+    "category": "Scene",
+    "name": "infinigen2.scenes.asset_demo.material_plane_horizontal_uv"
+  },
+  {
+    "category": "Scene",
+    "name": "infinigen2.scenes.asset_demo.object_demo"
+  },
+  {
+    "category": "Scene",
+    "name": "infinigen2.scenes.room.room.livingroom_nofurniture_rand"
+  },
+  {
+    "category": "Scene",
+    "name": "infinigen2.scenes.room.room.livingroom_rand"
+  },
+  {
+    "category": "Scene",
+    "name": "infinigen2.scenes.room.room.livingroom_with_smallobj_rand"
+  },
+  {
+    "category": "Scene",
+    "name": "infinigen2.scenes.room.room_shape.room_shape_rand"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen2.objects.random_primitives.primitives_rand"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen2.objects.sofa.sofa_rand"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen2.objects.window.window_rand"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen2.objects.window.curtain_rand"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen2.objects.ceiling_light.ceiling_light_rand"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen2.objects.table.dining_table_rand"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen2.objects.table.coffee_table_rand"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen2.objects.table.side_table_rand"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen2.objects.table.cocktail_table_rand"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen2.objects.table.base_straight_rand"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen2.objects.table.base_single_stand_rand"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen2.objects.table.base_square_rand"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen2.objects.flower.flower_rand"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen2.objects.lamp.lamp_rand"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen2.objects.lamp.desk_lamp_rand"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen2.objects.vase.vase_rand"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen2.objects.rug.rug_rand"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen2.objects.desk.desk_rand"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen2.objects.drawers.drawers_rand"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen2.objects.bookcase.bookcase_rand"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen2.objects.cabinet.cabinet_rand"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen2.objects.slot_cabinet.slot_cabinet_rand"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen2.objects.triangle_shelf.triangle_shelf_rand"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen2.objects.wall_art.wall_art_rand"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen2.objects.wall_art.mirror_rand"
+  },
+  {
+    "category": "Cameras",
+    "name": "infinigen2.cameras.stereo_cameras_in_bbox_rand"
+  },
+  {
+    "category": "Cameras",
+    "name": "infinigen2.cameras.monocular_camera_in_bbox_rand"
+  },
+  {
+    "category": "Cameras",
+    "name": "infinigen2.cameras.monocular_360_camera_rand"
+  },
+  {
+    "category": "Cameras",
+    "name": "infinigen2.cameras.linear_pan_camera_rand"
+  },
+  {
+    "category": "Cameras",
+    "name": "infinigen2.cameras.orbit_90_camera_rand"
+  },
+  {
+    "category": "Cameras",
+    "name": "infinigen2.cameras.material_orbit_camera_rand"
+  },
+  {
+    "category": "Cameras",
+    "name": "infinigen2.cameras.rrt_camera"
+  },
+  {
+    "category": "Cameras",
+    "name": "infinigen2.cameras.rrt_camera_fast"
+  },
+  {
+    "category": "Cameras",
+    "name": "infinigen2.cameras.random_walk_camera"
+  },
+  {
+    "category": "Cameras",
+    "name": "infinigen2.cameras.stereo_random_walk_camera"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.materials.plastic.plastic_opaque_rand"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.materials.plastic.plastic_translucent_rand"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.materials.plastic.plastic_grayscale_rand"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.materials.gravel_concrete.gravel_concrete_rand"
+  },
+  {
+    "category": "Material",
+    "name": "infinigen2.shaders.materials.gravel_concrete.random_gravel_concrete_rand"
+  }
+]

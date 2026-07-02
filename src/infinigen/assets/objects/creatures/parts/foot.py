@@ -23,6 +23,8 @@ from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.tagging import tag_object
 
+__all__ = ["Foot"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_tiger_toe", singleton=False, type="GeometryNodeTree"

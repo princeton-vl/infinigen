@@ -52,6 +52,15 @@ from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 
+__all__ = [
+    "CrustaceanFactory",
+    "CrabFactory",
+    "LobsterFactory",
+    "SpinyLobsterFactory",
+    "shader_crustacean",
+    "shader_eye",
+]
+
 n_legs = 4
 n_limbs = 5
 n_side_fin = 2

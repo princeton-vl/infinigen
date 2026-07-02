@@ -15,6 +15,8 @@ from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.organization import SurfaceTypes
 from infinigen.core.util.random import random_general as rg
 
+__all__ = ["Sand", "shader_SAND"]
+
 type = SurfaceTypes.SDFPerturb
 mod_name = "geo_SAND"
 name = "sand"

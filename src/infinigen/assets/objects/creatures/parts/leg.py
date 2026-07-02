@@ -18,6 +18,8 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.tagging import tag_object
 from infinigen.core.util.math import clip_gaussian
 
+__all__ = ["QuadrupedBackLeg", "QuadrupedFrontLeg", "BirdLeg", "InsectLeg"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_quadruped_back_leg", singleton=False, type="GeometryNodeTree"

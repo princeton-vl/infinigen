@@ -16,6 +16,8 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 
+__all__ = ["SpiderPlantFactory"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_set_leaf_countour", singleton=False, type="GeometryNodeTree"

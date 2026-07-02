@@ -13,6 +13,8 @@ from infinigen.core.placement.factory import make_asset_collection
 from infinigen.core.placement.instance_scatter import scatter_instances
 from infinigen.core.util.random import weighted_sample
 
+__all__ = ["Pebbles", "apply"]
+
 
 def apply(obj, n=5, detail=3, selection=None, **kwargs):
     fac = BlenderRockFactory(np.random.randint(1e5), detail=detail)

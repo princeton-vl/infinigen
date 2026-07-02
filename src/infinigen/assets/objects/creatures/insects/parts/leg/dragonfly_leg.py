@@ -18,6 +18,8 @@ from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = ["nodegroup_leg_control", "nodegroup_dragonfly_leg"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_leg_control", singleton=False, type="GeometryNodeTree"

@@ -19,6 +19,8 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 
+__all__ = ["KitchenSpaceFactory", "KitchenIslandFactory"]
+
 
 def nodegroup_tag_cube(nw: NodeWrangler):
     # Code generated using version 2.6.4 of the node_transpiler

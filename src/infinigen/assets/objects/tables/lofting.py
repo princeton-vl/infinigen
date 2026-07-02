@@ -10,6 +10,8 @@ from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = ["apply"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_flip_index", singleton=False, type="GeometryNodeTree"

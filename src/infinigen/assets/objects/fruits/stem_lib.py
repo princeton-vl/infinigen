@@ -17,6 +17,19 @@ from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = [
+    "nodegroup_empty_stem",
+    "shader_basic_stem_shader",
+    "nodegroup_basic_stem",
+    "shader_calyx_shader",
+    "nodegroup_calyx_stem",
+    "shader_coconut_calyx_shader",
+    "nodegroup_coconut_stem",
+    "shader_leaf",
+    "nodegroup_pineapple_leaf",
+    "nodegroup_pineapple_stem",
+]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_empty_stem", singleton=False, type="GeometryNodeTree"

@@ -7,8 +7,8 @@ This document explains how to configure various features of Infinigen. It assume
 ## Overview
 
 Generating scenes with Infinigen typically involves two main python scripts:
-1. [infinigen_examples/generate_nature.py](../infinigen_examples/generate_nature.py) - our example scene composition script, which invokes and places assets to create a realistic nature scene.
-1. [manage_jobs.py](../infinigen/datagen/manage_jobs.py) - a script which invokes the above scene composition script many times to generate a useful dataset.
+1. [infinigen_examples/generate_nature.py](../../src/infinigen_examples/generate_nature.py) - our example scene composition script, which invokes and places assets to create a realistic nature scene.
+1. [manage_jobs.py](../../src/infinigen/datagen/manage_jobs.py) - a script which invokes the above scene composition script many times to generate a useful dataset.
 
 `manage_jobs.py` controls how many and what jobs will be run, and `infinigen_examples/generate_nature.py` determines what will happen during those jobs. Ultimately both programs must be configured correctly in order to make useful data.
 

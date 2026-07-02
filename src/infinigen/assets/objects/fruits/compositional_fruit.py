@@ -17,6 +17,8 @@ from infinigen.assets.objects.fruits.starfruit import FruitFactoryStarfruit
 from infinigen.assets.objects.fruits.strawberry import FruitFactoryStrawberry
 from infinigen.core.util.math import FixedSeed
 
+__all__ = ["FruitFactoryCompositional"]
+
 fruit_names = {
     "Apple": FruitFactoryApple,
     "Pineapple": FruitFactoryPineapple,

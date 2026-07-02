@@ -22,6 +22,8 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.random import weighted_sample
 
+__all__ = ["StovetopFactory"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_burner_grate_curve", singleton=False, type="GeometryNodeTree"

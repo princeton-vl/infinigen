@@ -10,6 +10,8 @@ from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util.color import hsv2rgba
 
+__all__ = ["VaseCeramic", "ColoredGlass", "shader_vase_ceramic", "shader_colored_glass"]
+
 
 def shader_vase_ceramic(nw: NodeWrangler):
     # Code generated using version 2.6.4 of the node_transpiler

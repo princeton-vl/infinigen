@@ -16,6 +16,8 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.random import log_uniform, weighted_sample
 
+__all__ = ["BlanketFactory", "ComforterFactory", "BoxComforterFactory"]
+
 
 class BlanketFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False):

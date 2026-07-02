@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+# Copyright (C) 2026, Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
+
+# Authors: Jack Nugent
+
 import argparse
 import json
 import os
@@ -24,7 +29,7 @@ def parse_args() -> argparse.Namespace:
         "--args",
         nargs=argparse.REMAINDER,
         default=[],
-        help="Additional args forwarded to infinigen_v2.list and launch.sh.",
+        help="Additional args forwarded to infinigen2.list and launch.sh.",
     )
     return parser.parse_args()
 
@@ -109,7 +114,7 @@ def list_category(category: str, extra_args: list[str]) -> list[str]:
     cmd = [
         sys.executable,
         "-m",
-        "infinigen_v2.list",
+        "infinigen2.list",
         "--categories",
         category,
         "--missing_values",
@@ -154,11 +159,11 @@ def failed_render_names(output_path: Path) -> list[str]:
 
 def render_runner(output_path: Path) -> str:
     python_bin = Path(".venv/bin/python")
-    infinigen_bin = Path(".venv/bin/infinigen_v2")
+    infinigen_bin = Path(".venv/bin/infinigen2")
     if not python_bin.exists():
         raise RuntimeError("Expected .venv/bin/python to exist")
     if not infinigen_bin.exists():
-        raise RuntimeError("Expected .venv/bin/infinigen_v2 to exist")
+        raise RuntimeError("Expected .venv/bin/infinigen2 to exist")
     return (
         f"{python_bin} scripts/integration_v2/run_and_index.py "
         f"--index-root {output_path} -- {infinigen_bin}"

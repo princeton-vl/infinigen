@@ -17,6 +17,17 @@ from infinigen.assets.objects.creatures.util.creature_util import interp_dict
 from infinigen.assets.objects.creatures.util.tree import Tree
 from infinigen.core.util.math import lerp
 
+__all__ = [
+    "IKParams",
+    "Joint",
+    "Attachment",
+    "CreatureNode",
+    "CreatureGenome",
+    "interp_genome",
+    "part",
+    "attach",
+]
+
 
 @dataclass
 class IKParams:

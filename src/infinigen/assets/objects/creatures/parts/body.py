@@ -19,6 +19,8 @@ from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.tagging import tag_object
 
+__all__ = ["QuadrupedBody", "FishBody", "BirdBody"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_quadruped_body", singleton=False, type="GeometryNodeTree"

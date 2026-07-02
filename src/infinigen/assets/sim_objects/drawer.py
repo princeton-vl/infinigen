@@ -21,6 +21,8 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.random import weighted_sample
 
+__all__ = ["DrawerFactory"]
+
 
 @node_utils.to_nodegroup("nodegroup_handle", singleton=False, type="GeometryNodeTree")
 def nodegroup_handle(nw: NodeWrangler):

@@ -1,8 +1,0 @@
-infinigen_v2.generators.terrain.ant_landscape.sample_generalized_landscape
-infinigen_v2.generators.terrain.ant_landscape.sample_canyons_landcape
-infinigen_v2.generators.terrain.ant_landscape.sample_cliff_landscape
-infinigen_v2.generators.terrain.ant_landscape.sample_mesa_landscape
-infinigen_v2.generators.terrain.ant_landscape.sample_river_landscape
-infinigen_v2.generators.terrain.ant_landscape.sample_volcano_landscape
-infinigen_v2.generators.terrain.ant_landscape.sample_mountain_landscape
-infinigen_v2.generators.terrain.ant_landscape.sample_random_category_landscape

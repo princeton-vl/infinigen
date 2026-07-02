@@ -30,11 +30,14 @@ import gin
 gin.clear_config()
 gin.enter_interactive_mode()
 
+from infinigen import module_parent_path
 from infinigen.core import init, surface
 from infinigen_examples import generate_nature
 
 init.apply_gin_configs(
-    Path(pwd) / "infinigen_examples/configs_nature", ["base.gin"], skip_unknown=True
+    module_parent_path() / "infinigen_examples/configs_nature",
+    ["base.gin"],
+    skip_unknown=True,
 )
 
 logging.basicConfig(

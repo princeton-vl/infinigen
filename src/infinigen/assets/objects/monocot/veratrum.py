@@ -29,6 +29,12 @@ from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 
+__all__ = [
+    "VeratrumMonocotFactory",
+    "VeratrumBranchMonocotFactory",
+    "VeratrumEarMonocotFactory",
+]
+
 
 class VeratrumMonocotFactory(MonocotGrowthFactory):
     def __init__(self, factory_seed, coarse=False):

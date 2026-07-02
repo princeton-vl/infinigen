@@ -28,6 +28,9 @@ from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 
+
+__all__ = ["SeaweedFactory"]
+
 # infinigen_gpl is an optional GPL-licensed dependency, not required by v2
 try:
     from infinigen.infinigen_gpl.extras.diff_growth import build_diff_growth

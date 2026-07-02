@@ -12,6 +12,8 @@ from infinigen.assets.objects.creatures.util.creature import (
 from infinigen.assets.utils.extract_nodegroup_parts import extract_nodegroup_geo
 from infinigen.core.util import blender as butil
 
+__all__ = ["GeonodePartFactory"]
+
 
 class GeonodePartFactory:
     def __init__(self, nodegroup_func, joints=None):

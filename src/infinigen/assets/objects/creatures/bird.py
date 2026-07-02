@@ -31,6 +31,8 @@ from infinigen.core.util.math import FixedSeed, clip_gaussian
 from infinigen.core.util.random import random_general as rg
 from infinigen.core.util.random import weighted_sample
 
+__all__ = ["BirdFactory", "FlyingBirdFactory"]
+
 
 def bird_hair_params(flying=True):
     length = U(0.01, 0.025) if flying else U(0.03, 0.06)

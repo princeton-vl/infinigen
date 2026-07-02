@@ -12,6 +12,8 @@ from infinigen.core import surface
 from infinigen.core.nodes import Nodes, NodeWrangler
 from infinigen.core.util.random import log_uniform
 
+__all__ = ["HardwoodFloor", "shader_hardwood_floor"]
+
 
 def shader_hardwood_floor(nw: NodeWrangler, rotation=None):
     vec = nw.new_node(

@@ -21,6 +21,8 @@ from .growth import MonocotGrowthFactory
 from .tussock import TussockMonocotFactory
 from .veratrum import VeratrumMonocotFactory
 
+__all__ = ["MonocotFactory"]
+
 
 class MonocotFactory(AssetFactory):
     max_cluster = 10

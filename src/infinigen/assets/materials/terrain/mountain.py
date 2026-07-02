@@ -14,6 +14,8 @@ from infinigen.core.util.organization import SurfaceTypes
 from infinigen.core.util.random import clip_hsv, random_color, random_color_neighbour
 from infinigen.core.util.random import random_general as rg
 
+__all__ = ["Mountain", "geo_MOUNTAIN_general", "shader_MOUNTAIN"]
+
 type = SurfaceTypes.SDFPerturb
 mod_name = "geo_MOUNTAIN"
 name = "mountain"

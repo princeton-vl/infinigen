@@ -12,6 +12,8 @@ from infinigen.assets import colors
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = ["PlaidFabric", "shader_fabric"]
+
 
 def func_fabric(nw: NodeWrangler, **kwargs):
     # Code generated using version 2.6.4 of the node_transpiler

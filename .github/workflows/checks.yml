@@ -64,4 +64,4 @@ jobs:
 
       # - name: Unit Tests (pytest)
       #   run: |
-      #     uv run pytest tests/infinigen_v2 -k 'not skip_for_ci and not render_gpu'
+      #     uv run pytest tests/infinigen2 -k 'not skip_for_ci and not render_gpu'

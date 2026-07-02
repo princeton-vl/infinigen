@@ -12,6 +12,8 @@ from infinigen.assets.scatters.utils.wind import wind
 from infinigen.core.placement.factory import make_asset_collection
 from infinigen.core.placement.instance_scatter import scatter_instances
 
+__all__ = ["Monocots", "apply"]
+
 
 def apply(obj, n=4, grass=None, selection=None, **kwargs):
     monocots = make_asset_collection(

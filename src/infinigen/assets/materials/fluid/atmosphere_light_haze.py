@@ -11,6 +11,8 @@ from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes
 from infinigen.core.util.random import random_general as rg
 
+__all__ = ["AtmosphereLightHaze", "shader_atmosphere"]
+
 type = None
 
 

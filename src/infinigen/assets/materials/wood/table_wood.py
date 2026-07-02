@@ -12,6 +12,8 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util.color import hsv2rgba, rgb2hsv
 from infinigen.core.util.random import log_uniform
 
+__all__ = ["TableWood", "shader_wood"]
+
 
 def perturb(hsv):
     return np.array(

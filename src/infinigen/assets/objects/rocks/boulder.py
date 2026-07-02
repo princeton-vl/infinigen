@@ -27,6 +27,8 @@ from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform, weighted_sample
 
+__all__ = ["BoulderFactory"]
+
 logger = logging.getLogger(__name__)
 
 

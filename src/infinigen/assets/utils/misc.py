@@ -13,6 +13,19 @@ from infinigen.core.nodes import Nodes, NodeWrangler
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import clip_gaussian
 
+__all__ = [
+    "CountInstance",
+    "sample_direction",
+    "subclasses",
+    "make_normalized_factory",
+    "make_circular_angle",
+    "make_circular",
+    "toggle_hide",
+    "toggle_show",
+    "assign_material",
+    "generate_text",
+]
+
 # Authors: Lingjie Mei
 
 

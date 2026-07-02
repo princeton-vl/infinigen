@@ -23,6 +23,8 @@ from infinigen.core.tagging import COMBINED_ATTR_NAME
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.color import hsv2rgba
 
+__all__ = ["make_default_selections", "shader_spikes", "apply"]
+
 
 def build_spikes(base_radius=0.002, **kwargs):
     n_branch = 4

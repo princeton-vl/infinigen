@@ -9,6 +9,19 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
 from .shader_utils import nodegroup_add_noise, nodegroup_color_noise
 
+__all__ = [
+    "nodegroup_symmetric_clone",
+    "nodegroup_add_hair",
+    "nodegroup_attach_part",
+    "nodegroup_random_rotation_scale",
+    "nodegroup_instance_on_points",
+    "shader_dragonfly_body_shader",
+    "nodegroup_surface_bump",
+    "nodegroup_circle_cross_section",
+    "nodegroup_shape_quadratic",
+    "nodegroup_simple_tube_v2",
+]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_symmetric_clone", singleton=False, type="GeometryNodeTree"

@@ -10,6 +10,8 @@ from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util.color import hsv2rgba
 
+__all__ = ["BlackPlastic", "shader_black"]
+
 # used in ceiling lights and tv
 
 

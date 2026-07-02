@@ -9,6 +9,8 @@ from numpy.random import uniform
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = ["Horn", "shader_horn"]
+
 
 def shader_horn(nw: NodeWrangler):
     # Code generated using version 2.4.3 of the node_transpiler

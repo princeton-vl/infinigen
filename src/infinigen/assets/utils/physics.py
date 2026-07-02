@@ -9,6 +9,8 @@ import bpy
 import infinigen.core.util.blender as butil
 from infinigen.core.util.logging import Suppress
 
+__all__ = ["EnablePhysics", "free_fall"]
+
 
 def free_fall(actives, passives, place_fn, t=100):
     height = 0.0

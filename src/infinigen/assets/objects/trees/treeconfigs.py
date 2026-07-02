@@ -10,6 +10,8 @@ import numpy as np
 from .tree import TreeParams
 from .utils import helper, mesh
 
+__all__ = ["shrub", "pine_tree", "random_tree"]
+
 subsubtwig_config = {
     "n": 2,
     "symmetry": True,

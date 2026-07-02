@@ -10,6 +10,8 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
 from .utils import nodegroup_scalar_positive_modulo
 
+__all__ = ["nodegroup_herringbone"]
+
 
 @node_utils.to_nodegroup("nodegroup_mix", singleton=False, type="ShaderNodeTree")
 def nodegroup_mix(nw: NodeWrangler):

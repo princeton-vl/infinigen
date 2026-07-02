@@ -13,6 +13,8 @@ from infinigen.core.util.color import hsv2rgba
 
 from . import helper
 
+__all__ = ["new_link"]
+
 C = bpy.context
 D = bpy.data
 

@@ -12,6 +12,8 @@ import numpy as np
 from numpy.random import normal as N
 from numpy.random import uniform as U
 
+__all__ = ["snap_iks_to_floor", "idle_body_noise_drivers"]
+
 
 def compute_ik_length_height(targets):
     bounds = []

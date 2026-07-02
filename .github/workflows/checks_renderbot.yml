@@ -13,6 +13,7 @@ env:
 jobs:
 
   lint:
+    if: github.repository == 'princeton-vl/infinigen_internal'
     runs-on: [self-hosted, renderbot]
 
     steps:
@@ -32,6 +33,7 @@ jobs:
       #    uvx ruff check --output-format=github --preview --select CPY001 .
 
   test:
+    if: github.repository == 'princeton-vl/infinigen_internal'
     runs-on: [self-hosted, renderbot]
 
     steps:
@@ -53,9 +55,9 @@ jobs:
         run: |
           source .venv/bin/activate
           export CUDA_VISIBLE_DEVICES="-1" # hide cuda devices for these tests
-          pytest tests/infinigen_v2 -k 'not skip_for_ci and not render_gpu' -n auto
+          pytest tests/infinigen2 -k 'not skip_for_ci and not render_gpu' -n auto
       
       - name: Test with pytest (gpu)
         run: |
           source .venv/bin/activate
-          pytest tests/infinigen_v2 -k 'not skip_for_ci and render_gpu' -n 1
+          pytest tests/infinigen2 -k 'not skip_for_ci and render_gpu' -n 1

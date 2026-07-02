@@ -11,6 +11,8 @@ from infinigen.assets.objects.tables.table_utils import (
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = ["nodegroup_generate_leg_straight"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_generate_leg_straight", singleton=False, type="GeometryNodeTree"

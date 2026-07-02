@@ -10,6 +10,8 @@ from numpy.random import uniform
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 
+__all__ = ["scatter_lower", "scatter_upward"]
+
 
 def scatter_lower(
     nw: NodeWrangler, height_range=(0.5, 2), fill_range=(0.0, 0.8), noise_scale=0.4

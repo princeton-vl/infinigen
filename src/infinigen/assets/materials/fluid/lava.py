@@ -19,6 +19,8 @@ from infinigen.core.util.organization import SurfaceTypes
 from infinigen.core.util.random import random_color_neighbour
 from infinigen.terrain.utils import drive_param
 
+__all__ = ["Lava"]
+
 type = SurfaceTypes.BlenderDisplacement
 mod_name = "lava_geo"
 name = "lava"

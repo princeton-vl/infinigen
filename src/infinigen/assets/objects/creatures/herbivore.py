@@ -26,6 +26,8 @@ from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed, clip_gaussian
 from infinigen.core.util.random import weighted_sample
 
+__all__ = ["HerbivoreFactory"]
+
 
 def herbivore_hair():
     mat_roughness = U(0.5, 0.9)

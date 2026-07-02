@@ -20,6 +20,8 @@ from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.tagging import tag_nodegroup, tag_object
 
+__all__ = ["MammalEye", "nodegroup_mammal_eye"]
+
 
 @node_utils.to_nodegroup("nodegroup_eyelid", singleton=True, type="GeometryNodeTree")
 def nodegroup_eyelid(nw: NodeWrangler):

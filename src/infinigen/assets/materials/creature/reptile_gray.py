@@ -8,6 +8,8 @@ from infinigen.assets.utils.nodegroups.shader import nodegroup_color_mask
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = ["ReptileGray", "shader_gray"]
+
 
 def shader_gray(nw: NodeWrangler, rand=True, **input_kwargs):
     # Code generated using version 2.4.3 of the node_transpiler

@@ -22,6 +22,8 @@ from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 
+__all__ = ["MushroomStemFactory"]
+
 
 class MushroomStemFactory(AssetFactory):
     def __init__(self, factory_seed, inner_radius, material_func, coarse=False):

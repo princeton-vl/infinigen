@@ -17,6 +17,8 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.color import hsv2rgba
 
+__all__ = ["PalmTreeFactory", "shader_top_core", "shader_trunk"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_petal_cross_contour_top", singleton=False, type="GeometryNodeTree"

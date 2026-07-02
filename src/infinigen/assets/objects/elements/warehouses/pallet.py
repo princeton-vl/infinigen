@@ -17,6 +17,8 @@ from infinigen.core.tagging import PREFIX
 from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
 
+__all__ = ["PalletFactory"]
+
 
 class PalletFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False):

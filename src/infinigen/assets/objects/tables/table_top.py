@@ -18,6 +18,12 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.tagging import tag_nodegroup
 from infinigen.core.util.math import FixedSeed
 
+__all__ = [
+    "TableTopFactory",
+    "nodegroup_capped_cylinder",
+    "nodegroup_generate_table_top",
+]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_capped_cylinder", singleton=False, type="GeometryNodeTree"

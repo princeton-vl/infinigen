@@ -18,6 +18,8 @@ from infinigen.core.util.math import FixedSeed
 
 from .growth import MushroomGrowthFactory
 
+__all__ = ["MushroomFactory"]
+
 
 class MushroomFactory(AssetFactory):
     max_cluster = 10

@@ -17,6 +17,8 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.tagging import tag_object
 from infinigen.core.util.color import hsv2rgba
 
+__all__ = ["MossFactory"]
+
 
 class MossFactory(AssetFactory):
     def __init__(self, factory_seed):

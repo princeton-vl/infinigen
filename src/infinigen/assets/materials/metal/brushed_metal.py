@@ -13,6 +13,8 @@ from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = ["BrushedMetal", "shader_brushed_metal"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_brushed_metal", singleton=False, type="ShaderNodeTree"

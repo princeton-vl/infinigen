@@ -12,6 +12,8 @@ from infinigen.assets.objects.creatures.util.creature import Part, PartFactory
 from infinigen.assets.utils.object import join_objects, new_icosphere, origin2leftmost
 from infinigen.core.placement.detail import remesh_with_attrs
 
+__all__ = ["CrustaceanEyeFactory"]
+
 
 class CrustaceanEyeFactory(PartFactory):
     tags = ["eye"]

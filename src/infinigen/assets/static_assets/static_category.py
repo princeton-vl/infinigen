@@ -9,9 +9,12 @@ import random
 
 import bpy
 
+from infinigen import module_parent_path
 from infinigen.assets.static_assets.base import StaticAssetFactory
 from infinigen.core.tagging import tag_support_surfaces
 from infinigen.core.util.math import FixedSeed
+
+__all__ = ["static_category_factory"]
 
 
 def static_category_factory(
@@ -86,12 +89,9 @@ def static_category_factory(
 
 
 # Create factory instances for different categories
-StaticSofaFactory = static_category_factory(
-    "infinigen/assets/static_assets/source/Sofa"
-)
-StaticTableFactory = static_category_factory(
-    "infinigen/assets/static_assets/source/Table"
-)
+_static_source = module_parent_path() / "infinigen/assets/static_assets/source"
+StaticSofaFactory = static_category_factory(str(_static_source / "Sofa"))
+StaticTableFactory = static_category_factory(str(_static_source / "Table"))
 StaticShelfFactory = static_category_factory(
-    "infinigen/assets/static_assets/source/Shelf", tag_support=True, z_dim=2
+    str(_static_source / "Shelf"), tag_support=True, z_dim=2
 )

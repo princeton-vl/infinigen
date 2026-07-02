@@ -12,6 +12,8 @@ from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = ["Leather", "shader_leather"]
+
 
 @node_utils.to_nodegroup("nodegroup_leather", singleton=False, type="ShaderNodeTree")
 def nodegroup_leather(nw: NodeWrangler):

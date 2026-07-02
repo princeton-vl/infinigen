@@ -21,6 +21,8 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.random import weighted_sample
 
+__all__ = ["FaucetFactory"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_node_group_main_part_faucet", singleton=False, type="GeometryNodeTree"

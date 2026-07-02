@@ -19,6 +19,8 @@ from numpy.random import choice, uniform
 
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = ["EdgeWear", "shader_edge_tear_free_node_group"]
+
 logger = logging.getLogger(__name__)
 
 

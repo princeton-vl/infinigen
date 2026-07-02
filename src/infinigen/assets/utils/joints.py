@@ -8,6 +8,14 @@
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = [
+    "nodegroup_add_jointed_geometry_metadata",
+    "nodegroup_hinge_joint",
+    "nodegroup_sliding_joint",
+    "nodegroup_duplicate_joints_on_parent",
+    "nodegroup_distance_from_center",
+]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_add_jointed_geometry_metadata", singleton=False, type="GeometryNodeTree"

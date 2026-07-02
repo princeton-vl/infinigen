@@ -21,6 +21,8 @@ from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform, weighted_sample
 from infinigen.core.util.random import random_general as rg
 
+__all__ = ["MattressFactory", "make_coiled"]
+
 
 def make_coiled(obj, dot_distance, dot_depth, dot_size):
     with butil.ViewportMode(obj, "EDIT"):

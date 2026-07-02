@@ -15,6 +15,14 @@ from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes
 from infinigen.core.util.math import FixedSeed
 
+__all__ = [
+    "BarkRandom",
+    "nodegroup_shader_canonical_coord",
+    "nodegroup_canonical_coord",
+    "nodegroup_apply_geo_matv2",
+    "shader_random_bark_mat",
+]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_calc_radiuhs", singleton=True, type="GeometryNodeTree"

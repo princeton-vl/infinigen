@@ -30,6 +30,8 @@ from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import weighted_sample
 
+__all__ = ["DishwasherFactory"]
+
 
 @node_utils.to_nodegroup("nodegroup_center", singleton=False, type="GeometryNodeTree")
 def nodegroup_center(nw: NodeWrangler):

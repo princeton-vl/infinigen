@@ -16,6 +16,8 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 
+__all__ = ["LeafFactoryPine", "shader_needle", "shader_twig"]
+
 ######## code for creating pine needles ########
 
 

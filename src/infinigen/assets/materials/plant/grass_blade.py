@@ -10,6 +10,8 @@ from numpy.random import uniform
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = ["GrassBlade", "shader_grass_texture_original"]
+
 pallete1 = [
     ((0.2632, 0.1493, 0.0558, 1.0), 0.0),
     ((0.2695, 0.1585, 0.064, 1.0), 0.058),

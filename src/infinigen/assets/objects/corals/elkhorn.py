@@ -29,6 +29,8 @@ from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.random import log_uniform
 
+__all__ = ["ElkhornBaseCoralFactory"]
+
 
 class ElkhornBaseCoralFactory(BaseCoralFactory):
     tentacle_prob = 0.0

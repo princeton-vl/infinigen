@@ -19,6 +19,8 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.tagging import tag_nodegroup, tag_object
 
+__all__ = ["DandelionFactory", "DandelionSeedFactory"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_petal_stem_head_geometry", singleton=False, type="GeometryNodeTree"

@@ -41,6 +41,21 @@ from .star import StarBaseCoralFactory
 from .tree import BushBaseCoralFactory, TreeBaseCoralFactory, TwigBaseCoralFactory
 from .tube import TubeBaseCoralFactory
 
+__all__ = [
+    "CoralFactory",
+    "LeatherCoralFactory",
+    "TableCoralFactory",
+    "CauliflowerCoralFactory",
+    "BrainCoralFactory",
+    "HoneycombCoralFactory",
+    "BushCoralFactory",
+    "TwigCoralFactory",
+    "TubeCoralFactory",
+    "FanCoralFactory",
+    "ElkhornCoralFactory",
+    "StarCoralFactory",
+]
+
 
 class CoralFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False, factory_method=None):

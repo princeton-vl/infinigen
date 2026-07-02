@@ -15,6 +15,8 @@ from infinigen.core.nodes.node_wrangler import (
 )
 from infinigen.core.util import blender as butil
 
+__all__ = ["extract_nodegroup_geo"]
+
 
 def extract_nodegroup_geo(target_obj, nodegroup, k, ng_params=None):
     assert k in ng_outputs(nodegroup)

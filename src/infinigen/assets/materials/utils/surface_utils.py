@@ -9,6 +9,15 @@ import random
 
 from infinigen.core.nodes import Nodes, NodeWrangler, node_utils
 
+__all__ = [
+    "nodegroup_norm_vec",
+    "sample_range",
+    "sample_ratio",
+    "sample_color",
+    "geo_voronoi_noise",
+    "perturb_coordinates",
+]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_norm_value", singleton=False, type="GeometryNodeTree"

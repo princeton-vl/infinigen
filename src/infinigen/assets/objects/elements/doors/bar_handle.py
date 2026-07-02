@@ -8,6 +8,8 @@
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = ["nodegroup_push_bar_handle"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_beveled_cylinder", singleton=False, type="GeometryNodeTree"

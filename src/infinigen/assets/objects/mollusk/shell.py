@@ -20,6 +20,13 @@ from infinigen.core.tagging import tag_object
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.random import log_uniform
 
+__all__ = [
+    "ShellBaseFactory",
+    "ScallopBaseFactory",
+    "ClamBaseFactory",
+    "MusselBaseFactory",
+]
+
 
 class ShellBaseFactory(BaseMolluskFactory):
     def __init__(self, factory_seed, coarse=False):

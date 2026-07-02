@@ -1,3 +1,8 @@
+# Copyright (C) 2026, Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
+
+# Authors: Alexander Raistrick
+
 import argparse
 import importlib
 import logging
@@ -57,7 +62,7 @@ def _v1_to_blender(v1_str: str, idx: int) -> bpy.types.Material | bpy.types.Node
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("infinigen_v1_name", type=str, nargs="+")
-    parser.add_argument("infinigen_v2_name", type=str)
+    parser.add_argument("infinigen2_name", type=str)
     parser.add_argument("--num_instances", type=int, default=1)
     parser.add_argument("--loglevel", type=str, default="INFO")
     parser.add_argument(
@@ -131,10 +136,10 @@ def main():
         add_version_comment=args.add_version_comment,
     )
 
-    if "/" in args.infinigen_v2_name:
-        outpath, outname = args.infinigen_v2_name.rsplit(":", 1)
+    if "/" in args.infinigen2_name:
+        outpath, outname = args.infinigen2_name.rsplit(":", 1)
     else:
-        outpath, outname = args.infinigen_v2_name.rsplit(".", 1)
+        outpath, outname = args.infinigen2_name.rsplit(".", 1)
         outpath = Path("src") / outpath.replace(".", "/")
         outpath = outpath.with_suffix(".py")
         assert outpath.parent.exists(), (

@@ -11,6 +11,8 @@ from .spiral import SpiralStaircaseFactory
 from .straight import StraightStaircaseFactory
 from .u_shaped import UShapedStaircaseFactory
 
+__all__ = ["random_staircase_factory"]
+
 
 def random_staircase_factory():
     door_factories = [

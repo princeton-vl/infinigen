@@ -22,6 +22,8 @@ from infinigen.core.util import blender as butil
 from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.math import FixedSeed
 
+__all__ = ["LeafFactoryBroadleaf", "shader_material"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_random_mask_vein", singleton=False, type="GeometryNodeTree"

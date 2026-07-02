@@ -39,7 +39,7 @@ def my_asset(
 ) -> TYPE:
     pass
 
-def my_asset_distribution(
+def my_asset_rand(
     rng: pf.RNG,
     ...ARGS...
 ) -> TYPE:
@@ -55,7 +55,7 @@ def my_asset_distribution(
 > What commands will be used to evaluate if it works?
 
 ```bash
-seq 8 | xargs -P 4 -n1 -I{} uv run infinigen_v2 !!!!!REPLACE!!!!! render_cycles --seed {} --output outputs/bricks/{} --quiet | ./scripts/image-grid.py 4x output.png -o
+seq 8 | xargs -P 4 -n1 -I{} uv run infinigen !!!!!REPLACE!!!!! render_cycles --seed {} --output outputs/bricks/{} --quiet | ./scripts/image-grid.py 4x output.png -o
 ```
 
 ###### Baseline results

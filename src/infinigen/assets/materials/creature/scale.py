@@ -16,6 +16,8 @@ from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = ["Scale", "shader_scale"]
+
 
 def shader_scale(nw, rand=True, **input_kwargs):
     math_4 = nw.new_node(

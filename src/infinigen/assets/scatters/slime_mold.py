@@ -19,6 +19,8 @@ from infinigen.core.surface import shaderfunc_to_material
 from infinigen.core.util import blender as butil
 from infinigen.core.util.color import hsv2rgba
 
+__all__ = ["SlimeMold", "shader_mold", "apply"]
+
 
 def shader_mold(nw: NodeWrangler, base_hue):
     bright_color = hsv2rgba(

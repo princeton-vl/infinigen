@@ -16,6 +16,8 @@ from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util import blender as butil
 
+__all__ = ["add_curve_slithers", "slither_along_path", "snap_curve_to_floor"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_add_wiggles", singleton=True, type="GeometryNodeTree"

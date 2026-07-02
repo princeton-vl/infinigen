@@ -48,6 +48,8 @@ from infinigen.core.util.math import FixedSeed, normalize
 from infinigen.core.util.random import log_uniform, weighted_sample
 from infinigen.core.util.random import random_general as rg
 
+__all__ = ["StraightStaircaseFactory"]
+
 
 class StraightStaircaseFactory(AssetFactory):
     support_types = (

@@ -12,6 +12,8 @@ from infinigen.assets.scatters.utils.wind import wind
 from infinigen.core.placement.factory import make_asset_collection
 from infinigen.core.placement.instance_scatter import scatter_instances
 
+__all__ = ["DecorativePlants", "apply"]
+
 
 def apply(obj, n=4, selection=None, **kwargs):
     fac_class = np.random.choice([succulent.SucculentFactory])

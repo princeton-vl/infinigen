@@ -9,6 +9,8 @@ from infinigen.core.nodes import Nodes, NodeWrangler
 from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.random import log_uniform
 
+__all__ = ["Rug", "shader_rug"]
+
 
 def shader_rug(nw: NodeWrangler, strength=0.01, **kwargs):
     coord = nw.new_node(

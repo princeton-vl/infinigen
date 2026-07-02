@@ -8,6 +8,8 @@ import numpy as np
 
 from infinigen.core.nodes.node_wrangler import Nodes
 
+__all__ = ["geometry_func", "shader_material", "scatter_func"]
+
 
 def cloud_geometry_func(
     points_only=False,

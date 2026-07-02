@@ -9,6 +9,8 @@ from numpy.random import randint, uniform
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = ["Beak", "shader_beak"]
+
 
 def orange():
     r = uniform(205 / 255, 1)

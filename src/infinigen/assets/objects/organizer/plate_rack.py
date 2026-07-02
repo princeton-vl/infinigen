@@ -14,6 +14,8 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 
+__all__ = ["PlateRackBaseFactory", "PlateBaseFactory", "PlateOnRackBaseFactory"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_plate_rack_connect", singleton=False, type="GeometryNodeTree"

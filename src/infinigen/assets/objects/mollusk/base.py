@@ -8,6 +8,8 @@ import bpy
 
 from infinigen.core.placement.factory import AssetFactory
 
+__all__ = ["BaseMolluskFactory"]
+
 
 class BaseMolluskFactory(AssetFactory):
     max_expected_radius = 0.5

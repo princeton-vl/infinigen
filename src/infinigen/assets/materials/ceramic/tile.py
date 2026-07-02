@@ -22,6 +22,17 @@ from infinigen.core.util.random import log_uniform
 
 from . import ceramic
 
+__all__ = [
+    "Tile",
+    "shader_square_tile",
+    "shader_rectangle_tile",
+    "shader_hexagon_tile",
+    "shader_staggered_tile",
+    "shader_crossed_tile",
+    "shader_composite_tile",
+    "get_shader_funcs",
+]
+
 
 def mix_shader(nw, base_shader, offset, rotations, mortar, alternating, selections):
     n = len(selections) + 1

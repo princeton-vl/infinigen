@@ -19,6 +19,14 @@ from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = [
+    "FishGeomod",
+    "FishBody",
+    "shader_fish_body_regular",
+    "shader_fish_body_gold",
+    "shader_stripe_fish",
+]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_node_grid", singleton=False, type="GeometryNodeTree"

@@ -18,6 +18,8 @@ from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = ["shader_berry_shader", "shader_hair_shader", "nodegroup_blackberry_surface"]
+
 
 def shader_berry_shader(nw: NodeWrangler, berry_color):
     # Code generated using version 2.4.3 of the node_transpiler

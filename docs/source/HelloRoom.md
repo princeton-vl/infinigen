@@ -106,15 +106,15 @@ To fix this, use `real_geometry_with_bump.gin` if you want fine mesh + displacem
 ```bash
 
 # install terrain
-git submodule update
+git clone https://github.com/princeton-vl/OcMesher.git src/infinigen/OcMesher
 pip install -e .[terrain]
 
 python -m infinigen_examples.generate_indoors -- --output_folder outputs/indoors/coarse --seed 0 --task coarse -g forest singleroom real_geometry_with_bump -p compose_indoors.terrain_enabled=True restrict_solving.restrict_parent_rooms=\[\"DiningRoom\"\] compose_indoors.solve_small_enabled=False 
 ```
 
 <p align="center">
-  <img src="images/hello_room/ocmesh_base.png" width="350" />
-  <img src="images/hello_room/ocmesh_facesize.png" width="350" />
+  <img src="_static/images/hello_room/ocmesh_base.png" width="350" />
+  <img src="_static/images/hello_room/ocmesh_facesize.png" width="350" />
 </p>
 
 Second image shows polygons via the following codeblock:

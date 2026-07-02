@@ -7,6 +7,15 @@ from infinigen.assets.materials.utils import common
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = [
+    "BrushedBlackMetal",
+    "WhiteMetal",
+    "BlackGlass",
+    "shader_brushed_black_metal",
+    "shader_white_metal",
+    "shader_black_glass",
+]
+
 
 def shader_brushed_black_metal(nw: NodeWrangler, **kwargs):
     # Code generated using version 2.6.5 of the node_transpiler

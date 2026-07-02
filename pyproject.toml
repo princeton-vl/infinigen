@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "infinigen"
 readme = "README.md"
 license = {text = "BSD-3-Clause"}
-version = "2.0.0a1"
+dynamic = ["version"]
 
 description = "Infinite Photorealistic Worlds using Procedural Generation"
 keywords = [
@@ -33,7 +33,7 @@ dependencies = [
     "opencv-python<4.9.0", # e.g. 4.8.0.74
     "pandas",
     "psutil",
-    #    "scikit-image<0.20.0", # e.g 0.19.3 # caused issues with build in v2.
+    #    "scikit-image<0.20.0", # e.g 0.19.3 # caused issues with build in 2.0.
     "scikit-learn<1.4.0", # e.g 1.3.0
     "scipy",
     "shapely<=2.0.5",
@@ -44,7 +44,7 @@ dependencies = [
     # used by trimesh, we could specify "trimesh[easy]" but this brings more packages
     "python-fcl",
     "rtree",
-    "cvdpack",
+    "cvdpack>=0.5.2",
     "wandb>=0.21.0",
 ]
 
@@ -52,9 +52,8 @@ dependencies = [
 terrain = [
     "landlab==2.6.0",
     "pyrender<0.2.0",
-    # landlab depends on `setuptools` but doesn't explicitly list it as a
-    # dependency; We include it to avoid problems with newer Python versions.
-    "setuptools"
+    # landlab needs pkg_resources, removed in setuptools>=81
+    "setuptools<81"
 ]
 vis = [
     "einops",
@@ -87,9 +86,19 @@ sim = [
 wandb = [
     "wandb"
 ]
+# Legacy 1.0 generation; see docs/source/Installation.md "Legacy (1.0) generation"
+v1 = [
+    "infinigen[terrain,vis]",
+    "scikit-image<0.20.0",
+    "geomdl",
+]
 
 [project.scripts]
-infinigen_v2 = "infinigen_v2.generate:main"
+infinigen = "infinigen2.generate:main"
+infinigen2 = "infinigen2.generate:main"
+
+[tool.setuptools.dynamic]
+version = {attr = "infinigen2.__version__"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -135,6 +144,8 @@ exclude = [
     "src/infinigen/infinigen_gpl/",
     "src/infinigen/OcMesher/",
     "src/infinigen/datagen/customgt/dependencies/",
+    "src/infinigen/terrain/mesh_to_sdf",
+    "src/infinigen/terrain/mesher/_marching_cubes_lewiner*",
     "*.ipynb",
 ]
 
@@ -172,12 +183,9 @@ unresolved-attribute = "ignore"
 
 [tool.ty.src]
 include = [
-    "src/infinigen_v2", 
-    "tests/infinigen_v2",
+    "src/infinigen2", 
+    "tests/infinigen2",
 ]
-
-[tool.uv.sources]
-cvdpack = { git = "https://github.com/princeton-vl/cvdpack", rev = "5adcffce9f419d7b8deb07a0ab4c768489c913fa" }
 
 [dependency-groups]
 dev = [

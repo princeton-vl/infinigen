@@ -11,6 +11,8 @@ from infinigen.assets.utils.misc import CountInstance
 from infinigen.core.placement.factory import make_asset_collection
 from infinigen.core.placement.instance_scatter import scatter_instances
 
+__all__ = ["Mollusk", "apply"]
+
 
 def apply(obj, scale=0.4, density=1.0, n=10, selection=None):
     with CountInstance("mollusk"):

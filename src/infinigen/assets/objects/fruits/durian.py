@@ -11,6 +11,8 @@ from numpy.random import normal, uniform
 from infinigen.assets.objects.fruits.general_fruit import FruitFactoryGeneralFruit
 from infinigen.core.util.color import hsv2rgba
 
+__all__ = ["FruitFactoryDurian"]
+
 
 @gin.register
 class FruitFactoryDurian(FruitFactoryGeneralFruit):

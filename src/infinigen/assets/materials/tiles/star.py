@@ -8,6 +8,8 @@
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = ["nodegroup_star"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_star_single", singleton=False, type="ShaderNodeTree"

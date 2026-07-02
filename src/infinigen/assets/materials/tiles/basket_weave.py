@@ -10,6 +10,8 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
 from .utils import nodegroup_scalar_positive_modulo, nodegroup_u_v_recenter
 
+__all__ = ["nodegroup_basket_weave"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_basket_weave", singleton=False, type="ShaderNodeTree"

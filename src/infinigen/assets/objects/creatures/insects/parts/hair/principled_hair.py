@@ -11,6 +11,8 @@ from infinigen.assets.objects.creatures.insects.utils.geom_utils import (
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = ["nodegroup_principled_hair"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_principled_hair", singleton=False, type="GeometryNodeTree"

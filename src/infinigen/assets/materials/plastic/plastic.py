@@ -14,6 +14,8 @@ from infinigen.assets.materials.plastic.plastic_translucent import (
 from infinigen.assets.materials.utils import common
 from infinigen.core import surface
 
+__all__ = ["Plastic"]
+
 
 class Plastic:
     def sample_plastic(self, clear=None, **kwargs):

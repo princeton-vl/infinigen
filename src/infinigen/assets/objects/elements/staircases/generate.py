@@ -15,6 +15,8 @@ from .spiral import SpiralStaircaseFactory
 from .straight import StraightStaircaseFactory
 from .u_shaped import UShapedStaircaseFactory
 
+__all__ = ["StaircaseFactory"]
+
 
 class StaircaseFactory(AssetFactory):
     factories = [

@@ -23,6 +23,8 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.tagging import tag_object
 from infinigen.core.util.color import hsv2rgba
 
+__all__ = ["LeafBananaTreeFactory", "PlantBananaTreeFactory", "shader_leaf_material"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_nodegroup_apply_wave", singleton=False, type="GeometryNodeTree"

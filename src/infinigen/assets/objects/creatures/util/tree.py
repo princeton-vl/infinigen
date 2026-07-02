@@ -7,6 +7,17 @@
 import typing
 from dataclasses import dataclass, field
 
+__all__ = [
+    "Tree",
+    "iter_nodes",
+    "iter_items",
+    "iter_parent_child",
+    "map",
+    "map_parent_child",
+    "tzip",
+    "to_node_parent",
+]
+
 
 @dataclass
 class Tree:

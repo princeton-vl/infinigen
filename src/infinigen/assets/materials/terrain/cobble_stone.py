@@ -15,6 +15,8 @@ from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.organization import SurfaceTypes
 from infinigen.core.util.random import random_color_neighbour
 
+__all__ = ["CobbleStone", "shader_cobblestone"]
+
 type = SurfaceTypes.SDFPerturb
 mod_name = "geo_cobblestone"
 name = "cobble_stone"

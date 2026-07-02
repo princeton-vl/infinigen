@@ -13,6 +13,8 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.random import log_uniform
 
+__all__ = ["PlasticRough", "shader_rough_plastic"]
+
 
 @node_utils.to_nodegroup("nodegroup_plastics", singleton=False, type="ShaderNodeTree")
 def nodegroup_plastics(nw: NodeWrangler):

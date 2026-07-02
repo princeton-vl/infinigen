@@ -17,6 +17,13 @@ from infinigen.core.util.math import (
 
 from .nurbs import nurbs
 
+__all__ = [
+    "Skin",
+    "factorize_nurbs_handles",
+    "skeleton_to_tangents",
+    "compute_profile_verts",
+]
+
 
 def factorize_nurbs_handles(handles):
     """

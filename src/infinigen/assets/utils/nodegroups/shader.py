@@ -10,6 +10,8 @@ from numpy.random import uniform as U
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = ["nodegroup_color_mask"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_norm_local_pos", singleton=True, type="ShaderNodeTree"

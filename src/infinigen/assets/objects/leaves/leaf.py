@@ -11,6 +11,8 @@ from infinigen.assets.objects.trees.utils import mesh
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 
+__all__ = ["LeafFactory"]
+
 C = bpy.context
 D = bpy.data
 

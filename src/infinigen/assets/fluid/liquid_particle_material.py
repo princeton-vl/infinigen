@@ -8,6 +8,8 @@ from numpy.random import normal
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = ["Liquid", "apply"]
+
 
 def liquid_particle_material(nw: NodeWrangler):
     # Code generated using version 2.5.1 of the node_transpiler

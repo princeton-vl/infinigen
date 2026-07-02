@@ -17,6 +17,8 @@ from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = ["shader_strawberry_shader", "nodegroup_strawberry_surface"]
+
 
 def shader_strawberry_shader(nw: NodeWrangler, top_pos, main_color, top_color):
     # Code generated using version 2.4.3 of the node_transpiler

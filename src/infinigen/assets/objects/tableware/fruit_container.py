@@ -20,6 +20,8 @@ from infinigen.core.placement.instance_scatter import scatter_instances
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed
 
+__all__ = ["FruitCover", "FruitContainerFactory"]
+
 
 class FruitCover:
     def __init__(self, factory_seed=0):

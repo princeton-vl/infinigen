@@ -11,6 +11,8 @@ from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core.util.color import hsv2rgba
 from infinigen.core.util.random import log_uniform
 
+__all__ = ["Ceramic", "shader_ceramic"]
+
 
 def shader_ceramic(
     nw: NodeWrangler, clear=False, roughness_min=0, roughness_max=0.8, **kwargs

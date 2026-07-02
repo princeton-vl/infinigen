@@ -46,6 +46,8 @@ from .joint_utils import (
     nodegroup_symmetry_along_y,
 )
 
+__all__ = ["BaseDoorFactory"]
+
 
 def geometry_node_join(
     nw,

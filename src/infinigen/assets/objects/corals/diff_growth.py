@@ -21,6 +21,13 @@ from infinigen.core import surface
 from infinigen.core.tagging import tag_object
 from infinigen.core.util.math import FixedSeed
 
+
+__all__ = [
+    "DiffGrowthBaseCoralFactory",
+    "LeatherBaseCoralFactory",
+    "TableBaseCoralFactory",
+]
+
 # infinigen_gpl is an optional GPL-licensed dependency, not required by v2
 try:
     from infinigen.infinigen_gpl.extras.diff_growth import build_diff_growth

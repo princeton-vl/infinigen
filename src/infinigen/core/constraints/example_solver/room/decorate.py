@@ -25,6 +25,7 @@ from tqdm import tqdm, trange
 from trimesh.transformations import translation_matrix
 
 import infinigen.core.surface as surface
+from infinigen import module_parent_path
 from infinigen.assets.composition import material_assignments
 from infinigen.assets.materials.ceramic import plaster
 from infinigen.assets.objects.elements import PillarFactory, random_staircase_factory
@@ -100,7 +101,9 @@ def import_material(factory_name):
         try:
             return importlib.import_module(f"infinigen.assets.materials.{factory_name}")
         except ImportError:
-            for subdir in os.listdir("infinigen/assets/materials"):
+            for subdir in os.listdir(
+                module_parent_path() / "infinigen/assets/materials"
+            ):
                 if not subdir.endswith(".py"):
                     with gin.unlock_config():
                         module = importlib.import_module(

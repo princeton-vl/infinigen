@@ -16,6 +16,8 @@ from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
 from infinigen.core.tagging import tag_object
 
+__all__ = ["TubeBaseCoralFactory"]
+
 
 class TubeBaseCoralFactory(BaseCoralFactory):
     default_scale = [0.7] * 3

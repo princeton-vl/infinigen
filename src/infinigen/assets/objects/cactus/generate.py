@@ -27,6 +27,14 @@ from .globular import GlobularBaseCactusFactory
 from .kalidium import KalidiumBaseCactusFactory
 from .pricky_pear import PrickyPearBaseCactusFactory
 
+__all__ = [
+    "CactusFactory",
+    "GlobularCactusFactory",
+    "ColumnarCactusFactory",
+    "PrickyPearCactusFactory",
+    "KalidiumCactusFactory",
+]
+
 
 class CactusFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False, factory_method=None):

@@ -20,6 +20,8 @@ from infinigen.core.tagging import tag_nodegroup, tag_object
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed, dict_lerp
 
+__all__ = ["TreeFlowerFactory", "shader_flower_center", "shader_petal"]
+
 
 @node_utils.to_nodegroup("nodegroup_polar_to_cart_old", singleton=True)
 def nodegroup_polar_to_cart_old(nw):

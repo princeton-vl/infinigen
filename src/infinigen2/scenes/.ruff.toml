@@ -1,0 +1,11 @@
+extend = "../.ruff.toml"
+
+[lint.flake8-tidy-imports.banned-api]
+"inspect".msg = "metaprogramming is too complicated / confusing for procedural generator behavior"
+
+[lint]
+extend-select = [
+    "T201", # no print()
+    "T203", # no pprint()
+    "TID251", # custom banned imports
+]

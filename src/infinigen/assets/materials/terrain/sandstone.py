@@ -17,6 +17,8 @@ from infinigen.core.util.random import random_general as rg
 
 from .mountain import geo_MOUNTAIN_general
 
+__all__ = ["Sandstone", "shader"]
+
 type = SurfaceTypes.SDFPerturb
 mod_name = "geometry_sandstone"
 name = "sandstone"

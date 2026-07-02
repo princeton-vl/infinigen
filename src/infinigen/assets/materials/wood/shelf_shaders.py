@@ -17,6 +17,16 @@ from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util.color import hsv2rgba
 
+__all__ = [
+    "shader_shelves_white",
+    "shader_shelves_black_metallic",
+    "shader_shelves_white_metallic",
+    "shader_shelves_black_wood",
+    "shader_shelves_black_wood_z",
+    "shader_shelves_wood",
+    "shader_shelves_wood_z",
+]
+
 
 def shader_shelves_white(nw: NodeWrangler, **kwargs):
     # Code generated using version 2.6.4 of the node_transpiler

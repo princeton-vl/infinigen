@@ -18,6 +18,8 @@ from infinigen.core.util.blender import deep_clone_obj
 from infinigen.core.util.random import log_uniform
 from infinigen.core.util.random import random_general as rg
 
+__all__ = ["BedFactory"]
+
 
 class BedFactory(bedframe.BedFrameFactory):
     mattress_types = "weighted_choice", (1, "coiled"), (3, "wrapped")

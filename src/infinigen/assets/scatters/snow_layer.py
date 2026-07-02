@@ -10,6 +10,8 @@ from infinigen.core.init import require_blender_addon
 from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 
+__all__ = ["Snowlayer", "apply"]
+
 require_blender_addon("real_snow", fail="warn")
 
 

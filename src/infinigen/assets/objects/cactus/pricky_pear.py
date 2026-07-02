@@ -19,6 +19,8 @@ from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 from infinigen.core.util.random import log_uniform
 
+__all__ = ["PrickyPearBaseCactusFactory"]
+
 
 class PrickyPearBaseCactusFactory(BaseCactusFactory):
     spike_distance = 0.08

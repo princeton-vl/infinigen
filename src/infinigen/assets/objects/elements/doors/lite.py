@@ -9,6 +9,8 @@ from infinigen.core.util.math import FixedSeed
 
 from .panel import PanelDoorFactory
 
+__all__ = ["LiteDoorFactory"]
+
 
 class LiteDoorFactory(PanelDoorFactory):
     def __init__(self, factory_seed, coarse=False, constants=None):

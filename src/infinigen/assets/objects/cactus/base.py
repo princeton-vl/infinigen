@@ -9,6 +9,8 @@ import bpy
 from infinigen.assets.objects.cactus.spike import make_default_selections
 from infinigen.core.placement.factory import AssetFactory
 
+__all__ = ["BaseCactusFactory"]
+
 
 class BaseCactusFactory(AssetFactory):
     spike_distance = 0.025

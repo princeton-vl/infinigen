@@ -20,6 +20,8 @@ from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
 from infinigen.core.util.random import weighted_sample
 
+__all__ = ["PlierFactory"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_plier_handle_001", singleton=False, type="GeometryNodeTree"

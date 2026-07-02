@@ -11,6 +11,8 @@ from infinigen.core import surface
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
+__all__ = ["Chameleon", "shader_chameleon", "shader_chameleon_eye"]
+
 
 @node_utils.to_nodegroup(
     "nodegroup_chameleon_toe", singleton=False, type="GeometryNodeTree"

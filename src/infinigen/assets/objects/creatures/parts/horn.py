@@ -16,6 +16,8 @@ from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.tagging import tag_object
 from infinigen.core.util import blender as butil
 
+__all__ = ["Horn"]
+
 
 @node_utils.to_nodegroup("nodegroup_noise", singleton=False, type="GeometryNodeTree")
 def nodegroup_noise(nw: NodeWrangler):
