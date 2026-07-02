@@ -24,6 +24,7 @@ logging.basicConfig(
 import procfunc as pf
 
 from infinigen_v2.exporters.render_cycles import (
+    DenoiseMode,
     render_cycles,
     render_cycles_ground_truth,
 )
@@ -48,7 +49,20 @@ def main():
     parser.add_argument("--resolution", type=int, nargs=2, default=(1280, 720))
     parser.add_argument("--samples", type=int, default=256, help="clay/AO passes")
     parser.add_argument(
-        "--rgb_samples", type=int, default=2048, help="full-material rgb pass"
+        "--rgb_samples", type=int, default=8192, help="full-material rgb pass"
+    )
+    parser.add_argument(
+        "--rgb_noise_threshold",
+        type=float,
+        default=0.02,
+        help="adaptive-sampling noise threshold for the rgb (non-clay) pass only",
+    )
+    parser.add_argument(
+        "--rgb_denoise_mode",
+        type=str,
+        default=DenoiseMode.OPENIMAGEDENOISE.name,
+        choices=[m.name for m in DenoiseMode],
+        help="denoiser for the rgb pass; OpenImageDenoise by default (not OptiX)",
     )
     parser.add_argument("--fps", type=int, default=24)
     parser.add_argument("--skip_gt", action="store_true")
@@ -130,6 +144,11 @@ def main():
     ]
     rgb_passes = [
         RenderPass(ExportType.IMAGE, Path("%c/rgb-%f.png"), np.dtype(np.uint8)),
+        RenderPass(
+            ExportType.IMAGE_DENOISED,
+            Path("%c/rgb-denoised-%f.png"),
+            np.dtype(np.uint8),
+        ),
         RenderPass(ExportType.CAMERA, Path("%c/camera.npz"), np.dtype(np.float32)),
     ]
     gt_passes = [
@@ -179,6 +198,8 @@ def main():
             render_passes=rgb_passes,
             **render_kwargs,
             max_samples=args.rgb_samples,
+            samples_adaptive_threshold=args.rgb_noise_threshold,
+            denoise_mode=DenoiseMode[args.rgb_denoise_mode],
         )
     exports_list.append(rgb_exports)
 

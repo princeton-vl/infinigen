@@ -29,6 +29,31 @@ flat_t=$(awk "BEGIN{print $NFLAT/$FPS}")
 clay_t=$(awk "BEGIN{print $NCLAY/$FPS}")
 rgb_t=$(awk "BEGIN{print $NRGB/$FPS}")
 
+# normalize every segment to one fixed format so the file-level concat never renegotiates
+ENC="-c:v libx264 -pix_fmt yuv420p -r $FPS"
+NORM="format=gbrp,fps=$FPS,setsar=1,format=yuv420p"
+
+# a single still->clip segment (one image input range)
+plain_seg() { # <out> <pattern> <start> <dur>
+    ffmpeg -nostdin -y -loglevel error \
+        -framerate $FPS -t "$4" -start_number "$3" -i "$2" \
+        -vf "$NORM" $ENC "$1"
+}
+
+# a swipe transition between two image ranges (two inputs only -> no concat deadlock)
+swipe_seg() { # <out> <patternA> <startA> <patternB> <startB>
+    local sf="$1.filt"
+    cat > "$sf" <<FEOF
+[0:v]format=gbrp,fps=$FPS,setsar=1[a];
+[1:v]format=gbrp,fps=$FPS,setsar=1[b];
+[a][b]xfade=transition=custom:duration=$SW_T:offset=0:expr='$SWIPE_EXPR',format=yuv420p[out]
+FEOF
+    ffmpeg -nostdin -y -loglevel error \
+        -framerate $FPS -t "$SW_T" -start_number "$3" -i "$2" \
+        -framerate $FPS -t "$SW_T" -start_number "$5" -i "$4" \
+        -filter_complex_script "$sf" -map "[out]" $ENC "$1"
+}
+
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
 concat_list="$TMP/concat.txt"
@@ -53,36 +78,26 @@ gpu = ' '.join(gpu.split())
 print(f\"{round(s['blend_build_sec'])}sec CPU for .blend, {round(s['render_sec_per_frame'])}sec per frame on a {gpu}\")
 " 2>/dev/null || echo "?")
 
+    # build the five segments as standalone clips, then concat the files
+    sd="$TMP/segs_${scene_idx}"
+    mkdir -p "$sd"
+    plain_seg "$sd/s0.mp4" "$cam/ao-flat-%04d.png" 0    "$flat_t"
+    swipe_seg "$sd/s1.mp4" "$cam/ao-flat-%04d.png" $S1  "$cam/ao-disp-%04d.png" $S1
+    plain_seg "$sd/s2.mp4" "$cam/ao-disp-%04d.png" $CC  "$clay_t"
+    swipe_seg "$sd/s3.mp4" "$cam/ao-disp-%04d.png" $S2  "$cam/rgb-%04d.png" $S2
+    plain_seg "$sd/s4.mp4" "$cam/rgb-%04d.png" $RR      "$rgb_t"
+
+    seg_list="$sd/list.txt"
+    printf "file '%s'\n" "$sd/s0.mp4" "$sd/s1.mp4" "$sd/s2.mp4" "$sd/s3.mp4" "$sd/s4.mp4" > "$seg_list"
+
     # bottom bar: generation command left, runtime right
     BL="fontcolor=white:fontsize=$FS:box=1:boxcolor=black@0.65:boxborderw=6:x=16:y=h-th-16"
     BR="fontcolor=white:fontsize=$FS:box=1:boxcolor=black@0.65:boxborderw=6:x=w-tw-16:y=h-th-16"
+    DT="drawtext=text='uv run infinigen2 livingroom_with_smallobj_rand linear_pan_camera_rand render_cycles --seed $seed':$BL,drawtext=text='$runtime':$BR"
 
     clip="$TMP/scene_$(printf '%03d' "$scene_idx").mp4"
-    filt="$TMP/filt_${scene_idx}.txt"
-    cat > "$filt" <<EOF
-[0:v]format=gbrp,fps=$FPS,setsar=1[f];
-[1:v]format=gbrp,fps=$FPS,setsar=1[s1a];
-[2:v]format=gbrp,fps=$FPS,setsar=1[s1b];
-[3:v]format=gbrp,fps=$FPS,setsar=1[c];
-[4:v]format=gbrp,fps=$FPS,setsar=1[s2a];
-[5:v]format=gbrp,fps=$FPS,setsar=1[s2b];
-[6:v]format=gbrp,fps=$FPS,setsar=1[r];
-[s1a][s1b]xfade=transition=custom:duration=$SW_T:offset=0:expr='$SWIPE_EXPR'[s1];
-[s2a][s2b]xfade=transition=custom:duration=$SW_T:offset=0:expr='$SWIPE_EXPR'[s2];
-[f][s1][c][s2][r]concat=n=5:v=1:a=0[cat];
-[cat]drawtext=text='uv run infinigen2 livingroom_with_smallobj_rand linear_pan_camera_rand render_cycles --seed $seed':$BL,drawtext=text='$runtime':$BR[out]
-EOF
-
-    ffmpeg -y -loglevel error \
-        -framerate $FPS -t "$flat_t" -start_number 0    -i "$cam/ao-flat-%04d.png" \
-        -framerate $FPS -t "$SW_T"   -start_number $S1   -i "$cam/ao-flat-%04d.png" \
-        -framerate $FPS -t "$SW_T"   -start_number $S1   -i "$cam/ao-disp-%04d.png" \
-        -framerate $FPS -t "$clay_t" -start_number $CC   -i "$cam/ao-disp-%04d.png" \
-        -framerate $FPS -t "$SW_T"   -start_number $S2   -i "$cam/ao-disp-%04d.png" \
-        -framerate $FPS -t "$SW_T"   -start_number $S2   -i "$cam/rgb-%04d.png" \
-        -framerate $FPS -t "$rgb_t"  -start_number $RR   -i "$cam/rgb-%04d.png" \
-        -filter_complex_script "$filt" -map "[out]" \
-        -c:v libx264 -pix_fmt yuv420p -r $FPS "$clip"
+    ffmpeg -nostdin -y -loglevel error -f concat -safe 0 -i "$seg_list" \
+        -vf "$DT" $ENC "$clip"
 
     echo "file '$clip'" >> "$concat_list"
     scene_idx=$((scene_idx + 1))
@@ -90,5 +105,5 @@ done
 
 [ "$scene_idx" -gt 0 ] || { echo "no scenes with Camera/ found under $ROOT"; exit 1; }
 
-ffmpeg -y -loglevel error -f concat -safe 0 -i "$concat_list" -c:v libx264 -pix_fmt yuv420p -r $FPS "$OUT"
+ffmpeg -nostdin -y -loglevel error -f concat -safe 0 -i "$concat_list" -c:v libx264 -pix_fmt yuv420p -r $FPS "$OUT"
 echo "wrote $OUT ($scene_idx scene(s))"

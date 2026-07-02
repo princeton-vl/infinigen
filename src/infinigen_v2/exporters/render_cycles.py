@@ -3,6 +3,7 @@ import os
 # ruff: noqa: E402
 os.environ["OPENCV_IO_ENABLE_OPENEXR"] = "1"
 
+import enum
 import json
 import logging
 import shutil
@@ -204,6 +205,53 @@ def _autorender_filepath(
     return autorender_pass, str(prefix_path) + ("" if filename_prefix else "/")
 
 
+class DenoiseMode(enum.Enum):
+    # NONE: never denoise. BEST: first engine the build/hardware supports. OPTIX /
+    # OPENIMAGEDENOISE: force that engine (value is the Cycles denoiser id).
+    NONE = "none"
+    BEST = "best"
+    OPTIX = "OPTIX"
+    OPENIMAGEDENOISE = "OPENIMAGEDENOISE"
+
+
+_DENOISER_PREFERENCE = (DenoiseMode.OPTIX, DenoiseMode.OPENIMAGEDENOISE)
+
+
+def _try_set_denoiser(mode: DenoiseMode) -> bool:
+    try:
+        bpy.context.scene.cycles.denoiser = mode.value
+        return True
+    except Exception as e:
+        logger.warning(f"Denoiser {mode.value!r} unavailable: {e}")
+        return False
+
+
+def _configure_denoising(
+    render_passes: list[RenderPass], denoise_mode: DenoiseMode
+) -> bool:
+    """Toggle Cycles denoising and select the engine; return whether denoising is on.
+    Denoising runs only when a denoised pass is requested AND denoise_mode != NONE.
+    BEST falls back OptiX -> OpenImageDenoise; a forced engine does not fall back."""
+    denoised_passes = {ExportType.IMAGE_DENOISED, ExportType.IMAGE_DENOISED_HDR}
+    wants_denoised = any(rp.type in denoised_passes for rp in render_passes)
+    use_denoising = wants_denoised and denoise_mode != DenoiseMode.NONE
+    bpy.context.scene.cycles.use_denoising = use_denoising
+    if not use_denoising:
+        logger.info(f"Denoising off ({denoise_mode=}, {wants_denoised=})")
+        return False
+    candidates = (
+        _DENOISER_PREFERENCE if denoise_mode == DenoiseMode.BEST else (denoise_mode,)
+    )
+    if not any(_try_set_denoiser(m) for m in candidates):
+        raise RuntimeError(
+            f"No usable denoiser for {denoise_mode} (tried {candidates})"
+        )
+    logger.info(
+        f"Denoising on with {bpy.context.scene.cycles.denoiser!r} ({denoise_mode=})"
+    )
+    return True
+
+
 def _render_cycles_impl(
     objects: list[pf.MeshObject],
     camera: pf.CameraObject,
@@ -234,6 +282,7 @@ def _render_cycles_impl(
     sample_clamp_direct: float = 10.0,
     transmission_bounces: int = 2,
     render_output_subdir: str | None = None,
+    denoise_mode: DenoiseMode = DenoiseMode.BEST,
 ) -> dict[ExportType, list[Path]]:
     render_passes = [ensure_path_placeholders(rp) for rp in render_passes]
 
@@ -307,19 +356,7 @@ def _render_cycles_impl(
             material.displacement_method = displacement_mode.value
 
     # DENOISING
-    denoised_passes = {ExportType.IMAGE_DENOISED, ExportType.IMAGE_DENOISED_HDR}
-    use_denoising = any(rp.type in denoised_passes for rp in render_passes)
-    bpy.context.scene.cycles.use_denoising = use_denoising
-    if use_denoising:
-        try:
-            bpy.context.scene.cycles.denoiser = "OPTIX"
-        except Exception as e:
-            logger.warning(f"Cannot use OPTIX denoiser {e}")
-        logger.info(f"Using {bpy.context.scene.cycles.denoiser=}")
-    else:
-        logger.info(
-            f"No denoising passes requested, will use {bpy.context.scene.cycles.use_denoising=}"
-        )
+    use_denoising = _configure_denoising(render_passes, denoise_mode)
 
     pass_types = {rp.type for rp in render_passes}
     output_folder = Path(output_folder)
@@ -437,6 +474,7 @@ def render_cycles(
     sample_clamp_indirect: float = 10.0,
     sample_clamp_direct: float = 10.0,
     transmission_bounces: int = 2,
+    denoise_mode: DenoiseMode = DenoiseMode.BEST,
 ) -> dict[ExportType, list[Path]]:
     unsupported = [
         rp for rp in render_passes if rp.type not in RENDER_CYCLES_PASS_TYPES
@@ -477,6 +515,7 @@ def render_cycles(
         sample_clamp_indirect=sample_clamp_indirect,
         sample_clamp_direct=sample_clamp_direct,
         transmission_bounces=transmission_bounces,
+        denoise_mode=denoise_mode,
     )
 
 
@@ -510,6 +549,7 @@ def render_cycles_ground_truth(
     sample_clamp_indirect: float = 10.0,
     sample_clamp_direct: float = 10.0,
     transmission_bounces: int = 2,
+    denoise_mode: DenoiseMode = DenoiseMode.BEST,
 ) -> dict[ExportType, list[Path]]:
     unsupported = [
         rp for rp in render_passes if rp.type not in RENDER_CYCLES_GT_PASS_TYPES
@@ -552,6 +592,7 @@ def render_cycles_ground_truth(
             sample_clamp_indirect=sample_clamp_indirect,
             sample_clamp_direct=sample_clamp_direct,
             transmission_bounces=transmission_bounces,
+            denoise_mode=denoise_mode,
         )
 
 

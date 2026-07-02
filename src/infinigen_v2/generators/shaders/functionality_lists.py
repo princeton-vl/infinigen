@@ -291,10 +291,10 @@ def wall_material_distribution(
             (paint_wall_distribution, 3.0),
             (wood_planks.wood_planks_distribution, 1.5),
             (paint_flaked_distribution, 1.0),
-            (concrete.concrete_distribution, 0.5),
-            (stone_smooth.stone_smooth_distribution, 0.25),
-            (gravel_concrete.gravel_concrete_distribution, 0.25),
-            (granite.granite_distribution, 0.25),
+            (concrete.concrete_distribution, 1.0),
+            (stone_smooth.stone_smooth_distribution, 0.5),
+            (gravel_concrete.gravel_concrete_distribution, 0.5),
+            (granite.granite_distribution, 0.5),
         ],
     )
     brick_tile = pf.control.choice(
@@ -303,14 +303,14 @@ def wall_material_distribution(
             (bricks.bricks_distribution, 2.0),
             (bricks.bricks_paint_distribution, 1.0),
             (bricks.bricks_pristine_distribution, 0.5),
-            # (tiles.tile_indoor_wall_distribution, 1.5),  # SVM stack overflow -> black
+            (tiles.tile_indoor_wall_distribution, 1.5),
         ],
     )
     func = pf.control.choice(
         rng_choice,
         [
-            (lambda r, v: non_brick(r, v), 3.0),
-            (lambda r, v: brick_tile(r, v), 2.0),
+            (lambda r, v: non_brick(r, v), 4.0),
+            (lambda r, v: brick_tile(r, v), 2),
             (lambda r, v: _layer_distribution(r, v, non_brick(r, v)), 1.0),
         ],
     )

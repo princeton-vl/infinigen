@@ -66,7 +66,7 @@ echo "JOBFOLDER: ${JOBFOLDER} RETRY COUNT: ${SLURM_RESTART_COUNT}"
 TASKNAME="${SLURM_JOB_ID}_${SLURM_ARRAY_TASK_ID}"
 OUTDIR="${JOBFOLDER}/${TASKNAME}"
 SEED="$(( ${SEED_OFFSET:-0} + SLURM_ARRAY_TASK_ID ))"
-uv run --no-sync python "${RENDER_SCRIPT}" --seed "${SEED}" --output "${OUTDIR}" --frames 0 71 --resolution 1280 720 --samples 256 --rgb_samples 512 --skip_gt
+uv run --no-sync python "${RENDER_SCRIPT}" --seed "${SEED}" --output "${OUTDIR}" --frames 0 71 --resolution 1280 720 --samples 256 --skip_gt
 [ -f "${OUTDIR}/metadata.json" ] || { echo "ERROR: render did not produce ${OUTDIR}/metadata.json, assuming crashed, exiting"; exit 1; }
 
 FINALDIR="${PROJ_BASE}/${JOBNAME}"

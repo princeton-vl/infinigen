@@ -1241,17 +1241,27 @@ def skirting_on_walls_distribution(
     near_bottom = position_z < z_stat.min + 0.005
     near_top = position_z > z_stat.max - 0.005
 
-    # small fillet rounds corner junctions to avoid miter spikes
+    # fillet rounds corner junctions; resample then drops the degenerate clustered
+    # points feature wall-plane T-junctions inject (they pinch the swept profile)
     floor_curve_node = pf.nodes.geo.mesh_to_curve(joined, selection=near_bottom)
     floor_curve_node = pf.nodes.geo.fillet_curve_poly(
         floor_curve_node, radius=0.02, limit_radius=True, count=2
     )
+    floor_curve_node = pf.nodes.geo.resample_curve_length(floor_curve_node, length=0.04)
 
     ceiling_curve_node = pf.nodes.geo.mesh_to_curve(joined, selection=near_top)
     ceiling_curve_node = pf.nodes.geo.fillet_curve_poly(
         ceiling_curve_node, radius=0.02, limit_radius=True, count=2
     )
+    ceiling_curve_node = pf.nodes.geo.resample_curve_length(
+        ceiling_curve_node, length=0.04
+    )
     ceiling_curve_node = pf.nodes.geo.reverse_curve(ceiling_curve_node)
+    # Z_UP gives the horizontal loop a stable sweep frame so reverse_curve cannot
+    # flip it (normal=None: the Normal socket is disabled in Z_UP mode)
+    ceiling_curve_node = pf.nodes.geo.set_curve_normal(
+        ceiling_curve_node, normal=None, mode="Z_UP"
+    )
     ceiling_curve_node = pf.nodes.geo.set_curve_tilt(ceiling_curve_node, tilt=np.pi)
 
     geoms = pf.control.choice(

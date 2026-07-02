@@ -5,7 +5,7 @@ from pathlib import Path
 import bpy
 import procfunc as pf
 
-from infinigen_v2.exporters.render_cycles import _render_cycles_impl
+from infinigen_v2.exporters.render_cycles import DenoiseMode, _render_cycles_impl
 from infinigen_v2.exporters.util.blender_render import (
     DisplacementMode,
     disconnect_output_links,
@@ -106,6 +106,7 @@ def render_cycles_clay(
     sample_clamp_direct: float = 10.0,
     transmission_bounces: int = 2,
     fill_light: bool = False,
+    denoise_mode: DenoiseMode = DenoiseMode.BEST,
 ) -> dict[ExportType, list[Path]]:
     """White-clay render: override surfaces with neutral diffuse (keeping the scene
     lighting), optionally with a camera-parented fill headlight for pan views the
@@ -158,4 +159,5 @@ def render_cycles_clay(
             sample_clamp_indirect=sample_clamp_indirect,
             sample_clamp_direct=sample_clamp_direct,
             transmission_bounces=transmission_bounces,
+            denoise_mode=denoise_mode,
         )
