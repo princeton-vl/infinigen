@@ -10,6 +10,9 @@ import procfunc as pf
 from procfunc.nodes import types as t
 
 __all__ = [
+    "CubeWithVertexIndicesResult",
+    "ExtrudeSeamlessResult",
+    "WallCutoutResult",
     "corner_box",
     "crease_sharp",
     "extrude_mesh_seamless_uvs",
@@ -19,7 +22,7 @@ __all__ = [
 ]
 
 
-class _ExtrudeSeamlessResult(NamedTuple):
+class ExtrudeSeamlessResult(NamedTuple):
     mesh: pf.ProcNode[pf.MeshObject]
     top: pf.ProcNode[bool]
     side: pf.ProcNode[bool]
@@ -31,7 +34,7 @@ def extrude_mesh_seamless_uvs(
     selection: t.SocketOrVal[bool],
     offset_scale: t.SocketOrVal[float],
     uv_winding_sign: t.SocketOrVal[float] = 1.0,
-) -> _ExtrudeSeamlessResult:
+) -> ExtrudeSeamlessResult:
     """Extrude faces and continue source UVs onto the new side faces seamlessly.
 
     Each side corner gets uv0 plus a perpendicular offset proportional to its
@@ -95,7 +98,7 @@ def extrude_mesh_seamless_uvs(
         domain="CORNER",
         data_type="FLOAT2",
     )
-    return _ExtrudeSeamlessResult(mesh=out, top=ext.top, side=ext.side)
+    return ExtrudeSeamlessResult(mesh=out, top=ext.top, side=ext.side)
 
 
 def uv_winding_sign(obj: pf.MeshObject) -> float:
@@ -194,7 +197,7 @@ def _extrude_inwards_with_chamfer(
     )
 
 
-class _WallCutoutResult(NamedTuple):
+class WallCutoutResult(NamedTuple):
     wall: pf.ProcNode[pf.MeshObject]  # holed front wall
     sill: pf.ProcNode[pf.MeshObject]  # reveal/jamb tunnels
     lightblocker: pf.ProcNode[pf.MeshObject]  # opaque backing
@@ -208,7 +211,7 @@ def wall_cutout_split(
     uv_winding_sign: t.SocketOrVal[float] = 1.0,
     delete_facecap: t.SocketOrVal[bool] = True,
     chamfer: t.SocketOrVal[float] = 0.006,
-) -> _WallCutoutResult:
+) -> WallCutoutResult:
     """Split a flat `cutout_sel`-tagged surface into holed wall, sill tunnels, and lightblocker backing.
 
     The mouth of each hole gets a `chamfer`-wide angled lip, kept on the wall (it
@@ -248,7 +251,7 @@ def wall_cutout_split(
         name="is_sill", data_type=pf.NodeDataType.BOOLEAN
     ).attribute
     sill_sep = pf.nodes.geo.separate_geometry(niche, selection=is_sill, domain="FACE")
-    return _WallCutoutResult(
+    return WallCutoutResult(
         wall=sill_sep.inverted, sill=sill_sep.selection, lightblocker=lightblocker
     )
 
@@ -341,7 +344,7 @@ def _store_metric_box_uvs(mesh: pf.ProcNode) -> pf.ProcNode:
     )
 
 
-class _CubeWithVertexIndicesResult(NamedTuple):
+class CubeWithVertexIndicesResult(NamedTuple):
     mesh: pf.ProcNode[pf.MeshObject]
     index_x: pf.ProcNode[int]
     index_y: pf.ProcNode[int]
@@ -354,7 +357,7 @@ def _cube_with_vertex_indices(
     vertices_x: t.SocketOrVal[int] = 2,
     vertices_y: t.SocketOrVal[int] = 2,
     vertices_z: t.SocketOrVal[int] = 2,
-) -> _CubeWithVertexIndicesResult:
+) -> CubeWithVertexIndicesResult:
     cube = pf.nodes.geo.mesh_cube(
         size=size,
         vertices_x=vertices_x,
@@ -383,7 +386,7 @@ def _cube_with_vertex_indices(
         index_y=pf.nodes.math.round(index_xyz.y).astype(dtype=int),
         index_z=pf.nodes.math.round(index_xyz.z).astype(dtype=int),
     )
-    return _CubeWithVertexIndicesResult(
+    return CubeWithVertexIndicesResult(
         mesh=_store_metric_box_uvs(capture.geometry),
         index_x=capture.index_x,
         index_y=capture.index_y,
@@ -398,7 +401,7 @@ def corner_box(
     loops_y: t.SocketOrVal[int] = 0,
     loops_z: t.SocketOrVal[int] = 0,
     support_loop_offset: t.SocketOrVal[pf.Vector] = (0.05, 0.05, 0.05),
-) -> _CubeWithVertexIndicesResult:
+) -> CubeWithVertexIndicesResult:
     cube = _cube_with_vertex_indices(
         size=size,
         vertices_x=pf.nodes.math.add(loops_x, 4),
@@ -446,7 +449,7 @@ def corner_box(
     repositioned = pf.nodes.geo.set_position(
         geometry=cube.mesh, position=clamped + corner_correction
     )
-    return _CubeWithVertexIndicesResult(
+    return CubeWithVertexIndicesResult(
         mesh=_store_metric_box_uvs(repositioned),
         index_x=cube.index_x,
         index_y=cube.index_y,

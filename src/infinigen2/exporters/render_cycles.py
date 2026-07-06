@@ -46,6 +46,7 @@ from infinigen2.util.camera_projection import (
 __all__ = [
     "RENDER_CYCLES_GT_PASS_TYPES",
     "RENDER_CYCLES_PASS_TYPES",
+    "DenoiseMode",
     "configure_cycles_devices",
     "configure_cycles_performance",
     "render_cycles",

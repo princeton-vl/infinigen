@@ -36,6 +36,7 @@ from infinigen2.exporters.util.format import (
 from infinigen2.util.camera_projection import adjust_camera_sensor
 
 __all__ = [
+    "RenderEeveeParams",
     "configure_eevee_params",
     "render_eevee",
     "render_eevee_ground_truth",
@@ -45,7 +46,7 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class _RenderEeveeParams:
+class RenderEeveeParams:
     taa_render_samples: int = 64
     use_taa_reprojection: bool = True
     film_exposure: float = 1.0
@@ -85,7 +86,7 @@ class _RenderEeveeParams:
 
 
 def configure_eevee_params(
-    params: _RenderEeveeParams,
+    params: RenderEeveeParams,
 ):
     eevee = bpy.context.scene.eevee
     for k, v in params.__dict__.items():
@@ -108,7 +109,7 @@ def render_eevee(
     motion_blur_shutter: float | None = None,
     displacement_mode: DisplacementMode = DisplacementMode.DISPLACEMENT_AND_BUMP,
     allow_gt_types: bool = False,
-    **parameters: Unpack[_RenderEeveeParams],
+    **parameters: Unpack[RenderEeveeParams],
 ) -> dict[ExportType, list[Path]]:
     """Render using Eevee with multiple passes"""
 
@@ -127,7 +128,7 @@ def render_eevee(
     bpy.context.scene.camera = camera.item()
 
     adjust_camera_sensor(camera)
-    configure_eevee_params(_RenderEeveeParams(**parameters))
+    configure_eevee_params(RenderEeveeParams(**parameters))
 
     use_dof = depth_of_field_fstop is not None
     camera.item().data.dof.use_dof = use_dof
@@ -228,7 +229,7 @@ def render_eevee_ground_truth(
     depth_of_field_fstop: float | None = None,
     motion_blur_shutter: float | None = None,
     displacement_mode: DisplacementMode = DisplacementMode.DISPLACEMENT_AND_BUMP,
-    **parameters: Unpack[_RenderEeveeParams],
+    **parameters: Unpack[RenderEeveeParams],
 ) -> dict[ExportType, list[Path]]:
     with override_shading_for_gt(objects):
         return render_eevee(

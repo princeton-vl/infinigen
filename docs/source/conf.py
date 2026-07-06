@@ -17,6 +17,7 @@ import sys
 import traceback
 import types
 from pathlib import Path
+from typing import TypeVar
 
 from docutils import nodes as docutils_nodes
 from procfunc.util.teardown import exit_skipping_teardown
@@ -1074,6 +1075,16 @@ _V1_XREF_ROOTS = ("infinigen.", "infinigen_examples.")
 _orig_py_resolve_xref = PythonDomain.resolve_xref
 
 
+# TypeVars render as bare unresolvable xrefs in generic signatures but are not documentable types.
+def _is_typevar(target: str) -> bool:
+    module, _, name = target.rpartition(".")
+    try:
+        obj = getattr(importlib.import_module(module), name, None)
+    except Exception:
+        return False
+    return isinstance(obj, TypeVar)
+
+
 def _resolve_xref(self, env, fromdocname, builder, typ, target, node, contnode):
     """Refuse infinigen2 -> 1.0 cross-links so pf types fall through to procfunc/mathutils;
     warn (failing the build) on any other leak, which is a real 2.0 docs bug."""
@@ -1083,8 +1094,18 @@ def _resolve_xref(self, env, fromdocname, builder, typ, target, node, contnode):
     result = _orig_py_resolve_xref(
         self, env, fromdocname, builder, typ, target, node, contnode
     )
-    if result is None or not fromdocname.startswith("api/infinigen2"):
+    if not fromdocname.startswith("api/infinigen2"):
         return result
+    if result is None and (not target.startswith("infinigen2") or _is_typevar(target)):
+        return None
+    # A dangling infinigen2 xref is a private/unexported type with no docs page.
+    if result is None:
+        logger.warning(
+            f"infinigen2 API references non-public type {target!r}",
+            type="infinigen2",
+            subtype="private_return_type",
+        )
+        return None
     fq = (result.get("refuri") or result.get("refid") or "").rsplit("#", 1)[-1]
     if not fq.startswith(_V1_XREF_ROOTS):
         return result
