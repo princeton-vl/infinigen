@@ -2,7 +2,7 @@
 
 This tutorial will help you generate images, .blend files, or baked OBJ/USD/etc files for any asset of your choosing.
 
-### Example Commands
+## Example Commands
 
 Shown are three examples of using our `generate_individual_assets.py` script to create images and .blend files. If you want to create asset files in another format (e.g. OBJ, FBX, USD) you should first generate blend files then use our [](./ExportingToExternalFileFormats.md) docs to bake them to the format of your choosing. 
 
@@ -23,7 +23,7 @@ Running the above commands will save images and .blend files into your `outputs`
 
 Please run `python -m infinigen_examples.generate_individual_assets --help` for a full list of commandline arguments.
 
-### Generate many different assets in one command
+## Generate many different assets in one command
 
 :warning: There are a small number of assets which are used in the main system but are not included in the tests/infinigen/assets/*.txt lists for various reasons. You can read the commented lines in `tests/infinigen/assets/list_nature_meshes.txt` for a partial list. There are also other types of procedural generators (lighting, colors, scatters, volumetrics, animations, etc) besides meshes/materials, which add diversity to the main rendering system but are not included in the commands below.
 
@@ -39,7 +39,7 @@ python -m infinigen_examples.generate_individual_assets --output_folder outputs/
 python -m infinigen_examples.generate_individual_assets --output_folder outputs/corals -f tests/infinigen/assets/list_indoor_materials.txt -n 1 --save_blend
 ```
 
-### Creating OBJ, USD, FBX and other file formats
+## Creating OBJ, USD, FBX and other file formats
 
 You can use the `--export` flag to export each generated asset to a format of your choosing. Please see [ExportingToExternalFileFormats](./ExportingToExternalFileFormats.md) for details and limitations regarding exporting. 
 

@@ -31,7 +31,7 @@ This command will in one go:
 | `--nr`              | Number of seeds. Will export from `seed=0` to `seed=nr-1`.                                                                       |
 | `--rand_seeds`      | Flag. Stores true. Use random seeds instead of sequential numbers. Use together with `--nr`.                                     |
 | `--seeds`           | Specific seed values to use (e.g., `--seeds 42 101 253`). Can not use both `--seeds` and `--nr`.                                 |
-| `--output_dir`      | Directory to save outputs (default: `infinigen/tools/sim/tmp`)                                                                   |
+| `--output_dir`      | Directory to save outputs (default: `src/infinigen/tools/sim/tmp`)                                                                   |
 | `--parent_alpha`    | Transparency level for parent geometries (0-1)                                                                                   |
 | `--collision_mesh`  | Use collision meshes instead of visual meshes. Defaults to using only visual, no collision meshes.                               |
 | `--remove_existing` | Remove existing files before generating new ones.                                                                                |
@@ -42,7 +42,7 @@ This command will in one go:
 After rendering, open the generated HTML file in brower:
 
 ```bash
-# Example path: infinigen/tools/sim/tmp/vis_door_0_1_2.html
+# Example path: src/infinigen/tools/sim/tmp/vis_door_0_1_2.html
 ```
 
 The interface provides:

@@ -35,6 +35,12 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
+def _demo_sky() -> pf.World:
+    return sky_lighting.nishita_sky(
+        sun_rotation_deg=260, sun_elevation_deg=30
+    ).environment
+
+
 class DevSceneResult(NamedTuple):
     all_objects: list
     cameras: list
@@ -105,7 +111,7 @@ def object_demo(
     rng: pf.RNG,
     obj: pf.MeshObject | None = None,
     camera: pf.CameraObject | None = None,
-    lighting: pf.Object | None = None,
+    environment: pf.World | None = None,
 ) -> DevSceneResult:
     if obj is None:
         logger.warning("No object provided; using a default object.")
@@ -118,11 +124,11 @@ def object_demo(
             obj, t.Vector((1, 1, 0.4)), margin_pct=0.1
         )
 
-    if lighting is None:
-        lighting = sky_lighting.nishita_sky(
+    if environment is None:
+        environment = sky_lighting.nishita_sky(
             sun_rotation_deg=200,
             sun_elevation_deg=30,
-        )
+        ).environment
     background = grid_plane()
 
     ref_rad = 0.3
@@ -131,7 +137,7 @@ def object_demo(
     scale_ref = scale_reference(location=pos, radius=ref_rad)
 
     return DevSceneResult(
-        lights=[lighting], all_objects=[obj, background, scale_ref], cameras=[camera]
+        lights=[environment], all_objects=[obj, background, scale_ref], cameras=[camera]
     )
 
 
@@ -139,6 +145,7 @@ def object_demo(
 def material_sphere(
     rng: pf.RNG,
     material: pf.Material | None = None,
+    environment: pf.World | None = None,
     subdivisions: int = 4,
     radius: float = 0.75,
 ) -> DevSceneResult:
@@ -153,17 +160,15 @@ def material_sphere(
 
     pf.ops.object.set_material(sphere, material=material)
 
-    lighting = sky_lighting.nishita_sky(
-        sun_rotation_deg=260,
-        sun_elevation_deg=30,
-    )
+    if environment is None:
+        environment = _demo_sky()
 
     cam = hardcoded_camera(base_location=sphere.item().location, dist_mult=0.7)
     plane = grid_plane()
     ref = scale_reference(location=t.Vector((0.38, 0.76, -0.05)))
 
     return DevSceneResult(
-        lights=[lighting], all_objects=[sphere, plane, ref], cameras=[cam]
+        lights=[environment], all_objects=[sphere, plane, ref], cameras=[cam]
     )
 
 
@@ -171,6 +176,7 @@ def material_sphere(
 def material_torus_uv(
     rng: pf.RNG,
     material: pf.Material | None = None,
+    environment: pf.World | None = None,
     major_radius: float = 0.5,
     minor_radius: float = 0.25,
 ) -> DevSceneResult:
@@ -196,17 +202,15 @@ def material_torus_uv(
 
     pf.ops.object.set_material(obj, material=material)
 
-    lighting = sky_lighting.nishita_sky(
-        sun_rotation_deg=260,
-        sun_elevation_deg=30,
-    )
+    if environment is None:
+        environment = _demo_sky()
 
     cam = hardcoded_camera(base_location=obj.item().location, dist_mult=0.65)
     plane = grid_plane()
     ref = scale_reference(location=t.Vector((0.38, 0.76, -0.05)))
 
     return DevSceneResult(
-        lights=[lighting], all_objects=[obj, plane, ref], cameras=[cam]
+        lights=[environment], all_objects=[obj, plane, ref], cameras=[cam]
     )
 
 
@@ -214,6 +218,7 @@ def material_torus_uv(
 def material_plane_uv(
     rng: pf.RNG,
     material: pf.Material | None = None,
+    environment: pf.World | None = None,
 ) -> DevSceneResult:
     size = 2
     obj = pf.ops.primitives.mesh_plane(
@@ -241,14 +246,12 @@ def material_plane_uv(
     pf.ops.mesh.transform_apply(obj)
 
     plane = grid_plane()
-    lighting = sky_lighting.nishita_sky(
-        sun_rotation_deg=260,
-        sun_elevation_deg=30,
-    )
+    if environment is None:
+        environment = _demo_sky()
     ref = scale_reference(location=t.Vector((0.38, 0.76, -0.05)))
 
     return DevSceneResult(
-        lights=[lighting], all_objects=[obj, plane, ref], cameras=[cam]
+        lights=[environment], all_objects=[obj, plane, ref], cameras=[cam]
     )
 
 
@@ -256,6 +259,7 @@ def material_plane_uv(
 def material_plane_horizontal_uv(
     rng: pf.RNG,
     material: pf.Material | None = None,
+    environment: pf.World | None = None,
 ) -> DevSceneResult:
     size = 1
     obj = pf.ops.primitives.mesh_plane(
@@ -282,13 +286,11 @@ def material_plane_horizontal_uv(
         obj, t.Vector((-0.7, -1.0, 1.2)), margin_pct=-0.425
     )
 
-    lighting = sky_lighting.nishita_sky(
-        sun_rotation_deg=260,
-        sun_elevation_deg=30,
-    )
+    if environment is None:
+        environment = _demo_sky()
 
     return DevSceneResult(
-        lights=[lighting], all_objects=[obj, plane, ref], cameras=[cam]
+        lights=[environment], all_objects=[obj, plane, ref], cameras=[cam]
     )
 
 
@@ -296,6 +298,7 @@ def material_plane_horizontal_uv(
 def material_monkey(
     rng: pf.RNG,
     material: pf.Material | None = None,
+    environment: pf.World | None = None,
 ) -> DevSceneResult:
     s = 0.3
     obj = pf.ops.primitives.mesh_monkey(
@@ -312,16 +315,14 @@ def material_monkey(
 
     cam = hardcoded_camera(base_location=obj.item().location, dist_mult=0.15)
     plane = grid_plane()
-    lighting = sky_lighting.nishita_sky(
-        sun_rotation_deg=260,
-        sun_elevation_deg=30,
-    )
+    if environment is None:
+        environment = _demo_sky()
     ref = pf.ops.primitives.mesh_cylinder(
         radius=0.1, depth=0.02, location=t.Vector((0.1, 0.1, 0.01)), vertices=128
     )
 
     return DevSceneResult(
-        lights=[lighting], all_objects=[obj, plane, ref], cameras=[cam]
+        lights=[environment], all_objects=[obj, plane, ref], cameras=[cam]
     )
 
 
@@ -338,6 +339,7 @@ def _orthographic_camera_top_down(size: float, height: float = 5.0) -> pf.Camera
 def material_plane_orthographic(
     rng: pf.RNG,
     material: pf.Material | None = None,
+    environment: pf.World | None = None,
     size: float = 1.333,
 ) -> DevSceneResult:
     """Orthographic top-down plane scene for pixel-perfect GT validation.
@@ -357,15 +359,17 @@ def material_plane_orthographic(
     pf.ops.object.set_material(obj, material=material)
 
     cam = _orthographic_camera_top_down(size=size)
-    lighting = sky_lighting.nishita_sky()
+    if environment is None:
+        environment = sky_lighting.nishita_sky().environment
 
-    return DevSceneResult(lights=[lighting], all_objects=[obj], cameras=[cam])
+    return DevSceneResult(lights=[environment], all_objects=[obj], cameras=[cam])
 
 
 @pf.tracer.grammar
 def material_cube(
     rng: pf.RNG,
     material: pf.Material | None = None,
+    environment: pf.World | None = None,
 ) -> DevSceneResult:
     s = 0.5
     obj = demo_cube(size=s)
@@ -375,16 +379,13 @@ def material_cube(
         material = developer_grid(vector=pf.nodes.shader.coord().generated)
     pf.ops.object.set_material(obj, material=material)
 
-    cam = hardcoded_camera(
-        base_location=obj.item().location + t.Vector((0, 0, 0.47)),
-        dist_mult=0.32,
-        elevation_deg=30,
-    )
+    horiz = t.Vector((5, -4, 0))
+    cam_elevation_deg = 45
+    cam_dir = t.Vector((5, -4, horiz.length * np.tan(np.deg2rad(cam_elevation_deg))))
+    cam = camera_with_distance_framing_object(obj, cam_dir, margin_pct=0.05)
     plane = grid_plane()
-    lighting = sky_lighting.nishita_sky(
-        sun_rotation_deg=260,
-        sun_elevation_deg=30,
-    )
+    if environment is None:
+        environment = _demo_sky()
     angle = np.pi * 0.15
     half = s / 2
     corner_x = half * (np.cos(angle) - np.sin(angle))
@@ -397,7 +398,7 @@ def material_cube(
     )
 
     return DevSceneResult(
-        lights=[lighting], all_objects=[obj, plane, ref], cameras=[cam]
+        lights=[environment], all_objects=[obj, plane, ref], cameras=[cam]
     )
 
 
@@ -405,6 +406,7 @@ def material_cube(
 def material_banana(
     rng: pf.RNG,
     material: pf.Material | None = None,
+    environment: pf.World | None = None,
 ) -> DevSceneResult:
     obj = banana()
     obj.item().location.z = obj.item().dimensions.z / 2
@@ -420,11 +422,9 @@ def material_banana(
         dist_mult=0.06,
     )
     plane = grid_plane()
-    lighting = sky_lighting.nishita_sky(
-        sun_rotation_deg=260,
-        sun_elevation_deg=30,
-    )
+    if environment is None:
+        environment = _demo_sky()
     ref = scale_reference(location=t.Vector((0.38, 0.76, -0.05)))
     return DevSceneResult(
-        lights=[lighting], all_objects=[obj, plane, ref], cameras=[cam]
+        lights=[environment], all_objects=[obj, plane, ref], cameras=[cam]
     )

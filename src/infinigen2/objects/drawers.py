@@ -316,7 +316,7 @@ def _board_rail(
 
 
 @pf.nodes.node_function
-def drawers(
+def _drawers_geometry(
     dimensions: t.SocketOrVal[pf.Vector],
     drawer_board_thickness: t.SocketOrVal[float],
     drawer_side_height: t.SocketOrVal[float],
@@ -364,6 +364,32 @@ def drawers(
     return rotated
 
 
+def drawers(
+    dimensions: pf.Vector | None = None,
+    drawer_board_thickness: float = 0.0075,
+    drawer_side_height: float = 0.125,
+    drawer_width_gap: float = 0.02,
+    knob_radius: float = 0.0045,
+    knob_length: float = 0.0265,
+    frame_material: pf.Material | None = None,
+) -> DrawersResult:
+    if dimensions is None:
+        dimensions = pf.Vector((0.35, 0.5, 0.325))
+    if frame_material is None:
+        frame_material = pf.Material(surface=pf.nodes.shader.principled_bsdf())
+
+    geo = _drawers_geometry(
+        dimensions=dimensions,
+        drawer_board_thickness=drawer_board_thickness,
+        drawer_side_height=drawer_side_height,
+        drawer_width_gap=drawer_width_gap,
+        knob_radius=knob_radius,
+        knob_length=knob_length,
+        frame_material=frame_material,
+    )
+    return DrawersResult(mesh=pf.nodes.to_mesh_object(geo))
+
+
 def drawers_rand(
     rng: pf.RNG,
     dimensions: pf.Vector | None = None,
@@ -385,7 +411,7 @@ def drawers_rand(
     if frame_material is None:
         frame_material = furniture_material_rand(rng, vec)
 
-    geo = drawers(
+    geo = _drawers_geometry(
         dimensions=dimensions,
         drawer_board_thickness=drawer_board_thickness,
         drawer_side_height=drawer_side_height,

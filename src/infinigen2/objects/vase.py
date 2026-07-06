@@ -10,8 +10,7 @@ from typing import NamedTuple
 import procfunc as pf
 from procfunc.nodes import types as t
 
-from infinigen2.shaders.composites import tiles
-from infinigen2.shaders.materials import (
+from infinigen2.shaders.base_materials import (
     brick_concrete,
     ceramic,
     glass_colored,
@@ -21,6 +20,7 @@ from infinigen2.shaders.materials import (
     metal_hammered,
     terrazzo,
 )
+from infinigen2.shaders.composites import tiles
 
 __all__ = [
     "VaseResult",
@@ -276,7 +276,7 @@ def _vase_profile(
 
 
 @pf.nodes.node_function
-def vase(
+def _vase_geometry(
     u_resolution: t.SocketOrVal[int],
     v_resolution: t.SocketOrVal[int],
     height: t.SocketOrVal[float],
@@ -326,6 +326,50 @@ def vase(
     )
 
     return geo
+
+
+def vase(
+    u_resolution: int = 64,
+    v_resolution: int = 64,
+    height: float = 0.33,
+    diameter: float = 0.15,
+    profile_inner_radius: float = 1.0,
+    profile_star_points: int = 24,
+    top_scale: float = 0.5,
+    neck_mid_position: float = 0.85,
+    neck_position: float = 0.75,
+    neck_scale: float = 0.5,
+    shoulder_position: float = 0.5,
+    shoulder_thickness: float = 0.175,
+    foot_scale: float = 0.5,
+    foot_height: float = 0.05,
+    material: pf.Material | None = None,
+    thickness: float = 0.0075,
+) -> VaseResult:
+    if material is None:
+        material = pf.Material(surface=pf.nodes.shader.principled_bsdf())
+
+    geo = _vase_geometry(
+        u_resolution=u_resolution,
+        v_resolution=v_resolution,
+        height=height,
+        diameter=diameter,
+        profile_inner_radius=profile_inner_radius,
+        profile_star_points=profile_star_points,
+        top_scale=top_scale,
+        neck_mid_position=neck_mid_position,
+        neck_position=neck_position,
+        neck_scale=neck_scale,
+        shoulder_position=shoulder_position,
+        shoulder_thickness=shoulder_thickness,
+        foot_scale=foot_scale,
+        foot_height=foot_height,
+    )
+    geo = pf.nodes.geo.set_material(geo, material)
+    obj = pf.nodes.to_mesh_object(geo)
+    pf.ops.modifier.solidify(obj, thickness=thickness)
+    pf.ops.modifier.subdivide_surface(obj, levels=2, _skip_apply=True)
+    return VaseResult(mesh=obj)
 
 
 def vase_material_rand(rng: pf.RNG, vec) -> pf.Material:
@@ -382,7 +426,7 @@ def vase_rand(rng: pf.RNG) -> VaseResult:
     foot_scale = pf.random.uniform(rng, 0.4, 0.6)
     foot_height = pf.random.uniform(rng, 0.01, 0.1)
 
-    geo = vase(
+    geo = _vase_geometry(
         u_resolution=u_resolution,
         v_resolution=v_resolution,
         height=z,

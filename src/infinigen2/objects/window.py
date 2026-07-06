@@ -21,13 +21,11 @@ from infinigen2.util.curve import curve_to_mesh_with_uv
 
 __all__ = [
     "CurtainResult",
-    "WindowGeometryResult",
     "WindowResult",
     "curtain",
     "curtain_rand",
-    "glass_pane",
+    "window",
     "window_dimensions_rand",
-    "window_geometry",
     "window_rand",
 ]
 
@@ -63,7 +61,7 @@ def _line_seq(
 
 
 @pf.nodes.node_function
-def curtain(
+def _curtain_geometry(
     width: t.SocketOrVal[float],
     depth: t.SocketOrVal[float],
     height: t.SocketOrVal[float],
@@ -213,6 +211,42 @@ class CurtainResult(NamedTuple):
     mesh: pf.MeshObject
 
 
+def curtain(
+    width: float = 2.5,
+    depth: float = 0.04875,
+    height: float = 2.5,
+    interval_number: float = 22,
+    radius: float = 0.015,
+    l1: float = -1.25,
+    r1: float = -0.4375,
+    l2: float = 0.4375,
+    r2: float = 1.25,
+    frame_depth: float = -0.075,
+    curtain_frame_material: pf.Material | None = None,
+    curtain_material: pf.Material | None = None,
+) -> CurtainResult:
+    if curtain_frame_material is None:
+        curtain_frame_material = pf.Material(surface=pf.nodes.shader.principled_bsdf())
+    if curtain_material is None:
+        curtain_material = pf.Material(surface=pf.nodes.shader.principled_bsdf())
+
+    curtain_geo = _curtain_geometry(
+        width=width,
+        depth=depth,
+        height=height,
+        interval_number=interval_number,
+        radius=radius,
+        l1=l1,
+        r1=r1,
+        l2=l2,
+        r2=r2,
+        frame_depth=frame_depth,
+        curtain_frame_material=curtain_frame_material,
+        curtain_material=curtain_material,
+    )
+    return CurtainResult(mesh=pf.nodes.to_mesh_object(curtain_geo))
+
+
 def curtain_rand(
     rng: pf.RNG,
     dimensions: pf.Vector | None = None,
@@ -239,7 +273,7 @@ def curtain_rand(
     mid_r = (0.5 - base_coverage - var_r) * dimensions.y
 
     curtain_r2 = dimensions.y * 0.5
-    curtain_geo = curtain(
+    curtain_geo = _curtain_geometry(
         width=dimensions.y,
         depth=depth,
         height=dimensions.z,
@@ -433,7 +467,7 @@ def _window_panel(
     return set_shade_smooth
 
 
-class WindowGeometryResult(NamedTuple):
+class _WindowGeometryResult(NamedTuple):
     geometry: pf.ProcNode[pf.MeshObject]
     bounding_box: pf.ProcNode[pf.MeshObject]
 
@@ -444,7 +478,7 @@ class WindowResult(NamedTuple):
 
 
 @pf.nodes.node_function
-def window_geometry(
+def _window_geometry(
     width: t.SocketOrVal[float],
     height: t.SocketOrVal[float],
     frame_width: t.SocketOrVal[float],
@@ -466,7 +500,7 @@ def window_geometry(
     shutter_rotation: t.SocketOrVal[float],
     shutter_interval: t.SocketOrVal[float],
     frame_material: t.SocketOrVal[pf.Material],
-) -> WindowGeometryResult:
+) -> _WindowGeometryResult:
     rotate_b_3 = frame_width * panel_v_amount.astype(dtype=float)
     rotate_b_a = (width - rotate_b_3) / panel_v_amount.astype(dtype=float)
 
@@ -613,14 +647,14 @@ def window_geometry(
 
     bound_box = pf.nodes.geo.bound_box(creased)
 
-    return WindowGeometryResult(
+    return _WindowGeometryResult(
         geometry=creased,
         bounding_box=bound_box.bounding_box,
     )
 
 
 @pf.nodes.node_function
-def glass_pane(
+def _glass_pane(
     width: t.SocketOrVal[float],
     height: t.SocketOrVal[float],
     material: t.SocketOrVal[pf.Material],
@@ -637,6 +671,83 @@ def glass_pane(
     return pf.nodes.geo.set_material(
         geometry=mesh.mesh, selection=True, material=material
     )
+
+
+def window(
+    dimensions: pf.Vector | None = None,
+    frame_width: float = 0.035,
+    panel_h_amount: int = 2,
+    panel_v_amount: int = 2,
+    sub_frame_width: float = 0.0225,
+    sub_frame_thickness: float = 0.0525,
+    sub_panel_h_amount: int = 1,
+    sub_panel_v_amount: int = 1,
+    shutter: bool = False,
+    shutter_panel_radius: float = 0.002,
+    shutter_width: float = 0.04,
+    shutter_thickness: float = 0.005,
+    shutter_rotation: float = 0.707,
+    shutter_interval: float = 0.0424,
+    frame_material: pf.Material | None = None,
+    glass_material: pf.Material | None = None,
+    include_glass_pane: bool = True,
+) -> WindowResult:
+    if dimensions is None:
+        dimensions = pf.Vector((0.085, 2.5, 2.5))
+    if frame_material is None:
+        frame_material = pf.Material(surface=pf.nodes.shader.principled_bsdf())
+    if glass_material is None:
+        glass_material = pf.Material(surface=pf.nodes.shader.principled_bsdf())
+
+    res = _window_geometry(
+        width=dimensions.y,
+        height=dimensions.z,
+        frame_width=frame_width,
+        frame_thickness=dimensions.x,
+        panel_h_amount=panel_h_amount,
+        panel_v_amount=panel_v_amount,
+        sub_frame_width=sub_frame_width,
+        sub_frame_thickness=sub_frame_thickness,
+        sub_panel_h_amount=sub_panel_h_amount,
+        sub_panel_v_amount=sub_panel_v_amount,
+        open_h_angle=0.0,
+        open_v_angle=0.0,
+        open_offset=0.0,
+        oe_offset=0.0,
+        shutter=shutter,
+        shutter_panel_radius=shutter_panel_radius,
+        shutter_width=shutter_width,
+        shutter_thickness=shutter_thickness,
+        shutter_rotation=shutter_rotation,
+        shutter_interval=shutter_interval,
+        frame_material=frame_material,
+    )
+
+    frame_obj = pf.nodes.to_mesh_object(res.geometry)
+    pf.ops.uv.cube_project(frame_obj, uv_name="UVMap")
+
+    if include_glass_pane:
+        pane_obj = pf.nodes.to_mesh_object(
+            _glass_pane(
+                width=dimensions.y,
+                height=dimensions.z,
+                material=glass_material,
+            )
+        )
+        pf.ops.object.join(frame_obj, pane_obj)
+
+    pf.ops.modifier.subdivide_surface(frame_obj, levels=2, _skip_apply=True)
+
+    portal_light = pf.ops.primitives.light.area_lamp(
+        shape="RECTANGLE",
+        size_x=dimensions.y,
+        size_y=dimensions.z,
+        energy=0.0,
+        portal=True,
+    )
+    portal_light.item().rotation_euler = (np.pi, 0, 0)
+
+    return WindowResult(mesh=frame_obj, light=portal_light)
 
 
 def window_rand(
@@ -725,7 +836,7 @@ def window_rand(
         )
         curtain = curtain_fn()
 
-    res = window_geometry(
+    res = _window_geometry(
         width=dimensions.y,
         height=dimensions.z,
         frame_width=frame_width,
@@ -754,7 +865,7 @@ def window_rand(
 
     if include_glass_pane:
         pane_obj = pf.nodes.to_mesh_object(
-            glass_pane(
+            _glass_pane(
                 width=dimensions.y,
                 height=dimensions.z,
                 material=glass_material,

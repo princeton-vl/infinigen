@@ -17,8 +17,10 @@ __all__ = [
     "SandstoneDisplacementLayerResult",
     "sandstone_color_layer",
     "sandstone_displacement_layer",
-    "stone_smooth_presets",
+    "stone_grey_preset",
+    "stone_red_sandstone_preset",
     "stone_smooth_rand",
+    "stone_volcanic_tuff_preset",
 ]
 
 
@@ -2524,18 +2526,3 @@ def stone_red_sandstone_preset(vector: t.SocketOrVal[pf.Vector]):
         normal=(0.0, 0.0, 0.0),
     )
     return pf.Material(surface=surface, displacement=displacement)
-
-
-def stone_smooth_presets(
-    rng: pf.RNG,
-    vector: t.SocketOrVal[pf.Vector],
-) -> pf.Material:
-    func = pf.control.choice(
-        rng,
-        [
-            (stone_grey_preset, 1.0),
-            (stone_volcanic_tuff_preset, 1.0),
-            (stone_red_sandstone_preset, 0.3),
-        ],
-    )
-    return func(vector=vector)

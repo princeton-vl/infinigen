@@ -11,7 +11,7 @@
 
 Infinigen has distinct scene generation & rendering stages. We typically run these automatically for you (skip to [Generate scenes automatically](#generating-scenes-automatically)
 
-#### Generate a blender file
+### Generate a blender file
 
 First, run ONE command of your choosing from the block below. This will generate a 3D blender file for use in the subsequent steps.
 
@@ -51,9 +51,9 @@ Once complete, you can inspect / fly around `outputs/indoors/coarse/scene.blend`
 python -m infinigen.launch_blender outputs/indoors/coarse/scene.blend
 ```
 
-You may be prompted to revisit our [Installation.md](./Installation.md#installing-infinigen-as-a-blender-python-script) if blender is not yet installed.
+You may be prompted to revisit our [Installation.md](./Installation.md#installing-infinigen-into-blenders-internal-python-interpreter) if blender is not yet installed.
 
-#### Render image and ground truth
+### Render image and ground truth
 
 Next, run the commands below to render an RGB image and ground truth:
 
@@ -67,7 +67,7 @@ python -m infinigen_examples.generate_indoors --seed 0 --task render --input_fol
 
 Once complete, you can open `outputs/indoors/frames` and navigate to view the results.
 
-#### Next Steps
+### Next Steps
 
 See [ExportingToExternalFileFormats](./ExportingToExternalFileFormats.md) and [ExportingToSimulators](./ExportingToSimulators.md) to export to OBJ/USD.
 
@@ -150,7 +150,7 @@ Each of these commandline args demonstrates a different way in which you can res
 
 These settings are intended for debugging or for generating tailored datasets. If you want more granular control over what assets are used for what purposes, please customize `infinigen_examples/constraints/semantics.py` which defines this mapping. 
 
-If you are using the commands from [Creating large datasets](#creating-large-datasets) you will instead add these configs as `--overrides` to the end of your command, rather than `-p`
+If you are using the commands from [Creating large datasets](./ConfiguringInfinigen.md#creating-large-scale-stereo-datasets) you will instead add these configs as `--overrides` to the end of your command, rather than `-p`
 
 ### Generate Rooms with Floating Objects
 

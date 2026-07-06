@@ -3,6 +3,7 @@
 
 # Authors: Zeyu Ma
 
+import logging
 from ctypes import POINTER, c_float, c_int32
 
 import bpy
@@ -11,8 +12,15 @@ from numpy import ascontiguousarray as AC
 
 from infinigen.core.nodes.nodegroups import transfer_attributes
 from infinigen.core.util import blender as butil
-from infinigen.OcMesher.ocmesher import OcMesher
 from infinigen.terrain.utils import ASFLOAT, ASINT, Mesh, get_caminfo, load_cdll
+
+try:
+    from infinigen.OcMesher.ocmesher import OcMesher
+except ImportError:
+    logging.warning(
+        "Could not import infinigen.OcMesher submodule; run_ocmesher unavailable"
+    )
+    OcMesher = None
 
 
 def create_sdf_from_mesh(mesh):

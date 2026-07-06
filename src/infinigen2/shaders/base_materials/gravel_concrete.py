@@ -13,7 +13,6 @@ from infinigen2.shaders.util.coord import coord_warp
 __all__ = [
     "GravelResult",
     "gravel_concrete_bumps_preset",
-    "gravel_concrete_presets",
     "gravel_concrete_rand",
     "gravel_concrete_red_preset",
     "gravel_concrete_sharp_polished_preset",
@@ -750,21 +749,6 @@ def gravel_concrete_red_preset(
         surface=principled,
         displacement=displacement,
     )
-
-
-def gravel_concrete_presets(
-    rng: pf.RNG,
-    vector: pf.ProcNode[pf.Vector],
-) -> pf.Material:
-    func = pf.control.choice(
-        rng,
-        [
-            (gravel_concrete_bumps_preset, 1.0),
-            (gravel_concrete_red_preset, 1.0),
-            (gravel_concrete_sharp_polished_preset, 1.0),
-        ],
-    )
-    return func(vector=vector)
 
 
 def small_gravel_rand(

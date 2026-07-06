@@ -10,16 +10,11 @@ from typing import NamedTuple
 import procfunc as pf
 from procfunc.nodes import types as t
 
-from infinigen2.shaders.composites.fabric_patterned import (
-    fabric_patterned_rand,
-)
-from infinigen2.shaders.materials import carpet
-from infinigen2.shaders.materials.fabric import fabric_rand
+from infinigen2.shaders.functionality_lists import rug_material_rand
 
 __all__ = [
     "RugResult",
-    "rug_geometry",
-    "rug_material_rand",
+    "rug",
     "rug_rand",
 ]
 
@@ -29,7 +24,7 @@ class RugResult(NamedTuple):
 
 
 @pf.nodes.node_function
-def rug_geometry(
+def _rug_geometry(
     width: t.SocketOrVal[float],
     length: t.SocketOrVal[float],
     fillet_radius: t.SocketOrVal[float],
@@ -57,20 +52,24 @@ def rug_geometry(
     return geo
 
 
-def rug_material_rand(
-    rng: pf.RNG,
-    vector: t.SocketOrVal[pf.Vector],
-) -> pf.Material:
-    rng_choice, rng_func = rng.spawn(2)
-    func = pf.control.choice(
-        rng_choice,
-        [
-            (fabric_patterned_rand, 3.0),
-            (fabric_rand, 1.0),
-            (lambda rng, vector, **_: carpet.carpet_rand(rng, vector), 2.0),
-        ],
+def rug(
+    width: float = 2.5,
+    length: float = 3.125,
+    fillet_radius: float = 0.625,
+    thickness: float = 0.015,
+    material: pf.Material | None = None,
+) -> RugResult:
+    if material is None:
+        material = pf.Material(surface=pf.nodes.shader.principled_bsdf())
+
+    geo = _rug_geometry(
+        width=width,
+        length=length,
+        fillet_radius=fillet_radius,
+        thickness=thickness,
+        material=material,
     )
-    return func(rng_func, vector)
+    return RugResult(mesh=pf.nodes.to_mesh_object(geo))
 
 
 def rug_rand(
@@ -90,7 +89,7 @@ def rug_rand(
     mat_shader = rug_material_rand(rng, vec)
     mat = mat_shader
 
-    geo = rug_geometry(
+    geo = _rug_geometry(
         width=width,
         length=length,
         fillet_radius=fillet_radius,

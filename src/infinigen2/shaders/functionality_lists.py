@@ -7,7 +7,24 @@ import math
 from functools import partial
 
 import procfunc as pf
+from procfunc.nodes import types as t
 
+from infinigen2.shaders.base_materials import (
+    carpet,
+    ceramic,
+    concrete,
+    fabric,
+    glass_colored,
+    glass_no_refraction,
+    granite,
+    gravel_concrete,
+    marble,
+    metal_brushed,
+    paint,
+    plastic,
+    stone_smooth,
+    wood_grain,
+)
 from infinigen2.shaders.composites import (
     bricks,
     fabric_patterned,
@@ -27,22 +44,6 @@ from infinigen2.shaders.masks.tile_shapes import (
     tile_coord_transform_rand,
     tile_mask_rand,
 )
-from infinigen2.shaders.materials import (
-    carpet,
-    ceramic,
-    concrete,
-    fabric,
-    glass_colored,
-    glass_no_refraction,
-    granite,
-    gravel_concrete,
-    marble,
-    metal_brushed,
-    paint,
-    plastic,
-    stone_smooth,
-    wood_grain,
-)
 
 __all__ = [
     "art_color_rand",
@@ -55,6 +56,7 @@ __all__ = [
     "mirror_material_rand",
     "paint_flaked_rand",
     "paint_wall_rand",
+    "rug_material_rand",
     "skirt_material_rand",
     "table_top_material_rand",
     "uv_maybe_rotate",
@@ -422,6 +424,22 @@ def art_pattern_material_rand(
         ],
     )
     return func(r_mat, vector, base_color=base_color)
+
+
+def rug_material_rand(
+    rng: pf.RNG,
+    vector: t.SocketOrVal[pf.Vector],
+) -> pf.Material:
+    rng_choice, rng_func = rng.spawn(2)
+    func = pf.control.choice(
+        rng_choice,
+        [
+            (fabric_patterned.fabric_patterned_rand, 3.0),
+            (fabric.fabric_rand, 1.0),
+            (lambda rng, vector, **_: carpet.carpet_rand(rng, vector), 2.0),
+        ],
+    )
+    return func(rng_func, vector)
 
 
 def mirror_material_rand(rng: pf.RNG, vector: pf.ProcNode[pf.Vector]) -> pf.Material:

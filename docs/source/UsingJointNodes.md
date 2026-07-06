@@ -139,6 +139,6 @@ In addition to rules listed above, make sure to verify your simulation asset usi
 You may also find it helpful to create aliases for transpiling and spawning assets.
 
 ```
-alias transpilesim='{PROJECT_ROOT}/scripts/scripts/transpile_sim_ready_asset.sh'
-alias spawnsim='{PROJECT_ROOT}/scripts/scripts/spawn_sim_ready_asset.sh'
+alias transpilesim='{PROJECT_ROOT}/scripts/transpile_sim_ready_asset.sh'
+alias spawnsim='{PROJECT_ROOT}/scripts/spawn_sim_ready_asset.sh'
 ```

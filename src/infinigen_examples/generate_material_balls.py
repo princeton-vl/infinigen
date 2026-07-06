@@ -61,6 +61,8 @@ logging.basicConfig(
 
 scale = 0.4
 
+__all__ = []
+
 
 def apply_material(asset, mat_gen, **kwargs):
     if hasattr(mat_gen, "apply"):

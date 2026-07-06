@@ -65,6 +65,8 @@ from . import (
 
 logger = logging.getLogger(__name__)
 
+__all__ = ["compose_indoors"]
+
 
 def default_greedy_stages():
     """Returns descriptions of what will be covered by each greedy stage of the solver.

@@ -12,8 +12,11 @@ from infinigen2.shaders.util.coord import coord_warp
 __all__ = [
     "paint",
     "paint_color_rand",
-    "paint_presets",
     "paint_rand",
+    "paint_small_bumps_preset",
+    "paint_splats_preset",
+    "paint_spots_preset",
+    "paint_strokes_preset",
 ]
 
 
@@ -347,19 +350,6 @@ def paint_small_bumps_preset(
         globule_height=0.0,
         globule_spread=0.5,
     )
-
-
-def paint_presets(rng, vector: pf.ProcNode[pf.Vector]) -> pf.Material:
-    func = pf.control.choice(
-        rng,
-        [
-            (paint_strokes_preset, 1.0),
-            (paint_spots_preset, 1.0),
-            (paint_splats_preset, 1.0),
-            (paint_small_bumps_preset, 1.0),
-        ],
-    )
-    return func(vector=vector)
 
 
 def paint_color_rand(

@@ -849,32 +849,42 @@ def _cabinet_transform_params(
 
 def cabinet(
     rng: pf.RNG,
-    dimensions: pf.Vector,
-    frame_material: pf.Material,
-    panel_material: list[pf.Material],
-    has_mid_ramp: bool,
-    force_short_door: bool,
-    side_board_thickness: float,
-    division_board_thickness: float,
-    backboard_thickness: float,
-    bottom_board_height: float,
-    screw_depth_head: float,
-    screw_head_radius: float,
-    screw_width_gap: float,
-    screw_depth_gap: float,
-    attach_length: float,
-    attach_width: float,
-    attach_thickness: float,
-    attach_gap: float,
-    bottom_board_y_gap: float,
-    edge_thickness_1: float,
-    edge_width: float,
-    edge_thickness_2: float,
-    edge_ramp_angle: float,
-    knob_radius: float,
-    knob_length: float,
-    door_attach_gap: float,
-) -> pf.MeshObject:
+    dimensions: pf.Vector | None = None,
+    frame_material: pf.Material | None = None,
+    panel_material: list[pf.Material] | None = None,
+    has_mid_ramp: bool = True,
+    force_short_door: bool = False,
+    side_board_thickness: float = 0.02,
+    division_board_thickness: float = 0.02,
+    backboard_thickness: float = 0.01,
+    bottom_board_height: float = 0.083,
+    screw_depth_head: float = 0.0025,
+    screw_head_radius: float = 0.0025,
+    screw_width_gap: float = 0.01,
+    screw_depth_gap: float = 0.0425,
+    attach_length: float = 0.075,
+    attach_width: float = 0.0175,
+    attach_thickness: float = 0.0035,
+    attach_gap: float = 0.025,
+    bottom_board_y_gap: float = 0.03,
+    edge_thickness_1: float = 0.014,
+    edge_width: float = 0.04,
+    edge_thickness_2: float = 0.0065,
+    edge_ramp_angle: float = 0.7,
+    knob_radius: float = 0.0045,
+    knob_length: float = 0.0265,
+    door_attach_gap: float = 0.1,
+) -> CabinetResult:
+    if dimensions is None:
+        dimensions = pf.Vector((0.3, 0.5, 1.35))
+    if frame_material is None:
+        frame_material = pf.Material(surface=pf.nodes.shader.principled_bsdf())
+    if panel_material is None:
+        panel_material = [
+            pf.Material(surface=pf.nodes.shader.principled_bsdf()),
+            pf.Material(surface=pf.nodes.shader.principled_bsdf()),
+        ]
+
     shelf_params = _shelf_params_from_dimensions(
         dimensions=dimensions,
         frame_material=frame_material,
@@ -1013,7 +1023,7 @@ def cabinet(
     joined = pf.nodes.geo.join_geometry([shelf_geo] + doors + attaches)
     result = pf.nodes.to_mesh_object(joined)
     pf.ops.uv.cube_project(result, uv_name="UVMap")
-    return result
+    return CabinetResult(mesh=result)
 
 
 def cabinet_rand(
@@ -1097,33 +1107,31 @@ def cabinet_rand(
         has_mid_ramp=has_mid_ramp,
     )
 
-    return CabinetResult(
-        mesh=cabinet(
-            rng=rng_cabinet,
-            dimensions=dimensions,
-            frame_material=frame_material,
-            panel_material=panel_material,
-            has_mid_ramp=has_mid_ramp,
-            force_short_door=force_short_door,
-            side_board_thickness=side_board_thickness,
-            division_board_thickness=division_board_thickness,
-            backboard_thickness=backboard_thickness,
-            bottom_board_height=bottom_board_height,
-            screw_depth_head=screw_depth_head,
-            screw_head_radius=screw_head_radius,
-            screw_width_gap=screw_width_gap,
-            screw_depth_gap=screw_depth_gap,
-            attach_length=attach_length,
-            attach_width=attach_width,
-            attach_thickness=attach_thickness,
-            attach_gap=attach_gap,
-            bottom_board_y_gap=bottom_board_y_gap,
-            edge_thickness_1=edge_thickness_1,
-            edge_width=edge_width,
-            edge_thickness_2=edge_thickness_2,
-            edge_ramp_angle=edge_ramp_angle,
-            knob_radius=knob_radius,
-            knob_length=knob_length,
-            door_attach_gap=door_attach_gap,
-        )
+    return cabinet(
+        rng=rng_cabinet,
+        dimensions=dimensions,
+        frame_material=frame_material,
+        panel_material=panel_material,
+        has_mid_ramp=has_mid_ramp,
+        force_short_door=force_short_door,
+        side_board_thickness=side_board_thickness,
+        division_board_thickness=division_board_thickness,
+        backboard_thickness=backboard_thickness,
+        bottom_board_height=bottom_board_height,
+        screw_depth_head=screw_depth_head,
+        screw_head_radius=screw_head_radius,
+        screw_width_gap=screw_width_gap,
+        screw_depth_gap=screw_depth_gap,
+        attach_length=attach_length,
+        attach_width=attach_width,
+        attach_thickness=attach_thickness,
+        attach_gap=attach_gap,
+        bottom_board_y_gap=bottom_board_y_gap,
+        edge_thickness_1=edge_thickness_1,
+        edge_width=edge_width,
+        edge_thickness_2=edge_thickness_2,
+        edge_ramp_angle=edge_ramp_angle,
+        knob_radius=knob_radius,
+        knob_length=knob_length,
+        door_attach_gap=door_attach_gap,
     )

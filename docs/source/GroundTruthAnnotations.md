@@ -1,6 +1,6 @@
 # Ground-Truth Annotations
 
-### Agenda
+## Agenda
 
 - Save forward and backward flow for both built-in and advanced annotations.
 - Compute flow occlusion using forward-backward consistency.
@@ -8,7 +8,7 @@
 
 **Want annotations that we don't currently support? [Fill out a request!](https://github.com/princeton-vl/infinigen/issues/new?assignees=&labels=&projects=&template=request.md&title=%5BREQUEST%5D)**
 
-### Visualization dependencies
+## Visualization dependencies
 
 To run the visualization scripts below you will need to install extra dependencies
 
@@ -154,7 +154,7 @@ python -m infinigen.tools.results.visualize_traj path/to/your/scene/frames
 
 ### Camera Pose
 
-##### Intrinsic & Extrinsic Matrices
+#### Intrinsic & Extrinsic Matrices
 
 Camera intrinsics and extrinsics are stored as a numpy ".npz" file inside the "camview" folder.
 
@@ -164,7 +164,7 @@ The camera pose is stored as a 4 x 4 numpy matrix mapping from camera coordinate
 
 As is standard in computer vision, the assumed world coordinate system in the saved camera poses is +X -> Right, +Y -> Down, +Z Forward. This is opposed to how Blender internally represents geometry, with flipped Y and Z axes.
 
-##### Camera Velocity / Acceleration (IMU)
+#### Camera Velocity / Acceleration (IMU)
 
 Camera velocity / acceleration is stored as ".txt" files inside the "frames/imu_tum" folder.
 
@@ -174,7 +174,7 @@ Inertial Measurement Unit (IMU) records the rotational velocity and linear accel
 timestamp rv_x rv_y rv_z a_x a_y a_z
 ```
 
-##### TUM Trajectory Format
+#### TUM Trajectory Format
 
 For convenience, we also save the trajectories of any animated cameras in the [TUM trajectory format](https://github.com/MichaelGrupp/evo/wiki/Formats#tum---tum-rgb-d-dataset-trajectory-format).
 

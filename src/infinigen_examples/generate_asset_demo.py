@@ -39,6 +39,8 @@ logging.basicConfig(
     level=logging.WARNING,
 )
 
+__all__ = ["compose_scene"]
+
 
 def find_flat_location(
     mesh,

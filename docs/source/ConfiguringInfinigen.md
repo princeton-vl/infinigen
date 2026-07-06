@@ -160,7 +160,7 @@ If you have any issues with these commands, or wish to customize them to your ne
 
 All commands below are shown with using `local_256GB` config, but you can attempt to swap this for any compute config as discussed in [Configuring available computing resources](#configuring-available-computing-resources).
 
-#### Creating high quality videos
+### Creating high quality videos
 
 We recommend this command as a starting point for generating high quality videos. Generating multi-view consistent terrain is not computationally tractible without CUDA accelleration, so make sure to follow the CUDA Terrain instructions in Installation.md, and we recommend not to remove the `cuda_terrain` flag below.
 
@@ -171,7 +171,7 @@ python -m infinigen.datagen.manage_jobs --output_folder outputs/my_videos --num_
     -p fine_terrain.mesher_backend="OcMesher"
 ```
 
-#### Creating large-scale stereo datasets
+### Creating large-scale stereo datasets
 
 ```bash
 python -m infinigen.datagen.manage_jobs --output_folder outputs/stereo_data --num_scenes 10000 \
@@ -179,7 +179,7 @@ python -m infinigen.datagen.manage_jobs --output_folder outputs/stereo_data --nu
     --cleanup big_files --warmup_sec 60000 --config high_quality_terrain
 ```
 
-#### Creating a few low-resolution images to your test changes
+### Creating a few low-resolution images to your test changes
 
 ```bash
 python -m infinigen.datagen.manage_jobs --output_folder outputs/dev --num_scenes 50 \
@@ -187,7 +187,7 @@ python -m infinigen.datagen.manage_jobs --output_folder outputs/dev --num_scenes
     --cleanup big_files --warmup_sec 1200 --configs dev
 ```
 
-#### Creating datasets with specific properties or constraints:
+### Creating datasets with specific properties or constraints:
 
 These commands are intended as inspiration - please read docs above for more advice on customizing all aspects of Infinigen.
 

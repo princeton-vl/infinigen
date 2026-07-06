@@ -5,16 +5,26 @@
 # - Alexander Raistrick, Zeyu Ma, Kaiyu Yang, Lingjie Mei: original Infinigen v1 sky lighting (https://github.com/princeton-vl/infinigen/blob/05a09759fe9478595a3323ec2d6e26ce3513223f/infinigen/assets/lighting/sky_lighting.py)
 # - Alexander Raistrick: port to v2
 
+from typing import NamedTuple
+
 import numpy as np
 import procfunc as pf
 
 __all__ = [
+    "EnvironmentResult",
     "hosek_wilkie_sky",
     "hosek_wilkie_sky_rand",
+    "hosek_wilkie_sky_with_sun_lamp_rand",
     "nishita_sky",
     "nishita_sky_rand",
     "sky_with_sun_lamp_rand",
 ]
+
+
+class EnvironmentResult(NamedTuple):
+    environment: pf.World
+    lights: list
+
 
 # Direct-sun irradiance relative to ambient sky strength; ~5:1 reads sunny,
 # ~1:1 reads flat/overcast and the sun looks dim.
@@ -34,7 +44,7 @@ def _sun_warmth_color(
 
 
 @pf.tracer.primitive
-def nishita_sky(
+def _nishita_sky(
     sun_size_deg: float = 0.5,
     sun_intensity: float = 0.6,
     sun_elevation_deg: float = 10.0,
@@ -63,6 +73,33 @@ def nishita_sky(
     return pf.nodes.to_environment(surface=shader)
 
 
+def nishita_sky(
+    sun_size_deg: float = 0.5,
+    sun_intensity: float = 0.6,
+    sun_elevation_deg: float = 10.0,
+    sun_rotation_deg: float = 0.0,
+    altitude: float = 550.0,
+    air_density: float = 1.0,
+    dust_density: float = 1.0,
+    ozone_density: float = 1.0,
+    strength: float = 0.4,
+    sun_disc: bool = True,
+) -> EnvironmentResult:
+    world = _nishita_sky(
+        sun_size_deg=sun_size_deg,
+        sun_intensity=sun_intensity,
+        sun_elevation_deg=sun_elevation_deg,
+        sun_rotation_deg=sun_rotation_deg,
+        altitude=altitude,
+        air_density=air_density,
+        dust_density=dust_density,
+        ozone_density=ozone_density,
+        strength=strength,
+        sun_disc=sun_disc,
+    )
+    return EnvironmentResult(environment=world, lights=[])
+
+
 @pf.tracer.grammar
 def nishita_sky_rand(
     rng: np.random.Generator,
@@ -71,7 +108,7 @@ def nishita_sky_rand(
     sun_intensity: float | None = None,
     sun_size_deg: float | None = None,
     sun_disc: bool = True,
-) -> pf.World:
+) -> EnvironmentResult:
     if sun_elevation_deg is None:
         sun_elevation_deg = pf.random.uniform(rng, 5.0, 85.0)
     if sun_rotation_deg is None:
@@ -80,7 +117,7 @@ def nishita_sky_rand(
         sun_intensity = pf.random.uniform(rng, 0.8, 1.0)
     if sun_size_deg is None:
         sun_size_deg = pf.random.clip_gaussian(rng, 0.5, 0.3, 0.25, 5)
-    return nishita_sky(
+    world = _nishita_sky(
         sun_size_deg=sun_size_deg,
         sun_intensity=sun_intensity,
         sun_elevation_deg=sun_elevation_deg,
@@ -92,10 +129,11 @@ def nishita_sky_rand(
         strength=pf.random.uniform(rng, 0.18, 0.22),
         sun_disc=sun_disc,
     )
+    return EnvironmentResult(environment=world, lights=[])
 
 
 @pf.tracer.primitive
-def hosek_wilkie_sky(
+def _hosek_wilkie_sky(
     sun_elevation_deg: float = 45.0,
     sun_rotation_deg: float = 0.0,
     turbidity: float = 2.0,
@@ -118,23 +156,41 @@ def hosek_wilkie_sky(
     return pf.nodes.to_environment(surface=shader)
 
 
+def hosek_wilkie_sky(
+    sun_elevation_deg: float = 45.0,
+    sun_rotation_deg: float = 0.0,
+    turbidity: float = 2.0,
+    ground_albedo: float = 0.3,
+    strength: float = 7.5,
+) -> EnvironmentResult:
+    world = _hosek_wilkie_sky(
+        sun_elevation_deg=sun_elevation_deg,
+        sun_rotation_deg=sun_rotation_deg,
+        turbidity=turbidity,
+        ground_albedo=ground_albedo,
+        strength=strength,
+    )
+    return EnvironmentResult(environment=world, lights=[])
+
+
 @pf.tracer.grammar
 def hosek_wilkie_sky_rand(
     rng: np.random.Generator,
     sun_elevation_deg: float | None = None,
     sun_rotation_deg: float | None = None,
-) -> pf.World:
+) -> EnvironmentResult:
     if sun_elevation_deg is None:
         sun_elevation_deg = pf.random.uniform(rng, 10.0, 80.0)
     if sun_rotation_deg is None:
         sun_rotation_deg = pf.random.uniform(rng, 0.0, 360.0)
-    return hosek_wilkie_sky(
+    world = _hosek_wilkie_sky(
         sun_elevation_deg=sun_elevation_deg,
         sun_rotation_deg=sun_rotation_deg,
         turbidity=pf.random.uniform(rng, 0.0, 1.0),
         ground_albedo=pf.random.uniform(rng, 0.0, 1.0),
         strength=pf.random.uniform(rng, 5.0, 10.0),
     )
+    return EnvironmentResult(environment=world, lights=[])
 
 
 @pf.tracer.grammar
@@ -144,7 +200,7 @@ def hosek_wilkie_sky_with_sun_lamp_rand(
     sun_rotation_deg: float | None = None,
     sun_intensity: float | None = None,
     sun_size_deg: float | None = None,
-) -> tuple[pf.World, pf.Object]:
+) -> EnvironmentResult:
     r_default, r_sky, r_warmth = rng.spawn(3)
     if sun_elevation_deg is None:
         sun_elevation_deg = pf.random.uniform(r_default, 10.0, 80.0)
@@ -156,7 +212,7 @@ def hosek_wilkie_sky_with_sun_lamp_rand(
         sun_size_deg = pf.random.clip_gaussian(r_default, 0.5, 0.3, 0.25, 5)
 
     sky_strength = pf.random.uniform(r_sky, 5.0, 7.0)
-    sky_shader = hosek_wilkie_sky(
+    world = _hosek_wilkie_sky(
         sun_elevation_deg=sun_elevation_deg,
         sun_rotation_deg=sun_rotation_deg,
         turbidity=pf.random.uniform(r_sky, 2.0, 4.0),
@@ -177,7 +233,7 @@ def hosek_wilkie_sky_with_sun_lamp_rand(
     sun_lamp.item().rotation_euler = sun_direction.to_track_quat("Z", "Y").to_euler()
     sun_lamp.item().location.z = 25
 
-    return sky_shader, sun_lamp
+    return EnvironmentResult(environment=world, lights=[sun_lamp])
 
 
 @pf.tracer.grammar
@@ -186,7 +242,7 @@ def sky_with_sun_lamp_rand(
     sun_elevation_deg: float | None = None,
     sun_rotation_deg: float | None = None,
     sun_intensity: float | None = None,
-) -> tuple[pf.World, pf.Object]:
+) -> EnvironmentResult:
     if sun_elevation_deg is None:
         sun_elevation_deg = pf.random.clip_gaussian(rng, 30, 20, 10, 90)
     if sun_rotation_deg is None:
@@ -194,7 +250,7 @@ def sky_with_sun_lamp_rand(
     if sun_intensity is None:
         sun_intensity = pf.random.uniform(rng, 0.8, 1.0)
 
-    sky_shader = nishita_sky_rand(
+    sky = nishita_sky_rand(
         rng,
         sun_elevation_deg=sun_elevation_deg,
         sun_rotation_deg=sun_rotation_deg,
@@ -210,4 +266,4 @@ def sky_with_sun_lamp_rand(
     )
     sun_lamp.item().location.z = 25  # easier to see in blender UI
 
-    return sky_shader, sun_lamp
+    return EnvironmentResult(environment=sky.environment, lights=[sun_lamp])

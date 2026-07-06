@@ -1,7 +1,7 @@
 
 # Contributing
 
-### Installation
+## Installation
 
 Install `uv` if you don't already have it: `curl -LsSf https://astral.sh/uv/install.sh | sh`
 
@@ -12,7 +12,7 @@ cd infinigen
 uv sync --extra dev
 ```
 
-### Formatting
+## Formatting
 
 Run this once to enable the formatting hooks:
 ```bash
@@ -23,9 +23,9 @@ uv run pre-commit install
 - `pre-commit` will format your files whenever you commit. if it detects any changes,  it cancels the commit, and you have to `git add` and commit them again. This is quite annoying but is intended only as a backstop. 
 - to avoid `pre-commit` firing too often, ive added a `.vscode/settings.json` which should auto-format your files upon save. 
 
-### Procedural Generator Conventions
+## Procedural Generator Conventions
 
-##### All procedural generators
+### All procedural generators
 
 When creating any procedural generator there will be two public functions, e.g:
 - `bricks(vector, param1, param2 ...)` (called the `generate` function)
@@ -49,7 +49,7 @@ If you strictly need `if`/`for`/`while`, either put them inside the generate fun
 
 Randomness can only come from `rng` input arguments, not `np.random.uniform()` or `import random`.  Only the `_rand` function has an `rng`, not the regular function, which means the generate 
 
-##### Material functions
+### Material functions
 
 Must have a `vector: ProcNode[Vector]`input. This determines the coordinate space for the material, which is plugged into all `noise` / `bricks` etc, or else they will crash.
 
@@ -64,11 +64,11 @@ Output variable conventions:
 - `volume` for volume shader outputs
 - `displacement` for displacement vector outputs. Avoid using `height` as a float
 
-See [concrete.py](../src/infinigen2/shaders/materials/concrete.py) for an example.
+See [concrete.py](../../src/infinigen2/shaders/base_materials/concrete.py) for an example.
 
-### Tools
+## Tools
 
-##### Rendering
+### Rendering
 
 See the [landing page](Infinigen2) for the everyday render commands (quick render, GT render, many renders locally).
 
@@ -83,7 +83,7 @@ Generate samples from all materials: `bash scripts/integration_v2/launch.sh outp
 
 View Material samples: `uv run scripts/integration_v2/compare.py --scan-dir outputs`
 
-##### Testing
+### Testing
 
 Run linting
 ```bash
@@ -96,7 +96,7 @@ Run unit tests
 uv run pytest
 ```
 
-##### Transpiling assets to python
+### Transpiling assets to python
 
 See the [procfunc transpiling example](https://github.com/princeton-vl/procfunc#transpile-a-blender-file-to-procfunc-code) for a worked end-to-end example.
 

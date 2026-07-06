@@ -10,15 +10,15 @@ from typing import NamedTuple
 import procfunc as pf
 from procfunc.nodes import types as t
 
+from infinigen2.shaders.base_materials import metal_brushed
 from infinigen2.shaders.functionality_lists import (
     furniture_material_rand,
     table_top_material_rand,
 )
-from infinigen2.shaders.materials import metal_brushed
 
 __all__ = [
     "TriangleShelfResult",
-    "triangle_shelf_geometry",
+    "triangle_shelf",
     "triangle_shelf_rand",
 ]
 
@@ -606,7 +606,7 @@ def _side_boards(
 
 
 @pf.nodes.node_function
-def triangle_shelf_geometry(
+def _triangle_shelf_geometry(
     dimensions: t.SocketOrVal[pf.Vector],
     leg_board_gap: t.SocketOrVal[float],
     leg_width: t.SocketOrVal[float],
@@ -709,6 +709,54 @@ def triangle_shelf_geometry(
     return rotated
 
 
+def triangle_shelf(
+    dimensions: pf.Vector | None = None,
+    leg_board_gap: float = 0.0035,
+    leg_width: float = 0.02,
+    leg_depth: float = 0.015,
+    leg_curvature_ratio: float = 0.01,
+    board_thickness: float = 0.0175,
+    board_extrude_length: float = 0.05,
+    side_board_height: float = 0.03,
+    bottom_layer_height: float = 0.075,
+    mid_layer_height: float | None = None,
+    top_layer_height: float | None = None,
+    leg_material: pf.Material | None = None,
+    board_material: pf.Material | None = None,
+    screw_material: pf.Material | None = None,
+) -> TriangleShelfResult:
+    if dimensions is None:
+        dimensions = pf.Vector((0.3, 0.3, 0.6))
+    if top_layer_height is None:
+        top_layer_height = dimensions.z - 0.045
+    if mid_layer_height is None:
+        mid_layer_height = (top_layer_height + bottom_layer_height) / 2.0
+    if leg_material is None:
+        leg_material = pf.Material(surface=pf.nodes.shader.principled_bsdf())
+    if board_material is None:
+        board_material = pf.Material(surface=pf.nodes.shader.principled_bsdf())
+    if screw_material is None:
+        screw_material = pf.Material(surface=pf.nodes.shader.principled_bsdf())
+
+    geo = _triangle_shelf_geometry(
+        dimensions=dimensions,
+        leg_board_gap=leg_board_gap,
+        leg_width=leg_width,
+        leg_depth=leg_depth,
+        leg_curvature_ratio=leg_curvature_ratio,
+        board_thickness=board_thickness,
+        board_extrude_length=board_extrude_length,
+        side_board_height=side_board_height,
+        bottom_layer_height=bottom_layer_height,
+        mid_layer_height=mid_layer_height,
+        top_layer_height=top_layer_height,
+        leg_material=leg_material,
+        board_material=board_material,
+        screw_material=screw_material,
+    )
+    return TriangleShelfResult(mesh=pf.nodes.to_mesh_object(geo))
+
+
 def triangle_shelf_rand(
     rng: pf.RNG,
     dimensions: pf.Vector | None = None,
@@ -741,7 +789,7 @@ def triangle_shelf_rand(
     if screw_material is None:
         screw_material = metal_brushed.metal_brushed_linear_rand(rng, vec)
 
-    geo = triangle_shelf_geometry(
+    geo = _triangle_shelf_geometry(
         dimensions=dimensions,
         leg_board_gap=leg_board_gap,
         leg_width=leg_width,

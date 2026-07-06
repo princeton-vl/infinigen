@@ -2,9 +2,9 @@
 
 This document gives examples of how to configure cameras in Infinigen for various computer vision tasks.
 
-### Example Commands
+## Example Commands
 
-##### Stereo Matching
+### Stereo Matching
 
 Generate many nature, scenes each with 1 stereo camera:
 ```bash
@@ -22,7 +22,7 @@ python -m infinigen.datagen.manage_jobs --output_folder outputs/stereo_indoors -
 
 We recommend 20+ cameras per indoor room since room generation is not view-dependent and can be rendered from many angles. This helps overall GPU utilization since many frames are rendered per scene generated. In nature scenes, the current camera code would place cameras very far apart, meaning visible content does not overlap and there is minimal benefit to simply increasing `n_camera_rigs` in nature scenes without also customizing their arrangement. Thus, if you wish to extract more stereo frames per nature scene, we recommend instead rendering a low fps video using the "Random Walk Videos" commands below. 
 
-##### Dynamic Camera Videos with RRT*
+### Dynamic Camera Videos with RRT*
 
 Nature video, dynamic & interesting camera motion:
 
@@ -52,7 +52,7 @@ In order to create dynamic and varied camera motion, use the `rrt_cam_indoors.gi
 In order to make the resultant motion easier/harder, modify the distributions of `AnimPolicyRRT.speed` or `AnimPolicyRRT.rot` in `rrt_cam_indoors.gin` and `rrt_cam_nature.gin`. For example, to restrict the rotation in the roll dimension, set `AnimPolicyRRT.rot = ('normal', 0, [0, 15, 15], 3)`
 
 
-##### Random Walk Videos
+### Random Walk Videos
 
 Nature video, slow & smooth random walk camera motion:
 ```bash
@@ -78,7 +78,7 @@ python -m infinigen.datagen.manage_jobs --output_folder outputs/video_slow_indoo
 
 :warning: Random walk camera generation is very unlikely to find paths between indoor rooms, and therefore will fail to generate long or fast moving videos for indoor scenes. We will followup soon with a pathfinding-based camera trajectory generator to handle these cases. 
 
-##### Multi-view Camera Arrangement (for Multiview Stereo, NeRF, etc.)
+### Multi-view Camera Arrangement (for Multiview Stereo, NeRF, etc.)
 
 Many tasks require cameras placed in a roughly circular arrangement. Below with some noise added to their angle, roll, pitch, and yaw with respect to the object.
 
@@ -104,7 +104,7 @@ Generate a dataset of nature scenes with 30 multiview cameras:
 python -m infinigen.datagen.manage_jobs --output_folder outputs/mvs_nature --num_scenes 30 --configs multiview_stereo.gin --pipeline_configs local_256GB.gin monocular.gin blender_gt.gin cuda_terrain.gin --overrides camera.spawn_camera_rigs.n_camera_rigs=30 compose_nature.animate_cameras_enabled=False --pipeline_overrides iterate_scene_tasks.n_camera_rigs=30
 ```
 
-##### Custom camera arrangement
+### Custom camera arrangement
 
 Camera poses can be easily manipulated using the Blender API to create any camera arrangement you wish
 

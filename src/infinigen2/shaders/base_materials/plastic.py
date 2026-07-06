@@ -11,16 +11,22 @@ from infinigen2.shaders.util import coord
 __all__ = [
     "bumpy_rubber",
     "plastic_black_rubberized",
+    "plastic_black_rubberized_preset",
     "plastic_black_translucent",
+    "plastic_black_translucent_preset",
     "plastic_grayscale_rand",
     "plastic_high_gloss",
     "plastic_opaque",
     "plastic_opaque_rand",
     "plastic_sandblasted",
     "plastic_soft_touch",
+    "plastic_tough_packaging",
+    "plastic_tough_packaging_preset",
     "plastic_translucent_bumps",
+    "plastic_translucent_bumps_preset",
     "plastic_translucent_rand",
     "plastic_white_textured",
+    "plastic_white_textured_preset",
 ]
 
 
@@ -274,20 +280,20 @@ def plastic_grayscale_rand(
     h = pf.random.uniform(rng, 0.0, 1.0)
     s = 0.0
     v = pf.random.log_uniform(rng, 0.02, 0.9)
-    color = pf.color.hsv_to_rgba((h, s, v))
-    return plastic_opaque_rand(rng, vector, color=color)
+    base_color = pf.color.hsv_to_rgba((h, s, v))
+    return plastic_opaque_rand(rng, vector, base_color=base_color)
 
 
 def plastic_opaque_rand(
     rng: pf.RNG,
     vector: pf.ProcNode[pf.Vector],
-    color: t.SocketOrVal[pf.Color | None] = None,
+    base_color: t.SocketOrVal[pf.Color | None] = None,
 ) -> pf.Material:
-    if color is None:
+    if base_color is None:
         h = pf.random.uniform(rng, 0.0, 1.0)
         s = pf.random.uniform(rng, 0.2, 0.8)
         v = pf.random.log_uniform(rng, 0.01, 0.8)
-        color = pf.color.hsv_to_rgba((h, s, v))
+        base_color = pf.color.hsv_to_rgba((h, s, v))
 
     roughness = pf.random.uniform(rng, 0.3, 1.0)
     specular = pf.random.uniform(rng, 0.1, 1.0)
@@ -307,13 +313,13 @@ def plastic_opaque_rand(
     color_1_value = pf.random.uniform(rng, 0.5, 1.0)
     color_1 = pf.nodes.color.hue_saturation(
         fac=1.0,
-        color=color,
+        color=base_color,
         value=color_1_value,
     )
     color_2_value = pf.random.uniform(rng, 0.9, 1.3)
     color_2 = pf.nodes.color.hue_saturation(
         fac=1.0,
-        color=color,
+        color=base_color,
         value=color_2_value,
     )
 
@@ -761,7 +767,7 @@ def _plastic_black_rubberized_rand(
 @pf.nodes.node_function
 def plastic_black_translucent(
     vector: pf.ProcNode[pf.Vector],
-    color: t.SocketOrVal[pf.Color] = pf.Color((0.113, 0.113, 0.113)),
+    base_color: t.SocketOrVal[pf.Color] = pf.Color((0.113, 0.113, 0.113)),
     roughness: t.SocketOrVal[float] = 0.01,
     ior: t.SocketOrVal[float] = 1.2,
     transmission: t.SocketOrVal[float] = 0.941667,
@@ -770,8 +776,8 @@ def plastic_black_translucent(
 ) -> pf.Material:
     return _plastic(
         vector=vector,
-        surface_color_1=color,
-        surface_color_2=color,
+        surface_color_1=base_color,
+        surface_color_2=base_color,
         surface_min_roughness=roughness,
         surface_max_roughness=roughness,
         surface_min_specular=1.0,
@@ -794,25 +800,25 @@ def plastic_black_translucent(
 def _plastic_black_translucent_rand(
     rng: pf.RNG,
     vector: pf.ProcNode[pf.Vector],
-    color: t.SocketOrVal[pf.Color | None] = None,
+    base_color: t.SocketOrVal[pf.Color | None] = None,
     roughness: t.SocketOrVal[float | None] = None,
     ior: t.SocketOrVal[float | None] = None,
     transmission: t.SocketOrVal[float | None] = None,
     noise_size: t.SocketOrVal[float | None] = None,
     noise_height: t.SocketOrVal[float | None] = None,
 ) -> pf.Material:
-    if color is None:
+    if base_color is None:
         h = pf.random.uniform(rng, 0.0, 1.0)
         s = pf.random.uniform(rng, 0.1, 0.4)
         v = pf.random.uniform(rng, 0.03, 0.12)
-        color = pf.color.hsv_to_rgba((h, s, v))
+        base_color = pf.color.hsv_to_rgba((h, s, v))
     else:
         h_offset = pf.random.uniform(rng, -0.03, 0.03)
         s_offset = pf.random.uniform(rng, -0.05, 0.05)
         v_offset = pf.random.uniform(rng, -0.05, 0.05)
-        color = pf.nodes.color.hue_saturation(
+        base_color = pf.nodes.color.hue_saturation(
             fac=1.0,
-            color=color,
+            color=base_color,
             hue=h_offset + 0.5,
             saturation=s_offset + 1.0,
             value=v_offset + 1.0,
@@ -830,7 +836,7 @@ def _plastic_black_translucent_rand(
 
     return plastic_black_translucent(
         vector=vector,
-        color=color,
+        base_color=base_color,
         roughness=roughness,
         ior=ior,
         transmission=transmission,
@@ -842,7 +848,7 @@ def _plastic_black_translucent_rand(
 @pf.nodes.node_function
 def plastic_soft_touch(
     vector: pf.ProcNode[pf.Vector],
-    color: t.SocketOrVal[pf.Color] = pf.Color((0.761, 0.788, 0.391)),
+    base_color: t.SocketOrVal[pf.Color] = pf.Color((0.761, 0.788, 0.391)),
     roughness: t.SocketOrVal[float] = 0.25,
     specular: t.SocketOrVal[float] = 0.4,
     ior: t.SocketOrVal[float] = 1.33,
@@ -852,8 +858,8 @@ def plastic_soft_touch(
 ) -> pf.Material:
     return _plastic(
         vector=vector,
-        surface_color_1=color,
-        surface_color_2=color,
+        surface_color_1=base_color,
+        surface_color_2=base_color,
         surface_min_roughness=roughness,
         surface_max_roughness=roughness,
         surface_min_specular=specular,
@@ -876,7 +882,7 @@ def plastic_soft_touch(
 def _plastic_soft_touch_rand(
     rng: pf.RNG,
     vector: pf.ProcNode[pf.Vector],
-    color: t.SocketOrVal[pf.Color | None] = None,
+    base_color: t.SocketOrVal[pf.Color | None] = None,
     roughness: t.SocketOrVal[float | None] = None,
     specular: t.SocketOrVal[float | None] = None,
     ior: t.SocketOrVal[float | None] = None,
@@ -884,18 +890,18 @@ def _plastic_soft_touch_rand(
     noise_detail: t.SocketOrVal[float | None] = None,
     noise_seed: t.SocketOrVal[float | None] = None,
 ) -> pf.Material:
-    if color is None:
+    if base_color is None:
         h = pf.random.uniform(rng, 0.0, 1.0)
         s = pf.random.uniform(rng, 0.2, 0.6)
         v = pf.random.uniform(rng, 0.25, 0.55)
-        color = pf.color.hsv_to_rgba((h, s, v))
+        base_color = pf.color.hsv_to_rgba((h, s, v))
     else:
         h_offset = pf.random.uniform(rng, -0.05, 0.05)
         s_offset = pf.random.uniform(rng, -0.1, 0.1)
         v_offset = pf.random.uniform(rng, -0.15, 0.15)
-        color = pf.nodes.color.hue_saturation(
+        base_color = pf.nodes.color.hue_saturation(
             fac=1.0,
-            color=color,
+            color=base_color,
             hue=h_offset + 0.5,
             saturation=s_offset + 1.0,
             value=v_offset + 1.0,
@@ -915,7 +921,7 @@ def _plastic_soft_touch_rand(
 
     return plastic_soft_touch(
         vector=vector,
-        color=color,
+        base_color=base_color,
         roughness=roughness,
         specular=specular,
         ior=ior,
@@ -928,7 +934,7 @@ def _plastic_soft_touch_rand(
 @pf.nodes.node_function
 def plastic_sandblasted(
     vector: pf.ProcNode[pf.Vector],
-    color: t.SocketOrVal[pf.Color] = pf.Color((0.064, 0.055, 0.012)),
+    base_color: t.SocketOrVal[pf.Color] = pf.Color((0.064, 0.055, 0.012)),
     roughness: t.SocketOrVal[float] = 0.4,
     specular: t.SocketOrVal[float] = 0.2,
     ior: t.SocketOrVal[float] = 1.33,
@@ -938,8 +944,8 @@ def plastic_sandblasted(
 ) -> pf.Material:
     return _plastic(
         vector=vector,
-        surface_color_1=color,
-        surface_color_2=color,
+        surface_color_1=base_color,
+        surface_color_2=base_color,
         surface_min_roughness=roughness,
         surface_max_roughness=roughness,
         surface_min_specular=specular,
@@ -962,7 +968,7 @@ def plastic_sandblasted(
 def _plastic_sandblasted_rand(
     rng: pf.RNG,
     vector: pf.ProcNode[pf.Vector],
-    color: t.SocketOrVal[pf.Color | None] = None,
+    base_color: t.SocketOrVal[pf.Color | None] = None,
     roughness: t.SocketOrVal[float | None] = None,
     specular: t.SocketOrVal[float | None] = None,
     ior: t.SocketOrVal[float | None] = None,
@@ -970,18 +976,18 @@ def _plastic_sandblasted_rand(
     noise_detail: t.SocketOrVal[float | None] = None,
     noise_height: t.SocketOrVal[float | None] = None,
 ) -> pf.Material:
-    if color is None:
+    if base_color is None:
         h = pf.random.uniform(rng, 0.0, 1.0)
         s = pf.random.uniform(rng, 0.1, 0.5)
         v = pf.random.uniform(rng, 0.15, 0.5)
-        color = pf.color.hsv_to_rgba((h, s, v))
+        base_color = pf.color.hsv_to_rgba((h, s, v))
     else:
         h_offset = pf.random.uniform(rng, -0.05, 0.05)
         s_offset = pf.random.uniform(rng, -0.1, 0.1)
         v_offset = pf.random.uniform(rng, -0.15, 0.15)
-        color = pf.nodes.color.hue_saturation(
+        base_color = pf.nodes.color.hue_saturation(
             fac=1.0,
-            color=color,
+            color=base_color,
             hue=h_offset + 0.5,
             saturation=s_offset + 1.0,
             value=v_offset + 1.0,
@@ -1001,7 +1007,7 @@ def _plastic_sandblasted_rand(
 
     return plastic_sandblasted(
         vector=vector,
-        color=color,
+        base_color=base_color,
         roughness=roughness,
         specular=specular,
         ior=ior,
@@ -1014,7 +1020,7 @@ def _plastic_sandblasted_rand(
 @pf.nodes.node_function
 def plastic_high_gloss(
     vector: pf.ProcNode[pf.Vector],
-    color: t.SocketOrVal[pf.Color] = pf.Color((0.66, 0.788, 0.393)),
+    base_color: t.SocketOrVal[pf.Color] = pf.Color((0.66, 0.788, 0.393)),
     roughness: t.SocketOrVal[float] = 0.25,
     specular: t.SocketOrVal[float] = 0.4,
     ior: t.SocketOrVal[float] = 1.33,
@@ -1025,8 +1031,8 @@ def plastic_high_gloss(
 ) -> pf.Material:
     return _plastic(
         vector=vector,
-        surface_color_1=color,
-        surface_color_2=color,
+        surface_color_1=base_color,
+        surface_color_2=base_color,
         surface_min_roughness=roughness,
         surface_max_roughness=roughness,
         surface_min_specular=specular,
@@ -1049,7 +1055,7 @@ def plastic_high_gloss(
 def _plastic_high_gloss_rand(
     rng: pf.RNG,
     vector: pf.ProcNode[pf.Vector],
-    color: t.SocketOrVal[pf.Color | None] = None,
+    base_color: t.SocketOrVal[pf.Color | None] = None,
     roughness: t.SocketOrVal[float | None] = None,
     specular: t.SocketOrVal[float | None] = None,
     ior: t.SocketOrVal[float | None] = None,
@@ -1058,18 +1064,18 @@ def _plastic_high_gloss_rand(
     noise_detail: t.SocketOrVal[float | None] = None,
     noise_seed: t.SocketOrVal[float | None] = None,
 ) -> pf.Material:
-    if color is None:
+    if base_color is None:
         h = pf.random.uniform(rng, 0.0, 1.0)
         s = pf.random.uniform(rng, 0.3, 0.7)
         v = pf.random.uniform(rng, 0.5, 0.85)
-        color = pf.color.hsv_to_rgba((h, s, v))
+        base_color = pf.color.hsv_to_rgba((h, s, v))
     else:
         h_offset = pf.random.uniform(rng, -0.05, 0.05)
         s_offset = pf.random.uniform(rng, -0.1, 0.1)
         v_offset = pf.random.uniform(rng, -0.15, 0.15)
-        color = pf.nodes.color.hue_saturation(
+        base_color = pf.nodes.color.hue_saturation(
             fac=1.0,
-            color=color,
+            color=base_color,
             hue=h_offset + 0.5,
             saturation=s_offset + 1.0,
             value=v_offset + 1.0,
@@ -1091,7 +1097,7 @@ def _plastic_high_gloss_rand(
 
     return plastic_high_gloss(
         vector=vector,
-        color=color,
+        base_color=base_color,
         roughness=roughness,
         specular=specular,
         ior=ior,
@@ -1105,7 +1111,7 @@ def _plastic_high_gloss_rand(
 @pf.nodes.node_function
 def plastic_translucent_bumps(
     vector: pf.ProcNode[pf.Vector],
-    color: t.SocketOrVal[pf.Color] = pf.Color((0.621, 0.069, 0.069)),
+    base_color: t.SocketOrVal[pf.Color] = pf.Color((0.621, 0.069, 0.069)),
     roughness: t.SocketOrVal[float] = 0.01,
     ior: t.SocketOrVal[float] = 1.3,
     transmission: t.SocketOrVal[float] = 1.0,
@@ -1114,8 +1120,8 @@ def plastic_translucent_bumps(
 ) -> pf.Material:
     return _plastic(
         vector=vector,
-        surface_color_1=color,
-        surface_color_2=color,
+        surface_color_1=base_color,
+        surface_color_2=base_color,
         surface_min_roughness=roughness,
         surface_max_roughness=roughness * 2.0,
         surface_min_specular=0.5,
@@ -1138,25 +1144,25 @@ def plastic_translucent_bumps(
 def _plastic_translucent_bumps_rand(
     rng: pf.RNG,
     vector: pf.ProcNode[pf.Vector],
-    color: t.SocketOrVal[pf.Color | None] = None,
+    base_color: t.SocketOrVal[pf.Color | None] = None,
     roughness: t.SocketOrVal[float | None] = None,
     ior: t.SocketOrVal[float | None] = None,
     transmission: t.SocketOrVal[float | None] = None,
     noise_size: t.SocketOrVal[float | None] = None,
     noise_height: t.SocketOrVal[float | None] = None,
 ) -> pf.Material:
-    if color is None:
+    if base_color is None:
         h = pf.random.uniform(rng, 0.0, 1.0)
         s = pf.random.uniform(rng, 0.3, 1.0)
         v = pf.random.uniform(rng, 0.5, 0.95)
-        color = pf.color.hsv_to_rgba((h, s, v))
+        base_color = pf.color.hsv_to_rgba((h, s, v))
     else:
         h_offset = pf.random.uniform(rng, -0.05, 0.05)
         s_offset = pf.random.uniform(rng, -0.1, 0.1)
         v_offset = pf.random.uniform(rng, -0.15, 0.15)
-        color = pf.nodes.color.hue_saturation(
+        base_color = pf.nodes.color.hue_saturation(
             fac=1.0,
-            color=color,
+            color=base_color,
             hue=h_offset + 0.5,
             saturation=s_offset + 1.0,
             value=v_offset + 1.0,
@@ -1174,7 +1180,7 @@ def _plastic_translucent_bumps_rand(
 
     return plastic_translucent_bumps(
         vector=vector,
-        color=color,
+        base_color=base_color,
         roughness=roughness,
         ior=ior,
         transmission=transmission,
@@ -1186,7 +1192,7 @@ def _plastic_translucent_bumps_rand(
 @pf.nodes.node_function
 def plastic_white_textured(
     vector: pf.ProcNode[pf.Vector],
-    color: t.SocketOrVal[pf.Color] = pf.Color((0.319, 0.319, 0.319)),
+    base_color: t.SocketOrVal[pf.Color] = pf.Color((0.319, 0.319, 0.319)),
     roughness_min: t.SocketOrVal[float] = 0.4,
     roughness_max: t.SocketOrVal[float] = 0.5,
     specular_min: t.SocketOrVal[float] = 0.642132,
@@ -1199,8 +1205,8 @@ def plastic_white_textured(
 ) -> pf.Material:
     return _plastic(
         vector=vector,
-        surface_color_1=color,
-        surface_color_2=color,
+        surface_color_1=base_color,
+        surface_color_2=base_color,
         surface_min_roughness=roughness_min,
         surface_max_roughness=roughness_max,
         surface_min_specular=specular_min,
@@ -1223,7 +1229,7 @@ def plastic_white_textured(
 def _plastic_white_textured_rand(
     rng: pf.RNG,
     vector: pf.ProcNode[pf.Vector],
-    color: t.SocketOrVal[pf.Color | None] = None,
+    base_color: t.SocketOrVal[pf.Color | None] = None,
     roughness_min: t.SocketOrVal[float | None] = None,
     roughness_max: t.SocketOrVal[float | None] = None,
     specular_min: t.SocketOrVal[float | None] = None,
@@ -1234,18 +1240,18 @@ def _plastic_white_textured_rand(
     noise_height: t.SocketOrVal[float | None] = None,
     noise_seed: t.SocketOrVal[float | None] = None,
 ) -> pf.Material:
-    if color is None:
+    if base_color is None:
         h = pf.random.uniform(rng, 0.0, 1.0)
         s = pf.random.uniform(rng, 0.0, 0.2)
         v = pf.random.uniform(rng, 0.85, 0.98)
-        color = pf.color.hsv_to_rgba((h, s, v))
+        base_color = pf.color.hsv_to_rgba((h, s, v))
     else:
         h_offset = pf.random.uniform(rng, -0.05, 0.05)
         s_offset = pf.random.uniform(rng, -0.1, 0.1)
         v_offset = pf.random.uniform(rng, -0.1, 0.1)
-        color = pf.nodes.color.hue_saturation(
+        base_color = pf.nodes.color.hue_saturation(
             fac=1.0,
-            color=color,
+            color=base_color,
             hue=h_offset + 0.5,
             saturation=s_offset + 1.0,
             value=v_offset + 1.0,
@@ -1271,7 +1277,7 @@ def _plastic_white_textured_rand(
 
     return plastic_white_textured(
         vector=vector,
-        color=color,
+        base_color=base_color,
         roughness_min=roughness_min,
         roughness_max=roughness_max,
         specular_min=specular_min,
@@ -1282,3 +1288,57 @@ def _plastic_white_textured_rand(
         noise_height=noise_height,
         noise_seed=noise_seed,
     )
+
+
+@pf.nodes.node_function
+def plastic_tough_packaging(
+    vector: pf.ProcNode[pf.Vector],
+    base_color: t.SocketOrVal[pf.Color] = pf.Color((0.760727, 0.787818, 0.391346)),
+    roughness: t.SocketOrVal[float] = 0.25,
+    specular: t.SocketOrVal[float] = 0.4,
+    ior: t.SocketOrVal[float] = 1.33,
+    noise_size: t.SocketOrVal[float] = 1.0,
+    noise_detail: t.SocketOrVal[float] = 3.0,
+    noise_seed: t.SocketOrVal[float] = 0.0,
+) -> pf.Material:
+    return _plastic(
+        vector=vector,
+        surface_color_1=base_color,
+        surface_color_2=base_color,
+        surface_min_roughness=roughness,
+        surface_max_roughness=roughness,
+        surface_min_specular=specular,
+        surface_max_specular=specular,
+        surface_ior=ior,
+        surface_transmission=0.0,
+        subsurface_weight=0.0,
+        subsurface_radius=(1.0, 0.2, 0.1),
+        subsurface_scale=0.05,
+        subsurface_anisotropy=0.0,
+        noise_size=noise_size,
+        noise_detail=noise_detail,
+        noise_distortion_strength=1.0,
+        noise_distortion_size=1.0,
+        noise_height=1.0,
+        noise_seed=noise_seed,
+    )
+
+
+def plastic_black_rubberized_preset(vector: pf.ProcNode[pf.Vector]) -> pf.Material:
+    return plastic_black_rubberized(vector=vector)
+
+
+def plastic_black_translucent_preset(vector: pf.ProcNode[pf.Vector]) -> pf.Material:
+    return plastic_black_translucent(vector=vector)
+
+
+def plastic_tough_packaging_preset(vector: pf.ProcNode[pf.Vector]) -> pf.Material:
+    return plastic_tough_packaging(vector=vector)
+
+
+def plastic_translucent_bumps_preset(vector: pf.ProcNode[pf.Vector]) -> pf.Material:
+    return plastic_translucent_bumps(vector=vector)
+
+
+def plastic_white_textured_preset(vector: pf.ProcNode[pf.Vector]) -> pf.Material:
+    return plastic_white_textured(vector=vector)

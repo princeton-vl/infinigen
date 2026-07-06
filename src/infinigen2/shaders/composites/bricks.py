@@ -6,6 +6,14 @@
 import numpy as np
 import procfunc as pf
 
+from infinigen2.shaders.base_materials import (
+    brick_concrete,
+    concrete,
+    granite,
+    marble,
+    paint,
+    stone_smooth,
+)
 from infinigen2.shaders.displacements import masonry
 from infinigen2.shaders.masks import brick_selector, cracks
 from infinigen2.shaders.masks.brick_cutter import (
@@ -15,23 +23,29 @@ from infinigen2.shaders.masks.brick_cutter import (
     brick_dimensions_rand,
 )
 from infinigen2.shaders.masks.tile_shapes import tile_mask_rand
-from infinigen2.shaders.materials import (
-    brick_concrete,
-    concrete,
-    granite,
-    marble,
-    paint,
-    stone_smooth,
-)
 
 __all__ = [
     "brick_color_pattern_rand",
+    "brick_masonry_brown_preset",
+    "brick_masonry_granite_preset",
+    "brick_masonry_sharp_preset",
     "brick_shader_composite_rand",
+    "bricks_checkered_preset",
+    "bricks_checkered_sparse_preset",
+    "bricks_cobble_preset",
+    "bricks_grey_preset",
+    "bricks_grey_rounded_preset",
     "bricks_masonry_rand",
+    "bricks_paint_bumpy_preset",
     "bricks_paint_rand",
-    "bricks_presets",
+    "bricks_paint_spots_preset",
+    "bricks_paint_strokes_preset",
+    "bricks_paint_worn_preset",
     "bricks_pristine_rand",
     "bricks_rand",
+    "bricks_red_concave_preset",
+    "bricks_red_preset",
+    "bricks_striped_preset",
 ]
 
 
@@ -57,7 +71,7 @@ def bricks_red_concave_preset(
     )
     brick_concrete_result = brick_concrete.brick_concrete(
         vector=vector,
-        color=pf.Color((0.217, 0.197, 0.194)),
+        base_color=pf.Color((0.217, 0.197, 0.194)),
         roughness=0.847,
         specular_ior_level=0.1941,
         stretch_x=1.34,
@@ -86,7 +100,7 @@ def bricks_red_concave_preset(
 
     brick_concrete_result_1 = brick_concrete.brick_concrete(
         vector=brick_cutter_result.vector,
-        color=surface_color,
+        base_color=surface_color,
         roughness=0.847,
         specular_ior_level=0.1941,
         stretch_x=1.34,
@@ -146,7 +160,7 @@ def bricks_red_preset(
     )
     brick_concrete_result = brick_concrete.brick_concrete(
         vector=vector,
-        color=pf.Color((0.217, 0.197, 0.194)),
+        base_color=pf.Color((0.217, 0.197, 0.194)),
         roughness=0.847,
         specular_ior_level=0.1941,
         stretch_x=1.54,
@@ -175,7 +189,7 @@ def bricks_red_preset(
 
     brick_concrete_result_1 = brick_concrete.brick_concrete(
         vector=brick_cutter_result.vector,
-        color=surface_color,
+        base_color=surface_color,
         roughness=0.847,
         specular_ior_level=0.1941,
         stretch_x=1.34,
@@ -234,7 +248,7 @@ def bricks_grey_rounded_preset(
         grout_bevel_concavity=1.0,
     )
     brick_concrete_result = brick_concrete.brick_concrete(
-        color=pf.Color((0.093, 0.084, 0.084)),
+        base_color=pf.Color((0.093, 0.084, 0.084)),
         roughness=0.847,
         specular_ior_level=0.1941,
         stretch_x=1.34,
@@ -265,7 +279,7 @@ def bricks_grey_rounded_preset(
 
     brick_concrete_result_1 = brick_concrete.brick_concrete(
         vector=brick_cutter_result.vector,
-        color=surface_color,
+        base_color=surface_color,
         roughness=0.847,
         specular_ior_level=0.1941,
         stretch_x=1.34,
@@ -328,7 +342,7 @@ def bricks_grey_preset(
     )
     brick_concrete_result = brick_concrete.brick_concrete(
         vector=vector,
-        color=pf.Color((0.093, 0.084, 0.084)),
+        base_color=pf.Color((0.093, 0.084, 0.084)),
         roughness=0.847,
         specular_ior_level=0.1941,
         stretch_x=1.34,
@@ -358,7 +372,7 @@ def bricks_grey_preset(
 
     brick_concrete_result_1 = brick_concrete.brick_concrete(
         vector=brick_cutter_result.vector,
-        color=surface_color,
+        base_color=surface_color,
         roughness=0.847,
         specular_ior_level=0.1941,
         stretch_x=1.34,
@@ -605,7 +619,7 @@ def brick_masonry_brown_preset(
 
     brick_concrete_result = brick_concrete.brick_concrete(
         vector=brick_cutter_result.vector,
-        color=pf.Color((0.294, 0.19, 0.126)),
+        base_color=pf.Color((0.294, 0.19, 0.126)),
         roughness=0.7,
         specular_ior_level=0.1,
         color_noise_1_spread=0.8,
@@ -688,7 +702,7 @@ def bricks_checkered_sparse_preset(
 
     brick_concrete_result = brick_concrete.brick_concrete(
         vector=brick_cutter_result.vector,
-        color=displacement_color,
+        base_color=displacement_color,
         roughness=0.9409,
         specular_ior_level=0.0753,
         color_noise_1_spread=0.8,
@@ -754,7 +768,7 @@ def bricks_checkered_preset(
 
     brick_concrete_result = brick_concrete.brick_concrete(
         vector=brick_cutter_result.vector,
-        color=displacement_color,
+        base_color=displacement_color,
         roughness=0.9409,
         specular_ior_level=0.0753,
         color_noise_1_spread=0.8,
@@ -818,7 +832,7 @@ def bricks_striped_preset(
 
     brick_concrete_result = brick_concrete.brick_concrete(
         vector=brick_cutter_result.vector,
-        color=displacement_color,
+        base_color=displacement_color,
         roughness=0.9409,
         specular_ior_level=0.0753,
         color_noise_1_spread=0.8,
@@ -883,7 +897,7 @@ def bricks_paint_strokes_preset(
     )
     brick_concrete_result = brick_concrete.brick_concrete(
         vector=vector,
-        color=pf.Color((0.217, 0.197, 0.194)),
+        base_color=pf.Color((0.217, 0.197, 0.194)),
         roughness=0.847,
         specular_ior_level=0.1941,
         stretch_x=1.34,
@@ -912,7 +926,7 @@ def bricks_paint_strokes_preset(
 
     brick_concrete_result_1 = brick_concrete.brick_concrete(
         vector=brick_cutter_result.vector,
-        color=displacement_color,
+        base_color=displacement_color,
         roughness=0.847,
         specular_ior_level=0.1941,
         stretch_x=1.34,
@@ -988,7 +1002,7 @@ def bricks_paint_spots_preset(
     )
     brick_concrete_result = brick_concrete.brick_concrete(
         vector=vector,
-        color=pf.Color((0.217, 0.197, 0.194)),
+        base_color=pf.Color((0.217, 0.197, 0.194)),
         roughness=0.847,
         specular_ior_level=0.1941,
         stretch_x=1.34,
@@ -1017,7 +1031,7 @@ def bricks_paint_spots_preset(
 
     brick_concrete_result_1 = brick_concrete.brick_concrete(
         vector=brick_cutter_result.vector,
-        color=displacement_color,
+        base_color=displacement_color,
         roughness=0.847,
         specular_ior_level=0.1941,
         stretch_x=1.34,
@@ -1072,7 +1086,7 @@ def bricks_paint_worn_preset(
     )
     brick_concrete_result = brick_concrete.brick_concrete(
         vector=vector,
-        color=pf.Color((0.217, 0.197, 0.194)),
+        base_color=pf.Color((0.217, 0.197, 0.194)),
         roughness=0.847,
         specular_ior_level=0.1941,
         stretch_x=1.34,
@@ -1101,7 +1115,7 @@ def bricks_paint_worn_preset(
 
     brick_concrete_result_1 = brick_concrete.brick_concrete(
         vector=brick_cutter_result.vector,
-        color=surface_color,
+        base_color=surface_color,
         roughness=0.847,
         specular_ior_level=0.1941,
         stretch_x=1.34,
@@ -1217,33 +1231,6 @@ def bricks_paint_bumpy_preset(
     )
 
 
-def bricks_presets(
-    rng: pf.RNG,
-    vector: pf.ProcNode[pf.Vector],
-) -> pf.Material:
-    func = pf.control.choice(
-        rng,
-        [
-            (bricks_red_concave_preset, 1.0),
-            (bricks_red_preset, 1.0),
-            (bricks_grey_rounded_preset, 1.0),
-            (bricks_grey_preset, 1.0),
-            (bricks_cobble_preset, 1.0),
-            (brick_masonry_sharp_preset, 1.0),
-            (brick_masonry_granite_preset, 1.0),
-            (brick_masonry_brown_preset, 1.0),
-            (bricks_checkered_sparse_preset, 1.0),
-            (bricks_checkered_preset, 1.0),
-            (bricks_striped_preset, 1.0),
-            (bricks_paint_strokes_preset, 1.0),
-            (bricks_paint_spots_preset, 1.0),
-            (bricks_paint_worn_preset, 1.0),
-            (bricks_paint_bumpy_preset, 1.0),
-        ],
-    )
-    return func(vector=vector)
-
-
 def brick_color_pattern_rand(
     rng: pf.RNG,
     vector: pf.ProcNode[pf.Vector],
@@ -1324,7 +1311,7 @@ def brick_shader_composite_rand(
     with_color = pf.control.choice(
         rng,
         [
-            # TODO: more materials with the `color` argument
+            # TODO: more materials with the `base_color` argument
             (brick_concrete.brick_concrete_rand, 2.0),
         ],
     )
@@ -1332,7 +1319,7 @@ def brick_shader_composite_rand(
     no_color = pf.control.choice(
         rng,
         [
-            # TODO: more materials with no `color` argument
+            # TODO: more materials with no `base_color` argument
             (granite.granite_rand, 1.0),
             (stone_smooth.stone_smooth_rand, 0.5),
             (concrete.concrete_rand, 1.0),
@@ -1340,7 +1327,7 @@ def brick_shader_composite_rand(
     )
 
     color_pattern = brick_color_pattern_rand(rng, vector, brick_id, brick_random)
-    mat_with_pattern = with_color(rng, vector, color=color_pattern)
+    mat_with_pattern = with_color(rng, vector, base_color=color_pattern)
     mat_no_pattern = no_color(rng, vector)
     return pf.control.choice(
         rng,
@@ -1485,7 +1472,7 @@ def bricks_masonry_rand(
         grout_color = pf.color.hsv_to_rgba(color_hsv)
 
         grout_shader = brick_concrete.brick_concrete_grout_rand(
-            r3, vector, color=grout_color
+            r3, vector, base_color=grout_color
         )
 
     surface = pf.nodes.shader.mix_shader(

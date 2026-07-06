@@ -170,7 +170,7 @@ def iterate_scene_tasks(
     This function is a generator which yields all scenes we might want to consider
     monitoring or running for a particular scene
 
-    It `yield`s the available scenes, regardless of whether they are already running etc
+    It yields the available scenes, regardless of whether they are already running etc
     """
 
     for task in global_tasks + view_dependent_tasks + camera_dependent_tasks:

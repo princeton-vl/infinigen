@@ -1,6 +1,6 @@
-## Exporting to Robotics Simulators
+# Exporting to Robotics Simulators
 
-### Exporting Articulated Objects
+## Exporting Articulated Objects
 
 To export articulated assets to the MJCF/URDF/USD file formats, we provide the following command.
 
@@ -21,7 +21,7 @@ For instance, to generate 10 instances of all available assets in the MJCF file 
 
 To view the most updated list of included articulated assets, please see `OBJECT_CLASS_MAP` in `infinigen/assets/sim_objects/mapping.py`. Each key in the map corresponds to an articulated asset. Note that `singlefridge` and `doublefridge` are used by `multifridge` and `multidoublefridge` and are not meant to be used on their own.
 
-### Exporting Infinigen-Indoors Scenes
+## Exporting Infinigen-Indoors Scenes
 
 This section details how to run a robotics simulation in an exported Infinigen scene using NVIDIA IsaacSim. For more information on scene generation or export, refer to [Hello Room](HelloRoom.md) or [Exporting to External File Formats](./ExportingToExternalFileFormats.md).
 
@@ -30,7 +30,7 @@ This section details how to run a robotics simulation in an exported Infinigen s
 First, create and export a scene with the commands below:
 
 ```bash
-python -m infinigen_examples.generate_indoors --seed 0 --task coarse --output_folder outputs/indoors/coarse -g overhead_singleroom.gin -p compose_indoors.terrain_enabled=False  restrict_solving.solve_max_rooms=1 
+python -m infinigen_examples.generate_indoors --seed 0 --task coarse --output_folder outputs/indoors/coarse -g overhead singleroom -p compose_indoors.terrain_enabled=False  restrict_solving.solve_max_rooms=1 
 ```
 
 ```bash

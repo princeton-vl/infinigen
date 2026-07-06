@@ -25,6 +25,7 @@ from pathlib import Path
 from typing import Any, Callable
 import bpy
 import numpy as np
+from infinigen2 import list as list_command
 
 os.environ["OPENCV_IO_ENABLE_OPENEXR"] = "1"
 # ruff: noqa: E402
@@ -72,8 +73,26 @@ def get_parser():
 
     parser.add_argument(
         "generators",
-        nargs="+",
+        nargs="*",
         type=str,
+        help=(
+            "Any sequence of generators to run, e.g. "
+            "`bricks_rand material_sphere render_cycles`. The CLI chains generators "
+            "together by connecting outputs to inputs. See the documentation for "
+            "function names, or run `infinigen2 --list` for a list."
+        ),
+    )
+    parser.add_argument(
+        "--list",
+        nargs="*",
+        default=None,
+        metavar="CATEGORY",
+        help=(
+            "List the available generators and exit, optionally filtering by category "
+            "(e.g. `infinigen2 --list Scene`). Categories are case-insensitive. For "
+            "more listing options (presets, custom columns, filtering) run "
+            "`python -m infinigen2.list`."
+        ),
     )
 
     parser.add_argument(
@@ -238,6 +257,10 @@ def _resolve_generator(name: str) -> tuple[Callable, str]:
         raise ValueError(
             f"Multiple generators found for {name}: {matches['name'].values}"
         )
+
+    presets = {n.rsplit(".", 1)[-1]: n for n in list_command.preset_dotted_names()}
+    if name in presets:
+        return import_item(presets[name]), "Material"
 
     category = next(
         (
@@ -453,10 +476,19 @@ def _execute_step(
     return result
 
 
+def _as_material(result: Any) -> pf.Material:
+    if isinstance(result, pf.Material):
+        return result
+    surface = getattr(result, "surface", None)
+    if surface is not None:
+        return pf.Material(surface=surface, displacement=result.displacement)
+    return pf.Material(surface=pf.nodes.shader.diffuse_bsdf(color=result))
+
+
 def _unpack_by_category(category: str, result, data: dict):
     match category:
         case "Material" | "MaterialOverlay":
-            data["material"] = result
+            data["material"] = _as_material(result)
         case "Mask":
             data["mask"] = result.mask
             data["material"] = pf.Material(
@@ -477,6 +509,10 @@ def _unpack_by_category(category: str, result, data: dict):
                 data["floor"] = result.floor
             if getattr(result, "dimensions", None) is not None:
                 data["dimensions"] = result.dimensions
+        case "Environment":
+            if result.environment is not None:
+                data["environment"] = result.environment
+            data["lights"] += result.lights
         case "Exporter":
             data["exports"] = data["exports"] + [result]
         case "Cameras":
@@ -498,6 +534,10 @@ def execute_generators(
     data["objects"] = []
     data["cameras"] = []
     data["output_folder"] = output_folder
+
+    # Conservative box near origin so an Environment step (which runs before any demo
+    # object exists) places lights near a small demo asset, not across a huge default.
+    data.setdefault("bbox", (np.array([-1.5, -1.5, 0.3]), np.array([1.5, 1.5, 2.5])))
 
     uv_generators = {
         "material_torus_uv",
@@ -611,6 +651,17 @@ def _configure_log_level(args):
 def _main():  # noqa: C901
     parser = get_parser()
     args = parser.parse_args()
+
+    if args.list is not None:
+        forwarded = ["--columns", "shortname"]
+        if args.list:
+            forwarded += ["--categories", *args.list]
+        sys.argv = [sys.argv[0], *forwarded]
+        list_command.main()
+        return
+
+    if not args.generators:
+        parser.error("the following arguments are required: generators")
 
     args.output.mkdir(parents=True, exist_ok=True)
     _configure_log_level(args)

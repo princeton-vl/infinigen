@@ -13,6 +13,8 @@ _TEMPLATES = {
     "--passes rgb -r 512 512 -s 128",
     "Scene": "infinigen2 {short} render_cycles --seed {seed} "
     "--passes rgb -r 480 480 -s 256",
+    "Environment": "infinigen2 {short} material_monkey render_cycles --seed {seed} "
+    "--passes rgb -r 512 512 -s 128",
 }
 
 

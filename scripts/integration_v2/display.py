@@ -5,6 +5,7 @@
 
 """Display module: transform collected data into template-ready structures."""
 
+import json
 import math
 import os
 from concurrent.futures import ThreadPoolExecutor
@@ -212,6 +213,58 @@ def render_row(
     }
 
 
+def _archive_preset_parents(collection_results: list) -> dict | None:
+    for result in collection_results:
+        path = result.version_path / "preset_parents.json"
+        if not path.exists():
+            continue
+        try:
+            return json.loads(path.read_text())
+        except (OSError, ValueError):
+            return {}
+    return None
+
+
+def _preset_parents(collection_results: list) -> dict:
+    """Preset -> parent-generator map. Prefer the `preset_parents.json` written into
+    a render archive at launch time (the web server runs a minimal env without
+    infinigen2); fall back to importing infinigen2 when running against a checkout,
+    then to no grouping."""
+    archived = _archive_preset_parents(collection_results)
+    if archived is not None:
+        return archived
+    try:
+        from infinigen2.list import preset_parents
+
+        return preset_parents()
+    except Exception:
+        return {}
+
+
+def _append_preset_images(target: dict, source: dict, label: str) -> None:
+    for target_obj, preset_obj in zip(target["objects"], source["objects"]):
+        target_obj["images"].extend(
+            {**img, "is_preset": True, "label": label} for img in preset_obj["images"]
+        )
+
+
+def _fold_presets(rows: list[dict], parents: dict) -> list[dict]:
+    """Fold each `*_preset` asset row into its parent generator row as `is_preset`
+    images, so presets render on one line beneath their _rand instead of as their
+    own rows. Presets whose parent isn't present stay as standalone rows."""
+    by_name = {row["asset"]: row for row in rows}
+    folded = set()
+    for row in rows:
+        if row["asset_type"] != "preset":
+            continue
+        target = by_name.get(parents.get(row["asset"]))
+        if target is None:
+            continue
+        _append_preset_images(target, row, row["asset"].removesuffix("_preset"))
+        folded.add(row["asset"])
+    return [row for row in rows if row["asset"] not in folded]
+
+
 def build_comparison_data(
     collection_results: list, version_names: list[str]
 ) -> list[dict]:
@@ -227,6 +280,8 @@ def build_comparison_data(
         rows.append(
             render_row(asset_name, asset_type, collection_results, version_names)
         )
+
+    rows = _fold_presets(rows, _preset_parents(collection_results))
 
     if len(version_names) == 2:
         rows.sort(

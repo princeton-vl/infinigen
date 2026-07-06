@@ -18,13 +18,13 @@ __all__ = [
 @pf.nodes.node_function
 def ceramic(
     vector: t.SocketOrVal[pf.Vector],
-    color: t.SocketOrVal[pf.Color],
+    base_color: t.SocketOrVal[pf.Color],
     roughness: t.SocketOrVal[float] = 0.3,
     displacement_height: t.SocketOrVal[float] = 0.002,
     displacement_scale: t.SocketOrVal[float] = 3.0,
 ) -> pf.Material:
     surface = pf.nodes.shader.principled_bsdf(
-        base_color=color,
+        base_color=base_color,
         roughness=roughness,
         subsurface_scale=1.0,
         subsurface_anisotropy=0.0,
@@ -59,12 +59,12 @@ def ceramic_color_rand(rng: pf.RNG) -> pf.Color:
 def ceramic_rand(
     rng: pf.RNG,
     vector: pf.ProcNode[pf.Vector],
-    color: t.SocketOrVal[pf.Color] | None = None,
+    base_color: t.SocketOrVal[pf.Color] | None = None,
     displacement_height: t.SocketOrVal[float] | None = None,
     roughness: t.SocketOrVal[float] | None = None,
 ) -> pf.Material:
-    if color is None:
-        color = ceramic_color_rand(rng)
+    if base_color is None:
+        base_color = ceramic_color_rand(rng)
     if roughness is None:
         roughness = pf.random.clip_gaussian(rng, 0.25, 0.15, 0.05, 0.8)
     if displacement_height is None:
@@ -73,7 +73,7 @@ def ceramic_rand(
 
     return ceramic(
         vector,
-        color,
+        base_color,
         roughness=roughness,
         displacement_height=displacement_height,
         displacement_scale=displacement_scale,

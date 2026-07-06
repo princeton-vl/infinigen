@@ -13,16 +13,7 @@ The main Infinigen 2.0 generation CLI: build one or more generators into a scene
    :prog: infinigen2
 ```
 
-## `infinigen2.list`
-
-List the registered generators in the Infinigen 2.0 manifest, optionally filtering by category or name.
-
-```{eval-rst}
-.. argparse::
-   :module: infinigen2.list
-   :func: get_parser
-   :prog: python -m infinigen2.list
-```
+To list the available generators, run `infinigen2 --list` (optionally filtering by category, e.g. `infinigen2 --list Scene`).
 
 ## `infinigen.datagen.manage_jobs`
 

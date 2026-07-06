@@ -73,6 +73,8 @@ logger = logging.getLogger(__name__)
 OBJECTS_PATH = infinigen.module_parent_path() / "infinigen/assets/objects"
 assert OBJECTS_PATH.exists(), OBJECTS_PATH
 
+__all__ = []
+
 
 def unified_asset_import(name):
     try:
@@ -170,7 +172,7 @@ def build_scene_asset(args, cls, idx):
         raise e
     fac.finalize_assets(asset)
     if args.fire:
-        from infinigen.assets.fluid.fluid import set_obj_on_fire
+        from infinigen.assets.fluid.fluid import set_obj_on_fire  # keep-local
 
         set_obj_on_fire(
             asset,

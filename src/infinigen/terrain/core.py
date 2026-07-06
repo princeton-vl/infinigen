@@ -41,8 +41,6 @@ from infinigen.core.util.organization import (
 )
 from infinigen.core.util.random import weighted_sample
 from infinigen.core.util.test_utils import import_item
-from infinigen.OcMesher.ocmesher import OcMesher as UntexturedOcMesher
-from infinigen.OcMesher.ocmesher import __version__ as ocmesher_version
 from infinigen.terrain.assets.ocean import ocean_asset
 from infinigen.terrain.mesher import (
     OpaqueSphericalMesher,
@@ -62,8 +60,18 @@ from infinigen.terrain.utils import (
     write_attributes,
 )
 
+try:
+    from infinigen.OcMesher.ocmesher import OcMesher as UntexturedOcMesher
+    from infinigen.OcMesher.ocmesher import __version__ as ocmesher_version
+except ImportError:
+    logging.warning(
+        "Could not import infinigen.OcMesher submodule; terrain meshing unavailable"
+    )
+    UntexturedOcMesher = object
+    ocmesher_version = None
+
 ocmesher_version_expected = "2.0"
-if ocmesher_version != ocmesher_version_expected:
+if ocmesher_version is not None and ocmesher_version != ocmesher_version_expected:
     raise ValueError(
         f"User has installed {ocmesher_version=} which is not for {infinigen.__version__=}, we expected {ocmesher_version_expected=}, you may need to re-run installation / recompile the codebase"
     )

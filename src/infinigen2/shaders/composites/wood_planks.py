@@ -6,8 +6,7 @@
 import procfunc as pf
 from procfunc.nodes import types as t
 
-from infinigen2.shaders.masks.brick_cutter import brick_cutter
-from infinigen2.shaders.materials.wood_grain import (
+from infinigen2.shaders.base_materials.wood_grain import (
     wood_color_rand,
     wood_grain_blonde_preset,
     wood_grain_brown_preset,
@@ -16,11 +15,14 @@ from infinigen2.shaders.materials.wood_grain import (
     wood_grain_generator_rand,
     wood_shader_rand,
 )
+from infinigen2.shaders.masks.brick_cutter import brick_cutter
 
 __all__ = [
     "planks_cutter_rand",
+    "wood_planks_blonde_preset",
+    "wood_planks_brown_preset",
+    "wood_planks_deck_preset",
     "wood_planks_flaky_preset",
-    "wood_planks_presets",
     "wood_planks_rand",
     "wood_siding_rand",
 ]
@@ -211,22 +213,6 @@ def wood_planks_blonde_preset(
         surface=mix_shader,
         displacement=displacement,
     )
-
-
-def wood_planks_presets(
-    rng: pf.RNG,
-    vector: t.SocketOrVal[pf.Vector],
-):
-    func = pf.control.choice(
-        rng,
-        [
-            (wood_planks_deck_preset, 1.0),
-            (wood_planks_brown_preset, 1.0),
-            (wood_planks_blonde_preset, 1.0),
-            (wood_planks_flaky_preset, 1.0),
-        ],
-    )
-    return func(vector=vector)
 
 
 def wood_planks_flaky_preset(

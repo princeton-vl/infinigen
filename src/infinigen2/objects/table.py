@@ -588,7 +588,7 @@ def table_top(
 
 
 @pf.nodes.node_function
-def base_straight(
+def _base_straight_geometry(
     dimensions: t.SocketOrVal[pf.Vector],
     leg_diameter: t.SocketOrVal[float],
     leg_placement_top_scale: t.SocketOrVal[float],
@@ -633,7 +633,7 @@ def base_straight(
 
 
 @pf.nodes.node_function
-def base_square(
+def _base_square_geometry(
     dimensions: t.SocketOrVal[pf.Vector],
     leg_diameter: t.SocketOrVal[float],
     leg_placement_top_scale: t.SocketOrVal[float],
@@ -680,7 +680,7 @@ def base_square(
 
 
 @pf.nodes.node_function
-def base_single_stand(
+def _base_single_stand_geometry(
     dimensions: t.SocketOrVal[pf.Vector],
     leg_diameter: t.SocketOrVal[float],
     leg_placement_top_scale: t.SocketOrVal[float],
@@ -743,18 +743,66 @@ def table_dimensions_rand(
     return (width, depth, height)
 
 
+def base_straight(
+    dimensions: pf.Vector | None = None,
+    leg_diameter: float = 0.06,
+    leg_placement_top_scale: float = 0.8,
+    leg_placement_bottom_scale: float = 1.1,
+    stretcher_increment: int = 1,
+    stretcher_relative_pos: float = 0.4,
+) -> TableResult:
+    """4-leg base with optional stretchers."""
+    if dimensions is None:
+        dimensions = pf.Vector((1.4, 0.8, 0.75))
+    geo = _base_straight_geometry(
+        dimensions=dimensions,
+        leg_diameter=leg_diameter,
+        leg_placement_top_scale=leg_placement_top_scale,
+        leg_placement_bottom_scale=leg_placement_bottom_scale,
+        stretcher_increment=stretcher_increment,
+        stretcher_relative_pos=stretcher_relative_pos,
+    )
+    return TableResult(mesh=pf.nodes.to_mesh_object(geo))
+
+
 def base_straight_rand(rng: pf.RNG, dimensions: pf.Vector | None = None) -> TableResult:
     """4-leg base with optional stretchers."""
     rng, rng_dims = rng.spawn(2)
     if dimensions is None:
         dimensions = table_dimensions_rand(rng_dims)
-    geo = base_straight(
+    geo = _base_straight_geometry(
         dimensions=dimensions,
         leg_diameter=pf.random.uniform(rng, 0.05, 0.07),
         leg_placement_top_scale=0.8,
         leg_placement_bottom_scale=pf.random.uniform(rng, 1.0, 1.2),
         stretcher_increment=pf.control.choice(rng, [(0, 1.0), (1, 1.0), (2, 1.0)]),
         stretcher_relative_pos=pf.random.uniform(rng, 0.2, 0.6),
+    )
+    return TableResult(mesh=pf.nodes.to_mesh_object(geo))
+
+
+def base_single_stand(
+    dimensions: pf.Vector | None = None,
+    leg_diameter: float | None = None,
+    leg_placement_top_scale: float = 0.65,
+    leg_placement_bottom_scale: float = 1.0,
+    top_radius: float = 0.23,
+    middle_radius: float = 0.35,
+    bottom_radius: float = 1.7,
+) -> TableResult:
+    """2 pedestal legs."""
+    if dimensions is None:
+        dimensions = pf.Vector((1.4, 0.8, 0.75))
+    if leg_diameter is None:
+        leg_diameter = 0.25 * dimensions.x
+    geo = _base_single_stand_geometry(
+        dimensions=dimensions,
+        leg_diameter=leg_diameter,
+        leg_placement_top_scale=leg_placement_top_scale,
+        leg_placement_bottom_scale=leg_placement_bottom_scale,
+        top_radius=top_radius,
+        middle_radius=middle_radius,
+        bottom_radius=bottom_radius,
     )
     return TableResult(mesh=pf.nodes.to_mesh_object(geo))
 
@@ -766,7 +814,7 @@ def base_single_stand_rand(
     rng, rng_dims = rng.spawn(2)
     if dimensions is None:
         dimensions = table_dimensions_rand(rng_dims)
-    geo = base_single_stand(
+    geo = _base_single_stand_geometry(
         dimensions=dimensions,
         leg_diameter=pf.random.uniform(rng, 0.22 * dimensions[0], 0.28 * dimensions[0]),
         leg_placement_top_scale=pf.random.uniform(rng, 0.6, 0.7),
@@ -778,12 +826,32 @@ def base_single_stand_rand(
     return TableResult(mesh=pf.nodes.to_mesh_object(geo))
 
 
+def base_square(
+    dimensions: pf.Vector | None = None,
+    leg_diameter: float = 0.085,
+    leg_placement_top_scale: float = 0.8,
+    leg_placement_bottom_scale: float = 1.0,
+    has_bottom_connector: bool = True,
+) -> TableResult:
+    """2 box-frame legs."""
+    if dimensions is None:
+        dimensions = pf.Vector((1.4, 0.8, 0.75))
+    geo = _base_square_geometry(
+        dimensions=dimensions,
+        leg_diameter=leg_diameter,
+        leg_placement_top_scale=leg_placement_top_scale,
+        leg_placement_bottom_scale=leg_placement_bottom_scale,
+        has_bottom_connector=has_bottom_connector,
+    )
+    return TableResult(mesh=pf.nodes.to_mesh_object(geo))
+
+
 def base_square_rand(rng: pf.RNG, dimensions: pf.Vector | None = None) -> TableResult:
     """2 box-frame legs."""
     rng, rng_dims = rng.spawn(2)
     if dimensions is None:
         dimensions = table_dimensions_rand(rng_dims)
-    geo = base_square(
+    geo = _base_square_geometry(
         dimensions=dimensions,
         leg_diameter=pf.random.uniform(rng, 0.07, 0.10),
         leg_placement_top_scale=0.8,

@@ -79,6 +79,8 @@ logger = logging.getLogger(__name__)
 
 from infinigen.core.util import rrt
 
+__all__ = ["compose_nature", "populate_scene"]
+
 
 @gin.configurable
 def compose_nature(output_folder, scene_seed, **params):

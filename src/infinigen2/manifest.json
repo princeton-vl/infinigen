@@ -33,7 +33,17 @@
   },
   {
     "category": "Material",
-    "name": "infinigen2.shaders.composites.bricks.bricks_rand"
+    "name": "infinigen2.shaders.composites.bricks.bricks_rand",
+    "presets": [
+      "bricks_checkered_preset",
+      "bricks_checkered_sparse_preset",
+      "bricks_cobble_preset",
+      "bricks_grey_preset",
+      "bricks_grey_rounded_preset",
+      "bricks_red_concave_preset",
+      "bricks_red_preset",
+      "bricks_striped_preset"
+    ]
   },
   {
     "category": "Material",
@@ -41,16 +51,22 @@
   },
   {
     "category": "Material",
-    "name": "infinigen2.shaders.composites.bricks.bricks_paint_rand"
+    "name": "infinigen2.shaders.composites.bricks.bricks_paint_rand",
+    "presets": [
+      "bricks_paint_bumpy_preset",
+      "bricks_paint_spots_preset",
+      "bricks_paint_strokes_preset",
+      "bricks_paint_worn_preset"
+    ]
   },
   {
     "category": "Material",
-    "name": "infinigen2.shaders.composites.bricks.bricks_presets",
-    "min_parameters": 0
-  },
-  {
-    "category": "Material",
-    "name": "infinigen2.shaders.composites.bricks.bricks_masonry_rand"
+    "name": "infinigen2.shaders.composites.bricks.bricks_masonry_rand",
+    "presets": [
+      "brick_masonry_brown_preset",
+      "brick_masonry_granite_preset",
+      "brick_masonry_sharp_preset"
+    ]
   },
   {
     "category": "Material",
@@ -62,11 +78,16 @@
   },
   {
     "category": "Material",
-    "name": "infinigen2.shaders.materials.brick_concrete.brick_concrete_rand"
+    "name": "infinigen2.shaders.base_materials.brick_concrete.brick_concrete_rand"
   },
   {
     "category": "Mask",
-    "name": "infinigen2.shaders.masks.cracks.cracks_rand"
+    "name": "infinigen2.shaders.masks.cracks.cracks_rand",
+    "presets": [
+      "cracks_dense_preset",
+      "cracks_flakes_preset",
+      "cracks_worn_preset"
+    ]
   },
   {
     "category": "Mask",
@@ -82,17 +103,13 @@
   },
   {
     "category": "Mask",
-    "name": "infinigen2.shaders.masks.cracks.cracks_presets",
-    "min_parameters": 0
-  },
-  {
-    "category": "Mask",
-    "name": "infinigen2.shaders.masks.splats.splats_mask_rand"
-  },
-  {
-    "category": "Mask",
-    "name": "infinigen2.shaders.masks.splats.splats_mask_presets",
-    "min_parameters": 0
+    "name": "infinigen2.shaders.masks.splats.splats_mask_rand",
+    "presets": [
+      "splats_cookware_mask_preset",
+      "splats_metal_mask_preset",
+      "splats_spots_mask_preset",
+      "splats_streaks_mask_preset"
+    ]
   },
   {
     "category": "Mask",
@@ -140,12 +157,7 @@
   },
   {
     "category": "Material",
-    "name": "infinigen2.shaders.masks.splats.metal_splats_presets",
-    "min_parameters": 0
-  },
-  {
-    "category": "Material",
-    "name": "infinigen2.shaders.materials.glass_no_refraction.glass_no_refraction_rand"
+    "name": "infinigen2.shaders.base_materials.glass_no_refraction.glass_no_refraction_rand"
   },
   {
     "category": "Material",
@@ -161,19 +173,35 @@
   },
   {
     "category": "Mask",
-    "name": "infinigen2.shaders.masks.scratches.scratches_mask_rand"
+    "name": "infinigen2.shaders.masks.scratches.scratches_mask_rand",
+    "presets": [
+      "scratches_brushed_mask_preset",
+      "scratches_deep_dirty_mask_preset",
+      "scratches_dense_mask_preset",
+      "scratches_light_varnish_mask_preset",
+      "scratches_shallow_mask_preset"
+    ]
   },
   {
     "category": "Material",
-    "name": "infinigen2.shaders.composites.scratches_overlay.scratched_wood_rand"
+    "name": "infinigen2.shaders.composites.scratches_overlay.scratched_wood_rand",
+    "presets": [
+      "scratches_deep_dirty_preset",
+      "scratches_light_varnish_preset",
+      "scratches_shallow_preset"
+    ]
   },
   {
     "category": "Material",
-    "name": "infinigen2.shaders.composites.scratches_overlay.scratched_metal_rand"
+    "name": "infinigen2.shaders.composites.scratches_overlay.scratched_metal_rand",
+    "presets": [
+      "scratches_brushed_preset",
+      "scratches_dense_preset"
+    ]
   },
   {
     "category": "Material",
-    "name": "infinigen2.shaders.materials.glass_colored.glass_colored_rand"
+    "name": "infinigen2.shaders.base_materials.glass_colored.glass_colored_rand"
   },
   {
     "category": "Material",
@@ -181,52 +209,58 @@
   },
   {
     "category": "Material",
-    "name": "infinigen2.shaders.materials.concrete.concrete_rand"
+    "name": "infinigen2.shaders.base_materials.concrete.concrete_rand"
   },
   {
     "category": "Material",
-    "name": "infinigen2.shaders.materials.granite.granite_presets",
-    "min_parameters": 0
+    "name": "infinigen2.shaders.base_materials.granite.granite_rand",
+    "presets": [
+      "granite_cobble_gray_preset",
+      "granite_crystals_preset",
+      "granite_masonry_gray_preset",
+      "granite_no_displacement_preset",
+      "granite_sandy_preset",
+      "granite_white_brown_preset",
+      "granite_yellow_preset"
+    ]
   },
   {
     "category": "Material",
-    "name": "infinigen2.shaders.materials.granite.granite_rand"
+    "name": "infinigen2.shaders.base_materials.granite.granite_smooth_rand"
   },
   {
     "category": "Material",
-    "name": "infinigen2.shaders.materials.granite.granite_smooth_rand"
+    "name": "infinigen2.shaders.base_materials.marble.marble_rand",
+    "presets": [
+      "marble_black_preset",
+      "marble_black_spots_preset",
+      "marble_gold_preset",
+      "marble_gray_preset",
+      "marble_navy_preset",
+      "marble_orange_preset",
+      "marble_white_preset",
+      "marble_white_striped_preset",
+      "marble_yellow_preset"
+    ]
   },
   {
     "category": "Material",
-    "name": "infinigen2.shaders.materials.marble.marble_rand"
+    "name": "infinigen2.shaders.base_materials.stone_smooth.stone_smooth_rand",
+    "presets": [
+      "stone_grey_preset",
+      "stone_red_sandstone_preset",
+      "stone_volcanic_tuff_preset"
+    ]
   },
   {
     "category": "Material",
-    "name": "infinigen2.shaders.materials.marble.marble_presets",
-    "min_parameters": 0
-  },
-  {
-    "category": "Material",
-    "name": "infinigen2.shaders.materials.stone_smooth.stone_smooth_rand"
-  },
-  {
-    "category": "Material",
-    "name": "infinigen2.shaders.materials.stone_smooth.stone_smooth_presets",
-    "min_parameters": 0
-  },
-  {
-    "category": "Material",
-    "name": "infinigen2.shaders.materials.paint.paint_rand"
-  },
-  {
-    "category": "Material",
-    "name": "infinigen2.shaders.materials.paint.paint_presets",
-    "min_parameters": 0
-  },
-  {
-    "category": "Material",
-    "name": "infinigen2.shaders.materials.gravel_concrete.gravel_concrete_presets",
-    "min_parameters": 0
+    "name": "infinigen2.shaders.base_materials.paint.paint_rand",
+    "presets": [
+      "paint_small_bumps_preset",
+      "paint_splats_preset",
+      "paint_spots_preset",
+      "paint_strokes_preset"
+    ]
   },
   {
     "category": "MaterialOverlay",
@@ -238,57 +272,57 @@
   },
   {
     "category": "Material",
-    "name": "infinigen2.shaders.materials.fabric.fabric_rand"
+    "name": "infinigen2.shaders.base_materials.fabric.fabric_rand",
+    "presets": [
+      "fabric_coarse_preset",
+      "fabric_fine_preset"
+    ]
   },
   {
     "category": "Material",
-    "name": "infinigen2.shaders.materials.fabric.fabric_translucent_rand"
+    "name": "infinigen2.shaders.base_materials.fabric.fabric_translucent_rand"
   },
   {
     "category": "Material",
-    "name": "infinigen2.shaders.materials.fabric.fabric_presets",
-    "min_parameters": 0
+    "name": "infinigen2.shaders.base_materials.carpet.carpet_rand",
+    "presets": [
+      "carpet_noisy_preset",
+      "carpet_streaks_faint_preset",
+      "carpet_streaks_right_angle_preset",
+      "carpet_streaks_short_preset"
+    ]
   },
   {
     "category": "Material",
-    "name": "infinigen2.shaders.materials.carpet.carpet_rand"
+    "name": "infinigen2.shaders.base_materials.metal_brushed.metal_brushed_linear_rand"
   },
   {
     "category": "Material",
-    "name": "infinigen2.shaders.materials.carpet.carpet_presets",
-    "min_parameters": 0
+    "name": "infinigen2.shaders.base_materials.metal_brushed.metal_brushed_radial_rand"
   },
   {
     "category": "Material",
-    "name": "infinigen2.shaders.materials.metal_brushed.metal_brushed_linear_rand"
+    "name": "infinigen2.shaders.base_materials.metal_hammered.metal_hammered_rand"
   },
   {
     "category": "Material",
-    "name": "infinigen2.shaders.materials.metal_brushed.metal_brushed_radial_rand"
+    "name": "infinigen2.shaders.base_materials.terrazzo.terrazzo_rand"
   },
   {
     "category": "Material",
-    "name": "infinigen2.shaders.materials.metal_hammered.metal_hammered_rand"
+    "name": "infinigen2.shaders.base_materials.terrazzo.terrazzo_monocolor_rand"
   },
   {
     "category": "Material",
-    "name": "infinigen2.shaders.materials.terrazzo.terrazzo_rand"
+    "name": "infinigen2.shaders.base_materials.terrazzo.terrazzo_multicolor_rand"
   },
   {
     "category": "Material",
-    "name": "infinigen2.shaders.materials.terrazzo.terrazzo_monocolor_rand"
+    "name": "infinigen2.shaders.base_materials.terrazzo.terrazzo_black_monocolor_rand"
   },
   {
     "category": "Material",
-    "name": "infinigen2.shaders.materials.terrazzo.terrazzo_multicolor_rand"
-  },
-  {
-    "category": "Material",
-    "name": "infinigen2.shaders.materials.terrazzo.terrazzo_black_monocolor_rand"
-  },
-  {
-    "category": "Material",
-    "name": "infinigen2.shaders.materials.terrazzo.terrazzo_black_multicolor_rand"
+    "name": "infinigen2.shaders.base_materials.terrazzo.terrazzo_black_multicolor_rand"
   },
   {
     "category": "Material",
@@ -316,25 +350,33 @@
   },
   {
     "category": "Material",
-    "name": "infinigen2.shaders.materials.wood_grain.wood_grain_rand"
+    "name": "infinigen2.shaders.base_materials.wood_grain.wood_grain_rand",
+    "presets": [
+      "wood_grain_blonde_preset",
+      "wood_grain_brown_preset",
+      "wood_grain_deck_preset",
+      "wood_grain_flaky_preset",
+      "wood_grain_rings_dark_preset",
+      "wood_grain_rings_soft_preset",
+      "wood_grain_rings_spots_preset",
+      "wood_grain_solid_preset",
+      "wood_grain_stained_preset",
+      "wood_grain_varnished_preset"
+    ]
   },
   {
     "category": "Material",
-    "name": "infinigen2.shaders.materials.wood_grain.wood_grain_presets",
-    "min_parameters": 0
+    "name": "infinigen2.shaders.composites.wood_planks.wood_planks_rand",
+    "presets": [
+      "wood_planks_blonde_preset",
+      "wood_planks_brown_preset",
+      "wood_planks_deck_preset",
+      "wood_planks_flaky_preset"
+    ]
   },
   {
     "category": "Material",
-    "name": "infinigen2.shaders.composites.wood_planks.wood_planks_rand"
-  },
-  {
-    "category": "Material",
-    "name": "infinigen2.shaders.composites.wood_planks.wood_planks_presets",
-    "min_parameters": 0
-  },
-  {
-    "category": "Material",
-    "name": "infinigen2.shaders.materials.ceramic.ceramic_rand"
+    "name": "infinigen2.shaders.base_materials.ceramic.ceramic_rand"
   },
   {
     "category": "Material",
@@ -359,6 +401,26 @@
   {
     "category": "Material",
     "name": "infinigen2.shaders.functionality_lists.ceiling_material_rand"
+  },
+  {
+    "category": "Environment",
+    "name": "infinigen2.lighting.sky_lighting.nishita_sky_rand"
+  },
+  {
+    "category": "Environment",
+    "name": "infinigen2.lighting.sky_lighting.hosek_wilkie_sky_rand"
+  },
+  {
+    "category": "Environment",
+    "name": "infinigen2.lighting.sky_lighting.hosek_wilkie_sky_with_sun_lamp_rand"
+  },
+  {
+    "category": "Environment",
+    "name": "infinigen2.lighting.sky_lighting.sky_with_sun_lamp_rand"
+  },
+  {
+    "category": "Environment",
+    "name": "infinigen2.lighting.point_lighting.floating_colored_lights_rand"
   },
   {
     "category": "Scene",
@@ -554,22 +616,36 @@
   },
   {
     "category": "Material",
-    "name": "infinigen2.shaders.materials.plastic.plastic_opaque_rand"
+    "name": "infinigen2.shaders.base_materials.plastic.plastic_opaque_rand",
+    "presets": [
+      "plastic_black_rubberized_preset",
+      "plastic_tough_packaging_preset",
+      "plastic_white_textured_preset"
+    ]
   },
   {
     "category": "Material",
-    "name": "infinigen2.shaders.materials.plastic.plastic_translucent_rand"
+    "name": "infinigen2.shaders.base_materials.plastic.plastic_translucent_rand",
+    "presets": [
+      "plastic_black_translucent_preset",
+      "plastic_translucent_bumps_preset"
+    ]
   },
   {
     "category": "Material",
-    "name": "infinigen2.shaders.materials.plastic.plastic_grayscale_rand"
+    "name": "infinigen2.shaders.base_materials.plastic.plastic_grayscale_rand"
   },
   {
     "category": "Material",
-    "name": "infinigen2.shaders.materials.gravel_concrete.gravel_concrete_rand"
+    "name": "infinigen2.shaders.base_materials.gravel_concrete.gravel_concrete_rand",
+    "presets": [
+      "gravel_concrete_bumps_preset",
+      "gravel_concrete_red_preset",
+      "gravel_concrete_sharp_polished_preset"
+    ]
   },
   {
     "category": "Material",
-    "name": "infinigen2.shaders.materials.gravel_concrete.random_gravel_concrete_rand"
+    "name": "infinigen2.shaders.base_materials.gravel_concrete.random_gravel_concrete_rand"
   }
 ]

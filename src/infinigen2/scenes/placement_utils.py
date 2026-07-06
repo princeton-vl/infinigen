@@ -14,6 +14,7 @@ from infinigen2.scenes import collision_collection as ccol
 
 __all__ = [
     "delete_object",
+    "distribute_in_bbox",
     "duplicates",
     "keep_non_colliding",
     "repeat_attempts",
@@ -193,6 +194,82 @@ def delete_object(obj: bpy.types.Object) -> None:
         bpy.data.meshes.remove(data)
     elif item_type == "LIGHT":
         bpy.data.lights.remove(data)
+
+
+def _origin_relative_extents(obj: pf.Object) -> tuple[np.ndarray, np.ndarray]:
+    """World-axis-aligned bbox of obj relative to its origin, given its current
+    rotation and scale. Non-mesh objects (e.g. lights) are treated as points."""
+    if not isinstance(obj, pf.MeshObject):
+        return np.zeros(3), np.zeros(3)
+    corners = np.array(obj.item().bound_box)  # (8, 3) local
+    rot = np.array(pf.Euler(obj.item().rotation_euler, "XYZ").to_matrix())  # (3, 3)
+    scale = np.array(obj.item().scale)
+    rotated = (corners * scale) @ rot.T
+    return rotated.min(axis=0), rotated.max(axis=0)
+
+
+def _uniform_location(
+    rng: pf.RNG, loc_min: np.ndarray, loc_max: np.ndarray
+) -> pf.Vector:
+    return pf.Vector(
+        tuple(
+            pf.random.uniform(rng, float(loc_min[k]), float(loc_max[k]))
+            for k in range(3)
+        )
+    )
+
+
+def _sample_non_colliding(
+    rng: pf.RNG,
+    obj: pf.MeshObject,
+    loc_min: np.ndarray,
+    loc_max: np.ndarray,
+    colliders: ccol.CollisionSet,
+    attempts: int,
+) -> pf.Vector:
+    loc = _uniform_location(rng, loc_min, loc_max)
+    for _ in range(attempts):
+        obj.item().location = tuple(loc)
+        if not ccol.intersection_test(colliders, obj):
+            return loc
+        loc = _uniform_location(rng, loc_min, loc_max)
+    return loc
+
+
+def distribute_in_bbox(
+    rng: pf.RNG,
+    objects: list[pf.Object],
+    bbox: tuple[np.ndarray, np.ndarray],
+    colliders: ccol.CollisionSet | None = None,
+    attempts: int = 8,
+) -> list[pf.Object]:
+    """Place each object at a uniformly-random location inside `bbox`, keeping its
+    current rotation and scale, fitting its bounding box within the box, and (when
+    `colliders` is non-empty) rejection-sampling up to `attempts` times so mesh
+    placements avoid that collision set. Mutates each object's location in place.
+    """
+    all_min = np.asarray(bbox[0], dtype=float)
+    all_max = np.asarray(bbox[1], dtype=float)
+    center = (all_min + all_max) / 2
+
+    check = colliders is not None and ccol.n_colliders(colliders) > 0
+    obj_rngs = rng.spawn(len(objects))
+    for i, obj in enumerate(objects):
+        r = obj_rngs[i]
+        ext_min, ext_max = _origin_relative_extents(obj)
+        loc_min = all_min - ext_min
+        loc_max = all_max - ext_max
+        too_large = loc_min > loc_max
+        loc_min = np.where(too_large, center, loc_min)
+        loc_max = np.where(too_large, center, loc_max)
+
+        if check and isinstance(obj, pf.MeshObject):
+            loc = _sample_non_colliding(r, obj, loc_min, loc_max, colliders, attempts)
+        else:
+            loc = _uniform_location(r, loc_min, loc_max)
+        obj.item().location = tuple(loc)
+
+    return objects
 
 
 def keep_non_colliding(

@@ -25,7 +25,6 @@ __all__ = [
     "marble_gray_preset",
     "marble_navy_preset",
     "marble_orange_preset",
-    "marble_presets",
     "marble_rand",
     "marble_white_preset",
     "marble_white_striped_preset",
@@ -1704,24 +1703,6 @@ def marble_black_preset(vector: pf.ProcNode[pf.Vector]):
     return pf.Material(
         grain_to_shader_result.bsdf, pf.nodes.math.constant((0.0, 0.0, 0.0)), None
     )
-
-
-def marble_presets(rng: pf.RNG, vector: t.SocketOrVal[pf.Vector]):
-    func = pf.control.choice(
-        rng,
-        [
-            (marble_black_preset, 1.0),
-            (marble_black_spots_preset, 1.0),
-            (marble_gold_preset, 1.0),
-            (marble_gray_preset, 1.0),
-            (marble_navy_preset, 1.0),
-            (marble_orange_preset, 1.0),
-            (marble_white_preset, 1.0),
-            (marble_white_striped_preset, 1.0),
-            (marble_yellow_preset, 1.0),
-        ],
-    )
-    return func(vector=vector)
 
 
 def grain_to_shader_rand(

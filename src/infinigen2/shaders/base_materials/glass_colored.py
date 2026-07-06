@@ -15,11 +15,11 @@ __all__ = [
 
 @pf.nodes.node_function
 def glass_colored(
-    color: t.SocketOrVal[pf.Color],
+    base_color: t.SocketOrVal[pf.Color],
     roughness: t.SocketOrVal[float] = 0.0,
 ) -> pf.Material:
     surface = pf.nodes.shader.principled_bsdf(
-        base_color=color,
+        base_color=base_color,
         roughness=roughness,
         ior=1.5,
         transmission_weight=1.0,
@@ -40,13 +40,13 @@ def glass_colored_color_rand(rng: pf.RNG) -> pf.Color:
 def glass_colored_rand(
     rng: pf.RNG,
     vector: pf.ProcNode[pf.Vector] | None = None,
-    color: t.SocketOrVal[pf.Color] | None = None,
+    base_color: t.SocketOrVal[pf.Color] | None = None,
     roughness: t.SocketOrVal[float] | None = None,
 ) -> pf.Material:
     del vector
     rng_choice, rng_color = rng.spawn(2)
-    if color is None:
-        color = pf.control.choice(
+    if base_color is None:
+        base_color = pf.control.choice(
             rng_choice,
             [
                 (glass_colored_color_rand(rng_color), 0.7),
@@ -56,4 +56,4 @@ def glass_colored_rand(
     if roughness is None:
         roughness = pf.random.clip_gaussian(rng, 0.0, 0.02, 0.0, 0.05)
 
-    return glass_colored(color=color, roughness=roughness)
+    return glass_colored(base_color=base_color, roughness=roughness)

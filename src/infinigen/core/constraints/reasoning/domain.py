@@ -163,11 +163,12 @@ class Domain:
     ):
         """
         new_rel, new_dom: the relation and domain to be added
-        optimize_check_implies: bool
-            If enabled, dont add relations (aka predicates) that are already
-            provably true based on existing predicates. This should not be necessary for correctness:
-            object addition should check if relation constraints are satisfied/implied before adding more.
-            But it may (?) help speed, and the unit tests assume it is enabled for the most part
+
+        optimize_check_implies: if enabled, dont add relations (aka predicates)
+        that are already provably true based on existing predicates. This should
+        not be necessary for correctness: object addition should check if relation
+        constraints are satisfied/implied before adding more. But it may (?) help
+        speed, and the unit tests assume it is enabled for the most part
         """
 
         assert new_dom is not self
@@ -350,8 +351,9 @@ class Domain:
 
         contains(self, x) and contains(other, x) -> contains(intersection, x)
 
-        TODO:
-        - does order relations are checked for intersection matter?
+        TODO::
+
+            - does order relations are checked for intersection matter?
             - almost certainly yes, intersection is not transitive.
             - so what order is best? fewest remaining relations? does it matter?
         """

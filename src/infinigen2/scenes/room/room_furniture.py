@@ -597,13 +597,14 @@ def room_furniture_rand(
     sun_rotation_deg = pf.random.uniform(rng_rot, 0, 360)
     sun_intensity = pf.random.uniform(rng_intensity, 0.8, 1.0)
     sun_size_deg = pf.random.clip_gaussian(rng_size, 0.5, 0.3, 0.25, 5)
-    _sky_shader, sun_lamp = sky_lighting.hosek_wilkie_sky_with_sun_lamp_rand(
+    sky_env = sky_lighting.hosek_wilkie_sky_with_sun_lamp_rand(
         rng_sky_model,
         sun_elevation_deg=sun_elevation_deg,
         sun_rotation_deg=sun_rotation_deg,
         sun_intensity=sun_intensity,
         sun_size_deg=sun_size_deg,
     )
+    sun_lamp = sky_env.lights[0]
 
     if extra_colliders is None:
         extra_colliders = []

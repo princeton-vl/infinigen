@@ -14,13 +14,20 @@ import os
 import re
 import subprocess
 import sys
+import traceback
+import types
 from pathlib import Path
 
 from docutils import nodes as docutils_nodes
+from procfunc.util.teardown import exit_skipping_teardown
 from sphinx import addnodes
+from sphinx.domains.python import PythonDomain
 from sphinx.ext import apidoc
 from sphinx.ext.autodoc import ModuleDocumenter
+from sphinx.util import logging as sphinx_logging
 from sphinx.util.typing import stringify_annotation
+
+logger = sphinx_logging.getLogger(__name__)
 
 sys.path.insert(0, os.path.abspath("../.."))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -61,6 +68,15 @@ intersphinx_mapping = {
 
 templates_path = ["_templates"]
 exclude_patterns = []
+
+# Anchors for h1-h4 so in-page/cross-doc [](#slug) links resolve (MyST makes none by default).
+myst_heading_anchors = 4
+
+# Resolve [](#ref) links only in these domains; skips sphinxarg's no-resolve_any_xref domain.
+myst_ref_domains = ["std", "py"]
+
+# No warnings are suppressed; every warning fails the build (see _exit_skipping_teardown).
+suppress_warnings = []
 
 
 # [source] links resolve to the GitHub repo+ref the docs are built from: env
@@ -157,9 +173,26 @@ source_suffix = {
     ".md": "markdown",
 }
 
+# Keep smart quotes/ellipses but stop `--` in CLI help (e.g. `--frames`) from
+# being typeset as an en-dash, which reads as a single-dash flag.
+smartquotes_action = "qe"
+
 autodoc_typehints = (
     "description"  # Show type hints in the description, not the signature
 )
+
+# Mock optional/heavy deps the lean env omits so autodoc can import 1.0 modules using them.
+autodoc_mock_imports = [
+    "flow_vis",
+    "google_images_search",
+    "mujoco",
+    "omni",
+    "pxr",
+    "pybullet",
+    "seaborn",
+    "suffixes",
+    "torch",
+]
 
 # _shorten_signature reconstructs the return type into the signature; show it
 # as the leaf name (`-> BookcaseResult`) but keep the fully-qualified xref link.
@@ -188,12 +221,82 @@ autodoc_default_options = {
 REPO_ROOT = Path(__file__).resolve().parents[2]
 MANIFEST_PATH = REPO_ROOT / "src" / "infinigen2" / "manifest.json"
 
+
+# Repo-path tokens (these prefixes) and file links in docs must exist on disk or the build fails.
+_DOC_PATH_PREFIXES = ("src/", "docs/", "scripts/", "tests/")
+_DOC_INLINE_RE = re.compile(r"`([^`\n]+)`")
+_DOC_FENCE_RE = re.compile(r"```[^\n]*\n(.*?)```", re.DOTALL)
+_DOC_LINK_RE = re.compile(r"\]\(([^)\s]+)")
+_DOC_PLACEHOLDER_RE = re.compile(r"[<>{}$*?]|\.\.\.")
+_DOC_LINK_EXT_RE = re.compile(r"\.(md|py|png|jpg|svg|gin|sh|json|txt|yaml|yml|html)$")
+
+# Paths docs reference that intentionally don't ship (v1 fixtures, runtime output dirs).
+_DOC_PATH_IGNORE = (
+    "tests/infinigen/assets/list_indoor_materials.txt",
+    "tests/infinigen/assets/list_nature_materials.txt",
+    "tests/test_meshes_basic.txt",
+    "src/infinigen/tools/sim/tmp",
+)
+
+
+def _doc_path_ok(token: str) -> bool:
+    token = token.split("::", 1)[0].split("#", 1)[0]
+    return (REPO_ROOT / token).exists() or (REPO_ROOT / "src" / token).exists()
+
+
+def _repo_path_tokens(text: str) -> set[str]:
+    spans = _DOC_INLINE_RE.findall(text) + _DOC_FENCE_RE.findall(text)
+    tokens = {tok for span in spans for tok in span.split()}
+    clean = set()
+    for tok in tokens:
+        tok = tok.strip("`'\"()[],;:")
+        if _DOC_PLACEHOLDER_RE.search(tok):
+            continue
+        if any(tok == ig or tok.startswith(ig + "/") for ig in _DOC_PATH_IGNORE):
+            continue
+        if tok.startswith(_DOC_PATH_PREFIXES):
+            clean.add(tok)
+    return clean
+
+
+def _doc_link_targets(text: str, doc: Path) -> set[str]:
+    targets = set()
+    for line in text.splitlines():
+        if line.lstrip().startswith(":"):
+            continue
+        for raw in _DOC_LINK_RE.findall(line):
+            if raw.startswith(("http://", "https://", "mailto:")):
+                continue
+            rel = raw.split("#", 1)[0]
+            if not rel or not _DOC_LINK_EXT_RE.search(rel):
+                continue
+            if not (doc.parent / rel).exists():
+                targets.add(raw)
+    return targets
+
+
+def _lint_doc_paths(app):
+    broken = []
+    for doc in sorted((REPO_ROOT / "docs" / "source").rglob("*.md")):
+        text = doc.read_text(encoding="utf-8")
+        rel_doc = doc.relative_to(REPO_ROOT)
+        for tok in sorted(_repo_path_tokens(text)):
+            if not _doc_path_ok(tok):
+                broken.append(f"{rel_doc}: repo path `{tok}` does not exist")
+        for target in sorted(_doc_link_targets(text, doc)):
+            broken.append(f"{rel_doc}: link target `{target}` does not exist")
+    if broken:
+        listing = "\n".join(f"  - {b}" for b in broken)
+        raise RuntimeError(f"docs reference {len(broken)} missing path(s):\n{listing}")
+
+
 # Seed renders per manifest category; categories absent here get no images.
 _CATEGORY_IMAGE_COUNT = {
     "Material": 6,
     "Mask": 6,
     "Object": 6,
     "Scene": 6,
+    "Environment": 6,
 }
 
 # Image URLs: <base>/<slug>/images/<name>/<seed>.png; empty base = local paths.
@@ -293,16 +396,43 @@ def _inject_images(app, what, name, obj, options, lines):  # noqa: ARG001
         lines += _figure_html(url, name, seed, cmd)
 
 
+# Each `*_preset` renders like a material (one deterministic seed), keyed by its
+# full dotted name; scripts/integration_v2/launch.sh produces the image and the
+# ~/projects/infinigen_docs_ops collect step files it under images/<name>/0.png.
+def _preset_image_url(name: str) -> str:
+    rel = f"images/{name}/0.png"
+    if not IMAGE_URL_BASE:
+        return rel
+    return f"{IMAGE_URL_BASE}/{VERSION_SLUG}/assets/{rel}"
+
+
+def _inject_preset_image(app, what, name, obj, options, lines):  # noqa: ARG001
+    if what != "function" or not _is_preset(name):
+        return
+    cmd = _replicate_command("Material", name, 0)
+    lines += _figure_html(_preset_image_url(name), name, 0, cmd)
+
+
+def _is_namedtuple(obj: object) -> bool:
+    return (
+        isinstance(obj, type)
+        and issubclass(obj, tuple)
+        and getattr(obj, "_fields", None) is not None
+    )
+
+
+# `*_preset` variant builders (not the `*_presets` chooser, which ends in "s").
+def _is_preset(name: str) -> bool:
+    return name.rsplit(".", 1)[-1].endswith("_preset")
+
+
 def _clean_namedtuple(app, what, name, obj, options, lines):  # noqa: ARG001
     if what == "attribute" and lines and lines[0].startswith("Alias for field number"):
         del lines[:]
         return
-    if what != "class" or not isinstance(obj, type):
+    if not _is_namedtuple(obj):
         return
-    fields = getattr(obj, "_fields", None)
-    if fields is None or not issubclass(obj, tuple):
-        return
-    auto = f"{obj.__name__}({', '.join(fields)})"
+    auto = f"{obj.__name__}({', '.join(obj._fields)})"
     if lines and lines[0].strip() == auto:
         del lines[:]
 
@@ -320,7 +450,7 @@ def _format_default(value: object) -> str:
 
 
 def _param_defaults(app, what, name, obj, options, lines):  # noqa: ARG001
-    if what not in ("function", "method"):
+    if what not in ("function", "method") or _is_preset(name):
         return
     try:
         params = inspect.signature(obj).parameters
@@ -336,10 +466,9 @@ def _param_defaults(app, what, name, obj, options, lines):  # noqa: ARG001
             continue
         if param.default is param.empty:
             fields.append(f":param {pname}:")
-        else:
-            fields.append(
-                f":param {pname}: (default: {_format_default(param.default)})"
-            )
+            continue
+        default = _format_default(param.default)
+        fields.append(f":param {pname}: (default: ``{default}``)")
     if fields:
         lines += ["", *fields]
 
@@ -375,6 +504,18 @@ def _shorten_signature(app, what, name, obj, options, signature, return_annotati
         recorded = None
     if recorded:
         recorded.pop("return", None)
+    # NamedTuple fields already render as typed attribute members below; drop the
+    # recorded hints (kills the duplicate "Parameters" block) and collapse a wide
+    # header to `(...)` so it isn't a second field wall.
+    if what == "class" and _is_namedtuple(obj):
+        if recorded:
+            recorded.clear()
+        if len(obj._fields) > 3:
+            return "(...)", return_annotation
+    # Presets are a long list of near-identical variants; render each as a bare
+    # one-line signature (no Parameters block) so they read as a compact index.
+    if recorded and _is_preset(name):
+        recorded.clear()
     ret = return_annotation
     if not ret and what in ("function", "method"):
         ret = _return_annotation(obj)
@@ -387,9 +528,10 @@ def _shorten_signature(app, what, name, obj, options, signature, return_annotati
     return sig, ret
 
 
-# apidoc titles pages "infinigen2.objects package" / "...foo module"; strip the
-# trailing word from every heading so the sidebar shows the dotted name only.
-_HEADING_SUFFIX = re.compile(r"^(?P<title>.+?) (?:package|module)$")
+# apidoc titles pages "infinigen2.objects package" / "...foo module" / (with
+# --implicit-namespaces) "...objects namespace"; strip the trailing word from
+# every heading so the sidebar shows the dotted name only.
+_HEADING_SUFFIX = re.compile(r"^(?P<title>.+?) (?:package|module|namespace)$")
 
 # Section-underline characters, deepest last; used to demote inlined subpackages.
 _LADDER = '=-~^"+*'
@@ -442,7 +584,7 @@ _SUBPKG_NAMES = {
     "shaders.composites": "Composite Materials",
     "shaders.displacements": "Displacements",
     "shaders.masks": "Masks",
-    "shaders.materials": "Materials",
+    "shaders.base_materials": "Base Materials",
     "shaders.util": "Shader Utilities",
     "util": "Utilities",
     "util.codestats": "Code Statistics",
@@ -466,6 +608,12 @@ _V1_SUBPKG_NAMES = {
     "assets.utils": "Asset Utilities",
     "assets.weather": "Weather",
     "core": "Core",
+    "core.constraints": "Constraints",
+    "core.nodes": "Nodes",
+    "core.placement": "Placement",
+    "core.rendering": "Rendering",
+    "core.sim": "Simulation",
+    "core.util": "Core Utilities",
     "datagen": "Datagen",
     "terrain": "Terrain",
     "tools": "Tools",
@@ -475,16 +623,19 @@ _V1_SUBPKG_NAMES = {
 # Lead the v1 root toctree with Assets, then Core; the rest follow alphabetically.
 _V1_TOP_LEAD = ["assets", "core"]
 
-# Inside the folded Assets page, lead its subpackage sub-sections with Materials,
-# then Objects; the rest follow alphabetically. Keyed relative to infinigen.assets.
-_V1_ASSETS_LEAD = ["materials", "objects"]
+# Assets is a hub: lead its child subpage toctree with Materials, Objects,
+# Scatters; the rest follow alphabetically. Keyed relative to infinigen.assets.
+_V1_ASSETS_LEAD = ["materials", "objects", "scatters"]
+
+# Core is a hub too; lead with Nodes and Placement. Keyed under infinigen.core.
+_V1_CORE_LEAD = ["nodes", "placement"]
 
 # Shaders keeps its child subpackages as their own pages (nested in the sidebar);
 # this leads its toctree, the rest (shader utilities) follow.
 _SHADERS_LEAD = [
-    "shaders.materials",
-    "shaders.masks",
+    "shaders.base_materials",
     "shaders.composites",
+    "shaders.masks",
     "shaders.displacements",
 ]
 
@@ -539,7 +690,7 @@ def _package_lines(name: str, files: dict, offset: int) -> list[str]:
 
 
 # Every dotted path apidoc generated a subpackage page for (objects,
-# shaders.materials, ...), captured before _build_pages deletes the
+# shaders.base_materials, ...), captured before _build_pages deletes the
 # nested ones. Lets the heading rename tell subpackages from plain modules.
 def _real_subpackages(api_dir: Path, prefix: str = "infinigen2") -> set:
     return {p.stem[len(prefix) + 1 :] for p in api_dir.glob(prefix + ".*.rst")}
@@ -584,6 +735,23 @@ def _rename_subpackage_headings(
     rst_path.write_text("\n".join(lines) + "\n")
 
 
+# apidoc titles each inlined submodule with its full dotted path, crowding the
+# page TOC with redundant prefixes. Show the leaf only (the parent heading carries
+# the package). Runs after the subpackage rename, whose headings contain a space.
+def _shorten_module_headings(rst_path: Path, prefix: str) -> None:
+    lines = rst_path.read_text().splitlines()
+    for i in range(len(lines) - 1):
+        if not (lines[i].strip() and _is_underline(lines[i + 1])):
+            continue
+        title = lines[i].strip().replace("\\", "")
+        if " " in title or not title.startswith(prefix + "."):
+            continue
+        leaf = title.rsplit(".", 1)[-1]
+        lines[i] = leaf
+        lines[i + 1] = lines[i + 1][0] * len(leaf)
+    rst_path.write_text("\n".join(lines) + "\n")
+
+
 # Reorder the root page's subpackage toctree so the lead pages come first.
 def _reorder_root_toctree(
     rst_path: Path, lead: list, prefix: str = "infinigen2"
@@ -604,6 +772,39 @@ def _reorder_root_toctree(
 
     lines[entries[0] : entries[-1] + 1] = sorted(block, key=rank)
     rst_path.write_text("\n".join(lines) + "\n")
+
+
+# apidoc leaves pure-namespace subpackages (only sub-subpackages, no direct
+# modules, e.g. infinigen.assets.objects) out of the hub toctree though it still
+# writes their page. Add any such orphan sibling so it isn't unreachable.
+def _link_orphan_subpages(hub_rst: Path, prefix: str) -> None:
+    lines = hub_rst.read_text().splitlines()
+    entries = [
+        i
+        for i, line in enumerate(lines)
+        if line[:1] in (" ", "\t") and line.strip().startswith(prefix + ".")
+    ]
+    if not entries:
+        return
+    listed = {lines[i].strip() for i in entries}
+    depth = prefix.count(".") + 1
+    orphans = sorted(
+        p.stem
+        for p in hub_rst.parent.glob(prefix + ".*.rst")
+        if p.stem.count(".") == depth and p.stem not in listed
+    )
+    if not orphans:
+        return
+    lines[entries[-1] + 1 : entries[-1] + 1] = ["   " + name for name in orphans]
+    hub_rst.write_text("\n".join(lines) + "\n")
+
+
+# Drop a toctree entry from a hub page (its own page survives and is linked
+# elsewhere); used to move sim objects out of Assets into the Sim section.
+def _drop_toctree_entry(hub_rst: Path, entry: str) -> None:
+    lines = hub_rst.read_text().splitlines()
+    kept = [line for line in lines if line.strip() != entry]
+    hub_rst.write_text("\n".join(kept) + "\n")
 
 
 # Reorder the inlined subpackage sub-sections of a folded page (e.g. Assets) so
@@ -637,6 +838,39 @@ def _reorder_inline_subsections(rst_path: Path, prefix: str, lead: list) -> None
     rst_path.write_text("\n".join(lines) + "\n")
 
 
+# The example scripts are CLIs; surface their argparse usage on the Examples page
+# rather than only their (now curated) public functions.
+_EXAMPLE_CLIS = [
+    ("generate_nature", "python -m infinigen_examples.generate_nature"),
+    ("generate_indoors", "python -m infinigen_examples.generate_indoors"),
+    (
+        "generate_individual_assets",
+        "python -m infinigen_examples.generate_individual_assets",
+    ),
+]
+
+
+def _add_examples_cli(rst_path: Path) -> None:
+    if not rst_path.exists():
+        return
+    lines = rst_path.read_text().splitlines()
+    for i in range(len(lines) - 1):
+        if not (lines[i].strip() and _is_underline(lines[i + 1])):
+            continue
+        block = ["", "Command Line Interface", "-" * 22, ""]
+        for mod, prog in _EXAMPLE_CLIS:
+            block += [
+                ".. argparse::",
+                f"   :module: infinigen_examples.{mod}",
+                "   :func: get_parser",
+                f"   :prog: {prog}",
+                "",
+            ]
+        lines[i + 2 : i + 2] = block
+        break
+    rst_path.write_text("\n".join(lines) + "\n")
+
+
 # Rewrite a page's first heading (its H1 / sidebar label) to a plain title.
 def _rename_root_heading(rst_path: Path, title: str) -> None:
     if not rst_path.exists():
@@ -667,10 +901,39 @@ def _retitle_root(rst_path: Path, dotted: str) -> None:
     rst_path.write_text("\n".join(lines) + "\n")
 
 
+# Document only the 1.0 public interface (assets/, example-imported core, general utils).
+_V1_APIDOC_EXCLUDE_RELPATHS = [
+    ("infinigen", "assets", "objects", "tables", "lofting.py"),
+    ("infinigen", "assets", "fluid", "flip_init.py"),
+    ("infinigen", "assets", "fluid", "run_tests.py"),
+    ("infinigen", "assets", "objects", "elements", "doors", "dev_script.py"),
+    ("infinigen", "core", "nodes"),
+    ("infinigen", "core", "sim"),
+    ("infinigen", "core", "util", "bevelling.py"),
+    ("infinigen", "core", "util", "color.py"),
+    ("infinigen", "core", "util", "exporting.py"),
+    ("infinigen", "core", "util", "paths.py"),
+    ("infinigen", "datagen"),
+    ("infinigen", "terrain"),
+    ("infinigen", "tools", "ground_truth"),
+    ("infinigen", "tools", "perceptual"),
+    ("infinigen", "tools", "results"),
+    ("infinigen", "tools", "sim"),
+    ("infinigen", "tools", "terrain"),
+    ("infinigen", "tools", "submit_asset_cache.py"),
+    ("infinigen", "OcMesher"),
+    ("infinigen", "infinigen_gpl"),
+    ("infinigen", "launch_blender.py"),
+]
+
+
 def _run_apidoc(_app):
     here = os.path.dirname(__file__)
     src = os.path.join(here, "..", "..", "src")
     api_dir = Path(here) / "api"
+    _v1_apidoc_excludes = [
+        os.path.join(src, *parts) for parts in _V1_APIDOC_EXCLUDE_RELPATHS
+    ]
     apidoc.main(
         ["--force", "--no-toc", "-o", str(api_dir), os.path.join(src, "infinigen2")]
     )
@@ -679,14 +942,25 @@ def _run_apidoc(_app):
     _build_pages(api_dir, "infinigen2", _HUBS)
     for page in api_dir.glob("infinigen2.*.rst"):
         _rename_subpackage_headings(page, subpkgs)
+        _shorten_module_headings(page, "infinigen2")
     _reorder_root_toctree(api_dir / "infinigen2.rst", _TOP_LEAD)
     _reorder_root_toctree(api_dir / "infinigen2.shaders.rst", _SHADERS_LEAD)
     _retitle_root(api_dir / "infinigen2.rst", "infinigen2")
     # v1 docs regenerate here (the api dir is gitignored, so nothing is stale).
-    # v1 has only a root hub: each top-level subpackage folds into one page so the
-    # Infinigen 1.0 sidebar stays two levels deep (root -> assets/core/...).
+    # --implicit-namespaces pulls in infinigen.assets.objects (a namespace package
+    # with no __init__ that apidoc would skip) so Objects gets a page like the rest.
+    # Exclude cpp_utils (compiled Cython) and the unimportable 1.0 modules in _v1_apidoc_excludes.
     apidoc.main(
-        ["--force", "--no-toc", "-o", str(api_dir), os.path.join(src, "infinigen")]
+        [
+            "--force",
+            "--no-toc",
+            "--implicit-namespaces",
+            "-o",
+            str(api_dir),
+            os.path.join(src, "infinigen"),
+            os.path.join(src, "infinigen", "assets", "utils", "geometry", "cpp_utils"),
+            *_v1_apidoc_excludes,
+        ]
     )
     apidoc.main(
         [
@@ -699,15 +973,31 @@ def _run_apidoc(_app):
     )
     _strip_api_suffixes(api_dir)
     v1_subpkgs = _real_subpackages(api_dir, "infinigen")
-    _build_pages(api_dir, "infinigen", {"infinigen"})
-    _reorder_inline_subsections(
-        api_dir / "infinigen.assets.rst", "infinigen.assets", _V1_ASSETS_LEAD
+    _build_pages(
+        api_dir, "infinigen", {"infinigen", "infinigen.assets", "infinigen.core"}
+    )
+    _link_orphan_subpages(api_dir / "infinigen.assets.rst", "infinigen.assets")
+    _link_orphan_subpages(api_dir / "infinigen.core.rst", "infinigen.core")
+    _reorder_root_toctree(
+        api_dir / "infinigen.assets.rst", _V1_ASSETS_LEAD, "infinigen.assets"
+    )
+    _reorder_root_toctree(
+        api_dir / "infinigen.core.rst", _V1_CORE_LEAD, "infinigen.core"
     )
     _reorder_root_toctree(api_dir / "infinigen.rst", _V1_TOP_LEAD, "infinigen")
     for page in api_dir.glob("infinigen.*.rst"):
         _rename_subpackage_headings(page, v1_subpkgs, "infinigen", _V1_SUBPKG_NAMES)
+        _shorten_module_headings(page, "infinigen")
     _retitle_root(api_dir / "infinigen.rst", "infinigen")
     _rename_root_heading(api_dir / "infinigen_examples.rst", "Examples")
+    _shorten_module_headings(api_dir / "infinigen_examples.rst", "infinigen_examples")
+    _add_examples_cli(api_dir / "infinigen_examples.rst")
+    # Sim objects get their own page under the Infinigen 1.0 Sim toctree (index.md)
+    # instead of nesting under Assets.
+    _drop_toctree_entry(
+        api_dir / "infinigen.assets.rst", "infinigen.assets.sim_objects"
+    )
+    _rename_root_heading(api_dir / "infinigen.assets.sim_objects.rst", "Sim Objects")
 
 
 # Per-file member order: `*_rand`, plain funcs, `*_presets` chooser, individual
@@ -780,6 +1070,33 @@ def _prefix_pf_types(app, doctree):  # noqa: ARG001
             text.parent.replace(text, docutils_nodes.Text("pf." + leaf))
 
 
+_V1_XREF_ROOTS = ("infinigen.", "infinigen_examples.")
+_orig_py_resolve_xref = PythonDomain.resolve_xref
+
+
+def _resolve_xref(self, env, fromdocname, builder, typ, target, node, contnode):
+    """Refuse infinigen2 -> 1.0 cross-links so pf types fall through to procfunc/mathutils;
+    warn (failing the build) on any other leak, which is a real 2.0 docs bug."""
+    # builtin `type` annotations otherwise match the many material `.type` attrs; leave unlinked.
+    if target == "type":
+        return None
+    result = _orig_py_resolve_xref(
+        self, env, fromdocname, builder, typ, target, node, contnode
+    )
+    if result is None or not fromdocname.startswith("api/infinigen2"):
+        return result
+    fq = (result.get("refuri") or result.get("refid") or "").rsplit("#", 1)[-1]
+    if not fq.startswith(_V1_XREF_ROOTS):
+        return result
+    if target.rsplit(".", 1)[-1] not in _PF_TYPES:
+        logger.warning(
+            f"infinigen2 API cross-links to 1.0 {fq} (as {target!r})",
+            type="infinigen2",
+            subtype="v1_xref",
+        )
+    return None
+
+
 # v1 modules lack __all__, so automodule's undoc-members otherwise documents
 # imported names (numpy.random.randint, ...). Skip any member defined outside the
 # infinigen packages so only real module members are documented.
@@ -787,15 +1104,36 @@ def _skip_imported(app, what, name, obj, skip, options):  # noqa: ARG001
     if skip:
         return None
     module = getattr(obj, "__module__", None)
-    if module and not module.startswith("infinigen"):
+    if module is None:
+        # C builtins report no module; skip them so third-party docstrings don't leak in.
+        if isinstance(obj, (types.BuiltinFunctionType, types.BuiltinMethodType)):
+            return True
+        return None
+    if not module.startswith("infinigen"):
         return True
     return None
 
 
+# bpy's C teardown segfaults (exit 139), so exit here after the build with a real code.
+def _exit_skipping_teardown(app, exception):
+    if exception is not None:
+        traceback.print_exception(type(exception), exception, exception.__traceback__)
+    code = 1 if (exception is not None or app._warncount > 0) else 0
+    print(
+        f"[docs] build finished: {app._warncount} warning(s), exiting {code}",
+        file=sys.stderr,
+    )
+    exit_skipping_teardown(code)
+
+
 def setup(app):
     ModuleDocumenter.sort_members = _sort_members
+    PythonDomain.resolve_xref = _resolve_xref
+    app.connect("build-finished", _exit_skipping_teardown)
+    app.connect("builder-inited", _lint_doc_paths)
     app.connect("builder-inited", _run_apidoc)
     app.connect("autodoc-process-docstring", _inject_images)
+    app.connect("autodoc-process-docstring", _inject_preset_image)
     app.connect("autodoc-process-docstring", _clean_namedtuple)
     app.connect("autodoc-process-docstring", _param_defaults)
     app.connect("autodoc-process-signature", _shorten_signature)

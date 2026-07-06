@@ -402,7 +402,7 @@ def _plant_seed(
 
 
 @pf.nodes.node_function
-def flower(
+def _flower_geometry(
     center_rad: t.SocketOrVal[float],
     petal_dims: t.SocketOrVal[pf.Vector],
     seed_size: t.SocketOrVal[float],
@@ -534,6 +534,39 @@ def flower(
     return flower_smooth
 
 
+def flower(
+    center_rad: float = 0.0156,
+    petal_dims: pf.Vector = (0.109, 0.0049, 0.0875),
+    seed_size: float = 0.001,
+    min_petal_angle: float = 0.35,
+    max_petal_angle: float = 1.4,
+    wrinkle: float = 0.01,
+    curl: float = 0.524,
+    petal_material: pf.Material | None = None,
+    center_material: pf.Material | None = None,
+) -> FlowerResult:
+    if petal_material is None:
+        petal_material = pf.Material(surface=pf.nodes.shader.principled_bsdf())
+    if center_material is None:
+        center_material = pf.Material(surface=pf.nodes.shader.principled_bsdf())
+
+    res = _flower_geometry(
+        center_rad=center_rad,
+        petal_dims=petal_dims,
+        seed_size=seed_size,
+        min_petal_angle=min_petal_angle,
+        max_petal_angle=max_petal_angle,
+        wrinkle=wrinkle,
+        curl=curl,
+        petal_material=petal_material,
+        center_material=center_material,
+    )
+
+    obj = pf.nodes.to_mesh_object(res)
+    pf.ops.modifier.subdivide_surface(obj, levels=2)
+    return FlowerResult(mesh=obj)
+
+
 def flower_rand(
     rng: pf.RNG,
     materials: FlowerMaterials | None = None,
@@ -572,7 +605,7 @@ def flower_rand(
     wrinkle = pf.random.uniform(rng_geo, 0.003, 0.02)
     curl = pf.random.normal(rng_geo, np.deg2rad(30), np.deg2rad(50))
 
-    res = flower(
+    res = _flower_geometry(
         center_rad=center_rad,
         petal_dims=petal_dims,
         seed_size=seed_size,

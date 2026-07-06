@@ -6,15 +6,15 @@
 :caption: Infinigen 2.0 Preview
 
 Getting Started <self>
+Command Line Interface <cli>
 api/infinigen2
 procfunc <https://procfunc.readthedocs.io>
-Example Projects
+Example Projects <ExampleProjects>
 ```
 
 ```{toctree}
 :maxdepth: 1
 
-cli
 Contributing
 CHANGELOG
 ```
@@ -55,6 +55,7 @@ StaticAssets
 :maxdepth: 2
 :caption: Infinigen 1.0 Sim
 
+api/infinigen.assets.sim_objects
 ExportingToSimulators
 GeneratingFluidSimulations
 UsingJointNodes

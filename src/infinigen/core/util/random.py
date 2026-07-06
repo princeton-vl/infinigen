@@ -150,8 +150,7 @@ def random_color_neighbour(
     :param hue_diff: maximum change in hue, if none all hue is allowed
     :param sat_diff: maximum change in saturation
     :param val_diff: maximum change in value
-    :param only_less_hue: only small hue values smaller than the one provided
-        in rgb
+    :param only_less_hue: only small hue values smaller than the one provided in rgb
     :param only_less_sat:
     :param only_less_val:
     :param only_more_hue:

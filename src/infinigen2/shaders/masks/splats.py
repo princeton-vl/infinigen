@@ -13,13 +13,11 @@ from infinigen2.shaders.util.coord import coord_warp, space_warp
 __all__ = [
     "SplatsMaskResult",
     "metal_base_material",
-    "metal_splats_presets",
     "splat_dots",
     "splat_dots_rand",
     "splats_base_material",
     "splats_cookware",
     "splats_cookware_mask_preset",
-    "splats_mask_presets",
     "splats_mask_rand",
     "splats_metal_gradient",
     "splats_metal_mask_preset",
@@ -794,22 +792,6 @@ def splats_streaks(vector: t.SocketOrVal[pf.Vector]):
     )
 
 
-def splats_mask_presets(
-    rng: pf.RNG,
-    vector: t.SocketOrVal[pf.Vector],
-) -> SplatsMaskResult:
-    func = pf.control.choice(
-        rng,
-        [
-            (splats_metal_mask_preset, 1.0),
-            (splats_cookware_mask_preset, 1.0),
-            (splats_spots_mask_preset, 1.0),
-            (splats_streaks_mask_preset, 3.0),
-        ],
-    )
-    return SplatsMaskResult(mask=func(vector=vector))
-
-
 def metal_base_material(vector: t.SocketOrVal[pf.Vector]):
     principled = pf.nodes.shader.principled_bsdf(
         base_color=pf.color.hsv_color(hue=0.0, saturation=0.0, value=0.526),
@@ -825,19 +807,6 @@ def splats_base_material(vector: t.SocketOrVal[pf.Vector]):
         roughness=0.0,
     )
     return principled
-
-
-def metal_splats_presets(rng: pf.RNG, vector):
-    del vector
-    coord = pf.nodes.shader.coord()
-    mask = splats_mask_presets(rng=rng, vector=coord.object).mask
-    diffuse = splats_base_material(vector=coord.object)
-    metal = metal_base_material(vector=coord.object)
-    mix_shader = pf.nodes.shader.mix_shader(factor=mask, a=metal, b=diffuse)
-    return pf.Material(
-        surface=mix_shader,
-        displacement=pf.nodes.math.constant((0.0, 0.0, 0.0)),
-    )
 
 
 def splat_dots_rand(

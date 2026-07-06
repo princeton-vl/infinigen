@@ -1,15 +1,20 @@
 import procfunc as pf
 from procfunc.nodes import types as t
 
+from infinigen2.shaders.base_materials import metal_brushed, wood_grain
 from infinigen2.shaders.composites import wood_planks
 from infinigen2.shaders.masks import scratches
-from infinigen2.shaders.materials import metal_brushed, wood_grain
 
 __all__ = [
     "scratch_shader_rand",
     "scratched_metal_rand",
     "scratched_wood_rand",
+    "scratches_brushed_preset",
+    "scratches_deep_dirty_preset",
+    "scratches_dense_preset",
+    "scratches_light_varnish_preset",
     "scratches_overlay_rand",
+    "scratches_shallow_preset",
 ]
 
 
@@ -120,3 +125,79 @@ def scratched_metal_rand(
     )
     material = base_func(rng_base_func, vector)
     return scratches_overlay_rand(rng_overlay, vector, material)
+
+
+def _apply_scratch_mask(
+    mask: pf.ProcNode[float],
+    base: pf.Material,
+    scratch_shader: pf.ProcNode[pf.Shader],
+    depth: float,
+) -> pf.Material:
+    surface = pf.nodes.shader.mix_shader(factor=mask, a=base.surface, b=scratch_shader)
+    if depth <= 0.0:
+        return pf.Material(surface=surface, displacement=base.displacement)
+    carve = pf.nodes.shader.displacement(
+        height=mask, midlevel=0.0, scale=depth, normal=(0.0, 0.0, 0.0)
+    )
+    return pf.Material(surface=surface, displacement=base.displacement - carve)
+
+
+def scratches_brushed_preset(vector: t.SocketOrVal[pf.Vector]) -> pf.Material:
+    base = metal_brushed.metal_brushed(
+        vector=vector,
+        brush_type=3.0,
+        brush_size=0.3,
+        color=pf.Color((0.4035122, 0.4035122, 0.4035122)),
+        roughness=0.38627362,
+    )
+    mask = scratches.scratches_brushed_mask_preset(vector)
+    scratch_shader = pf.nodes.shader.anisotropic_bsdf(
+        color=pf.Color((0.4975732, 0.4975732, 0.4975732)),
+        roughness=0.4076923,
+        normal=(0.0, 0.0, 0.0),
+    )
+    return _apply_scratch_mask(mask, base, scratch_shader, 0.0)
+
+
+def scratches_dense_preset(vector: t.SocketOrVal[pf.Vector]) -> pf.Material:
+    base = metal_brushed.metal_brushed(
+        vector=vector,
+        brush_type=3.0,
+        brush_size=0.3,
+        color=pf.Color((0.35180885, 0.35180885, 0.35180885)),
+        color_variation=0.57465065,
+        roughness=0.3,
+    )
+    mask = scratches.scratches_dense_mask_preset(vector)
+    scratch_shader = pf.nodes.shader.anisotropic_bsdf(
+        color=pf.Color((0.351809, 0.351809, 0.351809)),
+        roughness=0.4,
+        normal=(0.0, 0.0, 0.0),
+    )
+    return _apply_scratch_mask(mask, base, scratch_shader, 0.0)
+
+
+def scratches_deep_dirty_preset(vector: t.SocketOrVal[pf.Vector]) -> pf.Material:
+    base = wood_grain.wood_grain_brown_preset(vector)
+    mask = scratches.scratches_deep_dirty_mask_preset(vector)
+    scratch_shader = pf.nodes.shader.diffuse_bsdf(
+        color=pf.Color((0.0059479414, 0.0059479414, 0.0059479414)),
+        normal=(0.0, 0.0, 0.0),
+    )
+    return _apply_scratch_mask(mask, base, scratch_shader, 0.0005)
+
+
+def scratches_light_varnish_preset(vector: t.SocketOrVal[pf.Vector]) -> pf.Material:
+    base = wood_grain.wood_grain_varnished_preset(vector)
+    mask = scratches.scratches_light_varnish_mask_preset(vector)
+    scratch_shader = pf.nodes.shader.diffuse_bsdf(
+        color=pf.Color((0.80003154, 0.4295859, 0.16547439)),
+        normal=(0.0, 0.0, 0.0),
+    )
+    return _apply_scratch_mask(mask, base, scratch_shader, 0.0005)
+
+
+def scratches_shallow_preset(vector: t.SocketOrVal[pf.Vector]) -> pf.Material:
+    base = wood_grain.wood_grain_brown_preset(vector)
+    mask = scratches.scratches_shallow_mask_preset(vector)
+    return _apply_scratch_mask(mask, base, base.surface, 0.0003)

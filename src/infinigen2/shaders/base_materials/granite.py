@@ -26,7 +26,6 @@ __all__ = [
     "granite_crystals_preset",
     "granite_masonry_gray_preset",
     "granite_no_displacement_preset",
-    "granite_presets",
     "granite_rand",
     "granite_sandy_preset",
     "granite_smooth_rand",
@@ -1142,28 +1141,6 @@ def granite_sandy_preset(
         feldspar_color_variation=0.6075,
         feldspar_height=0.5,
     )
-
-
-def granite_presets(
-    rng: pf.RNG,
-    vector: t.SocketOrVal[pf.Vector],
-):
-    # TODO: replace with continously randomized version below
-
-    func = pf.control.choice(
-        rng,
-        [
-            (granite_yellow_preset, 1.0),
-            (granite_no_displacement_preset, 1.0),
-            (granite_white_brown_preset, 1.0),
-            (granite_crystals_preset, 1.0),
-            (granite_cobble_gray_preset, 1.0),
-            (granite_masonry_gray_preset, 1.0),
-            (granite_sandy_preset, 1.0),
-        ],
-    )
-    result = func(vector=vector)
-    return pf.Material(surface=result.surface, displacement=result.displacement)
 
 
 def _create_gradient_color(

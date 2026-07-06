@@ -18,13 +18,20 @@ __all__ = [
     "ScratchesLinearResult",
     "ScratchesMaskResult",
     "ScratchesRandomResult",
+    "scratches_brushed_mask_preset",
+    "scratches_deep_dirty_mask_preset",
+    "scratches_dense_mask_preset",
     "scratches_layer_rand",
+    "scratches_light_varnish_mask_preset",
     "scratches_linear",
     "scratches_linear_rand",
     "scratches_mask_rand",
     "scratches_random",
     "scratches_random_rand",
+    "scratches_shallow_mask_preset",
 ]
+
+_LayerParam = t.SocketOrVal[float] | t.SocketOrVal[pf.Vector]
 
 
 class ScratchesMaskResult(NamedTuple):
@@ -414,3 +421,295 @@ def scratches_mask_rand(
         )
         mask = pf.nodes.math.maximum(a=mask, b=result.scratch_texture)
     return ScratchesMaskResult(mask=mask)
+
+
+def _random_texture(
+    vector: t.SocketOrVal[pf.Vector], **params: _LayerParam
+) -> pf.ProcNode[float]:
+    shader = _dummy_shader()
+    result = scratches_random(
+        vector=vector, base_shader=shader, scratch_shader=shader, **params
+    )
+    return result.scratch_texture
+
+
+def _linear_texture(
+    vector: t.SocketOrVal[pf.Vector], **params: _LayerParam
+) -> pf.ProcNode[float]:
+    shader = _dummy_shader()
+    result = scratches_linear(
+        vector=vector, base_shader=shader, scratch_shader=shader, **params
+    )
+    return result.scratch_texture
+
+
+def _max_layers(*layers: pf.ProcNode[float]) -> pf.ProcNode[float]:
+    mask = layers[0]
+    for layer in layers[1:]:
+        mask = pf.nodes.math.maximum(a=mask, b=layer)
+    return mask
+
+
+def scratches_brushed_mask_preset(
+    vector: t.SocketOrVal[pf.Vector],
+) -> pf.ProcNode[float]:
+    fine_a = _random_texture(
+        vector,
+        scratch_spacing=0.02,
+        scratch_thickness=1e-04,
+        distortion_strength=0.2,
+        distortion_detail=0.0,
+    )
+    fine_b = _random_texture(
+        vector,
+        random_seed=31.4,
+        scratch_spacing=0.02,
+        scratch_thickness=1e-04,
+        distortion_strength=0.2,
+        distortion_detail=0.0,
+    )
+    hairline = _linear_texture(
+        vector,
+        scratch_rotation=(0.0, 0.275762, 0.0),
+        scratch_spacing=0.002,
+        scratch_spread=0.40168542,
+        scratch_thickness=1e-04,
+        noise_size=24.0,
+        distortion_size=3.0,
+        distortion_strength=1.0,
+        distortion_detail=1.0,
+    )
+    grain_a = _linear_texture(
+        vector,
+        scratch_rotation=(0.0, 0.275762, 0.0),
+        scratch_spacing=0.012,
+        scratch_spread=0.3792135,
+        scratch_thickness=0.0002,
+        thickness_variation=0.48876405,
+        noise_size=4.0,
+        distortion_size=12.0,
+        distortion_strength=0.89,
+        distortion_detail=5.9300003,
+    )
+    grain_b = _linear_texture(
+        vector,
+        random_seed=15.299999,
+        scratch_rotation=(0.0, 0.3595378, 0.0),
+        scratch_spacing=0.012,
+        scratch_spread=0.34134832,
+        scratch_thickness=0.0002,
+        thickness_variation=0.4494382,
+        noise_size=4.0,
+        distortion_size=11.57,
+        distortion_strength=1.23,
+        distortion_detail=6.0,
+    )
+    grain_c = _linear_texture(
+        vector,
+        random_seed=29.8,
+        scratch_rotation=(0.0, 0.13264503, 0.0),
+        scratch_spacing=0.012,
+        scratch_spread=0.4623803,
+        scratch_thickness=0.0002,
+        thickness_variation=0.29126215,
+        noise_size=2.0,
+        distortion_size=4.0,
+        distortion_strength=1.6899999,
+        distortion_detail=2.3000002,
+    )
+    coarse = _random_texture(
+        vector,
+        scratch_spacing=0.05,
+        scratch_thickness=0.0002,
+        distortion_size=1.0,
+        distortion_strength=0.3,
+        distortion_detail=1.0,
+    )
+    return _max_layers(fine_a, fine_b, hairline, grain_a, grain_b, grain_c, coarse)
+
+
+def scratches_dense_mask_preset(
+    vector: t.SocketOrVal[pf.Vector],
+) -> pf.ProcNode[float]:
+    fine_a = _random_texture(
+        vector,
+        random_seed=-11.199999,
+        scratch_spacing=0.02,
+        scratch_thickness=1e-04,
+        distortion_strength=0.2,
+        distortion_detail=0.0,
+    )
+    fine_b = _random_texture(
+        vector,
+        random_seed=19.199999,
+        scratch_spacing=0.017,
+        scratch_thickness=1e-04,
+        distortion_strength=0.2,
+        distortion_detail=0.0,
+    )
+    fine_c = _random_texture(
+        vector,
+        scratch_spacing=0.015,
+        scratch_thickness=1e-04,
+        distortion_strength=0.2,
+        distortion_detail=0.0,
+    )
+    fine_d = _random_texture(
+        vector,
+        random_seed=31.4,
+        scratch_spacing=0.008,
+        scratch_thickness=1e-04,
+        distortion_strength=0.2,
+        distortion_detail=0.0,
+    )
+    hairline = _linear_texture(
+        vector,
+        scratch_rotation=(0.0, 0.275762, 0.0),
+        scratch_spacing=0.002,
+        scratch_spread=0.40168542,
+        scratch_thickness=1e-04,
+        noise_size=4.0,
+        distortion_size=3.0,
+        distortion_strength=1.0,
+        distortion_detail=1.0,
+    )
+    return _max_layers(fine_a, fine_b, fine_c, fine_d, hairline)
+
+
+def scratches_deep_dirty_mask_preset(
+    vector: t.SocketOrVal[pf.Vector],
+) -> pf.ProcNode[float]:
+    gouge = _linear_texture(
+        vector,
+        random_seed=12.399999,
+        scratch_rotation=(1.5707964, 0.5393067, 0.0),
+        scratch_spacing=0.05,
+        scratch_spread=0.3918919,
+        scratch_thickness=0.0015,
+        thickness_variation=0.41312742,
+        noise_size=5.8999996,
+        distortion_size=2.31,
+        distortion_strength=0.83000004,
+        distortion_detail=1.0,
+    )
+    seam = _linear_texture(
+        vector,
+        random_seed=12.399999,
+        scratch_rotation=(1.5707964, -0.06108652, 0.0),
+        scratch_spacing=0.01,
+        scratch_spread=0.2992278,
+        scratch_thickness=0.002,
+        noise_size=5.7800007,
+        distortion_size=4.5,
+        distortion_stretch=1.0,
+        distortion_strength=0.3,
+        distortion_detail=1.0,
+    )
+    cross = _linear_texture(
+        vector,
+        random_seed=15.699999,
+        scratch_rotation=(1.5707964, 0.3089233, 0.0),
+        scratch_spacing=0.02,
+        scratch_spread=0.3764479,
+        scratch_thickness=0.0013,
+        noise_size=4.0,
+        distortion_size=18.640001,
+        distortion_stretch=2.0,
+        distortion_strength=1.3399999,
+        distortion_detail=1.0,
+    )
+    coarse = _linear_texture(
+        vector,
+        random_seed=22.699999,
+        scratch_rotation=(1.5707964, 1.0332348, 0.0),
+        scratch_spacing=0.04,
+        scratch_spread=0.43050194,
+        noise_size=4.0,
+        distortion_size=2.9400024,
+        distortion_strength=0.68999994,
+        distortion_detail=5.9999995,
+    )
+    return _max_layers(gouge, seam, cross, coarse)
+
+
+def scratches_light_varnish_mask_preset(
+    vector: t.SocketOrVal[pf.Vector],
+) -> pf.ProcNode[float]:
+    sparse = _random_texture(vector, distortion_detail=1.0)
+    wide = _random_texture(
+        vector,
+        random_seed=13.4,
+        scratch_spacing=0.2,
+        distortion_strength=0.2,
+        distortion_detail=1.0,
+    )
+    fine = _random_texture(
+        vector,
+        random_seed=28.899998,
+        scratch_spacing=0.05,
+        scratch_thickness=0.0005,
+        distortion_strength=0.3,
+        distortion_detail=1.0,
+    )
+    return _max_layers(sparse, wide, fine)
+
+
+def scratches_shallow_mask_preset(
+    vector: t.SocketOrVal[pf.Vector],
+) -> pf.ProcNode[float]:
+    broad = _linear_texture(
+        vector,
+        scratch_rotation=(1.5707964, 0.34906584, 0.0),
+        scratch_spacing=0.07,
+        scratch_spread=0.35752895,
+        scratch_thickness=0.0005,
+        thickness_variation=0.41312742,
+        noise_size=6.0,
+        distortion_size=3.1699998,
+        distortion_stretch=2.6,
+        distortion_strength=0.8399999,
+        distortion_detail=6.7000003,
+    )
+    medium = _linear_texture(
+        vector,
+        random_seed=10.0,
+        scratch_rotation=(1.5707964, 0.05235988, 0.0),
+        scratch_spacing=0.03,
+        scratch_spread=0.42297295,
+        scratch_thickness=0.0005,
+        thickness_variation=0.41312742,
+        noise_size=6.0,
+        distortion_size=6.0999994,
+        distortion_stretch=2.4299998,
+        distortion_strength=0.59999996,
+        distortion_detail=8.0,
+    )
+    fine_a = _linear_texture(
+        vector,
+        random_seed=30.0,
+        scratch_rotation=(1.5707964, 0.7853982, 0.0),
+        scratch_spacing=0.01,
+        scratch_spread=0.4,
+        scratch_thickness=0.0003,
+        thickness_variation=0.41312742,
+        noise_size=6.0,
+        distortion_size=3.99,
+        distortion_stretch=4.0,
+        distortion_strength=1.0799999,
+        distortion_detail=2.0,
+    )
+    fine_b = _linear_texture(
+        vector,
+        random_seed=64.6,
+        scratch_rotation=(1.5707964, 0.54105204, 0.0),
+        scratch_spacing=0.01,
+        scratch_spread=0.4,
+        scratch_thickness=0.0003,
+        thickness_variation=0.41312742,
+        noise_size=9.0,
+        distortion_size=3.0,
+        distortion_stretch=4.0,
+        distortion_strength=0.5,
+        distortion_detail=2.0,
+    )
+    return _max_layers(broad, medium, fine_a, fine_b)

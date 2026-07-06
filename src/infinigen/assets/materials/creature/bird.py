@@ -582,26 +582,6 @@ def shader_bird_beak(nw: NodeWrangler, rand=True, **input_kwargs):
 
 def shader_bird_eyeball(nw: NodeWrangler, rand=True, **input_kwargs):
     # Code generated using version 2.4.3 of the node_transpiler
-    """
-    texture_coordinate = nw.new_node(Nodes.TextureCoord)
-
-    mapping = nw.new_node(Nodes.Mapping,
-        input_kwargs={'Vector': texture_coordinate.outputs["Generated"], 'Rotation': (0.0, 0.0, -0.5236)})
-
-    separate_xyz = nw.new_node(Nodes.SeparateXYZ,
-        input_kwargs={'Vector': mapping})
-
-    colorramp = nw.new_node(Nodes.ColorRamp,
-        input_kwargs={'Fac': separate_xyz.outputs["X"]})
-    colorramp.color_ramp.interpolation = "CONSTANT"
-    colorramp.color_ramp.elements.new(0)
-    colorramp.color_ramp.elements[0].position = 0.0
-    colorramp.color_ramp.elements[0].color = (0.4489, 0.3077, 0.1451, 1.0)
-    colorramp.color_ramp.elements[1].position = 0.0837
-    colorramp.color_ramp.elements[1].color = (0.6744, 0.0691, 0.3627, 1.0)
-    colorramp.color_ramp.elements[2].position = 0.1909
-    colorramp.color_ramp.elements[2].color = (0.0, 0.0, 0.0, 1.0)
-    """
     principled_bsdf = nw.new_node(
         Nodes.PrincipledBSDF,
         input_kwargs={"Base Color": (0.0, 0.0, 0.0, 1.0), "Roughness": 0.0},

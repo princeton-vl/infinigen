@@ -12,7 +12,7 @@ This guide will show you how to generate an image and it's corresponding ground-
 :warning: **Known issue** : We are actively fixing an issue which causes Infinigen not to be reproducible on many platforms. The same command may produce multiple rearranged scenes with different runtimes and memory requirements.
 
 ## Generate a scene step by step
-Infinigen generates scenes by running multiple tasks (usually executed automatically, like in [Generate image(s) in one command](#generate-images-in-one-command)). Here we will run them one by one to demonstrate. These commands take approximately 10 minutes and 16GB of memory to execute on an M1 Mac or Linux Desktop.
+Infinigen generates scenes by running multiple tasks (usually executed automatically, like in [Generate image(s) in one command](#generate-scenes-in-one-command)). Here we will run them one by one to demonstrate. These commands take approximately 10 minutes and 16GB of memory to execute on an M1 Mac or Linux Desktop.
 
 :exclamation: If you encounter any missing .so files, missing dependencies (such as `gin`), or similar crashes, please check again that all steps of installation ran successfully. If you cannot resolve any issues with installation, please see our README and 'Bug Report' Git Issue template for advice on posting Git Issues to get help quickly - you must include the full installation logs in your issue so that we can help debug.
 

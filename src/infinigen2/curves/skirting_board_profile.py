@@ -54,7 +54,7 @@ def _staircase_translation(
 
 
 @pf.nodes.node_function
-def skirting_profile(
+def _skirting_profile(
     seed: t.SocketOrVal[int],
     count: t.SocketOrVal[int],
     width: t.SocketOrVal[float],
@@ -118,6 +118,29 @@ def skirting_profile(
     return fillet_mask_result.curve
 
 
+def skirting_profile(
+    seed: int = 0,
+    count: int = 2,
+    width: float = 0.05,
+    height: float = 0.12,
+    fillet_vertices: int = 4,
+    fillet_radius: float = 0.03,
+    fillet_probability: float = 1.0,
+    max_offset_pct: float = 0.03,
+) -> pf.CurveObject:
+    res = _skirting_profile(
+        seed=seed,
+        count=count,
+        width=width,
+        height=height,
+        fillet_vertices=fillet_vertices,
+        fillet_radius=fillet_radius,
+        fillet_probability=fillet_probability,
+        max_offset_pct=max_offset_pct,
+    )
+    return pf.nodes.to_curve_object(res)
+
+
 def skirting_profile_rand(
     rng: pf.RNG,
     count: int | None = None,
@@ -143,7 +166,7 @@ def skirting_profile_rand(
     if max_offset_pct is None:
         max_offset_pct = pf.random.uniform(rng, 0.01, 0.05)
 
-    res = skirting_profile(
+    res = _skirting_profile(
         seed=pf.random.randint(rng, 0, 1000),
         count=count,
         width=width,

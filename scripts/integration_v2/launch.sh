@@ -25,6 +25,8 @@ MATERIALS=${MATERIALS-$(uv run python -m infinigen2.list $LIST_ARGS --categories
 OBJECTS=${OBJECTS-$(uv run python -m infinigen2.list $LIST_ARGS --categories Object --missing_values drop --columns shortname $REST_ARGS)}
 SCENES=${SCENES-$(uv run python -m infinigen2.list $LIST_ARGS --categories Scene --missing_values drop --columns shortname $REST_ARGS)}
 MASKS=${MASKS-$(uv run python -m infinigen2.list $LIST_ARGS --categories Mask --missing_values drop --columns shortname $REST_ARGS)}
+PRESETS=${PRESETS-$(uv run python -m infinigen2.list $LIST_ARGS --presets --missing_values drop --columns shortname $REST_ARGS)}
+ENVIRONMENTS=${ENVIRONMENTS-$(uv run python -m infinigen2.list $LIST_ARGS --categories Environment --missing_values drop --columns shortname $REST_ARGS)}
 
 # store git info (for display purposes)
 mkdir -p "$OUTPUT_PATH"
@@ -45,7 +47,11 @@ if [ ! -f "$OUTPUT_PATH/git_info.toml" ]; then
 fi
 
 # store manifest.json; this is necessary since there may be differences between branches
-cp src/infinigen2/generators/manifest.json $OUTPUT_PATH
+cp src/infinigen2/manifest.json $OUTPUT_PATH
+
+# store the preset -> parent-generator map so the viewer can group presets beneath
+# their _rand without importing infinigen2 (the web server runs a minimal env)
+uv run python -c "import json, sys; from infinigen2.list import preset_parents; sys.stdout.write(json.dumps(preset_parents()))" > $OUTPUT_PATH/preset_parents.json
 
 GEN_ARGS="--loglevel WARNING"
 if [ -n "${RENDER_RUNNER:-}" ]; then
@@ -61,6 +67,11 @@ for i in {0..5}; do
         --passes rgb --displacement_mode DISPLACEMENT_AND_BUMP -r 192 192 -s 128
 
 done
+
+# MATERIAL PRESETS VISUAL CHECK (fixed-look variants; deterministic, one seed each)
+echo "$PRESETS" | xargs $MATERIAL_XARGS "${RENDER_RUNNER_ARGS[@]}" {} material_cube render_cycles \
+    $GEN_ARGS --output $OUTPUT_PATH/preset-{}-cube-cycles-0 --seed 0 \
+    --passes rgb --displacement_mode DISPLACEMENT_AND_BUMP -r 192 192 -s 128
 
 # MATERIALS DISPLACEMENT TEST (Cycles: BUMP, DISPLACEMENT_AND_BUMP, REALIZE_MESH)
 for disp in BUMP DISPLACEMENT_AND_BUMP REALIZE_MESH; do
@@ -97,9 +108,16 @@ for i in {0..5}; do
         --passes rgb -r 480 480 -s 256
 done
 
+# ENVIRONMENTS VISUAL CHECK (each lighting/sky generator lights a demo monkey)
+for i in {0..5}; do
+    echo "$ENVIRONMENTS" | xargs $XARGS "${RENDER_RUNNER_ARGS[@]}" {} material_monkey render_cycles \
+        $GEN_ARGS --output $OUTPUT_PATH/environment-{}-monkey-cycles-$i --seed $i \
+        --passes rgb -r 512 512 -s 128
+done
+
 # DOCS LANDING DEMOS (bricks on torus + patterned fabric on monkey; scratched
 # metal on cube already renders above via the main materials loop). Published by
-# scripts/docs/publish_manifest_images.py to <www-root>/<slug>/landing/.
+# the ~/projects/infinigen_docs_ops pipeline under <www-root>/<slug>/assets/images/landing/.
 "${RENDER_RUNNER_ARGS[@]}" bricks_rand material_torus_uv render_cycles \
     $GEN_ARGS --output $OUTPUT_PATH/landing-bricks_rand-torus-cycles-0 --seed 0 \
     --passes rgb -r 512 512 -s 128

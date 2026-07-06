@@ -36,11 +36,6 @@ jobs:
       - name: Validate code
         run: bash scripts/integration_v2/validate_code.sh
 
-      - name: Set up SSH for procfunc
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.PROCFUNC_DEPLOY_KEY }}
-
       - name: Set up uv
         uses: astral-sh/setup-uv@v7
         with:
@@ -65,3 +60,27 @@ jobs:
       # - name: Unit Tests (pytest)
       #   run: |
       #     uv run pytest tests/infinigen2 -k 'not skip_for_ci and not render_gpu'
+
+  docs:
+    runs-on: ${{ fromJSON(vars.CI_RUNNER || '"ubuntu-latest"') }}
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+          fetch-depth: 0
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.8.3"
+
+      - name: Install with docs dependencies
+        run: |
+          uv venv
+          uv pip install -e ".[dev]"
+
+      - name: Build docs (warnings as errors)
+        run: uv run --no-sync python -m sphinx -b html docs/source docs/build

@@ -9,13 +9,7 @@ from typing import NamedTuple
 import procfunc as pf
 from procfunc.nodes import types as t
 
-from infinigen2.shaders.composites import (
-    bricks,
-    fabric_patterned,
-    tiles,
-    wood_planks,
-)
-from infinigen2.shaders.materials import (
+from infinigen2.shaders.base_materials import (
     brick_concrete,
     carpet,
     ceramic,
@@ -33,33 +27,20 @@ from infinigen2.shaders.materials import (
     terrazzo,
     wood_grain,
 )
+from infinigen2.shaders.composites import (
+    bricks,
+    fabric_patterned,
+    tiles,
+    wood_planks,
+)
+from infinigen2.shaders.dev import bsdf_simple_rand
 from infinigen2.util.mesh import crease_sharp
 
 __all__ = [
     "PrimitivesResult",
     "all_materials_rand",
-    "bsdf_simple_rand",
     "primitives_rand",
 ]
-
-
-@pf.tracer.grammar
-def bsdf_simple_rand(
-    rng: pf.RNG,
-    vector: t.SocketOrVal[pf.Vector],
-) -> pf.Material:
-    del vector
-    hue = pf.random.uniform(rng, 0.0, 1.0)
-    saturation = pf.random.uniform(rng, 0.05, 0.95)
-    value = pf.random.uniform(rng, 0.05, 0.95)
-    roughness = pf.random.uniform(rng, 0.4, 0.97)
-    metallic = pf.random.uniform(rng, 0.0, 1.0)
-    surface = pf.nodes.shader.principled_bsdf(
-        base_color=pf.color.hsv_color(hue=hue, saturation=saturation, value=value),
-        roughness=roughness,
-        metallic=metallic,
-    )
-    return pf.Material(surface=surface, displacement=None, volume=None)
 
 
 @pf.tracer.grammar

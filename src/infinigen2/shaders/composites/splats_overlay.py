@@ -6,11 +6,11 @@
 import procfunc as pf
 import procfunc.nodes.types as t
 
-from infinigen2.shaders.masks import splats
-from infinigen2.shaders.materials import (
+from infinigen2.shaders.base_materials import (
     glass_no_refraction,
     metal_brushed,
 )
+from infinigen2.shaders.masks import splats
 
 __all__ = [
     "glass_no_refraction_splats_rand",

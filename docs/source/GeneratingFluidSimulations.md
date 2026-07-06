@@ -10,13 +10,13 @@ Before you can generate fluids, you must run an additional installation step: `b
 
 ## Example Commands
 
-#### Generate a video of a single scene with simulated fire generated on the fly
+### Generate a video of a single scene with simulated fire generated on the fly
 ```bash
 python -m infinigen.datagen.manage_jobs --specific_seed 3930249d --output_folder outputs/fire --num_scenes 1 --pipeline_config local_256GB.gin monocular_video.gin --cleanup none --config plain.gin fast_terrain_assets.gin use_on_the_fly_fire.gin --pipeline_overrides get_cmd.interactive_blender=True
 ```
 Because fluid simulation takes a long time, the fire resolution can be reduced in use_on_the_fly_fire.gin, by setting `set_obj_on_fire.resolution = {resolution}`. This will reduce the fire quality but speed up the simulation.
 
-#### Generate a video of a single valley scene with simulated river
+### Generate a video of a single valley scene with simulated river
 ```bash
 python -m infinigen.datagen.manage_jobs --specific_seed 61fc881a --output_folder outputs/river --num_scenes 1 --pipeline_config local_256GB.gin monocular_video.gin opengl_gt.gin cuda_terrain.gin --pipeline_overrides iterate_scene_tasks.frame_range=[100,244] --config river.gin simulated_river.gin no_assets.gin no_creatures.gin fast_terrain_assets.gin --cleanup none 
 ```
@@ -24,7 +24,7 @@ Similar to fire, the simulation can be sped up by reducing the resolution. In si
 
 Also, note that this command will produce a scene without assets to speed up the process. However, the liquids generally interact with the objects by splashing on them, and a scene like this can be produced by removing the `no_assets.gin` option in the above command. 
 
-#### Generate videos of random scene types, with simulated fire generated on the fly when needed
+### Generate videos of random scene types, with simulated fire generated on the fly when needed
 ```bash
 python -m infinigen.datagen.manage_jobs --output_folder outputs/onthefly  --num_scenes 10 \
     --pipeline_config slurm_high_memory.gin monocular_video.gin \
@@ -33,7 +33,7 @@ python -m infinigen.datagen.manage_jobs --output_folder outputs/onthefly  --num_
     --pipeline_overrides get_cmd.interactive_blender=True
 ```
 
-#### Generate videos of valley scenes with simulated rivers
+### Generate videos of valley scenes with simulated rivers
 ```bash
 python -m infinigen.datagen.manage_jobs --output_folder /n/fs/pvl-renders/kkayan/river --num_scenes 10 \
     --pipeline_config slurm_high_memory.gin monocular_video.gin opengl_gt.gin cuda_terrain.gin \
@@ -59,7 +59,7 @@ python -m infinigen.launch_blender -m infinigen.assets.fluid.run_asset_cache -- 
 where `fire_asset_folder` is where you want to save the fire. `asset` can be one of `CachedBushFactory`, `CachedTreeFactory`, `CachedCactusFactory`, `CachedCreatureFactory`, `CachedBoulderFactory`. 
 
 ### Import pre-generated fire when generating a scene
-After fire is pre-generated with one of the previous commands, edit config/use_cached_fire.gin and set the `FireCachingSystem.asset_folder` variable to `fire_asset_folder` you used when pre-generating fire. After this `use_cached_fire.gin` can be used instead of `use_on_the_fly_fire.gin` when generating a scene. This will import the fire from the folder it is saved instead of simulating it on-the-fly. 
+After fire is pre-generated with one of the previous commands, edit `infinigen_examples/configs_nature/extras/use_cached_fire.gin` and set the `FireCachingSystem.asset_folder` variable to `fire_asset_folder` you used when pre-generating fire. After this `use_cached_fire.gin` can be used instead of `use_on_the_fly_fire.gin` when generating a scene. This will import the fire from the folder it is saved instead of simulating it on-the-fly. 
 
 #### Example Command
 ```bash

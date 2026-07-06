@@ -64,6 +64,8 @@ logging.basicConfig(
     level=logging.WARNING,
 )
 
+__all__ = []
+
 
 def build_scene_asset(args, factory_name, idx):
     params = parameters[factory_name]["globals"].copy()

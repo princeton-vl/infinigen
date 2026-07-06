@@ -17,7 +17,7 @@ from infinigen2.shaders.functionality_lists import (
 
 __all__ = [
     "DeskResult",
-    "desk_geometry",
+    "desk",
     "desk_rand",
 ]
 
@@ -131,7 +131,7 @@ def _table_legs(
 
 
 @pf.nodes.node_function
-def desk_geometry(
+def _desk_geometry(
     dimensions: t.SocketOrVal[pf.Vector],
     thickness: t.SocketOrVal[float],
     leg_radius: t.SocketOrVal[float],
@@ -166,6 +166,32 @@ def desk_geometry(
     return rotated
 
 
+def desk(
+    dimensions: pf.Vector | None = None,
+    thickness: float = 0.02,
+    leg_radius: float = 0.0175,
+    leg_dist: float = 0.0525,
+    top_material: pf.Material | None = None,
+    leg_material: pf.Material | None = None,
+) -> DeskResult:
+    if dimensions is None:
+        dimensions = pf.Vector((0.575, 1.0, 0.715))
+    if top_material is None:
+        top_material = pf.Material(surface=pf.nodes.shader.principled_bsdf())
+    if leg_material is None:
+        leg_material = pf.Material(surface=pf.nodes.shader.principled_bsdf())
+
+    geo = _desk_geometry(
+        dimensions=dimensions,
+        thickness=thickness,
+        leg_radius=leg_radius,
+        leg_dist=leg_dist,
+        top_material=top_material,
+        leg_material=leg_material,
+    )
+    return DeskResult(mesh=pf.nodes.to_mesh_object(geo))
+
+
 def desk_rand(
     rng: pf.RNG,
     dimensions: pf.Vector | None = None,
@@ -188,7 +214,7 @@ def desk_rand(
     if leg_material is None:
         leg_material = furniture_material_rand(rng, vec)
 
-    geo = desk_geometry(
+    geo = _desk_geometry(
         dimensions=dimensions,
         thickness=thickness,
         leg_radius=leg_radius,

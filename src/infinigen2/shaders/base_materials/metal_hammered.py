@@ -9,7 +9,7 @@
 import procfunc as pf
 from procfunc.nodes import types as t
 
-from infinigen2.shaders.materials.metal_brushed import (
+from infinigen2.shaders.base_materials.metal_brushed import (
     metal_any_color_rand,
 )
 

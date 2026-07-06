@@ -6,14 +6,14 @@
 import procfunc as pf
 from procfunc.nodes import types as t
 
+from infinigen2.shaders.base_materials.fabric import (
+    fabric_color_rand,
+    fabric_rand,
+)
 from infinigen2.shaders.masks.tile_shapes import (
     TileShapeResult,
     tile_coord_transform_rand,
     tile_mask_rand,
-)
-from infinigen2.shaders.materials.fabric import (
-    fabric_color_rand,
-    fabric_rand,
 )
 
 __all__ = [

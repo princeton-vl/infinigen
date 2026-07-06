@@ -5,12 +5,12 @@
 
 import procfunc as pf
 
+from infinigen2.shaders.base_materials import paint as paint_material
+from infinigen2.shaders.base_materials.paint import paint, paint_rand
 from infinigen2.shaders.masks import cracks
 from infinigen2.shaders.masks.cracks import (
     cracks_flakes_preset,
 )
-from infinigen2.shaders.materials import paint as paint_material
-from infinigen2.shaders.materials.paint import paint, paint_rand
 
 __all__ = [
     "cracked_paint_overlay_rand",

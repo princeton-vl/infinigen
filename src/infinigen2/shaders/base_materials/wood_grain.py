@@ -25,7 +25,6 @@ __all__ = [
     "wood_grain_flaky_rand",
     "wood_grain_generator",
     "wood_grain_generator_rand",
-    "wood_grain_presets",
     "wood_grain_rand",
     "wood_grain_rings_dark_preset",
     "wood_grain_rings_soft_preset",
@@ -1262,28 +1261,6 @@ def wood_grain_rings_spots_preset(
         surface=wood_shader_result.bsdf,
         displacement=wood_shader_result.displacement,
     )
-
-
-def wood_grain_presets(
-    rng: pf.RNG,
-    vector: t.SocketOrVal[pf.Vector],
-):
-    func = pf.control.choice(
-        rng,
-        [
-            (wood_grain_deck_preset, 1.0),
-            (wood_grain_brown_preset, 1.0),
-            (wood_grain_blonde_preset, 1.0),
-            (wood_grain_flaky_preset, 1.0),
-            (wood_grain_solid_preset, 1.0),
-            (wood_grain_stained_preset, 1.0),
-            (wood_grain_varnished_preset, 1.0),
-            (wood_grain_rings_dark_preset, 1.0),
-            (wood_grain_rings_soft_preset, 1.0),
-            (wood_grain_rings_spots_preset, 1.0),
-        ],
-    )
-    return func(vector=vector)
 
 
 def wood_shader_rand(

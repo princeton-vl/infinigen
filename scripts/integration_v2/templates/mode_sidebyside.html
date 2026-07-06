@@ -116,6 +116,10 @@ img {
     border-left: 3px solid #666;
     margin-bottom: 4px;
 }
+
+.preset-strip {
+    flex-wrap: wrap;
+}
 {% endblock %}
 
 {% block content %}
@@ -132,7 +136,8 @@ img {
         <div class="object-cell">
             <div class="asset-name">{{ row.asset_label }}</div>
             {% if obj.images %}
-            {% set distribution_images = obj.images | selectattr('category', 'equalto', 'distribution') | list %}
+            {% set preset_images = obj.images | selectattr('is_preset') | list %}
+            {% set distribution_images = obj.images | selectattr('category', 'equalto', 'distribution') | rejectattr('is_preset') | list %}
             {% set displacement_images = obj.images | selectattr('category', 'equalto', 'displacement') | list %}
 
             {% if distribution_images %}
@@ -140,6 +145,17 @@ img {
                 <div class="section-title">Random seeds</div>
                 <div class="images-container">
                     {% for img in distribution_images %}
+                    {{ tile.image_tile(img) }}
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if preset_images %}
+            <div class="image-section" data-category="distribution">
+                <div class="section-title">Presets</div>
+                <div class="images-container preset-strip">
+                    {% for img in preset_images %}
                     {{ tile.image_tile(img) }}
                     {% endfor %}
                 </div>

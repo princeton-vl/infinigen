@@ -10,16 +10,16 @@ from typing import NamedTuple
 import procfunc as pf
 from procfunc.nodes import types as t
 
+from infinigen2.shaders.base_materials import (
+    metal_brushed,
+)
 from infinigen2.shaders.functionality_lists import (
     furniture_material_rand,
-)
-from infinigen2.shaders.materials import (
-    metal_brushed,
 )
 
 __all__ = [
     "BookcaseResult",
-    "bookcase_geometry",
+    "bookcase",
     "bookcase_rand",
 ]
 
@@ -237,7 +237,7 @@ def _side_board(
 
 
 @pf.nodes.node_function
-def bookcase_geometry(
+def _bookcase_geometry(
     dimensions: t.SocketOrVal[pf.Vector],
     side_board_thickness: t.SocketOrVal[float],
     division_board_thickness: t.SocketOrVal[float],
@@ -327,6 +327,48 @@ def bookcase_geometry(
     return rotated
 
 
+def bookcase(
+    dimensions: pf.Vector | None = None,
+    side_board_thickness: float = 0.0175,
+    division_board_thickness: float = 0.015,
+    bottom_gap: float = 0.1,
+    backboard_thickness: float = 0.015,
+    screw_head_depth: float = 0.005,
+    screw_head_radius: float = 0.0055,
+    screw_head_dist: float = 0.065,
+    attach_thickness: float = 0.0035,
+    attach_width: float = 0.025,
+    attach_top_length: float = 0.065,
+    attach_back_length: float = 0.035,
+    frame_material: pf.Material | None = None,
+    metal_material: pf.Material | None = None,
+) -> BookcaseResult:
+    if dimensions is None:
+        dimensions = pf.Vector((0.3, 0.5, 0.75))
+    if frame_material is None:
+        frame_material = pf.Material(surface=pf.nodes.shader.principled_bsdf())
+    if metal_material is None:
+        metal_material = pf.Material(surface=pf.nodes.shader.principled_bsdf())
+
+    geo = _bookcase_geometry(
+        dimensions=dimensions,
+        side_board_thickness=side_board_thickness,
+        division_board_thickness=division_board_thickness,
+        bottom_gap=bottom_gap,
+        backboard_thickness=backboard_thickness,
+        screw_head_depth=screw_head_depth,
+        screw_head_radius=screw_head_radius,
+        screw_head_dist=screw_head_dist,
+        attach_thickness=attach_thickness,
+        attach_width=attach_width,
+        attach_top_length=attach_top_length,
+        attach_back_length=attach_back_length,
+        frame_material=frame_material,
+        metal_material=metal_material,
+    )
+    return BookcaseResult(mesh=pf.nodes.to_mesh_object(geo))
+
+
 def bookcase_rand(
     rng: pf.RNG,
     dimensions: pf.Vector | None = None,
@@ -357,7 +399,7 @@ def bookcase_rand(
     if metal_material is None:
         metal_material = metal_brushed.metal_brushed_linear_rand(rng, vec)
 
-    geo = bookcase_geometry(
+    geo = _bookcase_geometry(
         dimensions=dimensions,
         side_board_thickness=side_board_thickness,
         division_board_thickness=division_board_thickness,

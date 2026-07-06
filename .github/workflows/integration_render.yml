@@ -32,11 +32,6 @@ jobs:
         with:
           submodules: false
 
-      - name: Set up SSH for procfunc
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.PROCFUNC_DEPLOY_KEY }}
-
       - name: Install infinigen & dependencies
         run: |
           uv venv
@@ -91,7 +86,7 @@ jobs:
             --gpus available
 
       - name: Archive renders to permanent storage
-        if: always()
+        if: ${{ !cancelled() }}
         run: |
           set -e
           # Skip (don't fail) when the render produced no output — e.g. it
@@ -124,7 +119,7 @@ jobs:
           echo "Path: ${TARGET_DIR}"
 
       - name: Comment PR with viewer link
-        if: ${{ always() && (github.event.pull_request.number || inputs.pr_number) }}
+        if: ${{ !cancelled() && (github.event.pull_request.number || inputs.pr_number) }}
         uses: actions/github-script@v7
         with:
           script: |

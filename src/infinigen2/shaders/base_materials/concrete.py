@@ -263,7 +263,7 @@ def concrete(
 def concrete_rand(
     rng: pf.RNG,
     vector: pf.ProcNode[pf.Vector],
-    color: t.SocketOrVal[pf.Color] | None = None,
+    base_color: t.SocketOrVal[pf.Color] | None = None,
     roughness: t.SocketOrVal[float] | None = None,
     crack_amount: t.SocketOrVal[float] | None = None,
     crack_scale: t.SocketOrVal[float] | None = None,
@@ -275,7 +275,7 @@ def concrete_rand(
     micro_grain: t.SocketOrVal[float] | None = None,
     micro_grain_scale: t.SocketOrVal[float] | None = None,
 ) -> pf.Material:
-    if color is None:
+    if base_color is None:
         hue_sat = pf.random.uniform(
             rng,
             np.array([0.0, 0.0]),
@@ -283,7 +283,7 @@ def concrete_rand(
         )
         hue, sat = hue_sat[0], hue_sat[1]
         val = pf.random.clip_gaussian(rng, 0.5, 0.2, 0.2, 0.95)
-        color = pf.color.hsv_color(hue=hue, saturation=sat, value=val)
+        base_color = pf.color.hsv_color(hue=hue, saturation=sat, value=val)
 
     if roughness is None:
         roughness = pf.random.uniform(rng, 0.5, 1.0)
@@ -311,7 +311,7 @@ def concrete_rand(
 
     return concrete(
         vector=vector,
-        base_color=color,
+        base_color=base_color,
         scale=1.0,
         roughness=roughness,
         crack_amount=crack_amount,

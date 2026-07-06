@@ -11,40 +11,34 @@ from typing import NamedTuple
 import procfunc as pf
 from procfunc.nodes import types as t
 
+from infinigen2.shaders.base_materials import fabric
 from infinigen2.shaders.composites import fabric_patterned
 from infinigen2.shaders.functionality_lists import (
     furniture_material_rand,
 )
-from infinigen2.shaders.materials import fabric
 from infinigen2.util.curve import curve_to_mesh_with_uv
 
 __all__ = [
-    "LampGeometryResult",
     "LampResult",
     "desk_lamp_rand",
-    "lamp_geometry",
+    "floating_point_lights",
+    "floating_point_lights_rand",
+    "lamp",
     "lamp_rand",
     "lampshade_color_rand",
     "lampshade_fabric_rand",
-    "point_light_indoor_rand",
 ]
 
 # head-local z of the bulb-rack inner ring (where the bulb socket sits)
 BULB_HUB_HEIGHT = 0.015
 
 
-def point_light_indoor_rand(
-    rng: pf.RNG,
-    energy: float | None = None,
-    temperature: float | None = None,
+def floating_point_lights(
+    energy: float = 10.0,
+    temperature: float = 4500.0,
     shadow_soft_size: float = 0.02,
 ) -> pf.LightObject:
     """Create a point light with blackbody temperature roughly based on indoor lighting. range 3500-6500K. was expanded to 2000-8000"""
-    if temperature is None:
-        temperature = pf.random.clip_gaussian(rng, 4500, 1000, 2000, 8000)
-    if energy is None:
-        energy = pf.random.uniform(rng, 5, 15)
-
     light = pf.ops.primitives.light.point_lamp(
         energy=energy,
         shadow_soft_size=shadow_soft_size,
@@ -54,6 +48,22 @@ def point_light_indoor_rand(
     pf.nodes.to_light(light, surface=emission)
 
     return light
+
+
+def floating_point_lights_rand(
+    rng: pf.RNG,
+    energy: float | None = None,
+    temperature: float | None = None,
+    shadow_soft_size: float = 0.02,
+) -> pf.LightObject:
+    if temperature is None:
+        temperature = pf.random.clip_gaussian(rng, 4500, 1000, 2000, 8000)
+    if energy is None:
+        energy = pf.random.uniform(rng, 5, 15)
+
+    return floating_point_lights(
+        energy=energy, temperature=temperature, shadow_soft_size=shadow_soft_size
+    )
 
 
 @pf.nodes.node_function
@@ -223,14 +233,14 @@ class LampResult(NamedTuple):
     light: pf.LightObject
 
 
-class LampGeometryResult(NamedTuple):
+class _LampGeometryResult(NamedTuple):
     geometry: pf.ProcNode
     bounding_box: pf.ProcNode
     light_position: pf.ProcNode[pf.Vector]
 
 
 @pf.nodes.node_function
-def lamp_geometry(
+def _lamp_geometry(
     stand_radius: t.SocketOrVal[float],
     base_radius: t.SocketOrVal[float],
     base_height: t.SocketOrVal[float],
@@ -245,7 +255,7 @@ def lamp_geometry(
     black_material: t.SocketOrVal[pf.Material],
     lampshade_material: t.SocketOrVal[pf.Material],
     metal_material: t.SocketOrVal[pf.Material],
-) -> LampGeometryResult:
+) -> _LampGeometryResult:
     lamp_head_rack_height = pf.nodes.math.multiply_add(
         a=shade_height * 0.4,
         b=reverse_lamp.astype(dtype=float),
@@ -331,7 +341,7 @@ def lamp_geometry(
     sample_curve_1 = pf.nodes.geo.sample_curve(
         curves=transform_1, factor=1.0, value=0.0
     )
-    return LampGeometryResult(
+    return _LampGeometryResult(
         geometry=join,
         bounding_box=bound_box.bounding_box,
         light_position=sample_curve_1.position,
@@ -387,6 +397,64 @@ def lampshade_fabric_rand(
     return option(rngs[1], vector)
 
 
+def lamp(
+    stand_radius: float = 0.01,
+    base_radius: float = 0.1,
+    base_height: float = 0.02,
+    shade_height: float = 0.24,
+    head_top_radius: float = 0.16,
+    head_bot_radius: float = 0.185,
+    height: float = 0.45,
+    rack_thickness: float = 0.002,
+    reverse_lamp: bool = True,
+    energy: float = 7.0,
+    temperature: float = 4500.0,
+    black_material: pf.Material | None = None,
+    lampshade_material: pf.Material | None = None,
+    metal_material: pf.Material | None = None,
+) -> LampResult:
+    if black_material is None:
+        black_material = pf.Material(surface=pf.nodes.shader.principled_bsdf())
+    if lampshade_material is None:
+        lampshade_material = pf.Material(surface=pf.nodes.shader.principled_bsdf())
+    if metal_material is None:
+        metal_material = pf.Material(surface=pf.nodes.shader.principled_bsdf())
+
+    z1 = (base_height + height) * 0.5
+    z2 = (z1 + height) * 0.5
+    curve_point1 = pf.Vector((0, 0, z1))
+    curve_point2 = pf.Vector((0, 0, z2))
+    curve_point3 = pf.Vector((0, 0, height))
+
+    result = _lamp_geometry(
+        stand_radius=stand_radius,
+        base_radius=base_radius,
+        base_height=base_height,
+        shade_height=shade_height,
+        head_top_radius=head_top_radius,
+        head_bot_radius=head_bot_radius,
+        reverse_lamp=reverse_lamp,
+        rack_thickness=rack_thickness,
+        curve_point1=curve_point1,
+        curve_point2=curve_point2,
+        curve_point3=curve_point3,
+        black_material=black_material,
+        lampshade_material=lampshade_material,
+        metal_material=metal_material,
+    )
+
+    mesh = pf.nodes.to_mesh_object(result.geometry)
+
+    bulb_radius = 0.02
+    point_light = floating_point_lights(
+        energy=energy, temperature=temperature, shadow_soft_size=bulb_radius
+    )
+    point_light.item().location.z = height + 1.05 * bulb_radius
+    point_light.item().parent = mesh.item()
+
+    return LampResult(mesh=mesh, light=point_light)
+
+
 def lamp_rand(
     rng: pf.RNG,
     height: float | None = None,
@@ -422,7 +490,7 @@ def lamp_rand(
     stem_mat = furniture_material_rand(rng, vec)
     lampshade_mat = lampshade_fabric_rand(rng, vec)
 
-    result = lamp_geometry(
+    result = _lamp_geometry(
         stand_radius=stand_radius,
         base_radius=base_radius,
         base_height=base_height,
@@ -444,7 +512,7 @@ def lamp_rand(
     if energy is None:
         energy = pf.random.clip_gaussian(rng, 7, 4, 5, 18)
     bulb_radius = 0.02
-    point_light = point_light_indoor_rand(
+    point_light = floating_point_lights_rand(
         rng, temperature=temperature, energy=energy, shadow_soft_size=bulb_radius
     )
     # Sit the bulb just above the stem top (the head mounts at z=height) so its
@@ -464,4 +532,4 @@ if __name__ == "__main__":
     bulb_rack_result = _bulb_rack()
 
     lamp_head_result = _lamp_head()
-    lamp_geometry_result = lamp_geometry()
+    lamp_geometry_result = _lamp_geometry()

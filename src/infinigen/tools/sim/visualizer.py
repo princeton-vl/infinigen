@@ -42,7 +42,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--output_dir",
         type=str,
-        default="/tmp",
+        default="src/infinigen/tools/sim/tmp",
         help="Directory to save rendered outputs",
     )
 

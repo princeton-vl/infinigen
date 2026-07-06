@@ -7,12 +7,7 @@ import numpy as np
 import procfunc as pf
 from procfunc.nodes import types as t
 
-from infinigen2.shaders.masks.tile_shapes import (
-    TileShapeResult,
-    tile_coord_transform_rand,
-    tile_mask_rand,
-)
-from infinigen2.shaders.materials import (
+from infinigen2.shaders.base_materials import (
     brick_concrete,
     ceramic,
     concrete,
@@ -21,6 +16,11 @@ from infinigen2.shaders.materials import (
     marble,
     stone_smooth,
     terrazzo,
+)
+from infinigen2.shaders.masks.tile_shapes import (
+    TileShapeResult,
+    tile_coord_transform_rand,
+    tile_mask_rand,
 )
 
 __all__ = [
@@ -49,7 +49,7 @@ def ceramic_colored_rand(
     saturation = pf.random.clip_gaussian(rng_color, 0.6, 0.32, 0.0, 0.7)
     value = pf.random.clip_gaussian(rng_color, 0.6, 0.3, 0.0, 1.0)
     color = pf.color.hsv_color(hue=hue, saturation=saturation, value=value)
-    return ceramic.ceramic_rand(rng_ceramic, vector, color=color)
+    return ceramic.ceramic_rand(rng_ceramic, vector, base_color=color)
 
 
 def tile_indoor_wall_material_rand(

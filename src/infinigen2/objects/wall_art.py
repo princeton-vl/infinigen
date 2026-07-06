@@ -10,13 +10,13 @@ from typing import NamedTuple
 import procfunc as pf
 from procfunc.nodes import types as t
 
+from infinigen2.shaders.base_materials import (
+    terrazzo,
+)
 from infinigen2.shaders.functionality_lists import (
     art_pattern_material_rand,
     furniture_material_rand,
     mirror_material_rand,
-)
-from infinigen2.shaders.materials import (
-    terrazzo,
 )
 
 __all__ = [

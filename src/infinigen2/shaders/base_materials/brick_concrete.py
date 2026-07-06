@@ -20,7 +20,7 @@ __all__ = [
 @pf.nodes.node_function
 def brick_concrete(
     vector: t.SocketOrVal[pf.Vector] = (0.0, 0.0, 0.0),
-    color: t.SocketOrVal[pf.Color] = pf.Color((0.577, 0.07, 0.045)),
+    base_color: t.SocketOrVal[pf.Color] = pf.Color((0.577, 0.07, 0.045)),
     roughness: t.SocketOrVal[float] = 0.5,
     specular_ior_level: t.SocketOrVal[float] = 0.5,
     stretch_x: t.SocketOrVal[float] = 1.8,
@@ -80,7 +80,7 @@ def brick_concrete(
     color_11 = color_vector_1
     color_10 = pf.nodes.color.mix_rgb(
         factor=color_noise_1,
-        a=color,
+        a=base_color,
         b=color_11.x.astype(dtype=pf.Color),
         blend_type="SOFT_LIGHT",
     )
@@ -257,7 +257,7 @@ def brick_concrete_color_rand(
 def brick_concrete_rand(
     rng: pf.RNG,
     vector: t.SocketOrVal[pf.Vector],
-    color: t.SocketOrVal[pf.Color] | None = None,
+    base_color: t.SocketOrVal[pf.Color] | None = None,
     displacement_pct: t.SocketOrVal[float] = 1,
     displacement_additional_height: t.SocketOrVal[float] = 0,
 ):
@@ -265,8 +265,8 @@ def brick_concrete_rand(
 
     rng, rcolor = rng.spawn(2)
 
-    if color is None:
-        color = brick_concrete_color_rand(rcolor)
+    if base_color is None:
+        base_color = brick_concrete_color_rand(rcolor)
 
     roughness = pf.random.uniform(rng, 0.7, 0.9409)
     specular_ior_level = pf.random.uniform(rng, 0.0753, 0.1941)
@@ -303,7 +303,7 @@ def brick_concrete_rand(
 
     brick_concrete_result = brick_concrete(
         vector=vector,
-        color=color,
+        base_color=base_color,
         roughness=roughness,
         specular_ior_level=specular_ior_level,
         stretch_x=stretch_x,
@@ -340,7 +340,7 @@ def brick_concrete_rand(
 def brick_concrete_grout_rand(
     rng: pf.RNG,
     vector: t.SocketOrVal[pf.Vector],
-    color: t.SocketOrVal[pf.Color] | None = None,
+    base_color: t.SocketOrVal[pf.Color] | None = None,
     displacement_pct: t.SocketOrVal[float] | None = None,
     displacement_additional_height: t.SocketOrVal[float] = 0,
 ):
@@ -348,13 +348,13 @@ def brick_concrete_grout_rand(
 
     r1, r2 = rng.spawn(2)
 
-    if color is None:
+    if base_color is None:
         color_hsv = pf.random.uniform(
             r1,
             np.array([0.0, 0.09677423, 0.05]),
             np.array([0.093, 0.1, 0.21]),
         )
-        color = pf.color.hsv_to_rgba(color_hsv)
+        base_color = pf.color.hsv_to_rgba(color_hsv)
 
     if displacement_pct is None:
         displacement_pct = pf.random.uniform(rng, 0.03, 0.1)
@@ -362,7 +362,7 @@ def brick_concrete_grout_rand(
     return brick_concrete_rand(
         r2,
         vector=vector,
-        color=color,
+        base_color=base_color,
         displacement_pct=displacement_pct,
         displacement_additional_height=displacement_additional_height,
     )

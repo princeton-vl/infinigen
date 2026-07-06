@@ -99,7 +99,7 @@ ARM_TYPE_ANGULAR = 2
 
 
 @pf.nodes.node_function
-def sofa(
+def _sofa_geometry(
     dimensions: t.SocketOrVal[pf.Vector],
     arm_dimensions: t.SocketOrVal[pf.Vector],
     back_dimensions: t.SocketOrVal[pf.Vector],
@@ -622,6 +622,72 @@ def sofa(
     return geometry
 
 
+def sofa(
+    dimensions: pf.Vector | None = None,
+    arm_dimensions: pf.Vector = (1.0, 0.105, 0.625),
+    back_dimensions: pf.Vector = (0.2, 0.0, 0.625),
+    seat_dimensions: pf.Vector | None = None,
+    foot_dimensions: pf.Vector = (0.16, 0.06, 0.06),
+    baseboard_height: float = 0.07,
+    backrest_width: float = 0.15,
+    seat_margin: float = 0.985,
+    backrest_angle: float = -0.325,
+    arm_width: float = 0.75,
+    arm_type: int = ARM_TYPE_SQUARE,
+    arm_height: float = 0.8,
+    arms_angle: float = 0.54,
+    reflection: int = 1,
+    leg_type: bool = True,
+    leg_dimensions: float = 0.65,
+    leg_z: float = 1.8,
+    leg_faces: int = 4,
+    body_crease: float = 0.7,
+    cushion_crease: float = 0.15,
+    arm_back_crease: float = 0.2,
+    fabric_material: pf.Material | None = None,
+    foot_material: pf.Material | None = None,
+) -> SofaResult:
+    if dimensions is None:
+        dimensions = pf.Vector((0.925, 1.75, 0.83))
+    if seat_dimensions is None:
+        seat_dimensions = pf.Vector((dimensions[0], 1.35, 0.225))
+    if fabric_material is None:
+        fabric_material = pf.Material(surface=pf.nodes.shader.principled_bsdf())
+    if foot_material is None:
+        foot_material = pf.Material(surface=pf.nodes.shader.principled_bsdf())
+
+    res = _sofa_geometry(
+        dimensions=dimensions,
+        arm_dimensions=arm_dimensions,
+        back_dimensions=back_dimensions,
+        seat_dimensions=seat_dimensions,
+        foot_dimensions=foot_dimensions,
+        fabric_material=fabric_material,
+        foot_material=foot_material,
+        baseboard_height=baseboard_height,
+        backrest_width=backrest_width,
+        seat_margin=seat_margin,
+        backrest_angle=backrest_angle,
+        arm_width=arm_width,
+        arm_type=arm_type,
+        arm_height=arm_height,
+        arms_angle=arms_angle,
+        reflection=reflection,
+        leg_type=leg_type,
+        leg_dimensions=leg_dimensions,
+        leg_z=leg_z,
+        leg_faces=leg_faces,
+        footrest=False,
+        body_crease=body_crease,
+        cushion_crease=cushion_crease,
+        arm_back_crease=arm_back_crease,
+    )
+    obj = pf.nodes.to_mesh_object(res)
+    pf.ops.uv.cube_project(obj, uv_name="UVMap")
+    pf.ops.modifier.subdivide_surface(obj, levels=5, _skip_apply=True)
+    return SofaResult(mesh=obj)
+
+
 def sofa_rand(
     rng: pf.RNG,
     dimensions: pf.Vector | None = None,
@@ -672,7 +738,7 @@ def sofa_rand(
     if foot_material is None:
         foot_material = furniture_material_rand(rng_foot, vec)
 
-    res = sofa(
+    res = _sofa_geometry(
         dimensions=dimensions,
         arm_dimensions=arm_dimensions,
         back_dimensions=back_dimensions,

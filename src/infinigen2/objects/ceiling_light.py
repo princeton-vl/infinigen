@@ -10,24 +10,23 @@ from typing import NamedTuple
 import procfunc as pf
 from procfunc.nodes import types as t
 
-from infinigen2.objects.lamp import point_light_indoor_rand
+from infinigen2.objects.lamp import floating_point_lights, floating_point_lights_rand
+from infinigen2.shaders.base_materials.emissive_nonblocking import (
+    lamp_bulb_nonemissive,
+)
 from infinigen2.shaders.functionality_lists import (
     furniture_material_rand,
 )
-from infinigen2.shaders.materials.emissive_nonblocking import (
-    lamp_bulb_nonemissive,
-)
 
 __all__ = [
-    "CeilingLightGeometryResult",
     "CeilingLightResult",
     "black_for_reflections",
-    "ceiling_light_geometry",
+    "ceiling_light",
     "ceiling_light_rand",
 ]
 
 
-class CeilingLightGeometryResult(NamedTuple):
+class _CeilingLightGeometryResult(NamedTuple):
     geometry: pf.ProcNode
     bounding_box: pf.ProcNode
 
@@ -38,7 +37,7 @@ class CeilingLightResult(NamedTuple):
 
 
 @pf.nodes.node_function
-def ceiling_light_geometry(
+def _ceiling_light_geometry(
     radius: t.SocketOrVal[float],
     thickness: t.SocketOrVal[float],
     inner_radius: t.SocketOrVal[float],
@@ -47,7 +46,7 @@ def ceiling_light_geometry(
     curvature: t.SocketOrVal[float],
     frame_material: t.SocketOrVal[pf.Material],
     bulb_material: t.SocketOrVal[pf.Material],
-) -> CeilingLightGeometryResult:
+) -> _CeilingLightGeometryResult:
     transform_translation_z = inner_height * -1.0
 
     curve_line_end = pf.nodes.math.combine_xyz(z=transform_translation_z)
@@ -122,7 +121,7 @@ def ceiling_light_geometry(
     join = pf.nodes.geo.join_geometry([set_material, set_material_1])
 
     bound_box = pf.nodes.geo.bound_box(join)
-    return CeilingLightGeometryResult(
+    return _CeilingLightGeometryResult(
         geometry=join,
         bounding_box=bound_box.bounding_box,
     )
@@ -140,6 +139,51 @@ def black_for_reflections(
         b=shader,
     )
     return pf.Material(surface=surface)
+
+
+def ceiling_light(
+    radius: float = 0.12,
+    thickness: float = 0.0275,
+    inner_radius: float = 0.078,
+    height: float = 0.063,
+    inner_height: float = 0.0504,
+    curvature: float = 0.3,
+    energy: float = 75.0,
+    temperature: float = 4500.0,
+    shadow_soft_size: float = 0.025,
+    turned_on: bool = True,
+    frame_material: pf.Material | None = None,
+    bulb_material: pf.Material | None = None,
+) -> CeilingLightResult:
+    if frame_material is None:
+        frame_material = black_for_reflections(pf.nodes.shader.principled_bsdf())
+    if bulb_material is None:
+        bulb_material = lamp_bulb_nonemissive()
+
+    geo = _ceiling_light_geometry(
+        radius=radius,
+        thickness=thickness,
+        inner_radius=inner_radius,
+        height=height,
+        inner_height=inner_height,
+        curvature=curvature,
+        frame_material=frame_material,
+        bulb_material=bulb_material,
+    )
+
+    obj = pf.nodes.to_mesh_object(geo.geometry)
+    pf.ops.uv.cylinder_project(obj)
+
+    light = None
+    if turned_on:
+        light = floating_point_lights(
+            energy=energy,
+            temperature=temperature,
+            shadow_soft_size=shadow_soft_size,
+        )
+        light.item().location.z = -0.03
+
+    return CeilingLightResult(mesh=obj, light=light)
 
 
 def ceiling_light_rand(
@@ -163,7 +207,7 @@ def ceiling_light_rand(
 
     bulb_material = lamp_bulb_nonemissive()
 
-    geo = ceiling_light_geometry(
+    geo = _ceiling_light_geometry(
         radius=radius,
         thickness=thickness,
         inner_radius=inner_radius,
@@ -184,7 +228,7 @@ def ceiling_light_rand(
         if shadow_soft_size is None:
             shadow_soft_size = pf.random.uniform(rng, 0.02, 0.03)
 
-        light = point_light_indoor_rand(
+        light = floating_point_lights_rand(
             rng,
             energy=energy,
             temperature=temperature,

@@ -13,9 +13,11 @@ from infinigen2.shaders.util.coord import coord_warp
 
 __all__ = [
     "CracksMaskResult",
+    "cracks_dense_preset",
+    "cracks_flakes_preset",
     "cracks_mask",
-    "cracks_presets",
     "cracks_rand",
+    "cracks_worn_preset",
 ]
 
 
@@ -351,21 +353,6 @@ def cracks_flakes_preset(
         hole_spread=0.5907,
         hole_detail=6.0,
     )
-
-
-def cracks_presets(
-    rng: pf.RNG,
-    vector: t.SocketOrVal[pf.Vector],
-) -> CracksMaskResult:
-    func = pf.control.choice(
-        rng,
-        [
-            (cracks_dense_preset, 1.0),
-            (cracks_worn_preset, 1.0),
-            (cracks_flakes_preset, 1.0),
-        ],
-    )
-    return CracksMaskResult(mask=func(vector=vector))
 
 
 def cracks_rand(

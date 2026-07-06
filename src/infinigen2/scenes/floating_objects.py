@@ -11,6 +11,7 @@ import mathutils
 import numpy as np
 import procfunc as pf
 
+from infinigen2.lighting.point_lighting import point_lamp_colored_rand
 from infinigen2.objects import (
     bookcase,
     cabinet,
@@ -25,6 +26,8 @@ from infinigen2.objects import (
     wall_art,
 )
 from infinigen2.scenes import collision_collection as ccol
+from infinigen2.scenes import placement_utils
+from infinigen2.shaders.dev import bsdf_simple_rand
 from infinigen2.util.external_assets import pregenerated_asset_rand
 
 __all__ = [
@@ -93,7 +96,7 @@ def floating_object_asset_rand(rng: pf.RNG) -> pf.MeshObject:
         if not obj.item().data.uv_layers:
             pf.ops.uv.cube_project(obj, uv_name="UVMap")
         if p < 0.2:
-            mat = random_primitives.bsdf_simple_rand(rng, vec)
+            mat = bsdf_simple_rand(rng, vec)
         else:
             mat = random_primitives.all_materials_rand(rng, vec)
         pf.ops.object.set_material(
@@ -106,6 +109,23 @@ def floating_object_asset_rand(rng: pf.RNG) -> pf.MeshObject:
 def _apply_object_scale(obj: pf.MeshObject) -> None:
     """Bake the object's scale into its mesh data so colliders see a rigid transform."""
     pf.ops.mesh.transform_apply(obj, location=False, rotation=False, scale=True)
+
+
+def _sample_object_transform(rng: pf.RNG, obj: pf.MeshObject) -> None:
+    """Sample a random rotation and size for obj, set them, and bake the scale so the
+    object presents a rigid transform for collision/placement."""
+    angles = [pf.random.uniform(rng, 0, 2 * math.pi) for _ in range(3)]
+    axes = [pf.random.clip_gaussian(rng, 1.0, 0.1, 0.8, 1.2) for _ in range(3)]
+    scale = pf.Vector(tuple(axes))
+
+    target_size = pf.random.clip_gaussian(rng, 0.75, 0.3, 0.3, 1.6)
+    current_max = max(obj.item().dimensions)
+    if current_max > 0:
+        scale *= target_size / current_max
+
+    obj.item().rotation_euler = tuple(angles)
+    obj.item().scale = tuple(scale)
+    _apply_object_scale(obj)
 
 
 class FloatingObjectsResult(NamedTuple):
@@ -161,62 +181,14 @@ def floating_objects_rand(
         ]
 
     obj_rngs = rng.spawn(len(floating_objects))
-    result = []
     for i, obj in enumerate(floating_objects):
-        r = obj_rngs[i]
+        if isinstance(obj, pf.MeshObject):
+            _sample_object_transform(obj_rngs[i], obj)
 
-        if not isinstance(obj, pf.MeshObject):
-            loc = pf.Vector(
-                (
-                    pf.random.uniform(r, all_min[0], all_max[0]),
-                    pf.random.uniform(r, all_min[1], all_max[1]),
-                    pf.random.uniform(r, all_min[2], all_max[2]),
-                )
-            )
-            pf.ops.object.set_transform(obj, location=loc)
-            result.append(obj)
-            continue
-
-        rot = pf.Vector(
-            (
-                pf.random.uniform(r, 0, 2 * math.pi),
-                pf.random.uniform(r, 0, 2 * math.pi),
-                pf.random.uniform(r, 0, 2 * math.pi),
-            )
-        )
-        scale = pf.Vector(
-            (
-                pf.random.clip_gaussian(r, 1.0, 0.1, 0.8, 1.2),
-                pf.random.clip_gaussian(r, 1.0, 0.1, 0.8, 1.2),
-                pf.random.clip_gaussian(r, 1.0, 0.1, 0.8, 1.2),
-            )
-        )
-
-        target_size = pf.random.clip_gaussian(rng, 0.75, 0.3, 0.3, 1.6)
-        current_max = max(obj.item().dimensions)
-        if current_max > 0:
-            scale *= target_size / current_max
-
-        rot_min, rot_max = rotated_bbox_extents(obj, rot, scale)
-        loc_min = all_min - rot_min
-        loc_max = all_max - rot_max
-        too_large = loc_min > loc_max
-        center = (all_min + all_max) / 2
-        loc_min = np.where(too_large, center, loc_min)
-        loc_max = np.where(too_large, center, loc_max)
-
-        loc = pf.Vector(
-            (
-                pf.random.uniform(r, loc_min[0], loc_max[0]),
-                pf.random.uniform(r, loc_min[1], loc_max[1]),
-                pf.random.uniform(r, loc_min[2], loc_max[2]),
-            )
-        )
-
-        pf.ops.object.set_transform(obj, location=loc, rotation_euler=rot, scale=scale)
-        _apply_object_scale(obj)
-
-        result.append(obj)
+    place_colliders = colliders if check_collisions else None
+    result = placement_utils.distribute_in_bbox(
+        rng, floating_objects, bbox, place_colliders
+    )
 
     if check_collisions:
         collider_candidates = [o for o in result if isinstance(o, pf.MeshObject)]
@@ -234,26 +206,6 @@ def floating_objects_rand(
     return FloatingObjectsResult(
         all_objects=result,
         colliders=colliders,
-    )
-
-
-@pf.tracer.grammar
-def point_lamp_colored_rand(
-    rng: pf.RNG,
-    energy: float,
-    color: tuple[float, float, float] | None = None,
-    shadow_soft_size: float | None = None,
-) -> pf.LightObject:
-    """A point light whose emission uses a fully-random RGB color."""
-    if color is None:
-        color = tuple(pf.random.uniform(rng, 0.0, 1.0) for _ in range(3))
-    if shadow_soft_size is None:
-        shadow_soft_size = pf.random.uniform(rng, 0.01, 0.20)
-
-    return pf.ops.primitives.light.point_lamp(
-        energy=energy,
-        color=color,
-        shadow_soft_size=shadow_soft_size,
     )
 
 
