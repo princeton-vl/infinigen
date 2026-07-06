@@ -7,6 +7,7 @@
 # - Karhan Kayan: fix constants
 
 import importlib
+import inspect
 import logging
 import os
 from collections import defaultdict
@@ -224,9 +225,17 @@ def room_walls(walls: list[bpy.types.Object], constants: RoomConstants, n_walls=
             if wall_fn.__class__.__name__ == "Plaster":
                 for r in rooms__:
                     unwrap_normal(r, selection=None)
-            if wall_fn.__class__.__name__ == "Brick":
-                kwargs = {}
-            surface.assign_material(rooms__, wall_fn(**kwargs))
+            sig = inspect.signature(wall_fn.generate)
+            has_var_keyword = any(
+                p.kind == inspect.Parameter.VAR_KEYWORD
+                for p in sig.parameters.values()
+            )
+            accepted_kwargs = {
+                k: v
+                for k, v in kwargs.items()
+                if has_var_keyword or k in sig.parameters
+            }
+            surface.assign_material(rooms__, wall_fn(**accepted_kwargs))
 
     for w in walls:
         logger.debug(
