@@ -10,7 +10,7 @@ from typing import NamedTuple
 import procfunc as pf
 from procfunc.nodes import types as t
 
-from infinigen2.objects.lamp import floating_point_lights, floating_point_lights_rand
+from infinigen2.objects.lamp import point_light_indoor, point_light_indoor_rand
 from infinigen2.shaders.base_materials.emissive_nonblocking import (
     lamp_bulb_nonemissive,
 )
@@ -176,7 +176,7 @@ def ceiling_light(
 
     light = None
     if turned_on:
-        light = floating_point_lights(
+        light = point_light_indoor(
             energy=energy,
             temperature=temperature,
             shadow_soft_size=shadow_soft_size,
@@ -228,7 +228,7 @@ def ceiling_light_rand(
         if shadow_soft_size is None:
             shadow_soft_size = pf.random.uniform(rng, 0.02, 0.03)
 
-        light = floating_point_lights_rand(
+        light = point_light_indoor_rand(
             rng,
             energy=energy,
             temperature=temperature,

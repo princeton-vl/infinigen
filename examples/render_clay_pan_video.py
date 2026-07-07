@@ -32,7 +32,7 @@ from infinigen2.exporters.render_cycles_clay import render_cycles_clay
 from infinigen2.exporters.util.blender_render import DisplacementMode
 from infinigen2.exporters.util.format import ExportType, RenderPass
 from infinigen2.cameras import monocular
-from infinigen2.scenes.room import room, room_shape
+from infinigen2.scenes.room import room
 from infinigen2.util.render_metadata import time_step, write_render_metadata
 from infinigen2.util.scene_cleanup import cleanup_except
 
@@ -46,6 +46,15 @@ def main():
     parser.add_argument("--seed", type=int, default=None)
     parser.add_argument("--output", type=Path, default=Path("outputs/clay_pan_video"))
     parser.add_argument("--frames", type=int, nargs=2, default=(0, 35))
+    parser.add_argument(
+        "--render_frames",
+        type=int,
+        nargs=2,
+        default=None,
+        help="sub-range of --frames to actually render (frame sharding). The camera "
+        "trajectory and scene still span the full --frames range, so each shard renders "
+        "the correct slice of the same pan rather than compressing the whole pan.",
+    )
     parser.add_argument("--resolution", type=int, nargs=2, default=(1280, 720))
     parser.add_argument("--samples", type=int, default=256, help="clay/AO passes")
     parser.add_argument(
@@ -66,10 +75,19 @@ def main():
     )
     parser.add_argument("--fps", type=int, default=24)
     parser.add_argument("--skip_gt", action="store_true")
+    parser.add_argument(
+        "--save_blend",
+        type=Path,
+        default=None,
+        help="save the built scene to this .blend and exit before rendering",
+    )
     args = parser.parse_args()
 
     seed = args.seed if args.seed is not None else int.from_bytes(os.urandom(8), "big")
     frame_start, frame_end = args.frames
+    render_start, render_end = (
+        args.render_frames if args.render_frames is not None else args.frames
+    )
     output = args.output
     output.mkdir(parents=True, exist_ok=True)
 
@@ -82,21 +100,21 @@ def main():
 
     logger.info("Building scene with seed %s", hex(seed))
     rng = np.random.default_rng(seed)
-    rngs = rng.spawn(3)
-
-    dimensions = room_shape.room_dimensions_distribution(rngs[0])
 
     times = {}
 
     with time_step(times, "livingroom"):
-        living = room.livingroom_with_smallobj_distribution(
-            rng=rngs[1], dimensions=dimensions, frame_start=0, frame_end=0
+        gen_rng, rng = rng.spawn(2)
+        living = room.livingroom_with_smallobj_rand(
+            rng=gen_rng, dimensions=None, frame_start=0, frame_end=0
         )
+    dimensions = living.dimensions
     objects = list(living.all_objects)
 
     with time_step(times, "linear_pan_camera"):
-        cameras = monocular.linear_pan_camera_distribution(
-            rng=rngs[2],
+        gen_rng, rng = rng.spawn(2)
+        cameras = monocular.linear_pan_camera_rand(
+            rng=gen_rng,
             objects=objects,
             colliders=living.colliders,
             dimensions=dimensions,
@@ -106,6 +124,10 @@ def main():
     camera = cameras[0]
 
     cleanup_except(objects + list(cameras) + list(living.lights))
+
+    if args.save_blend is not None:
+        pf.ops.file.save_blend(output_path=args.save_blend)
+        return
 
     # Short AO-pass distance so only tight crevices / fine displacement darken; the
     # AO pass is shown directly as the clay image to surface small geometry.
@@ -117,8 +139,8 @@ def main():
         objects=objects,
         camera=camera,
         output_folder=output,
-        frame_start=frame_start,
-        frame_end=frame_end,
+        frame_start=render_start,
+        frame_end=render_end,
         resolution=tuple(args.resolution),
         min_samples=32,
         film_exposure=2.0,
@@ -222,7 +244,7 @@ def main():
         exports=all_exports,
         build_keys={"livingroom", "linear_pan_camera"},
         render_keys={"clay_flat", "clay", "rgb", "gt"},
-        n_frames=frame_end - frame_start + 1,
+        n_frames=render_end - render_start + 1,
     )
 
     for paths in all_exports.values():

@@ -21,8 +21,8 @@ from infinigen2.util.curve import curve_to_mesh_with_uv
 __all__ = [
     "LampResult",
     "desk_lamp_rand",
-    "floating_point_lights",
-    "floating_point_lights_rand",
+    "point_light_indoor",
+    "point_light_indoor_rand",
     "lamp",
     "lamp_rand",
     "lampshade_color_rand",
@@ -33,7 +33,7 @@ __all__ = [
 BULB_HUB_HEIGHT = 0.015
 
 
-def floating_point_lights(
+def point_light_indoor(
     energy: float = 10.0,
     temperature: float = 4500.0,
     shadow_soft_size: float = 0.02,
@@ -50,7 +50,7 @@ def floating_point_lights(
     return light
 
 
-def floating_point_lights_rand(
+def point_light_indoor_rand(
     rng: pf.RNG,
     energy: float | None = None,
     temperature: float | None = None,
@@ -61,7 +61,7 @@ def floating_point_lights_rand(
     if energy is None:
         energy = pf.random.uniform(rng, 5, 15)
 
-    return floating_point_lights(
+    return point_light_indoor(
         energy=energy, temperature=temperature, shadow_soft_size=shadow_soft_size
     )
 
@@ -446,7 +446,7 @@ def lamp(
     mesh = pf.nodes.to_mesh_object(result.geometry)
 
     bulb_radius = 0.02
-    point_light = floating_point_lights(
+    point_light = point_light_indoor(
         energy=energy, temperature=temperature, shadow_soft_size=bulb_radius
     )
     point_light.item().location.z = height + 1.05 * bulb_radius
@@ -512,7 +512,7 @@ def lamp_rand(
     if energy is None:
         energy = pf.random.clip_gaussian(rng, 7, 4, 5, 18)
     bulb_radius = 0.02
-    point_light = floating_point_lights_rand(
+    point_light = point_light_indoor_rand(
         rng, temperature=temperature, energy=energy, shadow_soft_size=bulb_radius
     )
     # Sit the bulb just above the stem top (the head mounts at z=height) so its
