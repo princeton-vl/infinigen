@@ -1,0 +1,5 @@
+include 'configs_nature/performance/dev.gin'
+include 'configs_nature/disable_assets/no_creatures.gin'
+include 'configs_nature/performance/fast_terrain_assets.gin'
+run_erosion.n_iters = [1,1]
+configure_render_cycles.num_samples = 100

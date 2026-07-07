@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Select Versions</title>
+    <style>
+        body {
+            font-family: monospace;
+            margin: 20px;
+            font-size: 12px;
+        }
+
+        h1 {
+            font-size: 16px;
+            margin-bottom: 16px;
+        }
+
+        form {
+            max-width: 800px;
+        }
+
+        .version-list {
+            border: 1px solid #333;
+            padding: 8px;
+            margin-bottom: 12px;
+        }
+
+        .version-item {
+            padding: 6px;
+            border-bottom: 1px solid #ddd;
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .version-item:last-child {
+            border-bottom: none;
+        }
+
+        .version-item:hover {
+            background: #f5f5f5;
+        }
+
+        .version-name {
+            font-weight: bold;
+        }
+
+        .version-meta {
+            font-size: 10px;
+            color: #666;
+        }
+
+        .version-date {
+            font-size: 10px;
+            color: #999;
+        }
+
+        .controls {
+            margin-bottom: 12px;
+            display: flex;
+            gap: 8px;
+        }
+
+        button {
+            padding: 6px 12px;
+            font-family: monospace;
+            font-size: 11px;
+            cursor: pointer;
+            border: 1px solid #333;
+            background: white;
+        }
+
+        button:hover {
+            background: #f0f0f0;
+        }
+
+        button[type="submit"] {
+            background: #4CAF50;
+            color: white;
+            border-color: #4CAF50;
+        }
+
+        button[type="submit"]:hover {
+            background: #45a049;
+        }
+
+        .no-versions {
+            padding: 20px;
+            color: #999;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <h1>Select Versions to Compare</h1>
+
+    {% if versions %}
+    <form method="POST" action="/load-versions">
+        <div class="controls">
+            <button type="button" onclick="selectAll()">Select All</button>
+            <button type="button" onclick="deselectAll()">Deselect All</button>
+            <button type="submit">Compare Selected</button>
+        </div>
+
+        <div class="version-list">
+            {% for version in versions %}
+            <div class="version-item">
+                <input type="checkbox" name="versions" value="{{ version.name }}" id="v-{{ loop.index }}">
+                <label for="v-{{ loop.index }}">
+                    <div class="version-name">{{ version.name }}</div>
+                    <div class="version-meta">
+                        {% if version.branch %}Branch: {{ version.branch }}{% endif %}
+                        {% if version.commit %} | Commit: {{ version.commit }}{% endif %}
+                    </div>
+                </label>
+                <div class="version-date">{{ version.mtime | int }}</div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <button type="submit">Compare Selected</button>
+    </form>
+    {% else %}
+    <div class="no-versions">No version directories found. Try running with <code>--scan-dir</code></div>
+    {% endif %}
+
+    <script>
+        function selectAll() {
+            document.querySelectorAll('input[name="versions"]').forEach(cb => cb.checked = true);
+        }
+
+        function deselectAll() {
+            document.querySelectorAll('input[name="versions"]').forEach(cb => cb.checked = false);
+        }
+    </script>
+</body>
+</html>

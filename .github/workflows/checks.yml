@@ -3,6 +3,7 @@ name: Lint & Test
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     branches:
     - main
     - develop*
@@ -22,32 +23,64 @@ env:
 jobs:
 
   checks:
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.CI_RUNNER || '"ubuntu-latest"') }}
 
     steps:
-      - uses: actions/checkout@v3
 
-      - name: Lint with ruff
-        run: |
-          pip install ruff
-          # stop the build if there are Python syntax errors or undefined names
-          ruff check --output-format=github --select=E9,F63,F7,F82 .
-          # default set of ruff rules with GitHub Annotations
-          ruff check --output-format=github .
-
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
-          python-version: "3.11"
+          submodules: false
+          fetch-depth: 0
 
-      - name: Install infinigen & dependencies
-        run: |
-          pip install ".[dev]"
+      - name: Validate code
+        run: bash scripts/integration_v2/validate_code.sh
 
-      - name: Test with pytest
-        run: |
-          pytest tests -k 'not skip_for_ci'
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.8.3"
 
-      - name: Check for copyright statements
+      - name: Install
         run: |
-          ruff check --output-format=github --preview --select CPY001 .
+          uv venv
+          uv pip install -e .
+
+      - name: Lint and Format (ruff)
+        run: |
+          uvx ruff==0.14.5 format --check .
+          uvx ruff==0.14.5 check --output-format=github --select=E9,F63,F7,F82 .
+          uvx ruff==0.14.5 check --output-format=github .
+      
+      # - name: Install with dev dependencies
+      #   run: |
+      #     uv venv
+      #     uv pip install ".[dev]"
+
+      # - name: Unit Tests (pytest)
+      #   run: |
+      #     uv run pytest tests/infinigen2 -k 'not skip_for_ci and not render_gpu'
+
+  docs:
+    runs-on: ${{ fromJSON(vars.CI_RUNNER || '"ubuntu-latest"') }}
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+          fetch-depth: 0
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.8.3"
+
+      - name: Install with docs dependencies
+        run: |
+          uv venv
+          uv pip install -e ".[dev]"
+
+      - name: Build docs (warnings as errors)
+        run: uv run --no-sync python -m sphinx -b html docs/source docs/build

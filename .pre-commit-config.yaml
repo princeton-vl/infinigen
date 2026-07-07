@@ -1,21 +1,15 @@
 repos:
-- repo: local
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  # Ruff version.
+  rev: v0.14.5 # pinned to same version as pyproject.toml
   hooks:
     # Run the linter.
-    - id: ruff
-      name: ruff
-      entry: uv run ruff check --fix
-      language: system
-      types: [python]
-    # Sort imports
-    - id: ruff-import-sort
-      name: ruff import sort
-      entry: uv run ruff check --select I --fix
-      language: system
-      types: [python]
+    - id: ruff-check
+      types_or: [ python, pyi ]
+      args: [ --fix ]
+    - id: ruff-check
+      types_or: [ python, pyi ]
+      args: [ --select=I001, "--fix"]
     # Run the formatter.
     - id: ruff-format
-      name: ruff format
-      entry: uv run ruff format
-      language: system
-      types: [python]
+      types_or: [ python, pyi ]

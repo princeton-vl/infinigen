@@ -1,0 +1,88 @@
+#include 'configs_nature/surface_registry.gin'
+
+OVERALL_SEED = 0
+LOG_DIR = '.'
+
+Terrain.asset_folder = "" # Will read from $INFINIGEN_ASSET_FOLDER environment var when set to None, and on the fly when set to ""
+Terrain.asset_version = 'May27'
+
+util.math.FixedSeed.seed = %OVERALL_SEED
+
+execute_tasks.frame_range = [1, 1] # Between start/end frames should this job consider? Increase end frame to tackle video
+execute_tasks.camera_id = [0, 0] # Which camera rig
+
+save_obj_and_instances.output_folder="saved_mesh.obj"
+
+util.logging.create_text_file.log_dir = %LOG_DIR
+
+target_face_size.global_multiplier = 2
+scatter_res_distance.dist = 4
+
+random_color_mapping.hue_stddev = 0.05 # Note: 1.0 is the whole color spectrum
+
+render.render_image_func = @full/render_image
+configure_render_cycles.time_limit = 0
+
+configure_render_cycles.min_samples = 0
+configure_render_cycles.num_samples = 8192
+configure_render_cycles.adaptive_threshold = 0.01
+configure_render_cycles.denoise = False
+configure_render_cycles.exposure = 1
+configure_blender.motion_blur_shutter = 0.15
+render_image.use_dof = False
+render_image.dof_aperture_fstop = 3
+compositor_postprocessing.distort = False
+compositor_postprocessing.color_correct = False
+
+flat/render_image.override_num_samples = 16
+flat/render_image.flat_shading = True
+full/render_image.passes_to_save = [
+    ['diffuse_direct', 'DiffDir'],
+    ['diffuse_color', 'DiffCol'],
+    ['diffuse_indirect', 'DiffInd'],
+    ['glossy_direct', 'GlossDir'],
+    ['glossy_color', 'GlossCol'],
+    ['glossy_indirect', 'GlossInd'],
+    ['transmission_direct', 'TransDir'],
+    ['transmission_color', 'TransCol'],
+    ['transmission_indirect', 'TransInd'],
+    ['volume_direct', 'VolumeDir'],
+    ['emit', 'Emit'],
+    ['environment', 'Env'],
+    ['ambient_occlusion', 'AO'],
+    ['material_index', 'IndexMA'],
+]
+flat/render_image.passes_to_save = [
+    ['z', 'Depth'],
+    ['normal', 'Normal'],
+    ['vector', 'Vector'],
+    ['object_index', 'IndexOB']
+]
+
+execute_tasks.generate_resolution = (1280, 720)
+execute_tasks.fps = 24
+get_sensor_coords.H = 720
+get_sensor_coords.W = 1280
+
+min_terrain_distance = 2
+keep_cam_pose_proposal.min_terrain_distance = %min_terrain_distance
+SphericalMesher.r_min = %min_terrain_distance
+
+build_terrain_bvh_and_attrs.avoid_border = False # disabled due to crashes 5/15
+
+camera.camera_pose_proposal.altitude = ("weighted_choice",
+    (0.975, ("clip_gaussian", 2, 0.3, 0.5, 3)), # person height usually
+    (0.025, ("clip_gaussian", 15, 7, 5, 30)) # drone height sometimes
+)
+
+camera.camera_pose_proposal.pitch = ("clip_gaussian", 90, 30, 20, 160)
+
+# WARNING: Large camera rig translations or rotations require special handling.
+#    if your cameras are not all approximately forward facing within a few centimeters, you must either:
+#    -  configure the pipeline to generate assets / terrain for each camera separately, rather than sharing it between the whole rig
+#    -  or, treat your camera rig as multiple camera rigs each with one camera, and implement code to positon them correctly
+camera.spawn_camera_rigs.n_camera_rigs = 1
+camera.spawn_camera_rigs.camera_rig_config = [
+    {'loc': (0, 0, 0), 'rot_euler': (0, 0, 0)},
+    {'loc': (0.075, 0, 0), 'rot_euler': (0, 0, 0)}
+]

@@ -1,0 +1,1 @@
+"""Masks are reused geometric patterns used to combine or index other materials. These are usually black and white patterns, but can also include vector offsets or other integer / distance fields, such as for bricks and brick coordinates."""

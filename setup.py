@@ -19,7 +19,7 @@ from setuptools import Extension, setup
 cwd = Path(__file__).parent
 
 str_true = "True"
-MINIMAL_INSTALL = os.environ.get("INFINIGEN_MINIMAL_INSTALL") == str_true
+MINIMAL_INSTALL = os.environ.get("INFINIGEN_MINIMAL_INSTALL", str_true) == str_true
 BUILD_TERRAIN = os.environ.get("INFINIGEN_INSTALL_TERRAIN", str_true) == str_true
 BUILD_OPENGL = os.environ.get("INFINIGEN_INSTALL_CUSTOMGT", "False") == str_true
 BUILD_BNURBS = os.environ.get("INFINIGEN_INSTALL_BNURBS", "False") == str_true
@@ -31,7 +31,13 @@ is_build_step = not any(x in sys.argv[1] for x in dont_build_steps)
 def ensure_submodules():
     # Inspired by https://github.com/pytorch/pytorch/blob/main/setup.py
 
-    with (cwd / ".gitmodules").open() as f:
+    gitmodules = cwd / ".gitmodules"
+    if not gitmodules.exists():
+        # submodules were removed; optional components (OcMesher, infinigen_gpl,
+        # customgt dependencies) are now cloned manually if needed
+        return
+
+    with gitmodules.open() as f:
         submodule_folders = [
             cwd / line.split("=", 1)[1].strip()
             for line in f.readlines()
@@ -62,7 +68,7 @@ if not MINIMAL_INSTALL:
         cython_extensions.append(
             Extension(
                 name="bnurbs",
-                sources=["infinigen/assets/utils/geometry/cpp_utils/bnurbs.pyx"],
+                sources=["src/infinigen/assets/utils/geometry/cpp_utils/bnurbs.pyx"],
                 include_dirs=[numpy.get_include()],
             )
         )
@@ -71,7 +77,7 @@ if not MINIMAL_INSTALL:
             Extension(
                 name="infinigen.terrain.marching_cubes",
                 sources=[
-                    "infinigen/terrain/marching_cubes/_marching_cubes_lewiner_cy.pyx"
+                    "src/infinigen/terrain/marching_cubes/_marching_cubes_lewiner_cy.pyx"
                 ],
                 include_dirs=[numpy.get_include()],
             )

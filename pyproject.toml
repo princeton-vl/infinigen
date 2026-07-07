@@ -20,61 +20,63 @@ classifiers = [
 
 requires-python = "==3.11.*"
 dependencies = [
-
     # NOTE: many less-than dependencies could likely be loosened
     #   we attempted to restrict to only versions that are known to be working
-
     "bpy==4.2.0",
+    "procfunc>=0.34,<0.35",
+    "coacd",
     "gin_config>=0.5.0",
-    "imageio<2.32.0",      # e.g. 2.31.1
+    "imageio<2.32.0", # e.g. 2.31.1
     "matplotlib",
     "networkx",
     "numpy<2",
     "opencv-python<4.9.0", # e.g. 4.8.0.74
     "pandas",
     "psutil",
-    "scikit-image<0.20.0", # e.g 0.19.3
-    "scikit-learn<1.4.0",  # e.g 1.3.0
+    #    "scikit-image<0.20.0", # e.g 0.19.3 # caused issues with build in 2.0.
+    "scikit-learn<1.4.0", # e.g 1.3.0
     "scipy",
     "shapely<=2.0.5",
     "tqdm",
     "trimesh<3.23.0",
     "OpenEXR",
-
     "submitit", # can be removed so long as you dont use slurm.gin or --slurm args
-
-    "geomdl", # can be removed so long as you do not generate any creatures
-
     # used by trimesh, we could specify "trimesh[easy]" but this brings more packages
     "python-fcl",
     "rtree",
+    "cvdpack>=0.5.2",
+    "wandb>=0.21.0",
 ]
 
 [project.optional-dependencies]
 terrain = [
     "landlab==2.6.0",
     "pyrender<0.2.0",
-    # landlab depends on `setuptools` but doesn't explicitly list it as a
-    # dependency; We include it to avoid problems with newer Python versions.
-    "setuptools"
+    # landlab needs pkg_resources, removed in setuptools>=81
+    "setuptools<81"
 ]
 vis = [
     "einops",
-    "flow_vis",
     "numba", # for ground truth visuals
     "pyglet<2" # for trimesh_scene.show()
 ]
 dev = [
+    "pre-commit",
     "pytest",
     "pytest-cov",
     "pytest-xdist",
     "pytest-timeout",
-    "ruff<0.9.0",
+    "ruff==0.14.5", # NOTE! must also update checks.yml and pre-commit-config.yaml
     "ty",
     "isort",
     "tabulate",
     "rapidfuzz",
-    "pre-commit"
+    "sphinx",
+    "myst-parser",
+    "sphinx_book_theme",
+    "sphinx-argparse",
+    "flask",
+    "jinja2",
 ]
 sim = [
     "mujoco",
@@ -84,21 +86,22 @@ sim = [
 wandb = [
     "wandb"
 ]
+# Legacy 1.0 generation; see docs/source/Installation.md "Legacy (1.0) generation"
+v1 = [
+    "infinigen[terrain,vis]",
+    "scikit-image<0.20.0",
+    "geomdl",
+]
 
-[tool.setuptools]
-# include-package-data is terribly named. package-data is still included if false,
-# just not the package-data setuptools would otherwise autogenerate from MANIFEST.in or version control
-include-package-data = false
-license-files = []
+[project.scripts]
+infinigen = "infinigen2.generate:main"
+infinigen2 = "infinigen2.generate:main"
+
+[tool.setuptools.dynamic]
+version = {attr = "infinigen2.__version__"}
 
 [tool.setuptools.packages.find]
-include = ["infinigen*"]
-
-# must be specified as module paths with ., using classic filepaths with / will silently not do anything
-exclude = [
-    "infinigen.datagen.customgt.dependencies*",
-    "infinigen.datagen.customgt.build*",
-]
+where = ["src"]
 
 [tool.setuptools.package-data]
 
@@ -113,13 +116,10 @@ exclude = [
     "assets/objects/creatures/parts/nurbs_data/*.npy", # stores creature nurbs centroids data, ideally will be deprecated
 ]
 
-[tool.setuptools.dynamic]
-version = {attr = "infinigen.__version__"}
-
 [tool.pytest.ini_options]
 testpaths = "tests"
 junit_family = "xunit2"
-markers = ["nature", "indoors", "skip_for_ci"]
+markers = ["skip_for_ci", "render_gpu", "slow"]
 timeout = 480
 
 filterwarnings = [
@@ -141,17 +141,12 @@ test-command = "pytest tests"
 target-version = "py310"
 
 exclude = [
-
+    "src/infinigen/infinigen_gpl/",
+    "src/infinigen/OcMesher/",
+    "src/infinigen/datagen/customgt/dependencies/",
+    "src/infinigen/terrain/mesh_to_sdf",
+    "src/infinigen/terrain/mesher/_marching_cubes_lewiner*",
     "*.ipynb",
-
-    # exclude known submodules
-    "infinigen/datagen/customgt/dependencies/",
-    "infinigen/OcMesher",
-    "infinigen/infinigen_gpl",
-
-    # exclude copied-in external code
-    "infinigen/terrain/mesh_to_sdf",
-    "infinigen/terrain/mesher/_marching_cubes_lewiner*"
 ]
 
 [tool.ruff.lint]
@@ -159,8 +154,9 @@ exclude = [
 select = [
     "E",
     "I",
-    "F",
+    "F", 
     "S102", # no exec(),
+    "TID251", # custom banned imports
     "TID252", # relative imports only allowed for siblings
 
 ]
@@ -168,6 +164,7 @@ ignore = [
     "E501", # over-length lines, formatter should handle it
     "E741", # ambigous variable name
     "F841", # local variable is assigned to but never used
+    "B905" # disable "zip must have strict parameter"
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -175,10 +172,22 @@ ignore = [
     "F401",
     "CPY001", # runs during PRs, but no need for copyright on boilerplate/often-empty __init__.py
 ]
-"infinigen/assets/*" = ["F841"] #transpiler currently creates lots of unused variables
+"src/infinigen/assets/*" = ["F841"] #transpiler currently creates lots of unused variables
 
 [tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "parents"
 
-[tool.pytype]
-inputs = ['infinigen', 'infinigen_examples']
+[tool.ty.rules]
+unresolved-import = "ignore"
+unresolved-attribute = "ignore"
+
+[tool.ty.src]
+include = [
+    "src/infinigen2", 
+    "tests/infinigen2",
+]
+
+[dependency-groups]
+dev = [
+    "wandb>=0.21.0",
+]

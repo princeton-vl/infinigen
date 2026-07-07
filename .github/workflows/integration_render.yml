@@ -1,0 +1,151 @@
+name: Integration Render
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches:
+      - develop2
+      - main2
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "PR number to tag outputs and comment on"
+        required: false
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  RENDER_ARCHIVE_ROOT: /home/renderbot/integration_test_archive/renders/integration
+  VIEWER_BASE_URL: https://pvlbox.princeton.edu
+
+jobs:
+  render:
+    if: github.repository == 'princeton-vl/infinigen_internal' && github.event.pull_request.draft == false
+    runs-on: [self-hosted, renderbot]
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Install infinigen & dependencies
+        run: |
+          uv venv
+          uv pip install -e ".[dev,vis]"
+
+      # Resolve every path/label this run needs, once, so the render / archive /
+      # report steps below are just simple consumers of these env vars.
+      - name: Resolve run metadata
+        run: |
+          set -e
+          # On a PR this is the PR number; via workflow_dispatch it's the input;
+          # on a branch push it's empty (RUN_LABEL stays "nopr").
+          PR_NUMBER="${{ github.event.pull_request.number || inputs.pr_number }}"
+          RUN_LABEL="nopr"
+          [ -n "$PR_NUMBER" ] && RUN_LABEL="pr${PR_NUMBER}"
+
+          REL_PATH="$(date -u +'%Y-%m-%dT%H-%M-%SZ')_${GITHUB_SHA:0:7}"
+
+          # Baseline to diff against in the viewer: the PR's target branch
+          # (<base>_latest), falling back to develop_latest when that branch has
+          # no baseline yet. base_ref is empty for push / dispatch, so those keep
+          # develop_latest.
+          BASELINE="develop_latest"
+          BASE_REF="${{ github.base_ref }}"
+          if [ -n "$BASE_REF" ] && [ -e "$RENDER_ARCHIVE_ROOT/${BASE_REF}_latest" ]; then
+            BASELINE="${BASE_REF}_latest"
+          fi
+
+          {
+            echo "REL_PATH=$REL_PATH"
+            echo "OUTPUT_DIR=$RUNNER_TEMP/integration-renders-${RUN_LABEL}-${REL_PATH}"
+            echo "TARGET_DIR=$RENDER_ARCHIVE_ROOT/$REL_PATH"
+            echo "BASELINE=$BASELINE"
+          } >> "$GITHUB_ENV"
+
+      - name: Run integration renders
+        id: render
+        continue-on-error: true
+        env:
+          GPU_MEM_USED_MAX_MB: 10000
+          GIT_BRANCH_OVERRIDE: ${{ github.head_ref || github.ref_name }}
+          MATERIAL_PARALLEL: 1
+          MATERIAL_LIMIT: -1
+          OBJECT_LIMIT: -1
+          SCENE_LIMIT: -1
+        run: |
+          set -e
+          mkdir -p "$OUTPUT_DIR"
+          uv run python scripts/integration_v2/launch_andromeda.py \
+            --output_path "$OUTPUT_DIR" \
+            --jobs-per-gpu 4 \
+            --gpus available
+
+      - name: Archive renders to permanent storage
+        if: ${{ !cancelled() }}
+        run: |
+          set -e
+          # Skip (don't fail) when the render produced no output — e.g. it
+          # crashed before writing anything. This also guards against an empty
+          # OUTPUT_DIR turning `rsync -a "$OUTPUT_DIR"/ ...` into `rsync -a / ...`,
+          # which would copy the whole filesystem until the disk fills.
+          if [ ! -d "$OUTPUT_DIR" ] || [ -z "$(ls -A "$OUTPUT_DIR" 2>/dev/null)" ]; then
+            echo "No render output at '$OUTPUT_DIR' — nothing to archive."
+            exit 0
+          fi
+
+          mkdir -p "$TARGET_DIR"
+          rsync -a "$OUTPUT_DIR"/ "$TARGET_DIR"/
+
+          # On a push to a tracked branch, point that branch's baseline at this
+          # run. develop_materials also keeps the historical develop_latest alias.
+          if [ "${{ github.event_name }}" = "push" ]; then
+            ln -sfn "$TARGET_DIR" "$RENDER_ARCHIVE_ROOT/${{ github.ref_name }}_latest"
+            if [ "${{ github.ref_name }}" = "develop_materials" ]; then
+              ln -sfn "$TARGET_DIR" "$RENDER_ARCHIVE_ROOT/develop_latest"
+            fi
+          fi
+
+      - name: Print viewer link
+        if: always()
+        run: |
+          echo "Integration renders are ready:"
+          echo "${VIEWER_BASE_URL}/?v=${REL_PATH}"
+          echo "${VIEWER_BASE_URL}/?v=${BASELINE}&v=${REL_PATH}"
+          echo "Path: ${TARGET_DIR}"
+
+      - name: Comment PR with viewer link
+        if: ${{ !cancelled() && (github.event.pull_request.number || inputs.pr_number) }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request?.number || core.getInput('pr_number');
+            const { VIEWER_BASE_URL, REL_PATH, TARGET_DIR } = process.env;
+            const baseline = process.env.BASELINE || 'develop_latest';
+            const body = [
+              "Integration renders are ready:",
+              `${VIEWER_BASE_URL}/?v=${REL_PATH}`,
+              "",
+              `Compare vs ${baseline}:`,
+              `${VIEWER_BASE_URL}/?v=${baseline}&v=${REL_PATH}`,
+              "",
+              `Path: ${TARGET_DIR}`,
+            ].join("\n");
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr,
+              body,
+            });
+
+      - name: Fail job if any render failed
+        if: always()
+        run: |
+          if [ "${{ steps.render.outcome }}" = "failure" ]; then
+            echo "One or more renders failed — marking job red."
+            exit 1
+          fi

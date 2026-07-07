@@ -2,7 +2,7 @@
 
 set -e
 
-cd ./infinigen/datagen/customgt
+cd ./src/infinigen/datagen/customgt
 
 cmake -S . -Bbuild -DCMAKE_C_COMPILER=/usr/bin/gcc -DCMAKE_BUILD_TYPE=Release
 cmake --build build --target all

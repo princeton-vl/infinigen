@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+{% import "_image_tile.html" as tile %}
+
+{% block styles %}
+.comparison-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.header-row {
+    position: sticky;
+    top: 30px;
+    background: white;
+    z-index: 50;
+    padding: 8px;
+    border: 2px solid var(--border-color);
+    margin-bottom: 4px;
+    text-align: center;
+}
+
+.version-name {
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.comparison-row {
+    margin-bottom: 8px;
+    border: 1px solid var(--border-color);
+    padding: 4px;
+}
+
+.asset-name {
+    font-weight: bold;
+    font-size: 12px;
+    margin-bottom: 4px;
+    padding: 2px 4px;
+    background: #f0f0f0;
+    border-bottom: 1px solid #ddd;
+}
+
+.version-layer {
+    display: none;
+}
+
+.version-layer.active {
+    display: block;
+}
+
+.images-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--gap);
+    align-items: flex-start;
+    padding: 4px;
+}
+
+.image-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.image-label {
+    font-size: 9px;
+    color: #666;
+    margin-bottom: 2px;
+    text-align: center;
+    word-break: break-word;
+    max-width: var(--img-width);
+}
+
+.error-details {
+    width: var(--img-width);
+    margin-top: 4px;
+    font-size: 10px;
+}
+
+.error-details pre {
+    max-height: 180px;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    border: 1px solid #ddd;
+    padding: 6px;
+    background: #fafafa;
+}
+
+img {
+    width: var(--img-width);
+    height: auto;
+    display: block;
+    border: 1px solid #ddd;
+}
+
+.empty-cell {
+    color: #999;
+    font-style: italic;
+    padding: 20px;
+    text-align: center;
+}
+
+.image-section {
+    margin-bottom: 8px;
+}
+
+.section-title {
+    font-size: 10px;
+    font-weight: bold;
+    padding: 2px 4px;
+    background: #e8e8e8;
+    border-left: 3px solid #666;
+    margin-bottom: 4px;
+}
+
+.preset-strip {
+    flex-wrap: wrap;
+}
+{% endblock %}
+
+{% block content %}
+<div class="comparison-container">
+    <div class="header-row">
+        <div class="version-name" id="current-version-name">{{ version_names[0] }}</div>
+    </div>
+
+    {% for row in rows %}
+    <div class="comparison-row" data-asset-type="{{ row.asset_type }}" data-asset="{{ row.asset }}">
+        <div class="asset-name">{{ row.asset_label }}</div>
+
+        {% for obj in row.objects %}
+        <div class="version-layer {% if loop.index0 == 0 %}active{% endif %}" data-version="{{ obj.version }}">
+            {% if obj.images %}
+            {% set preset_images = obj.images | selectattr('is_preset') | list %}
+            {% set distribution_images = obj.images | selectattr('category', 'equalto', 'distribution') | rejectattr('is_preset') | list %}
+            {% set displacement_images = obj.images | selectattr('category', 'equalto', 'displacement') | list %}
+
+            {% if distribution_images %}
+            <div class="image-section" data-category="distribution">
+                <div class="section-title">Random seeds</div>
+                <div class="images-container">
+                    {% for img in distribution_images %}
+                    {{ tile.image_tile(img) }}
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if preset_images %}
+            <div class="image-section" data-category="distribution">
+                <div class="section-title">Presets</div>
+                <div class="images-container preset-strip">
+                    {% for img in preset_images %}
+                    {{ tile.image_tile(img) }}
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if displacement_images %}
+            <div class="image-section" data-category="displacement">
+                <div class="section-title">Displacement tests</div>
+                <div class="images-container">
+                    {% for img in displacement_images %}
+                    {{ tile.image_tile(img) }}
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            {% else %}
+            <div class="empty-cell">No images</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+let currentVersionIndex = 0;
+const versionNames = {{ version_names|tojson }};
+
+function toggleVersion() {
+    // Hide current version
+    document.querySelectorAll('.version-layer.active').forEach(el => {
+        el.classList.remove('active');
+    });
+
+    // Move to next version
+    currentVersionIndex = (currentVersionIndex + 1) % versionNames.length;
+
+    // Show next version
+    document.querySelectorAll(`[data-version="${versionNames[currentVersionIndex]}"]`).forEach(el => {
+        el.classList.add('active');
+    });
+
+    // Update header
+    document.getElementById('current-version-name').textContent = versionNames[currentVersionIndex];
+}
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 't' || e.key === 'T') {
+        e.preventDefault();
+        toggleVersion();
+    }
+});
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 's' || e.key === 'S') {
+        toggleMode();
+    }
+});
+{% endblock %}

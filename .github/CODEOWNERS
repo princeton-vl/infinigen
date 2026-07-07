@@ -1,0 +1,28 @@
+# CODEOWNERS
+
+### All installation / project configs are owned by araistrick
+.gitmodules @araistrick
+pyproject.toml @araistrick
+
+
+LICENSE @araistrick
+.pre-commit-config.yaml @araistrick
+
+Dockerfile @araistrick
+Makefile @araistrick
+setup.py @araistrick
+README.md @araistrick
+scripts/installation/** @araistrick
+scripts/installation @araistrick
+
+**/.* @araistrick # catchall
+
+### Submodules - shouldnt change versions
+src/procfunc/
+src/infinigen/infinigen_gpl/
+src/infinigen/OcMesher/
+src/infinigen/datagen/customgt/dependencies/
+
+### Tests
+
+tests/** @araistrick

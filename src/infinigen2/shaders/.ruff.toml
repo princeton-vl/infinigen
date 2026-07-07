@@ -1,0 +1,13 @@
+extend = "../.ruff.toml"
+
+[lint.flake8-tidy-imports.banned-api]
+"inspect".msg = "metaprogramming is too complicated / confusing for procedural generator behavior"
+"infinigen2.objects".msg = "shaders cannot depend on objects"
+"infinigen2.scenes".msg = "shaders cannot depend on scenes"
+
+[lint]
+extend-select = [
+    "T201", # no print()
+    "T203", # no pprint()
+    "TID251", # custom banned imports
+]

@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asset Comparison</title>
+    <style>
+        :root {
+            --img-width: 300px;
+            --gap: 4px;
+            --border-color: #333;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: monospace;
+            margin: 0;
+            padding: 8px;
+            font-size: 11px;
+        }
+
+        #controls {
+            position: sticky;
+            top: 0;
+            background: white;
+            padding: 4px 8px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 4px;
+            z-index: 100;
+        }
+
+        .controls-row {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .mode-indicator {
+            font-weight: bold;
+            padding: 4px 8px;
+            background: #f0f0f0;
+            border: 1px solid #999;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .mode-indicator:hover {
+            background: #e0e0e0;
+        }
+
+        .mode-indicator:active {
+            background: #d0d0d0;
+        }
+
+        .filter-toggle {
+            cursor: pointer;
+            color: #0066cc;
+            text-decoration: underline;
+            font-size: 10px;
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+            color: #666;
+            margin-left: 4px;
+            font-size: 10px;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 220px;
+            background-color: #333;
+            color: #fff;
+            text-align: left;
+            border-radius: 3px;
+            padding: 6px;
+            position: absolute;
+            z-index: 1000;
+            top: 125%;
+            left: 50%;
+            margin-left: -110px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            font-size: 10px;
+            line-height: 1.3;
+        }
+
+        .tooltip .tooltiptext::after {
+            content: "";
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: transparent transparent #333 transparent;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        #filters {
+            display: none;
+            padding: 8px;
+            background: #f9f9f9;
+            border-top: 1px solid #ddd;
+            margin-top: 4px;
+        }
+
+        #filters.expanded {
+            display: block;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 4px;
+        }
+
+        .filter-group label {
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .filter-section {
+            margin-bottom: 8px;
+        }
+
+        .filter-section-title {
+            font-weight: bold;
+            font-size: 10px;
+            margin-bottom: 4px;
+        }
+
+        .asset-filter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 4px 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 4px;
+            background: white;
+            border: 1px solid #ddd;
+        }
+
+        .asset-filter-grid label {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 10px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .asset-filter-grid label span {
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .asset-checkbox-wrapper[data-hidden="true"] {
+            display: none;
+        }
+
+        .asset-filter-controls {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 4px;
+            font-size: 9px;
+        }
+
+        .asset-filter-controls button {
+            padding: 2px 6px;
+            font-size: 9px;
+            cursor: pointer;
+            background: white;
+            border: 1px solid #999;
+        }
+
+        .comparison-row[data-asset-hidden="true"] {
+            display: none !important;
+        }
+
+        .image-wrapper[data-filtered="true"] {
+            display: none !important;
+        }
+
+        .image-wrapper[data-align-hidden="true"] {
+            display: none !important;
+        }
+
+        .missing-placeholder {
+            width: var(--img-width);
+            min-height: var(--img-width);
+            background: #222;
+            color: #999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #444;
+            font-size: 10px;
+        }
+
+        {% block styles %}{% endblock %}
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <div class="controls-row">
+            <label>
+                Image size:
+                <input type="range" min="100" max="600" value="300"
+                       oninput="document.documentElement.style.setProperty('--img-width', this.value + 'px')">
+                <span id="size-display">300px</span>
+            </label>
+            <button class="mode-indicator" onclick="toggleMode()" title="Click to switch mode">
+                Mode: <span id="mode-name">{{ mode }}</span>
+            </button>
+            <span style="color: #666; font-size: 10px;">
+                {% if mode == 'toggle' %}
+                Press 's' for side-by-side | 't' to cycle versions
+                <span class="tooltip">?
+                    <span class="tooltiptext">Toggle mode overlays versions in same space. Press 't' to cycle through versions, 's' to switch to side-by-side view.</span>
+                </span>
+                {% else %}
+                Press 't' for toggle mode
+                <span class="tooltip">?
+                    <span class="tooltiptext">Side-by-side shows all versions in columns. Press 't' to switch to toggle mode.</span>
+                </span>
+                {% endif %}
+            </span>
+            <span class="filter-toggle" onclick="toggleFilters()">⚙ Filters</span>
+            <a href="/help" style="color: #0066cc; text-decoration: none; font-size: 10px;">Help</a>
+            <a href="/select-versions" style="color: #0066cc; text-decoration: none; font-size: 10px;">Select versions</a>
+        </div>
+
+        <div id="filters">
+            <div class="filter-section">
+                <div class="filter-section-title">View Options:</div>
+                <div class="filter-group">
+                    <label>
+                        <input type="checkbox" id="align-checkbox" checked onchange="toggleAlign()">
+                        Align images
+                        <span class="tooltip">?
+                            <span class="tooltiptext">When checked, shows "Missing" placeholders for images that exist in one version but not another. When unchecked, images are sorted by name without placeholders.</span>
+                        </span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="filter-section">
+                <div class="filter-section-title">Asset Types:</div>
+                <div class="filter-group">
+                    <label><input type="checkbox" class="filter-checkbox" data-filter-type="asset_type" data-filter-value="material" checked> Materials</label>
+                    <label><input type="checkbox" class="filter-checkbox" data-filter-type="asset_type" data-filter-value="object" checked> Objects</label>
+                    <label><input type="checkbox" class="filter-checkbox" data-filter-type="asset_type" data-filter-value="scene" checked> Scenes</label>
+                </div>
+            </div>
+
+            <div class="filter-section">
+                <div class="filter-section-title">Categories:</div>
+                <div class="filter-group">
+                    <label><input type="checkbox" class="filter-checkbox" data-filter-type="category" data-filter-value="distribution" checked> Distribution tests (seeds 0-3)</label>
+                    <label><input type="checkbox" class="filter-checkbox" data-filter-type="category" data-filter-value="displacement" checked> Displacement tests</label>
+                </div>
+            </div>
+
+            <div class="filter-section">
+                <div class="filter-section-title">Pass Types:</div>
+                <div class="filter-group">
+                    <label><input type="checkbox" class="filter-checkbox" data-filter-type="pass_type" data-filter-value="image" checked> RGB images</label>
+                    <label><input type="checkbox" class="filter-checkbox" data-filter-type="pass_type" data-filter-value="surface-normal" checked> Surface normals</label>
+                    <label><input type="checkbox" class="filter-checkbox" data-filter-type="pass_type" data-filter-value="error" checked> Errors</label>
+                </div>
+            </div>
+
+            <div class="filter-section">
+                <div class="filter-section-title">Renderers:</div>
+                <div class="filter-group">
+                    <label><input type="checkbox" class="filter-checkbox" data-filter-type="renderer" data-filter-value="cycles" checked> Cycles</label>
+                    <label><input type="checkbox" class="filter-checkbox" data-filter-type="renderer" data-filter-value="eevee" checked> Eevee</label>
+                </div>
+            </div>
+
+            <div class="filter-section">
+                <div class="filter-section-title">Assets:</div>
+                <div class="asset-filter-controls">
+                    <button onclick="selectAllAssets()">Select All</button>
+                    <button onclick="deselectAllAssets()">Deselect All</button>
+                </div>
+                <div class="asset-filter-controls" style="margin-bottom: 8px;">
+                    <span style="font-size: 10px; margin-right: 8px;">Include assets from:
+                        <span class="tooltip">?
+                            <span class="tooltiptext">Select which versions to include assets from. Union shows assets in any selected version. Intersection shows only assets in all selected versions.</span>
+                        </span>
+                    </span>
+                    {% for version in version_names %}
+                    <label>
+                        <input type="checkbox" class="version-include-checkbox" data-version="{{ version }}" checked onchange="updateAssetList()">
+                        {{ version }}
+                    </label>
+                    {% endfor %}
+                </div>
+                <div class="asset-filter-controls" style="margin-bottom: 4px;">
+                    <label style="margin-right: 8px;">
+                        <input type="radio" name="asset-join-mode" value="union" checked onchange="updateAssetList()">
+                        Union
+                        <span class="tooltip">?
+                            <span class="tooltiptext">Show assets present in any of the selected versions.</span>
+                        </span>
+                    </label>
+                    <label>
+                        <input type="radio" name="asset-join-mode" value="intersection" onchange="updateAssetList()">
+                        Intersection
+                        <span class="tooltip">?
+                            <span class="tooltiptext">Show only assets present in all selected versions.</span>
+                        </span>
+                    </label>
+                </div>
+                <div class="asset-filter-grid" id="asset-filter-grid">
+                    {% for row in rows %}
+                    {% set version_list = [] %}
+                    {% for obj in row.objects %}
+                        {% set has_real_images = obj.images and obj.images|selectattr('path')|list|length > 0 %}
+                        {% set has_errors = obj.images and obj.images|selectattr('stderr_text')|list|length > 0 %}
+                        {% if has_real_images or has_errors %}
+                            {% set _ = version_list.append(obj.version) %}
+                        {% endif %}
+                    {% endfor %}
+                    <label class="asset-checkbox-wrapper"
+                           data-asset="{{ row.asset }}"
+                           data-asset-type="{{ row.asset_type }}"
+                           data-versions="{{ version_list|join(',') }}">
+                        <input type="checkbox" class="asset-filter-checkbox"
+                               data-asset="{{ row.asset }}"
+                               checked>
+                        <span>{{ row.asset }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% block content %}{% endblock %}
+
+    <script>
+        const slider = document.querySelector('input[type="range"]');
+        const display = document.getElementById('size-display');
+
+        // Restore size from URL parameter if present
+        const urlParams = new URLSearchParams(window.location.search);
+        const sizeParam = urlParams.get('size');
+        if (sizeParam) {
+            slider.value = sizeParam;
+            document.documentElement.style.setProperty('--img-width', sizeParam + 'px');
+            display.textContent = sizeParam + 'px';
+        }
+
+        slider.addEventListener('input', (e) => {
+            display.textContent = e.target.value + 'px';
+        });
+
+        // Restore assets from URL
+        const assetsParam = urlParams.get('assets');
+        if (assetsParam) {
+            const selectedAssets = new Set(assetsParam.split(','));
+            document.querySelectorAll('.asset-filter-checkbox').forEach(cb => {
+                cb.checked = selectedAssets.has(cb.dataset.asset);
+            });
+        }
+
+        // Restore version includes from URL
+        const versionsParam = urlParams.get('versions');
+        if (versionsParam) {
+            const includedVersions = new Set(versionsParam.split(','));
+            document.querySelectorAll('.version-include-checkbox').forEach(cb => {
+                cb.checked = includedVersions.has(cb.dataset.version);
+            });
+        }
+
+        // Restore join mode from URL
+        const joinModeParam = urlParams.get('join_mode');
+        if (joinModeParam) {
+            const radio = document.querySelector(`input[name="asset-join-mode"][value="${joinModeParam}"]`);
+            if (radio) {
+                radio.checked = true;
+            }
+        }
+
+        // Update asset list if versions or join mode changed
+        if (versionsParam || joinModeParam) {
+            updateAssetList();
+        }
+
+        // Restore asset_type filters from URL
+        const assetTypeParam = urlParams.get('asset_type');
+        if (assetTypeParam) {
+            const assetTypes = new Set(assetTypeParam.split(','));
+            document.querySelectorAll('.filter-checkbox[data-filter-type="asset_type"]').forEach(cb => {
+                cb.checked = assetTypes.has(cb.dataset.filterValue);
+            });
+        }
+
+        // Restore align from URL
+        const alignParam = urlParams.get('align');
+        if (alignParam !== null) {
+            document.getElementById('align-checkbox').checked = (alignParam !== '0');
+        }
+
+        // Restore category filters from URL
+        const categoryParam = urlParams.get('category');
+        if (categoryParam) {
+            const categories = new Set(categoryParam.split(','));
+            document.querySelectorAll('.filter-checkbox[data-filter-type="category"]').forEach(cb => {
+                cb.checked = categories.has(cb.dataset.filterValue);
+            });
+        }
+
+        // Restore pass_type filters from URL
+        const passParam = urlParams.get('pass_type');
+        if (passParam) {
+            const passTypes = new Set(passParam.split(','));
+            document.querySelectorAll('.filter-checkbox[data-filter-type="pass_type"]').forEach(cb => {
+                cb.checked = passTypes.has(cb.dataset.filterValue);
+            });
+        }
+
+        // Restore renderer filters from URL
+        const rendererParam = urlParams.get('renderer');
+        if (rendererParam) {
+            const renderers = new Set(rendererParam.split(','));
+            document.querySelectorAll('.filter-checkbox[data-filter-type="renderer"]').forEach(cb => {
+                cb.checked = renderers.has(cb.dataset.filterValue);
+            });
+        }
+
+        // Apply filters after all state is restored
+        if (assetsParam || versionsParam || categoryParam || passParam || rendererParam || assetTypeParam) {
+            applyFilters();
+            applyAssetFilters();
+        }
+
+        function toggleFilters() {
+            document.getElementById('filters').classList.toggle('expanded');
+        }
+
+        function buildUrlWithState(newMode) {
+            const currentSize = document.querySelector('input[type="range"]').value;
+            const params = new URLSearchParams();
+
+            params.set('mode', newMode);
+            params.set('size', currentSize);
+
+            // Save asset selections
+            const selectedAssets = Array.from(document.querySelectorAll('.asset-filter-checkbox:checked'))
+                .map(cb => cb.dataset.asset);
+            if (selectedAssets.length > 0) {
+                params.set('assets', selectedAssets.join(','));
+            }
+
+            // Save version includes
+            const includedVersions = Array.from(document.querySelectorAll('.version-include-checkbox:checked'))
+                .map(cb => cb.dataset.version);
+            if (includedVersions.length > 0) {
+                params.set('versions', includedVersions.join(','));
+            }
+
+            // Save join mode
+            const joinMode = document.querySelector('input[name="asset-join-mode"]:checked')?.value;
+            if (joinMode && joinMode !== 'union') {
+                params.set('join_mode', joinMode);
+            }
+
+            // Save asset_type filters
+            const assetTypeFilters = Array.from(document.querySelectorAll('.filter-checkbox[data-filter-type="asset_type"]:checked'))
+                .map(cb => cb.dataset.filterValue);
+            if (assetTypeFilters.length > 0) {
+                params.set('asset_type', assetTypeFilters.join(','));
+            }
+
+            // Save align state
+            const alignChecked = document.getElementById('align-checkbox')?.checked;
+            if (alignChecked !== null && !alignChecked) {
+                params.set('align', '0');
+            }
+
+            // Save filter states
+            const categoryFilters = Array.from(document.querySelectorAll('.filter-checkbox[data-filter-type="category"]:checked'))
+                .map(cb => cb.dataset.filterValue);
+            if (categoryFilters.length > 0) {
+                params.set('category', categoryFilters.join(','));
+            }
+
+            const passFilters = Array.from(document.querySelectorAll('.filter-checkbox[data-filter-type="pass_type"]:checked'))
+                .map(cb => cb.dataset.filterValue);
+            if (passFilters.length > 0) {
+                params.set('pass_type', passFilters.join(','));
+            }
+
+            const rendererFilters = Array.from(document.querySelectorAll('.filter-checkbox[data-filter-type="renderer"]:checked'))
+                .map(cb => cb.dataset.filterValue);
+            if (rendererFilters.length > 0) {
+                params.set('renderer', rendererFilters.join(','));
+            }
+
+            return '/?' + params.toString();
+        }
+
+        function toggleMode() {
+            const currentMode = new URLSearchParams(window.location.search).get('mode') || 'sidebyside';
+            const newMode = currentMode === 'sidebyside' ? 'toggle' : 'sidebyside';
+            window.location.href = buildUrlWithState(newMode);
+        }
+
+        function toggleAlign() {
+            const alignEnabled = document.getElementById('align-checkbox').checked;
+            document.querySelectorAll('.image-wrapper').forEach(wrapper => {
+                const path = wrapper.dataset.path;
+                // Missing placeholders have no path or path="None"
+                if (!path || path === 'None' || path === '') {
+                    wrapper.dataset.alignHidden = alignEnabled ? 'false' : 'true';
+                }
+            });
+        }
+
+        // Apply initial align behavior (default and URL-restored state).
+        toggleAlign();
+
+        function applyFilters() {
+            const checkboxes = document.querySelectorAll('.filter-checkbox');
+            const activeFilters = {};
+
+            checkboxes.forEach(cb => {
+                const filterType = cb.dataset.filterType;
+                const filterValue = cb.dataset.filterValue;
+
+                if (!activeFilters[filterType]) {
+                    activeFilters[filterType] = [];
+                }
+
+                if (cb.checked) {
+                    activeFilters[filterType].push(filterValue);
+                }
+            });
+
+            document.querySelectorAll('.image-wrapper').forEach(wrapper => {
+                const category = wrapper.dataset.category;
+                const passType = wrapper.dataset.passType;
+                const renderer = wrapper.dataset.renderer;
+
+                // For each filter type, check if the value matches or if it's "other" (unfiltered category)
+                const hasCategoryFilter = activeFilters.category && activeFilters.category.length > 0;
+                const categoryMatch = hasCategoryFilter ? activeFilters.category.includes(category) : true;
+                const categoryIsOther = category === 'other';
+                const categoryOk = categoryMatch || (!hasCategoryFilter && categoryIsOther) || categoryIsOther;
+
+                const hasPassFilter = activeFilters.pass_type && activeFilters.pass_type.length > 0;
+                const passMatch = hasPassFilter ? activeFilters.pass_type.includes(passType) : true;
+                const passIsOther = passType === 'other';
+                const passOk = passMatch || (!hasPassFilter && passIsOther) || passIsOther;
+
+                const hasRendererFilter = activeFilters.renderer && activeFilters.renderer.length > 0;
+                const rendererMatch = hasRendererFilter ? activeFilters.renderer.includes(renderer) : true;
+                const rendererIsUnknown = renderer === 'unknown';
+                const rendererOk = rendererMatch || (!hasRendererFilter && rendererIsUnknown) || rendererIsUnknown;
+
+                // Show if ALL filter types pass (AND logic)
+                if (categoryOk && passOk && rendererOk) {
+                    wrapper.dataset.filtered = 'false';
+                } else {
+                    wrapper.dataset.filtered = 'true';
+                }
+            });
+
+            document.querySelectorAll('.image-section').forEach(section => {
+                const visibleImages = section.querySelectorAll('.image-wrapper[data-filtered="false"]').length;
+                const title = section.querySelector('.section-title');
+                if (title) {
+                    title.style.display = visibleImages > 0 ? 'block' : 'none';
+                }
+            });
+        }
+
+        document.querySelectorAll('.filter-checkbox').forEach(cb => {
+            cb.addEventListener('change', applyFilters);
+        });
+
+        function getAllVersions() {
+            const allVersions = new Set();
+            document.querySelectorAll('.comparison-row').forEach(row => {
+                row.querySelectorAll('.object-cell, .version-layer').forEach(cell => {
+                    const version = cell.dataset?.version || cell.querySelector('[data-version]')?.dataset?.version;
+                    if (version) allVersions.add(version);
+                });
+            });
+            return allVersions;
+        }
+
+        function updateAssetList() {
+            // Get which versions are included
+            const includedVersions = new Set(
+                Array.from(document.querySelectorAll('.version-include-checkbox:checked'))
+                    .map(cb => cb.dataset.version)
+            );
+
+            // Get the join mode (union or intersection)
+            const joinMode = document.querySelector('input[name="asset-join-mode"]:checked')?.value || 'union';
+
+            document.querySelectorAll('.asset-checkbox-wrapper').forEach(wrapper => {
+                const versionsStr = wrapper.dataset.versions;
+                const assetVersions = new Set(versionsStr.split(',').filter(v => v));
+                const checkbox = wrapper.querySelector('.asset-filter-checkbox');
+
+                let shouldShow = false;
+
+                if (joinMode === 'intersection') {
+                    // Show only if asset exists in ALL included versions
+                    shouldShow = includedVersions.size > 0;
+                    for (const version of includedVersions) {
+                        if (!assetVersions.has(version)) {
+                            shouldShow = false;
+                            break;
+                        }
+                    }
+                } else {
+                    // Union: show if asset exists in at least one included version
+                    for (const version of includedVersions) {
+                        if (assetVersions.has(version)) {
+                            shouldShow = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (shouldShow) {
+                    wrapper.dataset.hidden = 'false';
+                } else {
+                    wrapper.dataset.hidden = 'true';
+                    checkbox.checked = false;
+                }
+            });
+
+            applyAssetFilters();
+        }
+
+        function selectAllAssets() {
+            document.querySelectorAll('.asset-checkbox-wrapper:not([data-hidden="true"]) .asset-filter-checkbox').forEach(cb => {
+                cb.checked = true;
+            });
+            applyAssetFilters();
+        }
+
+        function deselectAllAssets() {
+            document.querySelectorAll('.asset-checkbox-wrapper:not([data-hidden="true"]) .asset-filter-checkbox').forEach(cb => {
+                cb.checked = false;
+            });
+            applyAssetFilters();
+        }
+
+        function applyAssetFilters() {
+            const selectedAssets = new Set();
+            document.querySelectorAll('.asset-filter-checkbox:checked').forEach(cb => {
+                selectedAssets.add(cb.dataset.asset);
+            });
+
+            // Get active asset types from the filter checkboxes
+            const activeAssetTypes = new Set();
+            document.querySelectorAll('.filter-checkbox[data-filter-type="asset_type"]:checked').forEach(cb => {
+                activeAssetTypes.add(cb.dataset.filterValue);
+            });
+
+            document.querySelectorAll('.comparison-row').forEach(row => {
+                const asset = row.dataset.asset || row.querySelector('.asset-name')?.textContent;
+                const assetType = row.dataset.assetType;
+
+                const assetSelected = selectedAssets.size > 0 && selectedAssets.has(asset);
+                const typeSelected = activeAssetTypes.size === 0 || activeAssetTypes.has(assetType);
+
+                if (assetSelected && typeSelected) {
+                    row.dataset.assetHidden = 'false';
+                } else {
+                    row.dataset.assetHidden = 'true';
+                }
+            });
+        }
+
+        document.querySelectorAll('.asset-filter-checkbox').forEach(cb => {
+            cb.addEventListener('change', applyAssetFilters);
+        });
+
+        // Also apply asset filters when asset_type checkboxes change
+        document.querySelectorAll('.filter-checkbox[data-filter-type="asset_type"]').forEach(cb => {
+            cb.addEventListener('change', applyAssetFilters);
+        });
+
+        {% block scripts %}{% endblock %}
+    </script>
+</body>
+</html>
