@@ -86,9 +86,14 @@ sim = [
 wandb = [
     "wandb"
 ]
-# Legacy 1.0 generation; see docs/source/Installation.md "Legacy (1.0) generation"
+# Legacy 1.0 generation; terrain/vis inlined (self-ref extras break newer pip wheel builds)
 v1 = [
-    "infinigen[terrain,vis]",
+    "landlab==2.6.0",
+    "pyrender<0.2.0",
+    "setuptools<81",
+    "einops",
+    "numba",
+    "pyglet<2",
     "scikit-image<0.20.0",
     "geomdl",
 ]
