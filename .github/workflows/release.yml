@@ -2,13 +2,8 @@ name: Build & Release
 
 on:
   push:
-    branches:
-      - main
     tags:
       - '*'
-  pull_request:
-    branches:
-      - main
 
 jobs:
   build_sdist_purepy:
