@@ -62,16 +62,16 @@ You can use `uv run infinigen <generator1> <generator2> ...` to execute a list o
 
 <div class="example-grid">
 <figure class="example-card">
-<img src="https://infinigen.cs.princeton.edu/docs/v2.0.0a1/assets/images/infinigen2.scenes.room.room.livingroom_with_smallobj_rand/0.png" alt="livingroom seed 0">
-<pre><code>uv run infinigen livingroom_with_smallobj_rand render_cycles --seed 0</code></pre>
+<img src="https://infinigen.cs.princeton.edu/docs/v2.0.0a1/assets/images/infinigen2.scenes.room.room.livingroom_rand/0.png" alt="livingroom seed 0">
+<pre><code>uv run infinigen livingroom_rand render_cycles --seed 0</code></pre>
 </figure>
 <figure class="example-card">
-<img src="https://infinigen.cs.princeton.edu/docs/v2.0.0a1/assets/images/infinigen2.scenes.room.room.livingroom_with_smallobj_rand/1.png" alt="livingroom seed 1">
-<pre><code>uv run infinigen livingroom_with_smallobj_rand render_cycles --seed 1</code></pre>
+<img src="https://infinigen.cs.princeton.edu/docs/v2.0.0a1/assets/images/infinigen2.scenes.room.room.livingroom_rand/1.png" alt="livingroom seed 1">
+<pre><code>uv run infinigen livingroom_rand render_cycles --seed 1</code></pre>
 </figure>
 <figure class="example-card">
-<img src="https://infinigen.cs.princeton.edu/docs/v2.0.0a1/assets/images/infinigen2.scenes.room.room.livingroom_with_smallobj_rand/2.png" alt="livingroom seed 2">
-<pre><code>uv run infinigen livingroom_with_smallobj_rand render_cycles --seed 2</code></pre>
+<img src="https://infinigen.cs.princeton.edu/docs/v2.0.0a1/assets/images/infinigen2.scenes.room.room.livingroom_rand/2.png" alt="livingroom seed 2">
+<pre><code>uv run infinigen livingroom_rand render_cycles --seed 2</code></pre>
 </figure>
 </div>
 
