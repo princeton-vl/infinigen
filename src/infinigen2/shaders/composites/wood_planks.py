@@ -207,7 +207,6 @@ def wood_planks_blonde_preset(
     displacement = pf.nodes.shader.displacement(
         height=brick_cutter_result.height,
         midlevel=0.0,
-        normal=(0.0, 0.0, 0.0),
     )
     return pf.Material(
         surface=mix_shader,
@@ -222,7 +221,6 @@ def wood_planks_flaky_preset(
 
     diffuse = pf.nodes.shader.diffuse_bsdf(
         color=pf.Color((0.526, 0.526, 0.526)),
-        normal=(0.0, 0.0, 0.0),
     )
 
     brick_cutter_result = brick_cutter(

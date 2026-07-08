@@ -65,7 +65,6 @@ def metal_hammered(
     displacement = pf.nodes.shader.displacement(
         height=height,
         midlevel=0.0,
-        normal=(0.0, 0.0, 0.0),
     )
 
     return pf.Material(

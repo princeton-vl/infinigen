@@ -40,7 +40,6 @@ def ceramic(
     displacement = pf.nodes.shader.displacement(
         height=displacement_height * displacement_noise.fac,
         midlevel=0.0,
-        normal=(0.0, 0.0, 0.0),
     )
     return pf.Material(
         surface=surface,

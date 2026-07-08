@@ -42,18 +42,22 @@ class ShaderTooComplexError(RuntimeError):
 
 
 def _iter_all_nodes(
-    node_tree: bpy.types.NodeTree, seen: set[int] | None = None
-) -> Iterator[bpy.types.Node]:
-    """Yield every node in `node_tree` and each nested node-group tree, visiting
-    each distinct group tree once. Order is unspecified; use for collect-all
-    passes, not for counting (which needs per-instance inlining)."""
+    node_tree: bpy.types.NodeTree,
+    nested: bool = False,
+    seen: set[int] | None = None,
+) -> Iterator[tuple[bpy.types.Node, bool]]:
+    """Yield (node, nested) for every node in `node_tree` and each nested
+    node-group tree, visiting each distinct group tree once. `nested` is True for
+    nodes living inside a node group (used to spot floating output nodes). Order
+    is unspecified; use for collect-all passes, not for counting (which needs
+    per-instance inlining)."""
     if seen is None:
         seen = set()
     for node in node_tree.nodes:
-        yield node
+        yield node, nested
         if node.type == "GROUP" and node.node_tree and id(node.node_tree) not in seen:
             seen.add(id(node.node_tree))
-            yield from _iter_all_nodes(node.node_tree, seen)
+            yield from _iter_all_nodes(node.node_tree, True, seen)
 
 
 def _flattened_node_count(node_tree: bpy.types.NodeTree, memo: dict[int, int]) -> int:
@@ -262,7 +266,7 @@ def _material_sampled_uv_layers(material: bpy.types.Material) -> set:
     if not material.use_nodes or material.node_tree is None:
         return set()
     layers = set()
-    for node in _iter_all_nodes(material.node_tree):
+    for node, _ in _iter_all_nodes(material.node_tree):
         layer = _node_sampled_layer(node)
         if layer is not None:
             layers.add(layer)
@@ -380,6 +384,77 @@ def check_material_uv_coords(
     return [i for i in issues if i is not None]
 
 
+class MaterialNodeError(ValueError):
+    pass
+
+
+# Shader nodes whose linked Normal / Coat Normal inputs encode bump detail that
+# vanishes under true geometric displacement; flag them in favor of displacement.
+_NORMAL_INPUT_NODE_TYPES = frozenset(
+    {
+        "ShaderNodeAmbientOcclusion",
+        "ShaderNodeBevel",
+        "ShaderNodeBsdfAnisotropic",
+        "ShaderNodeBsdfDiffuse",
+        "ShaderNodeBsdfGlass",
+        "ShaderNodeBsdfPrincipled",
+        "ShaderNodeBsdfRefraction",
+        "ShaderNodeBsdfSheen",
+        "ShaderNodeBsdfToon",
+        "ShaderNodeBsdfTranslucent",
+        "ShaderNodeFresnel",
+        "ShaderNodeLayerWeight",
+        "ShaderNodeSubsurfaceScattering",
+    }
+)
+
+_NORMAL_INPUT_SOCKETS = ("Normal", "Coat Normal")
+
+
+def _node_issues(node: bpy.types.Node, nested: bool) -> list[str]:
+    """Material-correctness issues for a single shader node, or []. Mirrors the
+    anti-patterns procfunc's removed strict mode rejected, read off the realized
+    bpy node rather than the traced graph: normal/bump usage (use displacement),
+    texture nodes sampled without an explicit vector (Cycles falls back to
+    Generated coords), and floating interface nodes that bypass the material's
+    own inputs/outputs."""
+    name = node.bl_idname
+    if name == "ShaderNodeNormalMap":
+        return [f"{name}: use the displacement output instead of normals"]
+    if name in _NORMAL_INPUT_NODE_TYPES:
+        return [
+            f"{name}: {sock!r} input set; use displacement instead"
+            for sock in _NORMAL_INPUT_SOCKETS
+            if node.inputs.get(sock) is not None and node.inputs[sock].is_linked
+        ]
+    if name.startswith("ShaderNodeTex"):
+        vec = node.inputs.get("Vector")
+        if vec is None or not vec.enabled or vec.is_linked:
+            return []
+        msg = (
+            f"{name}: Vector input unlinked, so Cycles samples Generated coords "
+            "instead of the intended sample vector; pass an explicit vector"
+        )
+        return [msg]
+    if nested and name.startswith("ShaderNodeOutput"):
+        return [f"{name}: floating output node; route through the interface"]
+    if name.startswith(("FunctionNodeInput", "GeometryNodeInput")):
+        return [f"{name}: floating input node; route through the interface"]
+    return []
+
+
+def material_node_issues(material: bpy.types.Material) -> list[str]:
+    """Diagnose material-correctness anti-patterns in `material`'s realized node
+    tree (descending into node groups). Returns a list of issue messages (empty
+    == ok); never raises — callers decide whether to escalate."""
+    if not material.use_nodes or material.node_tree is None:
+        return []
+    issues = []
+    for node, nested in _iter_all_nodes(material.node_tree):
+        issues += [f"{material.name}: {i}" for i in _node_issues(node, nested)]
+    return issues
+
+
 def _context_meshes(objects: list[pf.MeshObject] | None) -> list[bpy.types.Object]:
     """The realized bpy object per MeshObject, or every scene object when None."""
     if objects is None:
@@ -447,15 +522,27 @@ def assert_uv_coords_satisfied(objects: list[pf.MeshObject] | None = None):
         )
 
 
+def assert_material_nodes_valid(objects: list[pf.MeshObject] | None = None):
+    """Materials that drive normals instead of displacement, sample textures
+    without an explicit vector, or contain floating interface nodes render
+    incorrectly; fail loudly listing each offending node."""
+    issues = [
+        issue for m in _context_materials(objects) for issue in material_node_issues(m)
+    ]
+    if issues:
+        raise MaterialNodeError(f"materials contain invalid shader nodes: {issues}")
+
+
 @pf.tracer.primitive
 def render_validity_check(
     objects: list[pf.MeshObject],
     displacement_mode: DisplacementMode = DisplacementMode.DISPLACEMENT_AND_BUMP,
 ) -> dict[ExportType, list[Path]]:
     """Run every render_cycles validity check (displacement coords, shader
-    complexity, UV coords) WITHOUT rendering, so scenes/refactors can be
-    error-checked cheaply. Raises on the first failure."""
+    complexity, UV coords, material nodes) WITHOUT rendering, so scenes/refactors
+    can be error-checked cheaply. Raises on the first failure."""
     assert_displacement_coords_safe(objects, displacement_mode)
     assert_shader_complexity_ok(objects)
     assert_uv_coords_satisfied(objects)
+    assert_material_nodes_valid(objects)
     return {}

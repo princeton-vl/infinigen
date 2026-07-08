@@ -637,7 +637,6 @@ def _plastic(
     displacement = pf.nodes.shader.displacement(
         height=fac,
         scale=displacement_scale * 0.5,
-        normal=(0.0, 0.0, 0.0),
     )
     return pf.Material(
         surface=principled,

@@ -213,7 +213,7 @@ def _dark_scratches_overlay(rng: pf.RNG, vector, material: pf.Material) -> pf.Ma
         saturation=pf.random.clip_gaussian(rng, 0.15, 0.25, 0.0, 0.9),
         value=pf.random.uniform(rng, 0.0, 0.2),
     )
-    scratch_shader = pf.nodes.shader.diffuse_bsdf(color=color, normal=(0.0, 0.0, 0.0))
+    scratch_shader = pf.nodes.shader.diffuse_bsdf(color=color)
     return scratches_overlay_rand(
         rng, vector, material, scale=0.6, scratch_shader=scratch_shader
     )

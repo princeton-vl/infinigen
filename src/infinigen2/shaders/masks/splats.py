@@ -320,7 +320,6 @@ def splats_metal_gradient(vector: t.SocketOrVal[pf.Vector]):
 
     diffuse = pf.nodes.shader.diffuse_bsdf(
         color=pf.Color((0.385, 0.385, 0.385)),
-        normal=(0.0, 0.0, 0.0),
     )
 
     mix_shader = pf.nodes.shader.mix_shader(factor=mask, a=principled, b=diffuse)
@@ -423,7 +422,6 @@ def splats_cookware(vector: t.SocketOrVal[pf.Vector]):
 
     diffuse = pf.nodes.shader.diffuse_bsdf(
         color=pf.Color((0.549, 0.549, 0.549)),
-        normal=(0.0, 0.0, 0.0),
     )
 
     mix_shader = pf.nodes.shader.mix_shader(factor=mask, a=principled, b=diffuse)
@@ -485,7 +483,6 @@ def splats_spots(vector: t.SocketOrVal[pf.Vector]):
 
     diffuse = pf.nodes.shader.diffuse_bsdf(
         color=pf.Color((0.549, 0.549, 0.549)),
-        normal=(0.0, 0.0, 0.0),
     )
 
     mix_shader = pf.nodes.shader.mix_shader(factor=mask, a=principled, b=diffuse)
@@ -782,7 +779,6 @@ def splats_streaks(vector: t.SocketOrVal[pf.Vector]):
 
     diffuse = pf.nodes.shader.diffuse_bsdf(
         color=pf.Color((0.549, 0.549, 0.549)),
-        normal=(0.0, 0.0, 0.0),
     )
 
     mix_shader = pf.nodes.shader.mix_shader(factor=mask, a=principled, b=diffuse)

@@ -360,7 +360,6 @@ def grain_to_shader(
         height=grain,
         midlevel=0.0,
         scale=height,
-        normal=(0.0, 0.0, 0.0),
     )
 
     return GrainToShaderResult(principled, color, displacement)

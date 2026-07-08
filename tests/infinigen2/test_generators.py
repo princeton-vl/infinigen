@@ -18,6 +18,7 @@ from procfunc.util.manifest import import_item
 from infinigen2 import GENERATORS_MANIFEST
 from infinigen2.exporters.render_error_check import (
     assert_displacement_coords_safe,
+    assert_material_nodes_valid,
     assert_shader_complexity_ok,
     assert_uv_coords_satisfied,
 )
@@ -30,6 +31,7 @@ def _assert_render_valid(objects: list[pf.MeshObject]):
     assert_displacement_coords_safe(objects)
     assert_shader_complexity_ok(objects)
     assert_uv_coords_satisfied(objects)
+    assert_material_nodes_valid(objects)
 
 
 def _manifest_params(df, defaults: dict):

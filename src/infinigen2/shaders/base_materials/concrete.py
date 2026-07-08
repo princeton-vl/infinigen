@@ -251,7 +251,6 @@ def concrete(
         height=displacement_height,
         midlevel=0.0,
         scale=displacement_depth * -1.0,
-        normal=(0.0, 0.0, 0.0),
     )
 
     return pf.Material(

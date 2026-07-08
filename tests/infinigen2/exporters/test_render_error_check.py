@@ -15,6 +15,7 @@ from infinigen2.exporters.render_error_check import (
     DisplacementCoordError,
     check_material_uv_coords,
     count_material_nodes,
+    material_node_issues,
     unsafe_displacement_materials,
 )
 from infinigen2.shaders import functionality_lists
@@ -282,3 +283,80 @@ def test_accept_by_material_index():
     _remove_uv_layers(obj)
     issues = check_material_uv_coords(obj, mat_index=0)
     assert len(issues) == 1
+
+
+def _node_material(name):
+    mat = bpy.data.materials.new(name)
+    mat.use_nodes = True
+    mat.use_fake_user = True
+    return mat
+
+
+def test_normal_map_node_flagged():
+    mat = _node_material("normal_map")
+    mat.node_tree.nodes.new("ShaderNodeNormalMap")
+    issues = material_node_issues(mat)
+    assert any("ShaderNodeNormalMap" in i for i in issues)
+
+
+def test_linked_normal_input_flagged():
+    mat = _node_material("linked_normal")
+    tree = mat.node_tree
+    bsdf = next(n for n in tree.nodes if n.bl_idname == "ShaderNodeBsdfPrincipled")
+    coord = tree.nodes.new("ShaderNodeTexCoord")
+    tree.links.new(coord.outputs["Normal"], bsdf.inputs["Normal"])
+    issues = material_node_issues(mat)
+    assert any("'Normal' input set" in i for i in issues)
+
+
+def test_implicit_texture_vector_flagged():
+    mat = _node_material("implicit_vector")
+    mat.node_tree.nodes.new("ShaderNodeTexNoise")
+    issues = material_node_issues(mat)
+    assert any("Vector input unlinked" in i for i in issues)
+
+
+def test_explicit_texture_vector_ok():
+    mat = _node_material("explicit_vector")
+    tree = mat.node_tree
+    noise = tree.nodes.new("ShaderNodeTexNoise")
+    coord = tree.nodes.new("ShaderNodeTexCoord")
+    tree.links.new(coord.outputs["Object"], noise.inputs["Vector"])
+    assert material_node_issues(mat) == []
+
+
+def test_baked_constant_vector_still_flagged():
+    """A constant baked into the Vector default (unlinked) is ignored by Cycles
+    for texture nodes, so it must still be flagged."""
+    mat = _node_material("baked_constant_vector")
+    noise = mat.node_tree.nodes.new("ShaderNodeTexNoise")
+    noise.inputs["Vector"].default_value = (1.0, 1.0, 1.0)
+    issues = material_node_issues(mat)
+    assert any("Vector input unlinked" in i for i in issues)
+
+
+def test_one_d_noise_no_implicit_vector():
+    mat = _node_material("one_d_noise")
+    noise = mat.node_tree.nodes.new("ShaderNodeTexNoise")
+    noise.noise_dimensions = "1D"
+    assert material_node_issues(mat) == []
+
+
+def test_floating_output_in_group_flagged():
+    mat = _node_material("floating_output")
+    inner = bpy.data.node_groups.new("inner", "ShaderNodeTree")
+    inner.nodes.new("ShaderNodeOutputMaterial")
+    grp = mat.node_tree.nodes.new("ShaderNodeGroup")
+    grp.node_tree = inner
+    issues = material_node_issues(mat)
+    assert any("floating output node" in i for i in issues)
+
+
+def test_top_level_output_not_flagged():
+    mat = _node_material("clean_default")
+    assert material_node_issues(mat) == []
+
+
+def test_real_material_no_issues():
+    mat = _bricks_material(pf.nodes.shader.coord().object)
+    assert material_node_issues(mat) == []

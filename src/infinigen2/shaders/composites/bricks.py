@@ -430,7 +430,6 @@ def bricks_cobble_preset(
 
     surface_1 = pf.nodes.shader.diffuse_bsdf(
         color=pf.Color((0.042, 0.024, 0.02)),
-        normal=(0.0, 0.0, 0.0),
     )
 
     granite_result = granite.granite_cobble_gray_preset(vector=vector)
@@ -444,7 +443,6 @@ def bricks_cobble_preset(
     displacement_1 = pf.nodes.shader.displacement(
         height=brick_cutter_result.height,
         midlevel=0.0,
-        normal=(0.0, 0.0, 0.0),
     )
     displacement = granite_result.displacement + displacement_1
     return pf.Material(
@@ -475,7 +473,6 @@ def brick_masonry_sharp_preset(
 
     surface_1 = pf.nodes.shader.diffuse_bsdf(
         color=pf.Color((0.061, 0.06, 0.054)),
-        normal=(0.0, 0.0, 0.0),
     )
 
     granite_result = granite.granite_masonry_gray_preset(
@@ -516,7 +513,6 @@ def brick_masonry_sharp_preset(
     displacement = pf.nodes.shader.displacement(
         height=layer_2_result.height,
         midlevel=0.0,
-        normal=(0.0, 0.0, 0.0),
     )
     return pf.Material(
         surface=surface,
@@ -545,7 +541,6 @@ def brick_masonry_granite_preset(
 
     surface_1 = pf.nodes.shader.diffuse_bsdf(
         color=pf.Color((0.141, 0.079, 0.061)),
-        normal=(0.0, 0.0, 0.0),
     )
 
     granite_result = granite.granite_masonry_gray_preset(
@@ -580,7 +575,6 @@ def brick_masonry_granite_preset(
     displacement = pf.nodes.shader.displacement(
         height=layer_2_result.height,
         midlevel=0.0,
-        normal=(0.0, 0.0, 0.0),
     )
     return pf.Material(
         surface=surface,
@@ -610,7 +604,6 @@ def brick_masonry_brown_preset(
 
     surface_1 = pf.nodes.shader.diffuse_bsdf(
         color=pf.Color((0.061, 0.06, 0.054)),
-        normal=(0.0, 0.0, 0.0),
     )
 
     brick_concrete_result = brick_concrete.brick_concrete(
@@ -656,7 +649,6 @@ def brick_masonry_brown_preset(
     displacement = pf.nodes.shader.displacement(
         height=layer_2_result.height,
         midlevel=0.0,
-        normal=(0.0, 0.0, 0.0),
     )
     return pf.Material(
         surface=surface,
@@ -1215,7 +1207,6 @@ def bricks_paint_bumpy_preset(
     displacement_1 = pf.nodes.shader.displacement(
         height=brick_cutter_result.height,
         midlevel=0.0,
-        normal=(0.0, 0.0, 0.0),
     )
     displacement = paint_result.displacement + displacement_1
     return pf.Material(
@@ -1369,7 +1360,6 @@ def bricks_rand(
     cutter_displacement = pf.nodes.shader.displacement(
         height=brick_cutter.height,
         midlevel=0.0,
-        normal=(0.0, 0.0, 0.0),
     )
     displacement = displacement + cutter_displacement
     return pf.Material(
@@ -1561,7 +1551,6 @@ def bricks_paint_rand(
     cutter_displacement = pf.nodes.shader.displacement(
         height=brick_cutter.height,
         midlevel=0.0,
-        normal=(0.0, 0.0, 0.0),
     )
     bricks_displacement = bricks.displacement + cutter_displacement
     bricks_and_paint_displacement = bricks_displacement + paint_material.displacement

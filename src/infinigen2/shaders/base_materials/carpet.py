@@ -627,7 +627,6 @@ def carpet_noisy_preset(vector: pf.ProcNode[pf.Vector]):
     displacement = pf.nodes.shader.displacement(
         height=carpet_weaver_result.height,
         midlevel=0.0,
-        normal=(0.0, 0.0, 0.0),
     )
 
     return pf.Material(surface=principled, displacement=displacement)
@@ -692,7 +691,6 @@ def carpet_streaks_faint_preset(vector: pf.ProcNode[pf.Vector]):
     displacement = pf.nodes.shader.displacement(
         height=carpet_weaver_result.height,
         midlevel=0.0,
-        normal=(0.0, 0.0, 0.0),
     )
 
     return pf.Material(surface=principled, displacement=displacement)
@@ -807,7 +805,6 @@ def carpet_streaks_right_angle_preset(vector: pf.ProcNode[pf.Vector]):
     displacement = pf.nodes.shader.displacement(
         height=carpet_weaver_result.height,
         midlevel=0.0,
-        normal=(0.0, 0.0, 0.0),
     )
 
     return pf.Material(surface=principled, displacement=displacement)
@@ -881,7 +878,6 @@ def carpet_streaks_short_preset(vector: pf.ProcNode[pf.Vector]):
     displacement = pf.nodes.shader.displacement(
         height=carpet_weaver_result.height,
         midlevel=0.0,
-        normal=(0.0, 0.0, 0.0),
     )
 
     return pf.Material(surface=principled, displacement=displacement)
@@ -1038,7 +1034,6 @@ def carpet_rand(
     displacement = pf.nodes.shader.displacement(
         height=height,
         midlevel=0.0,
-        normal=(0.0, 0.0, 0.0),
     )
 
     return pf.Material(surface=principled, displacement=displacement)

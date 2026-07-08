@@ -131,7 +131,6 @@ def wood_shader(
     displacement = pf.nodes.shader.displacement(
         height=displacement_height_0 + additional_displacement,
         midlevel=0.0,
-        normal=(0.0, 0.0, 0.0),
     )
     return WoodShaderResult(
         bsdf=principled,
@@ -313,7 +312,7 @@ def wood_grain_generator(
     grain_map_base_value = pf.nodes.math.vector_length(grain_map_numerator_value_vector)
     grain_map_b_a = grain_settings_grain_size * 2.0
     grain_random_noise = pf.nodes.texture.noise(
-        vector=None,
+        vector=vector,
         noise_dimensions="4D",
         scale=1.0 / grain_map_b_a,
         roughness=0.0,
@@ -762,7 +761,6 @@ def wood_grain_flaky_preset(
 
     diffuse = pf.nodes.shader.diffuse_bsdf(
         color=pf.Color((0.526, 0.526, 0.526)),
-        normal=(0.0, 0.0, 0.0),
     )
 
     return pf.Material(

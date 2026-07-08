@@ -413,7 +413,6 @@ def _stone_red_sandstone_rand(
     displacement = pf.nodes.shader.displacement(
         height=displacement_layer_result_2.height,
         midlevel=0.0,
-        normal=(0.0, 0.0, 0.0),
     )
     return pf.Material(
         surface=surface,
@@ -818,7 +817,6 @@ def _stone_sandstone_rand(  # noqa: C901
     displacement = pf.nodes.shader.displacement(
         height=displacement_layer_result_2.height,
         midlevel=0.0,
-        normal=(0.0, 0.0, 0.0),
     )
 
     return pf.Material(
@@ -1087,7 +1085,6 @@ def _stone_limestone_rand(  # noqa: C901
     displacement = pf.nodes.shader.displacement(
         height=displacement_layer_result_2.height,
         midlevel=0.0,
-        normal=(0.0, 0.0, 0.0),
     )
 
     return pf.Material(
@@ -1284,7 +1281,6 @@ def _stone_basalt_rand(  # noqa: C901
     displacement = pf.nodes.shader.displacement(
         height=displacement_layer_result_1.height,
         midlevel=0.0,
-        normal=(0.0, 0.0, 0.0),
     )
 
     return pf.Material(
@@ -1591,7 +1587,6 @@ def _stone_volcanic_rand(  # noqa: C901
     displacement = pf.nodes.shader.displacement(
         height=displacement_layer_result_3.height,
         midlevel=0.0,
-        normal=(0.0, 0.0, 0.0),
     )
 
     return pf.Material(
@@ -1802,7 +1797,6 @@ def _stone_tuff_rand(  # noqa: C901
     displacement = pf.nodes.shader.displacement(
         height=displacement_layer_result_2.height,
         midlevel=0.0,
-        normal=(0.0, 0.0, 0.0),
     )
 
     return pf.Material(
@@ -1995,7 +1989,6 @@ def _stone_grey_rand(  # noqa: C901
     displacement = pf.nodes.shader.displacement(
         height=displacement_layer_result_1.height,
         midlevel=0.0,
-        normal=(0.0, 0.0, 0.0),
     )
 
     return pf.Material(
@@ -2263,7 +2256,6 @@ def stone_smooth_rand(  # noqa: C901
     displacement = pf.nodes.shader.displacement(
         height=displacement_layer_result_2.height,
         midlevel=0.0,
-        normal=(0.0, 0.0, 0.0),
     )
 
     return pf.Material(

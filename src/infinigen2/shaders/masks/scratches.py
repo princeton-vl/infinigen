@@ -128,7 +128,6 @@ def scratches_random(
         height=scratch_texture,
         midlevel=0.0,
         scale=scratch_depth,
-        normal=(0.0, 0.0, 0.0),
     )
 
     displacement = base_displacement - displacement_1
@@ -253,9 +252,12 @@ def scratches_linear(
     scratch_texture_value_value_a = random_seed + scratch_texture_b_0.z
     # Original blend used 1D voronoi (vector socket disabled); procfunc requires
     # a nonzero vector arg and rejects it under 1D, so use 4D with a constant
-    # vector — visually equivalent to 1D since only w varies per scratch line.
+    # vector so only w varies per scratch line. The constant must come through a
+    # linked node: a bare tuple bakes into the Vector default, which Cycles
+    # ignores for texture nodes (it samples Generated coords instead).
+    constant_vector = pf.nodes.math.combine_xyz(x=1.0, y=1.0, z=1.0)
     voronoi = pf.nodes.texture.voronoi(
-        vector=(1.0, 1.0, 1.0),
+        vector=constant_vector,
         scale=1.0 / scratch_spacing,
         normalize=True,
         voronoi_dimensions="4D",
@@ -318,7 +320,6 @@ def scratches_linear(
         height=scratch_texture,
         midlevel=0.0,
         scale=scratch_depth,
-        normal=(0.0, 0.0, 0.0),
     )
 
     displacement = base_displacement - displacement_1
@@ -379,7 +380,7 @@ def scratches_linear_rand(
 
 def _dummy_shader() -> pf.ProcNode[pf.Shader]:
     return pf.nodes.shader.diffuse_bsdf(
-        color=pf.Color((0.0, 0.0, 0.0)), normal=(0.0, 0.0, 0.0)
+        color=pf.Color((0.0, 0.0, 0.0)),
     )
 
 

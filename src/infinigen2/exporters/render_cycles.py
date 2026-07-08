@@ -22,6 +22,7 @@ import procfunc as pf
 from infinigen2.exporters.camera_pose import save_camera_poses
 from infinigen2.exporters.render_error_check import (
     assert_displacement_coords_safe,
+    assert_material_nodes_valid,
     assert_shader_complexity_ok,
     assert_uv_coords_satisfied,
     detect_cycles_errors,
@@ -437,6 +438,7 @@ def _render_cycles_impl(
     assert_displacement_coords_safe(objects, displacement_mode)
     assert_shader_complexity_ok(objects)
     assert_uv_coords_satisfied(objects)
+    assert_material_nodes_valid(objects)
     replay = logger.getEffectiveLevel() <= logging.INFO
     with detect_cycles_errors(replay=replay):
         bpy.ops.render.render(animation=True)

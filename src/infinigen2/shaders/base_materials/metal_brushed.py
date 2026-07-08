@@ -34,7 +34,6 @@ def metal_brushed(
     roughness: nt.SocketOrVal[float] = 0.4462,
     anisotropy: nt.SocketOrVal[float] = 0.0,
     anisotropy_rotation: nt.SocketOrVal[float] = 0.0,
-    tangent: nt.SocketOrVal[pf.Vector] = (0.0, 0.0, 0.0),
     height_scale: nt.SocketOrVal[float] = 1.0,
     height_offset: nt.SocketOrVal[float] = 0.0,
 ) -> pf.Material:
@@ -149,7 +148,6 @@ def metal_brushed(
         roughness=roughness,
         anisotropy=anisotropy,
         rotation=anisotropy_rotation,
-        tangent=tangent,
         distribution="BECKMANN",
     )
 
@@ -254,7 +252,6 @@ def metal_brushed_linear_rand(
         + roughness / max_roughness * 0.1
     )
     anisotropy_rotation = pf.random.uniform(r2, 0.0, 1.0)
-    tangent = (0, 0, 0)
     height_scale = pf.random.clip_gaussian(r2, 2.0, 4.0, 0.0, 10.0)
     height_offset = pf.random.uniform(r2, -5.0, 5.0)
 
@@ -269,7 +266,6 @@ def metal_brushed_linear_rand(
         roughness=roughness,
         anisotropy=anisotropy,
         anisotropy_rotation=anisotropy_rotation,
-        tangent=tangent,
         height_scale=height_scale,
         height_offset=height_offset,
     )

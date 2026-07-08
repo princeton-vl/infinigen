@@ -24,7 +24,7 @@ def _dark_scratch_shader_rand(rng: pf.RNG) -> pf.ProcNode[pf.Shader]:
         saturation=pf.random.clip_gaussian(rng, 0.15, 0.25, 0.0, 0.9),
         value=pf.random.uniform(rng, 0.0, 0.2),
     )
-    return pf.nodes.shader.diffuse_bsdf(color=color, normal=(0.0, 0.0, 0.0))
+    return pf.nodes.shader.diffuse_bsdf(color=color)
 
 
 def _bright_scratch_shader_rand(rng: pf.RNG) -> pf.ProcNode[pf.Shader]:
@@ -36,7 +36,6 @@ def _bright_scratch_shader_rand(rng: pf.RNG) -> pf.ProcNode[pf.Shader]:
     return pf.nodes.shader.anisotropic_bsdf(
         color=color,
         roughness=pf.random.uniform(rng, 0.3, 0.5),
-        normal=(0.0, 0.0, 0.0),
     )
 
 
@@ -154,7 +153,6 @@ def scratches_brushed_preset(vector: t.SocketOrVal[pf.Vector]) -> pf.Material:
     scratch_shader = pf.nodes.shader.anisotropic_bsdf(
         color=pf.Color((0.4975732, 0.4975732, 0.4975732)),
         roughness=0.4076923,
-        normal=(0.0, 0.0, 0.0),
     )
     return _apply_scratch_mask(mask, base, scratch_shader, 0.0)
 
@@ -172,7 +170,6 @@ def scratches_dense_preset(vector: t.SocketOrVal[pf.Vector]) -> pf.Material:
     scratch_shader = pf.nodes.shader.anisotropic_bsdf(
         color=pf.Color((0.351809, 0.351809, 0.351809)),
         roughness=0.4,
-        normal=(0.0, 0.0, 0.0),
     )
     return _apply_scratch_mask(mask, base, scratch_shader, 0.0)
 
@@ -182,7 +179,6 @@ def scratches_deep_dirty_preset(vector: t.SocketOrVal[pf.Vector]) -> pf.Material
     mask = scratches.scratches_deep_dirty_mask_preset(vector)
     scratch_shader = pf.nodes.shader.diffuse_bsdf(
         color=pf.Color((0.0059479414, 0.0059479414, 0.0059479414)),
-        normal=(0.0, 0.0, 0.0),
     )
     return _apply_scratch_mask(mask, base, scratch_shader, 0.0005)
 
@@ -192,7 +188,6 @@ def scratches_light_varnish_preset(vector: t.SocketOrVal[pf.Vector]) -> pf.Mater
     mask = scratches.scratches_light_varnish_mask_preset(vector)
     scratch_shader = pf.nodes.shader.diffuse_bsdf(
         color=pf.Color((0.80003154, 0.4295859, 0.16547439)),
-        normal=(0.0, 0.0, 0.0),
     )
     return _apply_scratch_mask(mask, base, scratch_shader, 0.0005)
 

@@ -255,7 +255,6 @@ def paint(
     displacement = pf.nodes.shader.displacement(
         height=displacement_height_10 + displacement_height,
         midlevel=0.0,
-        normal=(0.0, 0.0, 0.0),
     )
     return pf.Material(
         surface=surface,
