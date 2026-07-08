@@ -4,11 +4,11 @@
 # Authors: Karhan Kayan
 
 import inspect
+import math
 
 import numpy as np
 import procfunc as pf
 
-from infinigen.core.util import blender as butil
 from infinigen2.scenes.collision_collection import (
     any_self_collision,
     box_intersection_test,
@@ -341,7 +341,7 @@ def test_collision_cube_passes_through(tmp_path, save_blend=True):
 
     if save_blend:
         blend_path = tmp_path / f"{inspect.currentframe().f_code.co_name}.blend"
-        butil.save_blend(blend_path)
+        pf.ops.file.save_blend(output_path=blend_path)
 
 
 def test_collision_detects_after_object_rotates():
@@ -356,7 +356,6 @@ def test_collision_detects_after_object_rotates():
     This exercises the rotation component of _fcl_transform / setTransform, which
     the translation-only moving-object tests above do not cover.
     """
-    import math
 
     cube = pf.ops.primitives.mesh_cube()
     cube.item().location = (0, 0, 0)

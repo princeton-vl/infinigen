@@ -7,11 +7,11 @@ from pathlib import Path
 
 import imageio.v2 as imageio
 import numpy as np
+import procfunc as pf
 import pytest
 
-from infinigen.core.util import blender as butil
 from infinigen2.exporters import render_cycles, render_eevee
-from infinigen2.exporters.util.export_utils import _load_exr
+from infinigen2.exporters.util.export_utils import load_exr
 from infinigen2.exporters.util.format import ExportType, RenderPass
 
 from .test_exporters import configure_cube_scene
@@ -60,7 +60,7 @@ def test_image_denoised(tmp_path, method, save_blend=False):
 
     if save_blend:
         blend_path = tmp_path / "test_image_denoised.blend"
-        butil.save_blend(blend_path)
+        pf.ops.file.save_blend(output_path=blend_path)
 
     png_noisy = results[ExportType.IMAGE][0]
     png_denoised = results[ExportType.IMAGE_DENOISED][0]
@@ -115,12 +115,12 @@ def test_image_hdr(tmp_path, method, save_blend=False):
 
     if save_blend:
         blend_path = tmp_path / "test_image_hdr.blend"
-        butil.save_blend(blend_path)
+        pf.ops.file.save_blend(output_path=blend_path)
 
     exr_path = results[ExportType.IMAGE_HDR][0]
     assert exr_path.exists()
 
-    hdr = _load_exr(exr_path)
+    hdr = load_exr(exr_path)
     assert hdr.shape == (256, 256, 3)
     assert np.isfinite(hdr).all()
 
@@ -163,11 +163,11 @@ def test_image_denoised_hdr(tmp_path, method, save_blend=False):
 
     if save_blend:
         blend_path = tmp_path / "test_image_denoised_hdr.blend"
-        butil.save_blend(blend_path)
+        pf.ops.file.save_blend(output_path=blend_path)
 
     exr_path = results[ExportType.IMAGE_DENOISED_HDR][0]
     assert exr_path.exists()
 
-    hdr = _load_exr(exr_path)
+    hdr = load_exr(exr_path)
     assert hdr.shape == (256, 256, 3)
     assert np.isfinite(hdr).all()

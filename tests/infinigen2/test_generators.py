@@ -33,9 +33,12 @@ def _assert_render_valid(objects: list[pf.MeshObject]):
 
 
 def _manifest_params(df, defaults: dict):
-    sub = df[["name", *defaults.keys()]].copy()
+    sub = df[["name"]].copy()
     for col, val in defaults.items():
-        sub[col] = sub[col].fillna(val).astype(type(val))
+        if col in df.columns:
+            sub[col] = df[col].fillna(val).astype(type(val))
+        else:
+            sub[col] = val
     for row in sub.itertuples(index=False):
         yield pytest.param(*row, id=row[0])
 

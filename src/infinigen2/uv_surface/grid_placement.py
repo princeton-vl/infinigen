@@ -196,6 +196,23 @@ class GridFromSpacingResult(NamedTuple):
     index_y: pf.ProcNode[int]
 
 
+def _footprint_uv_bounds(
+    instance: pf.ProcNode[pf.MeshObject],
+    rotation_offset: t.SocketOrVal[pf.Vector],
+) -> tuple[t.SocketOrVal[pf.Vector], t.SocketOrVal[pf.Vector]]:
+    """(U, V) footprint bounds of an instance placed on the surface.
+
+    Instances are authored in the wall frame (X out of wall, Y along wall = U,
+    Z up = V); after the per-asset rotation_offset the footprint the niche grid
+    sees is the reoriented Y/Z extent, packed into the x,y of each result.
+    """
+    placed = pf.nodes.geo.transform(geometry=instance, rotation=rotation_offset)
+    bb = pf.nodes.geo.bound_box(placed)
+    bb_min = pf.nodes.math.combine_xyz(x=bb.min.y, y=bb.min.z)
+    bb_max = pf.nodes.math.combine_xyz(x=bb.max.y, y=bb.max.z)
+    return bb_min, bb_max
+
+
 @pf.nodes.node_function
 def grid_from_spacing(
     uv_surface: pf.ProcNode[pf.MeshObject],
@@ -206,20 +223,21 @@ def grid_from_spacing(
     margin_high: t.SocketOrVal[pf.Vector],
     x_instances_max: t.SocketOrVal[int] = 1000,
     y_instances_max: t.SocketOrVal[int] = 1000,
+    rotation_offset: t.SocketOrVal[pf.Vector] = (0.0, 0.0, 0.0),
 ) -> GridFromSpacingResult:
     surface_minmax = pf.nodes.geo.attribute_statistic(
         geometry=uv_surface, attribute=target_uv
     )
     uv_range_dims = surface_minmax.max - surface_minmax.min
 
-    bound_box = pf.nodes.geo.bound_box(instance)
+    bb_min, bb_max = _footprint_uv_bounds(instance, rotation_offset)
 
-    min_center_uv = margin_low - bound_box.min
-    max_center_uv = margin_high + bound_box.max
+    min_center_uv = margin_low - bb_min
+    max_center_uv = margin_high + bb_max
 
     uv_range_margined = (uv_range_dims - min_center_uv) - max_center_uv
 
-    dims_with_spacing = (bound_box.max - bound_box.min) + spacing
+    dims_with_spacing = (bb_max - bb_min) + spacing
 
     vertices_vec = pf.nodes.math.vector_ceil(uv_range_margined / dims_with_spacing)
 
@@ -272,6 +290,7 @@ def faces_for_instance_grid_bboxes(
     margin_verts_x: t.SocketOrVal[int] = 1,
     margin_verts_y: t.SocketOrVal[int] = 1,
     face_expand_margin: t.SocketOrVal[pf.Vector] = (0.0, 0.0, 0.0),
+    rotation_offset: t.SocketOrVal[pf.Vector] = (0.0, 0.0, 0.0),
 ) -> FacesForInstanceGridBboxesResult:
     n_verts_x = pf.nodes.geo.attribute_statistic(
         geometry=query_grid,
@@ -334,7 +353,7 @@ def faces_for_instance_grid_bboxes(
         y=corner_idx_y.astype(dtype=float),
     )
 
-    bound_box = pf.nodes.geo.bound_box(instance)
+    bb_min, bb_max = _footprint_uv_bounds(instance, rotation_offset)
 
     subgrid_instance_x = pf.nodes.math.floor(
         subgrid_result.subgrid_index_x.astype(dtype=float)
@@ -361,8 +380,8 @@ def faces_for_instance_grid_bboxes(
         value=take_which_corner_value,
         from_min=(0.0, 0.0, 0.0),
         from_max=(1.0, 1.0, 1.0),
-        to_min=bound_box.min - face_expand_margin + instance_uv,
-        to_max=bound_box.max + face_expand_margin + instance_uv,
+        to_min=bb_min - face_expand_margin + instance_uv,
+        to_max=bb_max + face_expand_margin + instance_uv,
     )
 
     normed_uv = normed_uv_to_bounds_uv(
@@ -381,12 +400,25 @@ def faces_for_instance_grid_bboxes(
         to_max=normed_uv.uv_out,
     )
 
+    # clamp the query a hair inside the surface UV bounds; a query past the edge hits no
+    # face -> value (0,0,0), which merge welds into one stray origin vert
+    surf_stat = pf.nodes.geo.attribute_statistic(
+        geometry=target_surface, attribute=target_uv
+    )
+    clamped_uv = pf.nodes.math.vector_minimum(
+        a=pf.nodes.math.vector_maximum(
+            a=mix_for_corners_vs_boundaries,
+            b=surf_stat.min + pf.Vector((0.001, 0.001, 0.0)),
+        ),
+        b=surf_stat.max - pf.Vector((0.001, 0.001, 0.0)),
+    )
     sample_uv_surface = pf.nodes.geo.sample_uv_surface(
         mesh=target_surface,
         value=input_position,
-        sample_uv=mix_for_corners_vs_boundaries,
+        sample_uv=clamped_uv,
         uv_map=target_uv,
     )
+    mix_for_corners_vs_boundaries = clamped_uv
 
     set_position = pf.nodes.geo.set_position(
         geometry=grid_result.mesh,
@@ -449,50 +481,37 @@ def place_instances_on_uv_grid(
     query_uv: t.SocketOrVal[pf.Vector],
     instance: pf.ProcNode[pf.MeshObject],
     secondary_axis_vector: t.SocketOrVal[pf.Vector] = (0, 0, 1),
-    up_align: t.SocketOrVal[bool] = False,
-    rotation_offset: t.SocketOrVal[float] = 0.0,
+    rotation_offset: t.SocketOrVal[pf.Vector] = (0.0, 0.0, 0.0),
+    normal_offset: t.SocketOrVal[float] = 0.0,
 ) -> pf.ProcNode[t.Instances]:
-    input_position = pf.nodes.geo.input_position()
-    sample_uv = pf.nodes.geo.sample_uv_surface(
+    position = pf.nodes.geo.sample_uv_surface(
         mesh=surface,
-        value=input_position,
+        value=pf.nodes.geo.input_position(),
         sample_uv=query_uv,
         uv_map=uv_field,
-    )
-    grid_positioned = pf.nodes.geo.set_position(
-        geometry=grid_mesh, position=sample_uv.value
-    )
+    ).value
+    normal = pf.nodes.geo.sample_uv_surface(
+        mesh=surface,
+        value=pf.nodes.geo.input_normal(),
+        sample_uv=query_uv,
+        uv_map=uv_field,
+    ).value
 
-    input_normal = pf.nodes.geo.input_normal()
-    sample_normal = pf.nodes.geo.sample_uv_surface(
-        mesh=surface,
-        value=input_normal,
-        sample_uv=query_uv,
-        uv_map=uv_field,
-    )
-    primary = pf.nodes.func.switch(
-        switch=up_align, a=sample_normal.value, b=(0.0, 0.0, 1.0)
-    )
-    secondary = pf.nodes.func.switch(
-        switch=up_align, a=secondary_axis_vector, b=sample_normal.value
-    )
+    seated = position + normal * normal_offset
+    grid_positioned = pf.nodes.geo.set_position(geometry=grid_mesh, position=seated)
+
+    # local +X -> normal (out), +Z -> secondary reference (world up on walls),
+    # +Y -> along surface; rotation_offset reorients in the instance's own frame
     rotation = pf.nodes.func.axes_to_rotation(
-        primary_axis_vector=primary,
-        secondary_axis_vector=secondary,
-        primary_axis="Z",
-        secondary_axis="Y",
+        primary_axis_vector=normal,
+        secondary_axis_vector=secondary_axis_vector,
+        primary_axis="X",
+        secondary_axis="Z",
     )
-
-    # yaw about world up; default 0.0 leaves rotation untouched
-    if not (isinstance(rotation_offset, float) and rotation_offset == 0.0):
-        rotation = pf.nodes.func.rotate_rotation(
-            rotation=rotation,
-            rotate_by=pf.nodes.math.combine_xyz(z=rotation_offset),
-            rotation_space="GLOBAL",
-        )
+    rotation = pf.nodes.func.rotate_rotation(
+        rotation=rotation, rotate_by=rotation_offset, rotation_space="LOCAL"
+    )
 
     return pf.nodes.geo.instance_on_points(
-        points=grid_positioned,
-        instance=instance,
-        rotation=rotation,
+        points=grid_positioned, instance=instance, rotation=rotation
     )

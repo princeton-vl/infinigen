@@ -13,8 +13,8 @@ import procfunc as pf
 from procfunc.nodes import types as t
 
 from infinigen2.shaders.functionality_lists import (
+    decorative_material_rand,
     furniture_fabric,
-    furniture_material_rand,
 )
 
 __all__ = [
@@ -736,7 +736,7 @@ def sofa_rand(
     if material is None:
         material = furniture_fabric(rng_fabric, vec, translucency=0.0)
     if foot_material is None:
-        foot_material = furniture_material_rand(rng_foot, vec)
+        foot_material = decorative_material_rand(rng_foot, vec)
 
     res = _sofa_geometry(
         dimensions=dimensions,

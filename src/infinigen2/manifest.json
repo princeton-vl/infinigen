@@ -532,6 +532,26 @@
   },
   {
     "category": "Object",
+    "name": "infinigen2.objects.door.door_body_rand"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen2.objects.door.door_with_handle_rand"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen2.objects.handles.lever_handle_rand"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen2.objects.handles.bar_pull_handle_rand"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen2.objects.handles.knob_handle_rand"
+  },
+  {
+    "category": "Object",
     "name": "infinigen2.objects.rug.rug_rand"
   },
   {
@@ -548,11 +568,11 @@
   },
   {
     "category": "Object",
-    "name": "infinigen2.objects.cabinet.cabinet_rand"
+    "name": "infinigen2.objects.storage.shelves_rand"
   },
   {
     "category": "Object",
-    "name": "infinigen2.objects.slot_cabinet.slot_cabinet_rand"
+    "name": "infinigen2.objects.storage.cabinet_with_door_rand"
   },
   {
     "category": "Object",

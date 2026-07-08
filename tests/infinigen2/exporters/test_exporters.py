@@ -13,7 +13,6 @@ import numpy as np
 import procfunc as pf
 import pytest
 
-from infinigen.core.util import blender as butil
 from infinigen2.exporters import render_cycles, render_eevee
 from infinigen2.exporters.util.format import ExportType, RenderPass
 from infinigen2.exporters.visualize_gt import visualize_flow
@@ -81,7 +80,7 @@ def test_cube_render_rgb(tmp_path, method, save_blend=True):
 
     if save_blend:
         blend_path = tmp_path / f"{inspect.currentframe().f_code.co_name}.blend"
-        butil.save_blend(blend_path)
+        pf.ops.file.save_blend(output_path=blend_path)
 
     assert results[ExportType.IMAGE][0].exists()
 
@@ -145,7 +144,7 @@ def test_cube_render_ground_truth_zoomed_in(tmp_path, method, save_blend=True):
 
     if save_blend:
         blend_path = tmp_path / f"{inspect.currentframe().f_code.co_name}.blend"
-        butil.save_blend(blend_path)
+        pf.ops.file.save_blend(output_path=blend_path)
 
     depth = np.load(results[ExportType.DEPTH][0])
     normal = np.load(results[ExportType.SURFACE_NORMAL][0])
@@ -322,7 +321,7 @@ def test_cube_render_ground_truth_surface_normals(
         blend_path = (
             tmp_path / f"{inspect.currentframe().f_code.co_name}_{method}.blend"
         )
-        butil.save_blend(blend_path)
+        pf.ops.file.save_blend(output_path=blend_path)
 
     normals_world = np.load(results[ExportType.SURFACE_NORMAL_WORLD][0])
     print(normals_world.shape)
@@ -490,7 +489,7 @@ def test_cube_render_optical_flow(tmp_path, method, save_blend=True, plot=False)
     print(f"Results: {results}")
     if save_blend:
         blend_path = tmp_path / f"{inspect.currentframe().f_code.co_name}.blend"
-        butil.save_blend(blend_path)
+        pf.ops.file.save_blend(output_path=blend_path)
 
     flow = np.load(results[ExportType.OPTICAL_FLOW][0])
     print(f"Flow shape: {flow.shape}")
@@ -592,7 +591,7 @@ def test_cube_render_optical_flow_horizontal(tmp_path, method, save_blend=True):
 
     if save_blend:
         blend_path = tmp_path / f"{inspect.currentframe().f_code.co_name}.blend"
-        butil.save_blend(blend_path)
+        pf.ops.file.save_blend(output_path=blend_path)
 
     flow = np.load(results[ExportType.OPTICAL_FLOW][0])
     flow_uv = flow[..., :2]
@@ -667,7 +666,7 @@ def test_cube_render_optical_flow_object_moving(
 
     if save_blend:
         blend_path = tmp_path / f"{inspect.currentframe().f_code.co_name}.blend"
-        butil.save_blend(blend_path)
+        pf.ops.file.save_blend(output_path=blend_path)
 
     flow = np.load(results[ExportType.OPTICAL_FLOW][0])
     if plot:

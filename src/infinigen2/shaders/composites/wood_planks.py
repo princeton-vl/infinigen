@@ -64,13 +64,13 @@ def wood_planks_deck_preset(
         factor=0.5,
         blend_type="SOFT_LIGHT",
         a=pf.Color((0.142, 0.119, 0.086)),
-        b=brick_cutter_result.random.astype(dtype=pf.Vector).x.astype(dtype=pf.Color),
+        b=brick_cutter_result.random.x,
     )
     displacement_grains_color = pf.nodes.color.mix_rgb(
         factor=0.5,
         blend_type="SOFT_LIGHT",
         a=pf.Color((0.387, 0.321, 0.229)),
-        b=brick_cutter_result.random.astype(dtype=pf.Vector).y.astype(dtype=pf.Color),
+        b=brick_cutter_result.random.y,
     )
 
     wood_shader_result = wood_grain_deck_preset(
@@ -123,13 +123,13 @@ def wood_planks_brown_preset(
         factor=0.5,
         blend_type="SOFT_LIGHT",
         a=pf.Color((0.021, 0.014, 0.005)),
-        b=brick_cutter_result.random.astype(dtype=pf.Vector).x.astype(dtype=pf.Color),
+        b=brick_cutter_result.random.x,
     )
     displacement_grains_color = pf.nodes.color.mix_rgb(
         factor=0.5,
         blend_type="SOFT_LIGHT",
         a=pf.Color((0.249, 0.103, 0.035)),
-        b=brick_cutter_result.random.astype(dtype=pf.Vector).y.astype(dtype=pf.Color),
+        b=brick_cutter_result.random.y,
     )
 
     wood_shader_result = wood_grain_brown_preset(
@@ -182,13 +182,13 @@ def wood_planks_blonde_preset(
         factor=0.5,
         blend_type="SOFT_LIGHT",
         a=pf.Color((0.432, 0.254, 0.069)),
-        b=brick_cutter_result.random.astype(dtype=pf.Vector).x.astype(dtype=pf.Color),
+        b=brick_cutter_result.random.x,
     )
     surface_b_grains_color = pf.nodes.color.mix_rgb(
         factor=0.5,
         blend_type="SOFT_LIGHT",
         a=pf.Color((0.549, 0.359, 0.122)),
-        b=brick_cutter_result.random.astype(dtype=pf.Vector).y.astype(dtype=pf.Color),
+        b=brick_cutter_result.random.y,
     )
 
     wood_shader_result = wood_grain_blonde_preset(
@@ -251,13 +251,13 @@ def wood_planks_flaky_preset(
     wood_shader_grains_color_1 = pf.nodes.color.mix_rgb(
         factor=0.5,
         a=pf.Color((0.142, 0.119, 0.086)),
-        b=brick_cutter_result.random.astype(dtype=pf.Vector).x.astype(dtype=pf.Color),
+        b=brick_cutter_result.random.x,
         blend_type="SOFT_LIGHT",
     )
     wood_shader_grains_color = pf.nodes.color.mix_rgb(
         factor=0.5,
         a=pf.Color((0.387, 0.321, 0.229)),
-        b=brick_cutter_result.random.astype(dtype=pf.Vector).y.astype(dtype=pf.Color),
+        b=brick_cutter_result.random.y,
         blend_type="SOFT_LIGHT",
     )
 
@@ -355,13 +355,13 @@ def wood_planks_rand(
         factor=0.5,
         blend_type="SOFT_LIGHT",
         a=color_1,
-        b=brick_cutter_result.random.astype(dtype=pf.Vector).x.astype(dtype=pf.Color),
+        b=brick_cutter_result.random.x,
     )
     grains_color_2 = pf.nodes.color.mix_rgb(
         factor=0.5,
         blend_type="SOFT_LIGHT",
         a=color_2,
-        b=brick_cutter_result.random.astype(dtype=pf.Vector).y.astype(dtype=pf.Color),
+        b=brick_cutter_result.random.y,
     )
 
     generator_result = wood_grain_generator_rand(rng, brick_cutter_result.vector)

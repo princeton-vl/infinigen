@@ -8,12 +8,12 @@ from typing import NamedTuple
 
 import numpy as np
 import procfunc as pf
-from mathutils import Euler, Matrix
+from mathutils import Euler
 
 from infinigen2.curves.skirting_board_profile import (
     skirting_profile_rand,
 )
-from infinigen2.objects import lamp, slot_cabinet, wall_art, window
+from infinigen2.objects import lamp, storage, wall_art, window
 from infinigen2.objects.ceiling_light import ceiling_light_rand
 from infinigen2.scenes import collision_collection as ccol
 from infinigen2.scenes.placement_utils import (
@@ -166,7 +166,7 @@ def window_spaced_rand(
 ) -> tuple[
     pf.MeshObject, pf.MeshObject | None, pf.MeshObject | None, list[pf.MeshObject]
 ]:
-    width = window_obj.item().dimensions.x
+    width = window_obj.item().dimensions.y
     wmin, _ = pf.ops.attr.bbox_min_max(window_obj)
 
     wall_uvs = pf.ops.attr.uv_coords(wall)
@@ -177,7 +177,7 @@ def window_spaced_rand(
     margin_split = pf.random.clip_gaussian(rng, 0.5, 0.3, 0.05, 0.95)
     margin_low_x = edge_margin * margin_split
     margin_high_x = edge_margin * (1.0 - margin_split)
-    margin_bottom = window_bottom + wmin[1]
+    margin_bottom = window_bottom + wmin[2]
 
     if width + margin_low_x + margin_high_x > wall_uv_width:
         logger.warning(
@@ -347,11 +347,6 @@ def wall_painting_grid_rand(
         rng, dimensions=pf.Vector((art_depth, art_width, art_height))
     ).mesh
 
-    # reorient into the wall instance frame (x along wall, y up, z out)
-    rot = Matrix(((0.0, 1.0, 0.0), (0.0, 0.0, 1.0), (1.0, 0.0, 0.0))).to_euler()
-    pf.ops.object.set_transform(art, rotation_euler=rot)
-    pf.ops.mesh.transform_apply(art)
-
     wall_thick = _extrude_for_thickness(wall, wall_thickness)
     wall_thick.item().name = "room_wall_back"
 
@@ -429,15 +424,16 @@ def wall_board_shelf_rand(
         0.7 + (max(0.7, available_x) - 0.7) * pf.random.uniform(rng, 0.0, 1.0) ** 2
     )
 
-    cube = pf.nodes.geo.mesh_cube(size=(shelf_width, shelf_depth, shelf_thickness))
+    # canonical wall frame: X=depth out of wall, Y=width, Z=thickness up
+    cube = pf.nodes.geo.mesh_cube(size=(shelf_depth, shelf_width, shelf_thickness))
     slab_geo = pf.nodes.geo.transform(
-        cube.mesh, translation=(0.0, shelf_depth * 0.5, 0.0)
+        cube.mesh, translation=(shelf_depth * 0.5, 0.0, 0.0)
     )
-    slab_geo = slot_cabinet.metric_box_uv(slab_geo)
+    slab_geo = storage.metric_box_uv(slab_geo)
     slab = pf.nodes.to_mesh_object(slab_geo)
 
     footprint = pf.nodes.to_mesh_object(
-        pf.nodes.geo.mesh_cube(size=(shelf_width, shelf_thickness, 0.0)).mesh
+        pf.nodes.geo.mesh_cube(size=(0.0, shelf_width, shelf_thickness)).mesh
     )
     vec = pf.nodes.shader.coord().uv
     shelf_material = furniture_material_rand(rng, vec)
@@ -472,7 +468,6 @@ def wall_board_shelf_rand(
         grid_mesh=grid_res.grid_mesh,
         query_uv=grid_res.query_uv,
         instance=slab,
-        up_align=True,
     )
     shelf_aliases = pf.nodes.to_aliases(instances)
     if not shelf_aliases:
@@ -522,8 +517,7 @@ def cutout_spaced_instances(
     recess: bool = True,
     recess_pct: float = 1.0,
     keep_facecap: bool = False,
-    up_align: bool = False,
-    rotation_offset: float = 0.0,
+    rotation_offset: tuple[float, float, float] = (0.0, 0.0, 0.0),
     footprint: pf.MeshObject | None = None,
     chamfer: float = 0.006,
     standoff: float = 0.0,
@@ -553,6 +547,7 @@ def cutout_spaced_instances(
         margin_high=margin_high,
         x_instances_max=x_instances_max,
         y_instances_max=y_instances_max,
+        rotation_offset=rotation_offset,
     )
 
     faces_res = grid_placement.faces_for_instance_grid_bboxes(
@@ -568,6 +563,7 @@ def cutout_spaced_instances(
         margin_verts_x=1,
         margin_verts_y=1,
         face_expand_margin=pf.Vector((cutout_chamfer, cutout_chamfer, 0.0)),
+        rotation_offset=rotation_offset,
     )
 
     sill: pf.MeshObject | None = None
@@ -610,6 +606,7 @@ def cutout_spaced_instances(
     geom = pf.nodes.geo.merge_by_distance(cut, distance=0.001)
     geom = _finish_cutout_mesh(pf.nodes.to_mesh_object(geom), surface, surface_material)
 
+    recess_depth = wall_thickness * recess_pct if recess else 0.0
     instances = grid_placement.place_instances_on_uv_grid(
         surface=surface,
         uv_field=uv_meters,
@@ -617,44 +614,29 @@ def cutout_spaced_instances(
         query_uv=grid_res.query_uv,
         instance=instance,
         secondary_axis_vector=instance_secondary_axis,
-        up_align=up_align,
         rotation_offset=rotation_offset,
+        normal_offset=standoff - recess_depth,
     )
     aliases = pf.nodes.to_aliases(instances)
-
-    into_wall_local = (
-        pf.Vector((0.0, -1.0, 0.0)) if up_align else pf.Vector((0.0, 0.0, -1.0))
-    )
-    # up_align seats the cabinet with local +X out of the wall; non-up_align uses -into_wall
-    out_of_wall_local = pf.Vector((1.0, 0.0, 0.0)) if up_align else -into_wall_local
-    recess_depth = wall_thickness * recess_pct if recess else 0.0
-    if recess_depth or standoff:
-        for alias in aliases:
-            item = alias.item()
-            rot = item.rotation_euler.to_matrix()
-            offset = (rot @ into_wall_local) * recess_depth + (
-                rot @ out_of_wall_local
-            ) * standoff
-            item.location = item.location + offset
 
     geom = _plane_to_posed_canonical_mesh(geom, up_axis=canonical_up_axis)
     return geom, sill, lightblocker, aliases
 
 
 def upright_cabinet_footprint(width: float, height: float) -> pf.MeshObject:
-    """Flat (U=width, V=height) rect for niche-grid sizing of an up_aligned cabinet."""
+    """Flat wall-frame rect (Y=width=U, Z=height=V) for niche-grid sizing."""
     return pf.nodes.to_mesh_object(
-        pf.nodes.geo.mesh_cube(size=(width, height, 0.0)).mesh
+        pf.nodes.geo.mesh_cube(size=(0.0, width, height)).mesh
     )
 
 
 def _seat_upright_cabinet(
     cab: pf.MeshObject, width: float, height: float, back_depth: float
 ) -> pf.MeshObject:
-    """Center an upright cabinet (X=depth out, Y=width, Z=height) for up_align placement.
+    """Center an upright cabinet in the wall frame (X=depth out, Y=width, Z=height).
 
     Y/Z centered on the niche; X shifted so the back sits back_depth behind the surface
-    (opening at depth-back_depth). up_align maps local X->+normal, Y->along-wall, Z->up.
+    (opening at depth-back_depth). Placement maps local X->normal, Y->along-wall, Z->up.
     """
     bmin, bmax = pf.ops.attr.bbox_min_max(cab)
     pf.ops.object.set_transform(
@@ -725,7 +707,7 @@ def wall_storage_shelf_rand(
     recess_frac = pf.random.uniform(rng, 0.0, 1.0)
     hole_depth = max(0.02, recess_frac**0.5 * depth)
 
-    cab = slot_cabinet.slot_cabinet_rand(
+    cab = storage.shelves_rand(
         rng,
         dimensions=pf.Vector((depth, width, height)),
         back_width=0.0,
@@ -743,8 +725,6 @@ def wall_storage_shelf_rand(
         wall_thickness=hole_depth,
         recess_pct=0.0,
         keep_facecap=True,
-        up_align=True,
-        rotation_offset=np.pi / 2,
         footprint=footprint,
         chamfer=pf.random.clip_gaussian(rng, 0.006, 0.002, 0.004, 0.010),
         standoff=pf.random.uniform(rng, 0.02, 0.05),
@@ -804,7 +784,7 @@ def wall_cubby_rand(
     )
     hole_depth = depth
 
-    cab = slot_cabinet.slot_cabinet_rand(
+    cab = storage.shelves_rand(
         rng,
         dimensions=pf.Vector((depth, width, height)),
         back_width=0.0,
@@ -824,8 +804,6 @@ def wall_cubby_rand(
         wall_thickness=hole_depth,
         recess_pct=0.0,
         keep_facecap=True,
-        up_align=True,
-        rotation_offset=np.pi / 2,
         footprint=footprint,
         chamfer=pf.random.clip_gaussian(rng, 0.006, 0.002, 0.004, 0.010),
     )
@@ -896,7 +874,7 @@ def wall_storage_flush_rand(
         wall_width, width, spacing_x, min_margin, margin_split
     )
 
-    cab = slot_cabinet.slot_cabinet_rand(
+    cab = storage.shelves_rand(
         rng,
         dimensions=pf.Vector((depth, width, height)),
     ).mesh
@@ -921,8 +899,7 @@ def wall_storage_flush_rand(
         grid_mesh=grid_res.grid_mesh,
         query_uv=grid_res.query_uv,
         instance=cab,
-        up_align=True,
-        rotation_offset=np.pi / 2,
+        normal_offset=pf.random.uniform(rng, 0.02, 0.05),
     )
     aliases = pf.nodes.to_aliases(instances)
     if not aliases:
@@ -935,14 +912,6 @@ def wall_storage_flush_rand(
             margin_low_x,
             margin_high_x,
         )
-
-    # up_align seats the cabinet with local +X out of the wall
-    out_of_wall_local = pf.Vector((1.0, 0.0, 0.0))
-    standoff = pf.random.uniform(rng, 0.02, 0.05)
-    for alias in aliases:
-        item = alias.item()
-        out_of_wall = item.rotation_euler.to_matrix() @ out_of_wall_local
-        item.location = item.location + out_of_wall * standoff
 
     wall, wall_thick = _plain_wall(wall, wall_material, wall_thickness)
     return WallFeatureResult(
@@ -968,7 +937,7 @@ def wall_doors_rand(
 
     door_width = pf.random.uniform(rng, 0.85, 1.2)
     door_height = min(pf.random.uniform(rng, 2.0, 2.2), wall_height * 0.9)
-    door_thickness = pf.random.uniform(rng, 0.04, 0.07)
+    door_thickness = pf.random.clip_gaussian(rng, 0.0318, 0.0127, 0.0254, 0.0762)
 
     spacing_x = pf.random.uniform(rng, 2.0, 6.0)
     max_margin = max(0.01, wall_width - door_width - 0.2)
@@ -977,31 +946,30 @@ def wall_doors_rand(
     margin_low_x = edge_margin * margin_split
     margin_high_x = edge_margin * (1.0 - margin_split)
 
-    wall_thick = _extrude_for_thickness(wall, wall_thickness)
-    wall_thick.item().name = "room_wall_back"
+    reveal_depth = pf.random.uniform(rng, 0.1, 0.3)
+    recess_pct = 0.9 + 0.1 * pf.random.uniform(rng, 0.0, 1.0)
 
-    # door slab, x-centered, bottom at y=0
-    cube = pf.nodes.geo.mesh_cube(size=(door_width, door_height, door_thickness))
-    slab = pf.nodes.geo.transform(cube.mesh, translation=(0.0, door_height * 0.5, 0.0))
-    slab = slot_cabinet.metric_box_uv(slab)
-    door = pf.nodes.to_mesh_object(slab)
-    vec = pf.nodes.shader.coord().uv
-    door_material = furniture_material_rand(rng, vec)
-    pf.ops.object.set_material(
-        door,
-        surface=door_material.surface,
-        displacement=door_material.displacement,
-    )
+    door = storage.door_with_handle_rand(
+        rng, dimensions=pf.Vector((door_thickness, door_width, door_height))
+    ).mesh
+    # centre the slab along the wall (Y); an off-centre along-wall origin lands it
+    # beside its hole. Use door_width, not the bbox, so the handle bump does not bias it
+    pf.ops.object.set_transform(door, location=(0.0, -door_width * 0.5, 0.0))
+    pf.ops.mesh.transform_apply(door)
 
-    geom, _sill, _lightblocker, door_aliases = cutout_spaced_instances(
+    # lift the door 1cm off the wall's bottom edge (V is the .y margin) so its chamfered
+    # cutout stays inside the wall UV; below that sample_uv_surface returns origin verts
+    floor_lift = 0.01
+    geom, sill, lightblocker, door_aliases = cutout_spaced_instances(
         surface=wall,
         instance=door,
         surface_material=wall_material,
         spacing=pf.Vector((spacing_x, 0, 0)),
-        margin_low=pf.Vector((margin_low_x, 0.0, 0)),
+        margin_low=pf.Vector((margin_low_x, floor_lift, 0)),
         margin_high=pf.Vector((margin_high_x, 0.0, 0)),
         x_instances_max=2,
-        recess=False,
+        wall_thickness=reveal_depth,
+        recess_pct=recess_pct,
     )
     if not door_aliases:
         logger.warning(
@@ -1016,8 +984,8 @@ def wall_doors_rand(
 
     return WallFeatureResult(
         wall_geom=[geom],
-        backs=[wall_thick],
-        sills=[],
+        backs=[lightblocker] if lightblocker is not None else [],
+        sills=[sill] if sill is not None else [],
         storage=[],
         lights=[],
         decorations={"door": door_aliases},
@@ -1055,9 +1023,9 @@ def wall_full_window_rand(
     pf.ops.object.set_transform(
         win_obj,
         scale=(
-            target_w / win_obj.item().dimensions.x,
-            target_h / win_obj.item().dimensions.y,
             1.0,
+            target_w / win_obj.item().dimensions.y,
+            target_h / win_obj.item().dimensions.z,
         ),
     )
     pf.ops.mesh.transform_apply(win_obj)
@@ -1369,18 +1337,16 @@ def ceiling_light_placement_rand(
             lamp_template.light.item().location - mesh_template.item().location
         )
 
-    # bake inverse of the grid's Ry(pi) so lamps keep their authored orientation
-    instance_quat = Euler((0.0, np.pi, 0.0)).to_quaternion()
-    template_quat = Euler(mesh_template.item().rotation_euler).to_quaternion()
-    pf.ops.object.set_transform(
-        mesh_template,
-        rotation_euler=(instance_quat.inverted() @ template_quat).to_euler(),
-    )
+    # bake the template's authored orientation, then centre it in the ceiling plane
     pf.ops.mesh.transform_apply(mesh_template)
     bmin, bmax = pf.ops.attr.bbox_min_max(mesh_template)
     center = (np.array(bmin) + np.array(bmax)) / 2
     pf.ops.object.set_transform(mesh_template, location=(-center[0], -center[1], 0.0))
     pf.ops.mesh.transform_apply(mesh_template)
+
+    # local +X -> ceiling normal (down); this offset re-hangs the Z-up lamp so it keeps
+    # its authored orientation (net-identity, so light_offset stays valid)
+    lamp_hang = (np.pi / 2, 0.0, -np.pi / 2)
 
     lamp_w = np.array(bmax) - np.array(bmin)
     gap_x = max(0.1, spacing_x - lamp_w[0])
@@ -1400,6 +1366,7 @@ def ceiling_light_placement_rand(
         margin_high=pf.Vector((margin_x, margin_y, 0)),
         x_instances_max=n_estimate_x,
         y_instances_max=n_estimate_y,
+        rotation_offset=lamp_hang,
     )
     instances = grid_placement.place_instances_on_uv_grid(
         surface=ceiling,
@@ -1408,6 +1375,7 @@ def ceiling_light_placement_rand(
         query_uv=grid_res.query_uv,
         instance=mesh_template,
         secondary_axis_vector=(0, 1, 0),
+        rotation_offset=lamp_hang,
     )
     meshes = pf.nodes.to_aliases(instances)
 
@@ -1466,15 +1434,15 @@ def wall_feature_rand(
     window_portal = window_result.light
 
     pf.ops.object.set_transform(
-        window_obj, scale=(1.0, window_height / window_obj.item().dimensions.y, 1.0)
+        window_obj, scale=(1.0, 1.0, window_height / window_obj.item().dimensions.z)
     )
     pf.ops.mesh.transform_apply(window_obj)
 
-    _width, _height, _depth = window_obj.item().dimensions
+    _depth, _width, _height = window_obj.item().dimensions
     wmin, _wmax = pf.ops.attr.bbox_min_max(window_obj)
     free_height = usable_height - _height
     window_bottom_pct = pf.random.clip_gaussian(rng_window, 0.7, 0.15, 0.35, 0.85)
-    window_bottom = edge_gap + free_height * window_bottom_pct - wmin[1]
+    window_bottom = edge_gap + free_height * window_bottom_pct - wmin[2]
     window_spacing = pf.random.uniform(rng_window, 0.1, 0.25) * _width
 
     wall_planes = []
@@ -1579,15 +1547,14 @@ def ceiling_skylights_rand(
     )
     win = window_result.mesh
 
-    # lay the window flat into the ceiling, facing down, origin-centered
-    pf.ops.object.set_transform(win, rotation_euler=(np.pi, 0.0, 0.0))
-    pf.ops.mesh.transform_apply(win)
+    # centre at origin; unified placement lays it into the ceiling (local +X
+    # follows the down-facing normal). footprint on the ceiling is Y x Z.
     bmin, bmax = pf.ops.attr.bbox_min_max(win)
     center = (np.array(bmin) + np.array(bmax)) / 2
-    pf.ops.object.set_transform(win, location=(-center[0], -center[1], 0.0))
+    pf.ops.object.set_transform(win, location=-center)
     pf.ops.mesh.transform_apply(win)
     bmin, bmax = pf.ops.attr.bbox_min_max(win)
-    win_dims = np.array(bmax) - np.array(bmin)
+    win_dims = (np.array(bmax) - np.array(bmin))[[1, 2]]
 
     spacing = pf.random.uniform(rng, 0.4, 1.8)
     margin_frac = pf.random.uniform(rng, 0.0, 1.0)
@@ -1699,6 +1666,7 @@ def ceiling_light_bars_rand(
         wall_thickness=reveal_depth,
         recess_pct=recess_pct,
         chamfer=pf.random.clip_gaussian(rng, 0.006, 0.002, 0.004, 0.010),
+        rotation_offset=(np.pi / 2, 0.0, np.pi / 2),
     )
 
     bar_ceiling_locs = [np.array(alias.item().location) for alias in bar_aliases]

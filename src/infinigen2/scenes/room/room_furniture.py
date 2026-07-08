@@ -12,10 +12,10 @@ import procfunc as pf
 from infinigen2.lighting import sky_lighting
 from infinigen2.objects import (
     bookcase,
-    cabinet,
     lamp,
     rug,
     sofa,
+    storage,
     table,
     triangle_shelf,
     vase,
@@ -143,7 +143,7 @@ def storage_object_rand(rng: pf.RNG) -> MeshResult:
         rng,
         [
             (bookcase.bookcase_rand, 1.0),
-            (cabinet.cabinet_rand, 1.0),
+            (storage.shelves_rand, 1.0),
         ],
     )
     result = func(rng)

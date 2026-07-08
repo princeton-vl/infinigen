@@ -10,9 +10,10 @@ from infinigen2.util.hardware_info import get_hardware_info
 
 @contextmanager
 def time_step(times: dict[str, float], name: str) -> Iterator[None]:
-    start = time.perf_counter()
+    start = time.perf_counter()  # validate-ignore: test_determinism
     yield
-    times[name] = times.get(name, 0.0) + (time.perf_counter() - start)
+    end = time.perf_counter()  # validate-ignore: test_determinism
+    times[name] = times.get(name, 0.0) + (end - start)
 
 
 def write_render_metadata(

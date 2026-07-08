@@ -90,11 +90,10 @@ def bricks_red_concave_preset(
         displacement_additional_height=brick_cutter_result.height,
     )
 
-    surface_color_1 = brick_cutter_result.random.astype(dtype=pf.Vector)
     surface_color = pf.nodes.color.mix_rgb(
         factor=1.0,
         a=pf.Color((0.577, 0.206, 0.132)),
-        b=surface_color_1.x.astype(dtype=pf.Color),
+        b=brick_cutter_result.random.x.astype(dtype=pf.Color),
         blend_type="SOFT_LIGHT",
     )
 
@@ -179,11 +178,10 @@ def bricks_red_preset(
         displacement_additional_height=brick_cutter_result.height,
     )
 
-    surface_color_1 = brick_cutter_result.random.astype(dtype=pf.Vector)
     surface_color = pf.nodes.color.mix_rgb(
         factor=1.0,
         a=pf.Color((0.577, 0.206, 0.132)),
-        b=surface_color_1.x.astype(dtype=pf.Color),
+        b=brick_cutter_result.random.x.astype(dtype=pf.Color),
         blend_type="SOFT_LIGHT",
     )
 
@@ -269,11 +267,10 @@ def bricks_grey_rounded_preset(
 
     surface_color_factor = pf.nodes.math.constant(0.286)
     surface_color_2 = pf.nodes.math.constant(pf.Color((0.5, 0.5, 0.5)))
-    surface_color_1 = brick_cutter_result.random.astype(dtype=pf.Vector)
     surface_color = pf.nodes.color.mix_rgb(
         factor=surface_color_factor,
         a=surface_color_2,
-        b=surface_color_1.x.astype(dtype=pf.Color),
+        b=brick_cutter_result.random.x.astype(dtype=pf.Color),
         blend_type="SOFT_LIGHT",
     )
 
@@ -362,11 +359,10 @@ def bricks_grey_preset(
     )
 
     surface_color_factor = pf.nodes.math.constant(0.286)
-    surface_color_1 = brick_cutter_result.random.astype(dtype=pf.Vector)
     surface_color = pf.nodes.color.mix_rgb(
         factor=surface_color_factor,
         a=pf.Color((0.391, 0.391, 0.391)),
-        b=surface_color_1.x.astype(dtype=pf.Color),
+        b=brick_cutter_result.random.x.astype(dtype=pf.Color),
         blend_type="SOFT_LIGHT",
     )
 
@@ -916,11 +912,10 @@ def bricks_paint_strokes_preset(
         displacement_additional_height=brick_cutter_result.height,
     )
 
-    displacement_color_1 = brick_cutter_result.random.astype(dtype=pf.Vector)
     displacement_color = pf.nodes.color.mix_rgb(
         factor=1.0,
         a=pf.Color((0.391, 0.391, 0.391)),
-        b=displacement_color_1.x.astype(dtype=pf.Color),
+        b=brick_cutter_result.random.x.astype(dtype=pf.Color),
         blend_type="SOFT_LIGHT",
     )
 
@@ -1021,11 +1016,10 @@ def bricks_paint_spots_preset(
         displacement_additional_height=brick_cutter_result.height,
     )
 
-    displacement_color_1 = brick_cutter_result.random.astype(dtype=pf.Vector)
     displacement_color = pf.nodes.color.mix_rgb(
         factor=1.0,
         a=pf.Color((0.577, 0.206, 0.132)),
-        b=displacement_color_1.x.astype(dtype=pf.Color),
+        b=brick_cutter_result.random.x.astype(dtype=pf.Color),
         blend_type="SOFT_LIGHT",
     )
 
@@ -1105,11 +1099,10 @@ def bricks_paint_worn_preset(
         displacement_additional_height=brick_cutter_result.height,
     )
 
-    surface_color_1 = brick_cutter_result.random.astype(dtype=pf.Vector)
     surface_color = pf.nodes.color.mix_rgb(
         factor=1.0,
         a=pf.Color((0.041, 0.041, 0.041)),
-        b=surface_color_1.x.astype(dtype=pf.Color),
+        b=brick_cutter_result.random.x.astype(dtype=pf.Color),
         blend_type="SOFT_LIGHT",
     )
 

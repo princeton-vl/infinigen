@@ -3,14 +3,14 @@
 
 # Authors: Karhan Kayan
 
+import bpy
 import procfunc as pf
 
-from infinigen.core.util import blender as butil
 from infinigen2.util.instance import instanced_objects
 
 
 def test_instance_parent_child_instancing_data(rng: pf.RNG):
-    butil.clear_scene()
+    bpy.ops.wm.read_homefile(use_empty=True)
 
     parent_dense = pf.ops.primitives.mesh_plane(size=12.0, location=(2, 0, 0))
     parent_sparse = pf.ops.primitives.mesh_plane(size=12.0, location=(-20, 0, 0))

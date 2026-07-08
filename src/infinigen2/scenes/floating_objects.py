@@ -14,12 +14,12 @@ import procfunc as pf
 from infinigen2.lighting.point_lighting import point_lamp_colored_rand
 from infinigen2.objects import (
     bookcase,
-    cabinet,
     desk,
     drawers,
     flower,
     random_primitives,
     sofa,
+    storage,
     table,
     triangle_shelf,
     vase,
@@ -54,7 +54,7 @@ def floating_object_asset_rand(rng: pf.RNG) -> pf.MeshObject:
         [
             (sofa.sofa_rand, 1.0),
             (bookcase.bookcase_rand, 1.0),
-            (cabinet.cabinet_rand, 1.0),
+            (storage.shelves_rand, 1.0),
             (drawers.drawers_rand, 1.0),
             (desk.desk_rand, 1.0),
             (table.side_table_rand, 1.0),

@@ -20,6 +20,7 @@ from infinigen2.shaders.base_materials import (
     gravel_concrete,
     marble,
     metal_brushed,
+    metal_hammered,
     paint,
     plastic,
     stone_smooth,
@@ -49,6 +50,7 @@ __all__ = [
     "art_color_rand",
     "art_pattern_material_rand",
     "ceiling_material_rand",
+    "decorative_material_rand",
     "floor_material_rand",
     "furniture_fabric",
     "furniture_material_rand",
@@ -164,6 +166,22 @@ def glass_material_rand(rng: pf.RNG, vec, glass_height=None) -> pf.Material:
     return pf.Material(surface=surface)
 
 
+def decorative_material_rand(rng: pf.RNG, vec) -> pf.Material:
+    rng_choice, rng_mat = rng.spawn(2)
+    material_func = pf.control.choice(
+        rng_choice,
+        [
+            (metal_brushed.metal_brushed_linear_rand, 3.0),
+            (metal_brushed.metal_brushed_radial_rand, 3.0),
+            (metal_hammered.metal_hammered_rand, 2.0),
+            (plastic.plastic_grayscale_rand, 1.0),
+            (plastic.plastic_opaque_rand, 1.0),
+            (wood_grain.wood_grain_rand, 0.5),
+        ],
+    )
+    return material_func(rng_mat, vec)
+
+
 def furniture_material_rand(rng: pf.RNG, vec) -> pf.Material:
     rng_uv, rng_choice, rng_mat, rng_wear_choice, rng_wear = rng.spawn(5)
     vec = uv_maybe_rotate_90(rng_uv, vec)
@@ -183,7 +201,7 @@ def furniture_material_rand(rng: pf.RNG, vec) -> pf.Material:
             (lambda r, v, m: m, 3.0),
             (scratches_overlay_rand, 1.0),
             (splats_overlay_rand, 1.0),
-            (paint_overlay.cracked_paint_overlay_rand, 0.5),
+            (paint_overlay.cracked_paint_overlay_rand, 0.25),
         ],
     )
     return wear(rng_wear, vec, material)

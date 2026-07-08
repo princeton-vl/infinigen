@@ -8,19 +8,22 @@ from typing import NamedTuple
 import procfunc as pf
 from procfunc.nodes import types as t
 
+from infinigen2.objects.door import door_with_handle, door_with_handle_rand
 from infinigen2.shaders.functionality_lists import (
     furniture_material_rand,
 )
 
 __all__ = [
-    "SlotCabinetResult",
+    "StorageResult",
+    "cabinet_with_door",
+    "cabinet_with_door_rand",
     "metric_box_uv",
-    "shelf",
-    "slot_cabinet_rand",
+    "shelves",
+    "shelves_rand",
 ]
 
 
-class SlotCabinetResult(NamedTuple):
+class StorageResult(NamedTuple):
     mesh: pf.MeshObject
 
 
@@ -165,7 +168,7 @@ def _grid_with_indices(
 
 
 @pf.nodes.node_function
-def shelf(
+def _shelf_geometry(
     dimensions: t.SocketOrVal[pf.Vector] = (1.0, 1.0, 1.0),
     n_spaces_y: t.SocketOrVal[int] = 0,
     n_spaces_z: t.SocketOrVal[int] = 0,
@@ -367,12 +370,48 @@ def shelf(
     return realize_instances
 
 
-def slot_cabinet_rand(
+def _shelves_finish(
+    geo: pf.ProcNode, frame_material: pf.Material, bevel_width: float
+) -> StorageResult:
+    geo = metric_box_uv(geo)
+    geo = pf.nodes.geo.set_material(geometry=geo, material=frame_material)
+    result = pf.nodes.to_mesh_object(geo)
+    pf.ops.modifier.bevel(result, width=bevel_width, segments=2)
+    return StorageResult(mesh=result)
+
+
+def shelves(
+    dimensions: pf.Vector | None = None,
+    n_spaces_y: int = 3,
+    n_spaces_z: int = 4,
+    frame_thickness: float = 0.03,
+    row_divider_width: float = 0.025,
+    col_divider_width: float = 0.02,
+    back_width: float = 0.02,
+    frame_material: pf.Material | None = None,
+) -> StorageResult:
+    if dimensions is None:
+        dimensions = pf.Vector((0.35, 1.2, 1.6))
+    if frame_material is None:
+        frame_material = pf.Material(surface=pf.nodes.shader.principled_bsdf())
+    geo = _shelf_geometry(
+        dimensions=dimensions,
+        n_spaces_y=n_spaces_y,
+        n_spaces_z=n_spaces_z,
+        frame_board_dimensions=(frame_thickness, frame_thickness, frame_thickness),
+        row_divider_width=row_divider_width,
+        col_divider_width=col_divider_width,
+        back_width=back_width,
+    )
+    return _shelves_finish(geo, frame_material, bevel_width=0.003)
+
+
+def shelves_rand(
     rng: pf.RNG,
     dimensions: pf.Vector | None = None,
     frame_material: pf.Material | None = None,
     back_width: float | None = None,
-) -> SlotCabinetResult:
+) -> StorageResult:
     if dimensions is None:
         depth = pf.random.uniform(rng, 0.25, 0.45)
         width = pf.random.uniform(rng, 0.7, 2.5)
@@ -404,7 +443,7 @@ def slot_cabinet_rand(
         (rng_mat,) = rng.spawn(1)
         frame_material = furniture_material_rand(rng_mat, vec)
 
-    geo = shelf(
+    geo = _shelf_geometry(
         dimensions=dimensions,
         n_spaces_y=n_spaces_y,
         n_spaces_z=n_spaces_z,
@@ -413,8 +452,55 @@ def slot_cabinet_rand(
         col_divider_width=col_divider_width,
         back_width=back_width,
     )
-    geo = metric_box_uv(geo)
-    geo = pf.nodes.geo.set_material(geometry=geo, material=frame_material)
+    bevel_width = pf.random.uniform(rng, 0.001, 0.005)
+    return _shelves_finish(geo, frame_material, bevel_width)
 
-    result = pf.nodes.to_mesh_object(geo)
-    return SlotCabinetResult(mesh=result)
+
+def cabinet_with_door(
+    dimensions: pf.Vector | None = None,
+    frame_material: pf.Material | None = None,
+) -> StorageResult:
+    if dimensions is None:
+        dimensions = pf.Vector((0.35, 0.6, 0.8))
+    if frame_material is None:
+        frame_material = pf.Material(surface=pf.nodes.shader.principled_bsdf())
+    thickness = 0.019
+    shelf_dimensions = pf.Vector((dimensions.x - thickness, dimensions.y, dimensions.z))
+    carcass = shelves(dimensions=shelf_dimensions, frame_material=frame_material).mesh
+    door = door_with_handle(
+        dimensions=pf.Vector((thickness, dimensions.y, dimensions.z)),
+        material=frame_material,
+    ).mesh
+    pf.ops.object.set_transform(door, location=(dimensions.x - thickness, 0.0, 0.0))
+    pf.ops.object.join(carcass, door)
+    return StorageResult(mesh=carcass)
+
+
+def cabinet_with_door_rand(
+    rng: pf.RNG, dimensions: pf.Vector | None = None
+) -> StorageResult:
+    rng, rng_shelves, rng_door, rng_mat, rng_door_mat = rng.spawn(5)
+    if dimensions is None:
+        depth = pf.random.uniform(rng, 0.25, 0.45)
+        width = pf.random.uniform(rng, 0.3, 0.9)
+        height = pf.random.uniform(rng, 0.5, 1.1)
+        dimensions = pf.Vector((depth, width, height))
+
+    frame_material = furniture_material_rand(rng_mat, pf.nodes.shader.coord().uv)
+    door_material = pf.control.choice(
+        rng_door_mat, [(frame_material, 2.0), (None, 1.0)]
+    )
+
+    thickness = pf.random.uniform(rng, 0.016, 0.022)
+    shelf_dimensions = pf.Vector((dimensions.x - thickness, dimensions.y, dimensions.z))
+    carcass = shelves_rand(
+        rng_shelves, dimensions=shelf_dimensions, frame_material=frame_material
+    ).mesh
+    door = door_with_handle_rand(
+        rng_door,
+        dimensions=pf.Vector((thickness, dimensions.y, dimensions.z)),
+        material=door_material,
+    ).mesh
+    pf.ops.object.set_transform(door, location=(dimensions.x - thickness, 0.0, 0.0))
+    pf.ops.object.join(carcass, door)
+    return StorageResult(mesh=carcass)
