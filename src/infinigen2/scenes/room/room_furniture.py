@@ -418,10 +418,13 @@ def _sofas_on_wall_setup(
     n = pf.random.randint(rng, 0, 8)
     rngs = rng.spawn(n)
     sofas = [sofa.sofa_rand(rngs[i]) for i in range(n)]
-    sofas = [
-        retry_place(rngs[i], sofas[i], colliders, _snap_back_front, parents=wall_planes)
-        for i in range(n)
-    ]
+    placed_sofas = []
+    for i in range(n):
+        sofa_obj = retry_place(
+            rngs[i], sofas[i], colliders, _snap_back_front, parents=wall_planes
+        )
+        placed_sofas.append(sofa_obj)
+    sofas = placed_sofas
     sofa_objs, colliders = keep_non_colliding(sofas, colliders)
     logger.info(f"Placed {len(sofa_objs)} wall sofas out of {n} attempts")
     rug_objs = _maybe_rug(rng, room_dimensions)
@@ -454,8 +457,9 @@ def centered_sofa_setup_rand(
     n = len(sides)
     rngs = rng.spawn(n)
     sofas = [sofa.sofa_rand(rngs[i]) for i in range(n)]
-    sofas = [
-        retry_place(
+    placed_sofas = []
+    for i in range(n):
+        sofa_obj = retry_place(
             rngs[i],
             sofas[i],
             colliders,
@@ -463,8 +467,8 @@ def centered_sofa_setup_rand(
             carpet=carpet,
             parent_side=sides[i],
         )
-        for i in range(n)
-    ]
+        placed_sofas.append(sofa_obj)
+    sofas = placed_sofas
     sofas = keep_unobstructed(sofas, center, colliders)
     sofa_objs, colliders = keep_non_colliding(sofas, colliders)
     logger.info(f"Placed {len(sofa_objs)} carpet sofas out of {n} attempts")
@@ -652,8 +656,9 @@ def room_furniture_rand(
     storage = [storage_object_rand(rngs[i]) for i in range(n)]
     wall_margins = [pf.random.uniform(rngs[i], 0.03, 0.10) for i in range(n)]
     wall_colliders = ccol.collision_set(wall_planes)
-    storage = [
-        retry_place(
+    placed_storage = []
+    for i in range(n):
+        storage_obj = retry_place(
             rngs[i],
             storage[i],
             colliders,
@@ -665,8 +670,8 @@ def room_furniture_rand(
                 m, wall_colliders, margin
             ),
         )
-        for i in range(n)
-    ]
+        placed_storage.append(storage_obj)
+    storage = placed_storage
     storage_objects, colliders = keep_non_colliding(storage, colliders)
     logger.info(f"Placed {len(storage_objects)} storage objects out of {n} attempts")
 
@@ -679,8 +684,9 @@ def room_furniture_rand(
     n = min(pf.random.randint(rng_table, 0, 6), len(arrangement.sofas))
     rngs = rng_table.spawn(n)
     side_tables = [table.side_table_rand(rngs[i]) for i in range(n)]
-    side_tables = [
-        retry_place(
+    placed_side_tables = []
+    for i in range(n):
+        side_table = retry_place(
             rngs[i],
             side_tables[i],
             colliders,
@@ -688,8 +694,8 @@ def room_furniture_rand(
             parents=sofa_meshes,
             attempts=12,
         )
-        for i in range(n)
-    ]
+        placed_side_tables.append(side_table)
+    side_tables = placed_side_tables
     side_tables, colliders = keep_non_colliding(side_tables, colliders)
     logger.info(f"Placed {len(side_tables)} side tables out of {n} attempts")
 
@@ -700,12 +706,17 @@ def room_furniture_rand(
     floor_lamps = [
         lamp.lamp_rand(rngs[i], pf.random.uniform(rngs[i], 1.0, 2.0)) for i in range(n)
     ]
-    floor_lamps = [
-        retry_place(
-            rngs[i], floor_lamps[i], colliders, _snap_side_by_side, parents=big_meshes
+    placed_floor_lamps = []
+    for i in range(n):
+        floor_lamp = retry_place(
+            rngs[i],
+            floor_lamps[i],
+            colliders,
+            _snap_side_by_side,
+            parents=big_meshes,
         )
-        for i in range(n)
-    ]
+        placed_floor_lamps.append(floor_lamp)
+    floor_lamps = placed_floor_lamps
     floor_lamps, colliders = keep_non_colliding(floor_lamps, colliders)
     logger.info(f"Placed {len(floor_lamps)} floor lamps out of {n} attempts")
     floor_lamp_lights = [r.light for r in floor_lamps if r.light is not None]
@@ -719,12 +730,17 @@ def room_furniture_rand(
     n = min(pf.random.randint(rng_decoration_object, 1, 4), 2 * len(surface_meshes))
     rngs = rng_decoration_object.spawn(n)
     decorations = [table_decoration_object_rand(rngs[i]) for i in range(n)]
-    decorations = [
-        retry_place(
-            rngs[i], decorations[i], colliders, _snap_on_top, parents=surface_meshes
+    placed_decorations = []
+    for i in range(n):
+        decoration = retry_place(
+            rngs[i],
+            decorations[i],
+            colliders,
+            _snap_on_top,
+            parents=surface_meshes,
         )
-        for i in range(n)
-    ]
+        placed_decorations.append(decoration)
+    decorations = placed_decorations
     decorations, colliders = keep_non_colliding(decorations, colliders)
     logger.info(f"Placed {len(decorations)} decoration objects out of {n} attempts")
 
@@ -733,12 +749,17 @@ def room_furniture_rand(
     n = min(pf.random.randint(rng_table_lamp, 1, 3), len(side_table_meshes))
     rngs = rng_table_lamp.spawn(n)
     table_lamps = [lamp.desk_lamp_rand(rngs[i]) for i in range(n)]
-    table_lamps = [
-        retry_place(
-            rngs[i], table_lamps[i], colliders, _snap_on_top, parents=side_table_meshes
+    placed_table_lamps = []
+    for i in range(n):
+        table_lamp = retry_place(
+            rngs[i],
+            table_lamps[i],
+            colliders,
+            _snap_on_top,
+            parents=side_table_meshes,
         )
-        for i in range(n)
-    ]
+        placed_table_lamps.append(table_lamp)
+    table_lamps = placed_table_lamps
     table_lamps, colliders = keep_non_colliding(table_lamps, colliders)
     logger.info(f"Placed {len(table_lamps)} table lamps out of {n} attempts")
     table_lamp_lights = [r.light for r in table_lamps if r.light is not None]

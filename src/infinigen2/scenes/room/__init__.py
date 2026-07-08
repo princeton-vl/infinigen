@@ -5,10 +5,7 @@
 
 from infinigen2.scenes.room.room import (  # noqa: F401
     LivingroomResult,
-    livingroom_nofurniture_rand,
     livingroom_rand,
-    livingroom_with_smallobj_rand,
-    room_with_all_objects,
 )
 from infinigen2.scenes.room.room_shape import (  # noqa: F401
     room_shape_rand,
