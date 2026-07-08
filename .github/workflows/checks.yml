@@ -80,7 +80,7 @@ jobs:
       - name: Install with docs dependencies
         run: |
           uv venv
-          uv pip install -e ".[dev]"
+          uv pip install -e ".[dev,infinigen1]"
 
       - name: Build docs (warnings as errors)
         run: uv run --no-sync python -m sphinx -b html docs/source docs/build

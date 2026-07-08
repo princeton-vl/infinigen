@@ -24,32 +24,24 @@ dependencies = [
     #   we attempted to restrict to only versions that are known to be working
     "bpy==4.2.0",
     "procfunc>=0.34,<0.35",
-    "coacd",
-    "gin_config>=0.5.0",
     "imageio<2.32.0", # e.g. 2.31.1
     "matplotlib",
-    "networkx",
     "numpy<2",
     "opencv-python<4.9.0", # e.g. 4.8.0.74
     "pandas",
-    "psutil",
-    #    "scikit-image<0.20.0", # e.g 0.19.3 # caused issues with build in 2.0.
-    "scikit-learn<1.4.0", # e.g 1.3.0
-    "scipy",
-    "shapely<=2.0.5",
-    "tqdm",
+    "scipy", # trimesh collision path
     "trimesh<3.23.0",
     "OpenEXR",
-    "submitit", # can be removed so long as you dont use slurm.gin or --slurm args
+    "pillow>=11.3.0",
     # used by trimesh, we could specify "trimesh[easy]" but this brings more packages
     "python-fcl",
-    "rtree",
-    "cvdpack>=0.5.2",
-    "wandb>=0.21.0",
+    "rtree", # trimesh spatial index
+    "cvdpack>=0.5.2", # v2 ground-truth tool
 ]
 
 [project.optional-dependencies]
 terrain = [
+    "infinigen[infinigen1]", # terrain is a v1 feature
     "landlab==2.6.0",
     "pyrender<0.2.0",
     # landlab needs pkg_resources, removed in setuptools>=81
@@ -68,7 +60,6 @@ dev = [
     "pytest-timeout",
     "ruff==0.14.5", # NOTE! must also update checks.yml and pre-commit-config.yaml
     "ty",
-    "isort",
     "tabulate",
     "rapidfuzz",
     "sphinx",
@@ -79,23 +70,27 @@ dev = [
     "jinja2",
 ]
 sim = [
+    "infinigen[infinigen1]", # sim exporters live in v1
     "mujoco",
     "usd-core",
-    "coacd",
 ]
 wandb = [
     "wandb"
 ]
 # Legacy 1.0 gen; not "v1" ("v1" is a PEP 440 version, breaks pip<25 extra markers)
 infinigen1 = [
-    "landlab==2.6.0",
-    "pyrender<0.2.0",
-    "setuptools<81",
-    "einops",
-    "numba",
-    "pyglet<2",
+    "infinigen[vis]", # einops, numba, pyglet
     "scikit-image<0.20.0",
     "geomdl",
+    # deps used only by v1 (moved out of core to keep v2 lean)
+    "gin_config>=0.5.0",
+    "coacd",
+    "networkx",
+    "psutil",
+    "scikit-learn<1.4.0",
+    "shapely<=2.0.5",
+    "tqdm",
+    "submitit", # v1 datagen SLURM
 ]
 
 [project.scripts]

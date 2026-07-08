@@ -7,12 +7,6 @@ import logging
 
 import bpy
 
-# TODO: remove infinigen dependency
-# ruff: noqa: TID251
-from infinigen.core.nodes.node_wrangler import (
-    geometry_node_group_empty_new,
-)
-
 from infinigen2.exporters.render_cycles import configure_cycles_devices
 
 __all__ = [
@@ -21,6 +15,29 @@ __all__ = [
 ]
 
 logger = logging.getLogger(__name__)
+
+
+def _geometry_node_group_empty_new():
+    group = bpy.data.node_groups.new("Geometry Nodes", "GeometryNodeTree")
+    group.interface.new_socket(
+        name="Geometry", in_out="INPUT", socket_type="NodeSocketGeometry"
+    )
+    group.interface.new_socket(
+        name="Geometry", in_out="OUTPUT", socket_type="NodeSocketGeometry"
+    )
+    input_node = group.nodes.new("NodeGroupInput")
+    output_node = group.nodes.new("NodeGroupOutput")
+    output_node.is_active_output = True
+
+    input_node.select = False
+    output_node.select = False
+
+    input_node.location.x = -200 - input_node.width
+    output_node.location.x = 200
+
+    group.links.new(output_node.inputs[0], input_node.outputs[0])
+
+    return group
 
 
 def _bake_displacement_to_vcols(obj, vcol_name="Displacement"):
@@ -113,7 +130,7 @@ def _bake_displacement_to_vcols(obj, vcol_name="Displacement"):
 
 def _add_geo_displacement(obj, scale_val=1.0, vcol_name="Displacement", apply=True):
     mod = obj.modifiers.new("Displacement", "NODES")
-    mod.node_group = geometry_node_group_empty_new()
+    mod.node_group = _geometry_node_group_empty_new()
     ng = mod.node_group
     nodes, links = ng.nodes, ng.links
 
