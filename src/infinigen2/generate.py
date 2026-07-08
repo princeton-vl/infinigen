@@ -185,7 +185,7 @@ def get_parser():
         "-s",
         "--samples",
         type=int,
-        default=256,
+        default=1024,
         help="Number of samples for the rendering",
     )
     parser.add_argument(
