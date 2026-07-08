@@ -85,6 +85,7 @@ jobs:
         CIBW_TEST_COMMAND: ""
         CIBW_BUILD_VERBOSITY: 1
         CIBW_ENVIRONMENT:
+          INFINIGEN_MINIMAL_INSTALL="False"
           CXXFLAGS="${{ env.CXXFLAGS }}"
           LDFLAGS="${{ env.LDFLAGS }}"
 
