@@ -6,7 +6,9 @@ on:
   push:
     branches:
       - develop2
+      - develop
       - main2
+      - main
   workflow_dispatch:
     inputs:
       pr_number:
