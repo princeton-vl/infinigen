@@ -86,8 +86,8 @@ sim = [
 wandb = [
     "wandb"
 ]
-# Legacy 1.0 generation; terrain/vis inlined (self-ref extras break newer pip wheel builds)
-v1 = [
+# Legacy 1.0 gen; not "v1" ("v1" is a PEP 440 version, breaks pip<25 extra markers)
+infinigen1 = [
     "landlab==2.6.0",
     "pyrender<0.2.0",
     "setuptools<81",

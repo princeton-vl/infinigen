@@ -460,15 +460,7 @@
   },
   {
     "category": "Scene",
-    "name": "infinigen2.scenes.room.room.livingroom_nofurniture_rand"
-  },
-  {
-    "category": "Scene",
     "name": "infinigen2.scenes.room.room.livingroom_rand"
-  },
-  {
-    "category": "Scene",
-    "name": "infinigen2.scenes.room.room.livingroom_with_smallobj_rand"
   },
   {
     "category": "Scene",

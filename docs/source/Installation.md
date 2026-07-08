@@ -96,7 +96,7 @@ git clone --recurse-submodules https://github.com/princeton-vl/infinigen.git
 cd infinigen
 conda create --name infinigen python=3.11
 conda activate infinigen
-INFINIGEN_MINIMAL_INSTALL=False INFINIGEN_INSTALL_TERRAIN=True pip install -e ".[v1]"
+INFINIGEN_MINIMAL_INSTALL=False INFINIGEN_INSTALL_TERRAIN=True pip install -e ".[infinigen1]"
 ```
 
 To additionally build the OpenGL ground-truth annotator, also set

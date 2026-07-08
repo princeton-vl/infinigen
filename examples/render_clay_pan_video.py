@@ -105,7 +105,7 @@ def main():
 
     with time_step(times, "livingroom"):
         gen_rng, rng = rng.spawn(2)
-        living = room.livingroom_with_smallobj_rand(
+        living = room.livingroom_rand(
             rng=gen_rng, dimensions=None, frame_start=0, frame_end=0
         )
     dimensions = living.dimensions

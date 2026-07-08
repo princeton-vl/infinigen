@@ -121,11 +121,7 @@ def _build(pathspec: str, kind: str) -> list[tuple]:
 
 # Generators we cannot assert deterministic yet, with the blocking reason.
 # These flip to expected-pass once the dependency lands.
-_DETERMINISM_BLOCKED = {
-    "livingroom_nofurniture_rand": "needs procfunc bpy_nocollide_data_name fix (procfunc #131, arrives via 0.33 migration #733)",
-    "livingroom_rand": "needs procfunc #131 (#733); also a slow furnished build",
-    "livingroom_with_smallobj_rand": "needs procfunc #131 (#733); small-object cull determinism fixed here via deterministic pool naming (verified on the 0.33 stack)",
-}
+_DETERMINISM_BLOCKED = {}
 
 
 def _determinism_params():
