@@ -110,13 +110,12 @@ def resolve_gpu_ids(gpus_arg: str) -> list[str]:
     return ids
 
 
-def list_category(category: str, extra_args: list[str]) -> list[str]:
+def list_items(selector: list[str], extra_args: list[str]) -> list[str]:
     cmd = [
         sys.executable,
         "-m",
         "infinigen2.list",
-        "--categories",
-        category,
+        *selector,
         "--missing_values",
         "drop",
         "--columns",
@@ -191,13 +190,17 @@ def main() -> int:
     object_limit = int(os.environ.get("OBJECT_LIMIT", "-1"))
     scene_limit = int(os.environ.get("SCENE_LIMIT", "-1"))
     mask_limit = int(os.environ.get("MASK_LIMIT", "-1"))
+    preset_limit = int(os.environ.get("PRESET_LIMIT", "-1"))
+    environment_limit = int(os.environ.get("ENVIRONMENT_LIMIT", "-1"))
 
     output_path = args.output_path
     slot_count = len(slot_gpus)
-    materials_all = list_category("Material", extra_args)
-    objects_all = list_category("Object", extra_args)
-    scenes_all = list_category("Scene", extra_args)
-    masks_all = list_category("Mask", extra_args)
+    materials_all = list_items(["--categories", "Material"], extra_args)
+    objects_all = list_items(["--categories", "Object"], extra_args)
+    scenes_all = list_items(["--categories", "Scene"], extra_args)
+    masks_all = list_items(["--categories", "Mask"], extra_args)
+    presets_all = list_items(["--presets"], extra_args)
+    environments_all = list_items(["--categories", "Environment"], extra_args)
 
     procs: list[tuple[int, str, subprocess.Popen[str]]] = []
     runner = render_runner(output_path)
@@ -207,11 +210,16 @@ def main() -> int:
         objects = shard_items(objects_all, slot_count, slot_idx, object_limit)
         scenes = shard_items(scenes_all, slot_count, slot_idx, scene_limit)
         masks = shard_items(masks_all, slot_count, slot_idx, mask_limit)
+        presets = shard_items(presets_all, slot_count, slot_idx, preset_limit)
+        environments = shard_items(
+            environments_all, slot_count, slot_idx, environment_limit
+        )
 
         print(
             f"slot={slot_idx}/{slot_count - 1} gpu={gpu_id} "
             f"materials={count_items(materials)} objects={count_items(objects)} "
-            f"scenes={count_items(scenes)} masks={count_items(masks)}"
+            f"scenes={count_items(scenes)} masks={count_items(masks)} "
+            f"presets={count_items(presets)} environments={count_items(environments)}"
         )
 
         env = os.environ.copy()
@@ -222,6 +230,8 @@ def main() -> int:
         env["OBJECTS"] = objects
         env["SCENES"] = scenes
         env["MASKS"] = masks
+        env["PRESETS"] = presets
+        env["ENVIRONMENTS"] = environments
 
         cmd = ["scripts/integration_v2/launch.sh", str(output_path), "1", *extra_args]
         proc = subprocess.Popen(cmd, env=env, text=True)
