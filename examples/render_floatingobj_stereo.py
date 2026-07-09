@@ -52,7 +52,7 @@ def main():
         frame_end=23,
         resolution=(1280, 720),
         min_samples=32,
-        max_samples=512,
+        max_samples=32,
         film_exposure=2.0,
     )
 
@@ -68,13 +68,13 @@ def main():
     rng = np.random.default_rng(seed)
     rngs = rng.spawn(6)
 
-    dimensions = room_shape.room_dimensions_distribution(rngs[0])
+    dimensions = room_shape.room_dimensions_rand(rngs[0])
     room_bbox = (np.zeros(3), np.array(dimensions))
 
     times = {}
 
     with time_step(times, "livingroom"):
-        living = room.livingroom_distribution(
+        living = room.livingroom_rand(
             rng=rngs[1],
             dimensions=dimensions,
             frame_start=render_kwargs["frame_start"],
@@ -83,7 +83,7 @@ def main():
     objects = list(living.all_objects)
 
     with time_step(times, "floating_objects"):
-        floating = floating_objects.floating_objects_distribution(
+        floating = floating_objects.floating_objects_rand(
             rng=rngs[2],
             colliders=living.colliders,
             bbox=room_bbox,
@@ -125,7 +125,7 @@ def main():
 
     light_rng = rngs[5]
     with time_step(times, "floating_lights"):
-        light_result = floating_objects.floating_lights_distribution(
+        light_result = floating_objects.floating_lights_rand(
             rng=light_rng,
             colliders=floating.colliders,
             bbox=room_bbox,
