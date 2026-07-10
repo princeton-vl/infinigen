@@ -25,4 +25,13 @@ RUN conda init bash && \
     . ~/.bashrc && \
     conda create --name infinigen python=3.11 -y && \
     conda activate infinigen && \
+    conda install -y -c conda-forge \
+        "numpy<2" \
+        "scipy" \
+        "scikit-image<0.20.0" \
+        "scikit-learn<1.4.0" \
+        "pandas" \
+        "matplotlib" \
+        "tqdm" \
+        "networkx" && \
     pip install -e ".[dev]"
