@@ -18,18 +18,19 @@ __all__ = [
     "plastic_high_gloss",
     "plastic_opaque",
     "plastic_opaque_rand",
+    "plastic_rand",
     "plastic_sandblasted",
     "plastic_soft_touch",
     "plastic_tough_packaging",
     "plastic_tough_packaging_preset",
     "plastic_translucent_bumps",
     "plastic_translucent_bumps_preset",
-    "plastic_translucent_rand",
     "plastic_white_textured",
     "plastic_white_textured_preset",
 ]
 
 
+"""
 def plastic_translucent_rand(
     rng: pf.RNG,
     vector: pf.ProcNode[pf.Vector],
@@ -71,6 +72,70 @@ def plastic_translucent_rand(
         noise_detail=noise_detail,
         noise_distortion_strength=1.0,
         noise_distortion_size=pf.random.uniform(rng, 0.0, 1.0),
+        noise_height=noise_height,
+        noise_seed=noise_seed,
+    )
+"""
+
+
+def plastic_rand(
+    rng: pf.RNG,
+    vector: pf.ProcNode[pf.Vector],
+) -> pf.Material:
+    r_trans, r_gloss, r_texture, r_value, r_sat, r_hue = rng.spawn(6)
+    r_rough, r_spec, r_transamt, r_c2 = rng.spawn(4)
+    r_detail, r_dist, r_distsize, r_nheight, r_seed = rng.spawn(5)
+
+    m_trans = pf.random.uniform(r_trans, 0.0, 1.0) ** 2.0
+    m_gloss = pf.random.uniform(r_gloss, 0.0, 1.0)
+    m_texture = pf.random.uniform(r_texture, 0.0, 1.0)
+    m_value = pf.random.uniform(r_value, 0.0, 1.0)
+    m_sat = pf.random.uniform(r_sat, 0.0, 1.0) ** 1.4
+    hue = pf.random.uniform(r_hue, 0.0, 1.0)
+
+    gloss_eff = m_gloss + (1.0 - m_gloss) * m_trans * 0.7
+
+    value = 0.02 + 0.95 * m_value**1.2
+    saturation = m_sat * 0.9
+    base_color = pf.color.hsv_color(hue=hue, saturation=saturation, value=value)
+
+    c2_scale = 1.0 + (pf.random.uniform(r_c2, 0.6, 1.4) - 1.0) * m_texture
+    color_2 = pf.color.hsv_color(hue=hue, saturation=saturation, value=value * c2_scale)
+
+    roughness = 0.9 + (0.02 - 0.9) * gloss_eff
+    roughness_min = roughness * pf.random.uniform(r_rough, 0.7, 1.0)
+
+    specular = 0.2 + (0.9 - 0.2) * gloss_eff
+    specular_min = specular * pf.random.uniform(r_spec, 0.75, 1.0)
+
+    ior = 1.52 + (1.25 - 1.52) * m_trans
+    transmission = m_trans * pf.random.uniform(r_transamt, 0.4, 1.0)
+
+    noise_size = 0.0005 * 4000.0 ** (1.0 - m_texture)
+    noise_height = m_texture * pf.random.uniform(r_nheight, 0.1, 1.2)
+    noise_detail = pf.random.uniform(r_detail, 0.0, 5.0)
+    noise_distortion_strength = pf.random.uniform(r_dist, 0.4, 1.0)
+    noise_distortion_size = pf.random.uniform(r_distsize, 0.0, 1.0)
+    noise_seed = pf.random.uniform(r_seed, -1000.0, 1000.0)
+
+    return _plastic(
+        vector=vector,
+        surface_color_1=base_color,
+        surface_color_2=color_2,
+        surface_min_roughness=roughness_min,
+        surface_max_roughness=roughness,
+        surface_min_specular=specular_min,
+        surface_max_specular=specular,
+        surface_ior=ior,
+        surface_transmission=transmission,
+        subsurface_weight=0.0,
+        subsurface_radius=(1.0, 0.2, 0.1),
+        subsurface_scale=0.05,
+        subsurface_anisotropy=0.0,
+        noise_size=noise_size,
+        noise_detail=noise_detail,
+        noise_distortion_strength=noise_distortion_strength,
+        noise_distortion_size=noise_distortion_size,
         noise_height=noise_height,
         noise_seed=noise_seed,
     )

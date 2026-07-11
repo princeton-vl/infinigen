@@ -388,6 +388,10 @@
   },
   {
     "category": "Material",
+    "name": "infinigen2.shaders.functionality_lists.paint_patterned_rand"
+  },
+  {
+    "category": "Material",
     "name": "infinigen2.shaders.functionality_lists.wall_material_rand"
   },
   {
@@ -628,19 +632,13 @@
   },
   {
     "category": "Material",
-    "name": "infinigen2.shaders.base_materials.plastic.plastic_opaque_rand",
+    "name": "infinigen2.shaders.base_materials.plastic.plastic_rand",
     "presets": [
       "plastic_black_rubberized_preset",
-      "plastic_tough_packaging_preset",
-      "plastic_white_textured_preset"
-    ]
-  },
-  {
-    "category": "Material",
-    "name": "infinigen2.shaders.base_materials.plastic.plastic_translucent_rand",
-    "presets": [
       "plastic_black_translucent_preset",
-      "plastic_translucent_bumps_preset"
+      "plastic_tough_packaging_preset",
+      "plastic_translucent_bumps_preset",
+      "plastic_white_textured_preset"
     ]
   },
   {

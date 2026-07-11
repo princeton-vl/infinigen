@@ -3,7 +3,6 @@
 
 # Authors: Karhan Kayan
 
-import functools
 from typing import NamedTuple
 
 import numpy as np
@@ -1925,7 +1924,8 @@ def _granite_sandy_rand(
     )
 
 
-def granite_rand(
+'''
+def granite_styles_rand(
     rng: pf.RNG,
     vector: t.SocketOrVal[pf.Vector],
     w: float | None = None,
@@ -1964,6 +1964,7 @@ def granite_rand(
         max_roughness=max_roughness,
     )
     return pf.Material(surface=result.surface, displacement=result.displacement)
+'''
 
 
 def granite_smooth_rand(
@@ -1990,6 +1991,114 @@ def granite_smooth_rand(
         surface=result.surface,
         displacement=pf.nodes.math.constant((0.0, 0.0, 0.0)),
     )
+
+
+def granite_rand(
+    rng: pf.RNG,
+    vector: t.SocketOrVal[pf.Vector],
+    w: float | None = None,
+    min_roughness: float | None = None,
+    max_roughness: float | None = None,
+) -> pf.Material:
+    """Continuous granite distribution unifying the 7 granite_rand styles.
+
+    Four master params replace the style choice: warmth (cool<->warm base),
+    sparkle (monochrome sandy <-> distinct crystals), grain (coarse masonry <->
+    fine crystal), weathering (polished no-displacement <-> rough displaced
+    cobble). Each qualitative effect rides a single master.
+    """
+    r_warmth, r_sparkle, r_grain, r_weather, r_w = rng.spawn(5)
+    r_cool, r_warm, r_dark, r_light1, r_light2 = rng.spawn(5)
+    r_size, r_rough, r_spec, r_hscale = rng.spawn(4)
+    r_hb, r_mica, r_quartz, r_feld = rng.spawn(4)
+
+    warmth = pf.random.uniform(r_warmth, 0.0, 1.0)
+    sparkle = pf.random.uniform(r_sparkle, 0.15, 1.0)
+    grain = pf.random.uniform(r_grain, 0.0, 1.0)
+    weathering = pf.random.uniform(r_weather, 0.0, 1.0)
+    if w is None:
+        w = pf.random.uniform(r_w, 0.0, 100.0)
+
+    base_color = pf.nodes.color.mix_rgb(
+        factor=warmth, a=_cool_color_rand(r_cool), b=_warm_color_rand(r_warm)
+    )
+    dark_color = _dark_accent_color_rand(r_dark)
+    light_color = _light_accent_color_rand(r_light1)
+    light_color_2 = _light_accent_color_rand(r_light2)
+    mica_color = pf.nodes.color.mix_rgb(factor=sparkle, a=base_color, b=dark_color)
+    quartz_color = pf.nodes.color.mix_rgb(factor=sparkle, a=base_color, b=light_color)
+    feldspar_color = pf.nodes.color.mix_rgb(
+        factor=sparkle, a=base_color, b=light_color_2
+    )
+
+    size = pf.random.log_normal(r_size, 100.0**grain, 0.25)
+    base_rough = 0.08 + weathering * 0.72
+    if min_roughness is None or max_roughness is None:
+        min_roughness, max_roughness = _sample_pair_bounded(
+            r_rough, base_rough, min(base_rough + 0.15, 0.98), std=0.06
+        )
+    min_spec, max_spec = _sample_pair_bounded(r_spec, 0.05, 0.11, std=0.03)
+    height_scale = weathering * pf.random.uniform(r_hscale, 0.1, 0.5)
+
+    hornblende_size = pf.random.log_normal(r_hb, 0.3, 0.25)
+    hornblende_color_variation = pf.random.clip_gaussian(r_hb, 0.5, 0.15)
+    hornblende_height = pf.random.log_normal(r_hb, 0.1, 0.3)
+
+    mica_size = pf.random.log_normal(r_mica, 0.5, 0.25)
+    mica_spread = pf.random.clip_gaussian(r_mica, 0.3 + 0.55 * sparkle, 0.12)
+    mica_smoothness = pf.random.clip_gaussian(r_mica, 0.1, 0.05, low=0.0, high=0.3)
+    mica_color_variation = pf.random.clip_gaussian(r_mica, 0.3 + 0.45 * sparkle, 0.15)
+    mica_height = pf.random.log_normal(r_mica, 0.2 + weathering * 1.6, 0.3)
+
+    quartz_size = pf.random.log_normal(r_quartz, 0.2 + 0.3 * sparkle, 0.25)
+    quartz_spread = pf.random.clip_gaussian(r_quartz, 0.4 + 0.45 * sparkle, 0.12)
+    quartz_smoothness = pf.random.clip_gaussian(r_quartz, 0.1, 0.05, low=0.0, high=0.3)
+    quartz_color_variation = pf.random.clip_gaussian(
+        r_quartz, 0.3 + 0.45 * sparkle, 0.15
+    )
+    quartz_height = pf.random.log_normal(r_quartz, 0.3 + weathering * 2.4, 0.3)
+
+    feldspar_size = pf.random.log_normal(r_feld, 0.3, 0.25)
+    feldspar_spread = pf.random.clip_gaussian(r_feld, 0.2 + 0.15 * sparkle, 0.08)
+    feldspar_smoothness = pf.random.clip_gaussian(r_feld, 0.15, 0.06, low=0.0, high=0.4)
+    feldspar_color_variation = pf.random.clip_gaussian(
+        r_feld, 0.3 + 0.45 * sparkle, 0.15
+    )
+    feldspar_height = pf.random.log_normal(r_feld, 0.5, 0.3)
+
+    result = granite(
+        vector=vector,
+        w=w,
+        size=size,
+        min_roughness=min_roughness,
+        max_roughness=max_roughness,
+        min_spec=min_spec,
+        max_spec=max_spec,
+        height_scale=height_scale,
+        hornblende_size=hornblende_size,
+        hornblende_color=base_color,
+        hornblende_color_variation=hornblende_color_variation,
+        hornblende_height=hornblende_height,
+        mica_size=mica_size,
+        mica_spread=mica_spread,
+        mica_smoothness=mica_smoothness,
+        mica_color=mica_color,
+        mica_color_variation=mica_color_variation,
+        mica_height=mica_height,
+        quartz_size=quartz_size,
+        quartz_spread=quartz_spread,
+        quartz_smoothness=quartz_smoothness,
+        quartz_color=quartz_color,
+        quartz_color_variation=quartz_color_variation,
+        quartz_height=quartz_height,
+        feldspar_size=feldspar_size,
+        feldspar_spread=feldspar_spread,
+        feldspar_smoothness=feldspar_smoothness,
+        feldspar_color=feldspar_color,
+        feldspar_color_variation=feldspar_color_variation,
+        feldspar_height=feldspar_height,
+    )
+    return pf.Material(surface=result.surface, displacement=result.displacement)
 
 
 if __name__ == "__main__":

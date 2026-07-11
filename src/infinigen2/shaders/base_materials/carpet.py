@@ -3,7 +3,6 @@
 
 # Transpiled into procfunc/v2 format by Alexander Raistrick
 
-import functools
 from typing import NamedTuple
 
 import procfunc as pf
@@ -951,6 +950,187 @@ def _thread_uv_noise_overlay_rand(
 def carpet_rand(
     rng: pf.RNG,
     vector: t.SocketOrVal[pf.Vector],
+) -> pf.Material:
+    r_cw0, r_cw1, r_cw2, r_sat, r_hue, r_wsat, r_wval, r_weftval, r_pv1, r_pv2 = (
+        rng.spawn(10)
+    )
+    r_weaver, r_streak, r_squish, r_stretch, r_shared, r_pass_a, r_pass_b = rng.spawn(7)
+    r_thread, r_overlay, r_rough, r_sheenw, r_sheenr = rng.spawn(5)
+    coord_warp_result = coord_warp(
+        vector=vector,
+        size=0.0014,
+        strength=pf.random.uniform(r_cw0, 0.0, 3.0),
+        detail=2.0,
+        phase=0.0,
+    )
+    coord_warp_result = coord_warp(
+        vector=coord_warp_result.vector,
+        size=0.005,
+        strength=pf.random.uniform(r_cw1, 0.0, 3.0),
+        detail=4.0,
+        phase=0.0,
+    )
+    coord_warp_result = coord_warp(
+        vector=coord_warp_result.vector,
+        size=0.04,
+        strength=pf.random.uniform(r_cw2, 0.0, 0.3),
+        detail=2.0,
+        phase=0.0,
+    )
+
+    sat_base = pf.random.clip_gaussian(r_sat, 0.0, 0.25, 0.02, 0.95)
+    hue = pf.random.clip_gaussian(r_hue, 40.0 / 360.0, 25.0 / 360.0, 0.0, 1.0)
+    warp_sat = pf.random.uniform(r_wsat, 0.0, 0.4)
+    warp_val = pf.random.uniform(r_wval, 0.02, 0.15)
+    warp_warp_color = pf.color.hsv_color(hue=hue, saturation=warp_sat, value=warp_val)
+    weft_val = pf.random.uniform(r_weftval, 0.02, 0.08)
+    weft_weft_color = pf.color.hsv_color(hue=hue, saturation=warp_sat, value=weft_val)
+    pattern_sat = 0.4 + 0.5 * sat_base
+    pattern_val_1 = (1 - 0.6 * sat_base) * pf.random.uniform(r_pv1, 0.35, 0.85)
+    pattern_val_2 = pf.random.uniform(r_pv2, 0.02, 0.12)
+    color_1 = pf.color.hsv_color(hue=hue, saturation=pattern_sat, value=pattern_val_1)
+    color_2 = pf.color.hsv_color(hue=hue, saturation=pattern_sat, value=pattern_val_2)
+
+    weaver_result = _carpet_weaver_rand(
+        r_weaver,
+        vector=coord_warp_result.vector,
+        warp_warp_color=warp_warp_color,
+        weft_weft_color=weft_weft_color,
+    )
+
+    # Master streakiness coordinates all params: 0 = old noisy branch, 1 = streak branches
+    streak = pf.random.uniform(r_streak, 0.0, 1.0)
+    cell_squish = pf.nodes.math.power(
+        base=30.0, exponent=streak * pf.random.uniform(r_squish, 0.5, 1.0)
+    )
+    cell_id = weaver_result.cell_id / pf.nodes.math.combine_xyz(
+        x=1.0, y=cell_squish, z=1.0
+    )
+    stretch = pf.nodes.math.power(
+        base=100.0, exponent=streak * pf.random.uniform(r_stretch, 0.5, 1.0)
+    )
+    size_noisy = pf.random.uniform(r_shared, 0.001, 0.00625)
+    size_streak = pf.random.uniform(r_shared, 0.008, 0.03)
+    detail_noisy = pf.random.uniform(r_shared, 1.5, 2.0)
+    detail_streak = pf.random.uniform(r_shared, 0.0, 1.5)
+    blending_noisy = pf.random.uniform(r_shared, 0.05, 0.2)
+    blending_streak = pf.random.uniform(r_shared, 0.0001, 0.5)
+    shared_kw = dict(
+        coverage=pf.nodes.math.mix(
+            a=pf.random.uniform(r_shared, 0.45, 0.55),
+            b=pf.random.uniform(r_shared, 0.28, 0.40),
+            factor=streak,
+        ),
+        color_settings_color_1=color_1,
+        color_settings_color_2=color_2,
+        color_settings_spread=pf.nodes.math.mix(
+            a=pf.random.uniform(r_shared, 0.3, 0.5),
+            b=pf.random.uniform(r_shared, 0.13, 0.3),
+            factor=streak,
+        ),
+        color_settings_blending=pf.nodes.math.mix(
+            a=blending_noisy, b=blending_streak, factor=streak
+        ),
+        noise_settings_type=pf.random.uniform(r_shared, 1.0, 3.0),
+        noise_settings_seed=pf.random.uniform(r_shared, 0.0, 5.3),
+        noise_settings_size=pf.nodes.math.mix(
+            a=size_noisy, b=size_streak, factor=streak
+        ),
+        noise_settings_invert=pf.nodes.math.mix(
+            a=pf.random.uniform(r_shared, 0.0, 1.0), b=1.0, factor=streak
+        ),
+        noise_settings_detail=pf.nodes.math.mix(
+            a=detail_noisy, b=detail_streak, factor=streak
+        ),
+        noise_settings_roughness=0.5,
+        noise_settings_lacunarity=2.0,
+    )
+    result = _carpet_cell_randomizer(
+        color=weaver_result.color,
+        cell_id=cell_id,
+        thread_mask=weaver_result.thread_mask,
+        alpha_warp=pf.nodes.math.mix(
+            a=pf.random.uniform(r_pass_a, 0.85, 1.0),
+            b=pf.random.uniform(r_pass_a, 0.3, 0.9),
+            factor=streak,
+        ),
+        alpha_weft=pf.nodes.math.mix(
+            a=pf.random.uniform(r_pass_a, 0.85, 1.0),
+            b=pf.random.uniform(r_pass_a, 0.0, 0.3),
+            factor=streak,
+        ),
+        noise_settings_stretch=pf.nodes.math.combine_xyz(x=1.0, y=stretch, z=1.0),
+        **shared_kw,
+    )
+    result = _carpet_cell_randomizer(
+        color=result.color,
+        cell_id=result.cell_id,
+        thread_mask=result.thread_mask,
+        alpha_warp=0.0,
+        alpha_weft=streak * pf.random.uniform(r_pass_b, 0.0, 0.9),
+        noise_settings_stretch=pf.nodes.math.combine_xyz(x=stretch, y=1.0, z=1.0),
+        **shared_kw,
+    )
+
+    # These stages are no-ops at strength 0, so streak scales them in continuously
+    thread_result = _carpet_thread_randomizer(
+        color=result.color,
+        thread_id=weaver_result.thread_id,
+        thread_mask=weaver_result.thread_mask,
+        alpha_warp=streak * pf.random.uniform(r_thread, 0.0, 0.5),
+        alpha_weft=streak * pf.random.uniform(r_thread, 0.0, 0.5),
+        coverage=pf.random.uniform(r_thread, 0.2, 0.5),
+        color_settings_color_1=color_1,
+        color_settings_color_2=color_2,
+        color_settings_spread=pf.random.uniform(r_thread, 0.3, 0.7),
+        color_settings_blending=pf.random.uniform(r_thread, 0.01, 0.1),
+        noise_settings_type=pf.random.uniform(r_thread, 1.0, 2.0),
+        noise_settings_seed=pf.random.uniform(r_thread, 0.0, 10.0),
+        noise_settings_size=pf.random.uniform(r_thread, 0.02, 0.1),
+        noise_settings_detail=pf.random.uniform(r_thread, 1.0, 4.0),
+        noise_settings_roughness=0.5,
+        noise_settings_lacunarity=2.0,
+    )
+    overlay_strength = streak * pf.random.uniform(r_overlay, 0.0, 0.84)
+    overlay_scale = pf.random.uniform(r_overlay, 200.0, 600.0)
+    overlay_noise = pf.nodes.texture.noise(
+        vector=weaver_result.thread_uv, scale=overlay_scale
+    )
+    overlay_mapped = pf.nodes.math.map_range(
+        value=overlay_noise.fac, from_max=0.7, from_min=0.3
+    )
+    final_color = pf.nodes.color.mix_rgb(
+        factor=overlay_strength,
+        a=thread_result.color,
+        b=overlay_mapped.astype(dtype=pf.Color),
+        blend_type="SOFT_LIGHT",
+    )
+
+    roughness = pf.random.clip_gaussian(r_rough, 0.868182, 0.1, 0.0, 1.0)
+    sheen_weight = pf.random.clip_gaussian(r_sheenw, 0.168182, 0.1, 0.0, 1.0)
+    sheen_roughness = pf.random.clip_gaussian(r_sheenr, 0.640909, 0.1, 0.0, 1.0)
+    principled = pf.nodes.shader.principled_bsdf(
+        base_color=final_color,
+        roughness=roughness,
+        alpha=weaver_result.alpha,
+        subsurface_anisotropy=0.0,
+        sheen_weight=sheen_weight,
+        sheen_roughness=sheen_roughness,
+    )
+
+    displacement = pf.nodes.shader.displacement(
+        height=weaver_result.height,
+        midlevel=0.0,
+        normal=(0.0, 0.0, 0.0),
+    )
+
+    return pf.Material(surface=principled, displacement=displacement)
+
+
+"""
+def carpet_styles_rand(
+    rng: pf.RNG,
+    vector: t.SocketOrVal[pf.Vector],
 ):
     rng, rng_style_choice, rb0, rb1, rb2, rb3 = rng.spawn(6)
     # Dedicated rngs per independent draw so codegen can't reorder them across consumers
@@ -1037,3 +1217,4 @@ def carpet_rand(
     )
 
     return pf.Material(surface=principled, displacement=displacement)
+"""

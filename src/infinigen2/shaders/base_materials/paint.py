@@ -358,10 +358,13 @@ def paint_color_rand(
 ) -> pf.Color:
     hue = pf.random.uniform(rng, 0.0, 1.0)  # all hues
 
+    # folded ramp: ~half white/off-white (sat<=0.05), rest ramps continuously into color
+    if saturation is None:
+        sat_axis = pf.random.uniform(rng, -1.0, 1.0)
+        saturation = 0.7 * max(0.0, sat_axis) ** 1.4 + pf.random.uniform(rng, 0.0, 0.05)
     if value is None:
-        value = pf.random.clip_gaussian(rng, 0.6, 0.3, 0.1, 0.9)
-    sat = pf.random.uniform(rng, 0, 0.5) * (1 - value) ** 2
-    return pf.color.hsv_color(hue=hue, saturation=sat, value=value)
+        value = pf.random.clip_gaussian(rng, 0.85 - 0.6 * saturation, 0.15, 0.15, 0.95)
+    return pf.color.hsv_color(hue=hue, saturation=saturation, value=value)
 
 
 def paint_rand(
