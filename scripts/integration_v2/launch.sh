@@ -102,7 +102,7 @@ for i in {0..5}; do
 done
 
 # SCENES VISUAL CHECK
-for i in {0..5}; do
+for i in {0..8}; do
     echo "$SCENES" | xargs $XARGS "${RENDER_RUNNER_ARGS[@]}" {} render_cycles \
         $GEN_ARGS --output $OUTPUT_PATH/scene-{}-demo-cycles-$i --seed $i \
         --passes rgb -r 480 480 -s 256

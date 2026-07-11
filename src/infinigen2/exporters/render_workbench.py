@@ -94,6 +94,10 @@ def render_workbench(
         shading.studio_light = matcap_light
     bpy.context.scene.display.render_aa = "16" if samples >= 16 else "8"
 
+    # FLAT SHADING - mirror render_cycles so geometry facets read in workbench
+    bpy.ops.object.select_all(action="SELECT")
+    bpy.ops.object.shade_flat()
+
     if displacement_mode not in [
         DisplacementMode.NONE,
         DisplacementMode.REALIZE_MESH,

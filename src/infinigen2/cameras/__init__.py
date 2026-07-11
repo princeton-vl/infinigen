@@ -1,4 +1,4 @@
-from .framing import camera_with_distance_framing_object
+from .framing import camera_with_distance_framing_objects
 from .monocular import (
     linear_pan_camera_rand,
     material_orbit_camera_rand,
@@ -15,7 +15,7 @@ from .stereo import (
 from .util import camera_collision_check, total_bbox
 
 __all__ = [
-    "camera_with_distance_framing_object",
+    "camera_with_distance_framing_objects",
     "stereo_cameras_in_bbox_rand",
     "stereo_random_walk_camera",
     "monocular_camera_in_bbox_rand",

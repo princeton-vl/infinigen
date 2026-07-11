@@ -9,19 +9,19 @@ import procfunc as pf
 from infinigen2.util import camera_projection
 
 __all__ = [
-    "camera_with_distance_framing_object",
+    "camera_with_distance_framing_objects",
 ]
 
 
 @pf.tracer.generator
-def camera_with_distance_framing_object(
-    target_object: pf.MeshObject,
+def camera_with_distance_framing_objects(
+    target_objects: list[pf.MeshObject],
     direction: pf.Vector,
     center_location: pf.Vector | None = None,
     camera: pf.CameraObject | None = None,
     margin_pct: float = 0.05,
     use_bbox: bool = False,
-):
+) -> pf.CameraObject:
     """
     Args:
         margin_pct: What percent of the image width/height should remain empty around the object
@@ -34,11 +34,13 @@ def camera_with_distance_framing_object(
 
     resolution = camera_projection.bpy_resolution()
 
-    bbox = pf.ops.attr.bbox_min_max(target_object, global_coords=True)
+    bounds = [pf.ops.attr.bbox_min_max(o, global_coords=True) for o in target_objects]
+    bbox_min = np.min([lo for lo, _ in bounds], axis=0)
+    bbox_max = np.max([hi for _, hi in bounds], axis=0)
     if center_location is None:
-        center_location = (bbox[0] + bbox[1]) / 2
+        center_location = pf.Vector((bbox_min + bbox_max) / 2)
 
-    query_distance = max(bbox[1] - bbox[0]) * 2
+    query_distance = max(bbox_max - bbox_min) * 2
     cam_rotation = (-direction).to_track_quat("-Z", "Y").to_euler()
     pf.ops.object.set_transform(
         camera,
@@ -47,9 +49,14 @@ def camera_with_distance_framing_object(
     )
 
     if use_bbox:
-        obj_points = pf.ops.attr.bbox_corners(target_object, global_coords=True)
+        points = [
+            pf.ops.attr.bbox_corners(o, global_coords=True) for o in target_objects
+        ]
     else:
-        obj_points = pf.ops.attr.vertex_positions(target_object, global_coords=True)
+        points = [
+            pf.ops.attr.vertex_positions(o, global_coords=True) for o in target_objects
+        ]
+    obj_points = np.concatenate(points)
 
     projected = camera_projection.project_points(camera, obj_points)
     u, v, _ = projected.T

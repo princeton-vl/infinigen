@@ -10,7 +10,7 @@ import numpy as np
 import procfunc as pf
 from procfunc import types as t
 
-from infinigen2.cameras import camera_with_distance_framing_object
+from infinigen2.cameras import camera_with_distance_framing_objects
 from infinigen2.lighting import sky_lighting
 from infinigen2.objects.dev import banana
 from infinigen2.shaders.dev import developer_grid
@@ -110,18 +110,28 @@ def demo_cube(size: float = 1.0) -> pf.MeshObject:
 def object_demo(
     rng: pf.RNG,
     obj: pf.MeshObject | None = None,
+    all_objects: list[pf.MeshObject] | None = None,
     camera: pf.CameraObject | None = None,
     environment: pf.World | None = None,
 ) -> DevSceneResult:
-    if obj is None:
+    if obj is not None:
+        assert all_objects is None, "object_demo takes obj or all_objects, not both"
+        all_objects = [obj]
+    if all_objects is None:
         logger.warning("No object provided; using a default object.")
-        obj = demo_cube()
-    bbox = pf.ops.attr.bbox_min_max(obj, global_coords=True)
-    obj.item().location.z -= bbox[0][-1]
+        all_objects = [demo_cube()]
+
+    bounds = [pf.ops.attr.bbox_min_max(o, global_coords=True) for o in all_objects]
+    bbox_min = np.min([lo for lo, _ in bounds], axis=0)
+    bbox_max = np.max([hi for _, hi in bounds], axis=0)
+    for o in all_objects:
+        o.item().location.z -= bbox_min[-1]
+    bbox_max[-1] -= bbox_min[-1]
+    bbox_min[-1] = 0.0
 
     if camera is None:
-        camera = camera_with_distance_framing_object(
-            obj, t.Vector((1, 1, 0.4)), margin_pct=0.1
+        camera = camera_with_distance_framing_objects(
+            all_objects, t.Vector((1, 1, 0.4)), margin_pct=0.1, use_bbox=True
         )
 
     if environment is None:
@@ -132,12 +142,13 @@ def object_demo(
     background = grid_plane()
 
     ref_rad = 0.3
-    dims = np.array(obj.item().dimensions)
-    pos = (-dims[0] / 2 - ref_rad - 0.1, 0, 0)
+    pos = (bbox_min[0] - ref_rad - 0.1, 0, 0)
     scale_ref = scale_reference(location=pos, radius=ref_rad)
 
     return DevSceneResult(
-        lights=[environment], all_objects=[obj, background, scale_ref], cameras=[camera]
+        lights=[environment],
+        all_objects=[*all_objects, background, scale_ref],
+        cameras=[camera],
     )
 
 
@@ -282,8 +293,8 @@ def material_plane_horizontal_uv(
     plane = grid_plane()
     ref = scale_reference(location=t.Vector((0.65, 0.0, -0.05)))
 
-    cam = camera_with_distance_framing_object(
-        obj, t.Vector((-0.7, -1.0, 1.2)), margin_pct=-0.425
+    cam = camera_with_distance_framing_objects(
+        [obj], t.Vector((-0.7, -1.0, 1.2)), margin_pct=-0.425
     )
 
     if environment is None:
@@ -382,7 +393,7 @@ def material_cube(
     horiz = t.Vector((5, -4, 0))
     cam_elevation_deg = 45
     cam_dir = t.Vector((5, -4, horiz.length * np.tan(np.deg2rad(cam_elevation_deg))))
-    cam = camera_with_distance_framing_object(obj, cam_dir, margin_pct=0.05)
+    cam = camera_with_distance_framing_objects([obj], cam_dir, margin_pct=0.05)
     plane = grid_plane()
     if environment is None:
         environment = _demo_sky()

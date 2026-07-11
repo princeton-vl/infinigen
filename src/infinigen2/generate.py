@@ -52,6 +52,7 @@ from infinigen2.exporters.util.format import (
 )
 from infinigen2.exporters.util.blender_render import DisplacementMode
 from infinigen2 import GENERATORS_MANIFEST
+from infinigen2.cameras import camera_with_distance_framing_objects
 from infinigen2.exporters.realize_mesh import realize_scene
 from procfunc.util.manifest import import_item
 from procfunc.util.teardown import skip_teardown_on_exit
@@ -362,19 +363,27 @@ def _centroid_camera(
     return camera
 
 
+def _dummy_camera(data: dict) -> pf.CameraObject:
+    floor = data.get("floor")
+    if floor is not None:
+        return _centroid_camera(data["objects"], (0.2, 0.2, 0.5), footprint=floor)
+    camera = camera_with_distance_framing_objects(
+        data["objects"], pf.Vector((1, 1, 0.4)), margin_pct=0.05, use_bbox=True
+    )
+    camera.item().name = "Camera"
+    return camera
+
+
 def _ensure_cameras_and_lights(data: dict):
     """Create dummy camera/lights if none exist. Mutates data in-place."""
     cameras = data.get("cameras", [])
     if not isinstance(cameras, cg.Proxy) and len(cameras) == 0:
-        dummy_camera = _centroid_camera(
-            data["objects"], (0.2, 0.2, 0.5), footprint=data.get("floor")
-        )
-        data["cameras"] = [dummy_camera]
+        data["cameras"] = [_dummy_camera(data)]
         cameras = data["cameras"]
 
     lights = data.get("lights", [])
     if not isinstance(lights, cg.Proxy) and len(lights) == 0:
-        light = pf.ops.primitives.point_lamp(energy=150)
+        light = pf.ops.primitives.point_lamp(energy=1500)
         loc = cameras[0].item().matrix_world @ pf.Vector((0, 0.5, -1))
         pf.ops.object.set_transform(light, location=loc)
         data["lights"] = [light]
@@ -501,6 +510,7 @@ def _unpack_by_category(category: str, result, data: dict):
                 data.setdefault("lights", []).append(result.light)
         case "Scene":
             data["objects"] += result.all_objects
+            data["all_objects"] = result.all_objects
             data["cameras"] += getattr(result, "cameras", [])
             data["lights"] += getattr(result, "lights", [])
             if hasattr(result, "colliders"):
