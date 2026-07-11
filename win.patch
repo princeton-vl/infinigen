@@ -1,0 +1,338 @@
+From a7742455b2341b0603a431eca0200827eacb51d6 Mon Sep 17 00:00:00 2001
+From: XingShuo <928160430@qq.com>
+Date: Fri, 28 Jul 2023 14:23:16 +0800
+Subject: [PATCH] patch1
+
+---
+ worldgen/terrain/assets/landtiles/core.py                 | 2 +-
+ worldgen/terrain/source/cpu/elements/atmosphere.cpp       | 2 +-
+ worldgen/terrain/source/cpu/elements/ground.cpp           | 2 +-
+ worldgen/terrain/source/cpu/elements/landtiles.cpp        | 2 +-
+ worldgen/terrain/source/cpu/elements/mountains.cpp        | 2 +-
+ .../terrain/source/cpu/elements/upsidedown_mountains.cpp  | 2 +-
+ worldgen/terrain/source/cpu/elements/voronoi_rocks.cpp    | 2 +-
+ worldgen/terrain/source/cpu/elements/warped_rocks.cpp     | 2 +-
+ worldgen/terrain/source/cpu/elements/waterbody.cpp        | 2 +-
+ worldgen/terrain/source/cpu/meshing/visibility_test.cpp   | 2 +-
+ worldgen/terrain/source/cpu/surfaces/chunkyrock.cpp       | 2 +-
+ worldgen/terrain/source/cpu/surfaces/cobble_stone.cpp     | 2 +-
+ worldgen/terrain/source/cpu/surfaces/cracked_ground.cpp   | 2 +-
+ worldgen/terrain/source/cpu/surfaces/dirt.cpp             | 2 +-
+ worldgen/terrain/source/cpu/surfaces/ice.cpp              | 2 +-
+ worldgen/terrain/source/cpu/surfaces/mountain.cpp         | 2 +-
+ worldgen/terrain/source/cpu/surfaces/mud.cpp              | 2 +-
+ worldgen/terrain/source/cpu/surfaces/sand.cpp             | 2 +-
+ worldgen/terrain/source/cpu/surfaces/sandstone.cpp        | 2 +-
+ worldgen/terrain/source/cpu/surfaces/snow.cpp             | 2 +-
+ worldgen/terrain/source/cpu/surfaces/soil.cpp             | 2 +-
+ worldgen/terrain/source/cpu/surfaces/stone.cpp            | 2 +-
+ worldgen/terrain/utils/ctype_util.py                      | 8 +++++++-
+ 23 files changed, 29 insertions(+), 23 deletions(-)
+
+diff --git a/worldgen/terrain/assets/landtiles/core.py b/worldgen/terrain/assets/landtiles/core.py
+index aa2d075..5360b30 100644
+--- a/worldgen/terrain/assets/landtiles/core.py
++++ b/worldgen/terrain/assets/landtiles/core.py
+@@ -83,7 +83,7 @@ def assets_to_data(
+     N=2048,
+     do_smooth=False,
+ ):
+-    preset_name = str(folder).split("/")[-2]
++    preset_name = str(folder).replace("\\", "/").split("/")[-2]
+     data = {}
+     if land_process is None: path = folder/f"{AssetFile.Heightmap}.exr"
+     elif land_process == Process.Snowfall: path = folder/f"{Process.Snowfall}.{AssetFile.Heightmap}.exr"
+diff --git a/worldgen/terrain/source/cpu/elements/atmosphere.cpp b/worldgen/terrain/source/cpu/elements/atmosphere.cpp
+index b78308d..1a26cb7 100644
+--- a/worldgen/terrain/source/cpu/elements/atmosphere.cpp
++++ b/worldgen/terrain/source/cpu/elements/atmosphere.cpp
+@@ -15,7 +15,7 @@ extern "C" {
+     ) {
+         using namespace data;
+         #pragma omp parallel for
+-        for (size_t idx = 0; idx < size; idx++) {
++        for (int idx = 0; idx < size; idx++) {
+             atmosphere(
+                 positions[idx], sdfs + idx, meta_param,
+                 d_i_params, d_f_params, second_d_i_params, second_d_f_params
+diff --git a/worldgen/terrain/source/cpu/elements/ground.cpp b/worldgen/terrain/source/cpu/elements/ground.cpp
+index 8744d5c..78f2c95 100644
+--- a/worldgen/terrain/source/cpu/elements/ground.cpp
++++ b/worldgen/terrain/source/cpu/elements/ground.cpp
+@@ -19,7 +19,7 @@ extern "C" {
+         int n_auxiliaries = 1;
+         if (auxs == NULL) n_auxiliaries = 0;
+         #pragma omp parallel for
+-        for (size_t idx = 0; idx < size; idx++) {
++        for (int idx = 0; idx < size; idx++) {
+             ground(
+                 positions[idx], sdfs + idx, auxs + n_auxiliaries * idx, meta_param,
+                 d_i_params, d_f_params, second_d_i_params, second_d_f_params
+diff --git a/worldgen/terrain/source/cpu/elements/landtiles.cpp b/worldgen/terrain/source/cpu/elements/landtiles.cpp
+index 09c15cd..c6bead5 100644
+--- a/worldgen/terrain/source/cpu/elements/landtiles.cpp
++++ b/worldgen/terrain/source/cpu/elements/landtiles.cpp
+@@ -19,7 +19,7 @@ extern "C" {
+         int n_auxiliaries = 3;
+         if (auxs == NULL) n_auxiliaries = 0;
+         #pragma omp parallel for
+-        for (size_t idx = 0; idx < size; idx++) {
++        for (int idx = 0; idx < size; idx++) {
+             landtiles(
+                 positions[idx], sdfs + idx, auxs + n_auxiliaries * idx, meta_param,
+                 d_i_params, d_f_params, second_d_i_params, second_d_f_params
+diff --git a/worldgen/terrain/source/cpu/elements/mountains.cpp b/worldgen/terrain/source/cpu/elements/mountains.cpp
+index f5156f7..6e0cf23 100644
+--- a/worldgen/terrain/source/cpu/elements/mountains.cpp
++++ b/worldgen/terrain/source/cpu/elements/mountains.cpp
+@@ -16,7 +16,7 @@ extern "C" {
+     ) {
+         using namespace data;
+         #pragma omp parallel for
+-        for (size_t idx = 0; idx < size; idx++) {
++        for (int idx = 0; idx < size; idx++) {
+             mountains(positions[idx], sdfs + idx, d_i_params, d_f_params);
+         }
+     }
+diff --git a/worldgen/terrain/source/cpu/elements/upsidedown_mountains.cpp b/worldgen/terrain/source/cpu/elements/upsidedown_mountains.cpp
+index 3cade49..71fe855 100644
+--- a/worldgen/terrain/source/cpu/elements/upsidedown_mountains.cpp
++++ b/worldgen/terrain/source/cpu/elements/upsidedown_mountains.cpp
+@@ -18,7 +18,7 @@ extern "C" {
+         int n_auxiliaries = 1;
+         if (auxs == NULL) n_auxiliaries = 0;
+         #pragma omp parallel for
+-        for (size_t idx = 0; idx < size; idx++) {
++        for (int idx = 0; idx < size; idx++) {
+             upsidedown_mountains(positions[idx], sdfs + idx, auxs + n_auxiliaries * idx, d_i_params, d_f_params);
+         }
+     }
+diff --git a/worldgen/terrain/source/cpu/elements/voronoi_rocks.cpp b/worldgen/terrain/source/cpu/elements/voronoi_rocks.cpp
+index a8ab822..f3d2d1b 100644
+--- a/worldgen/terrain/source/cpu/elements/voronoi_rocks.cpp
++++ b/worldgen/terrain/source/cpu/elements/voronoi_rocks.cpp
+@@ -18,7 +18,7 @@ extern "C" {
+         int n_auxiliaries = 2;
+         if (auxs == NULL) n_auxiliaries = 0;
+         #pragma omp parallel for
+-        for (size_t idx = 0; idx < size; idx++) {
++        for (int idx = 0; idx < size; idx++) {
+             voronoi_rocks(
+                 positions[idx], sdfs + idx, auxs + n_auxiliaries * idx, meta_param, second_meta_param,
+                 d_i_params, d_f_params, second_d_i_params, second_d_f_params, third_d_i_params, third_d_f_params
+diff --git a/worldgen/terrain/source/cpu/elements/warped_rocks.cpp b/worldgen/terrain/source/cpu/elements/warped_rocks.cpp
+index 11d2936..0efd6b6 100644
+--- a/worldgen/terrain/source/cpu/elements/warped_rocks.cpp
++++ b/worldgen/terrain/source/cpu/elements/warped_rocks.cpp
+@@ -19,7 +19,7 @@ extern "C" {
+         int n_auxiliaries = 1;
+         if (auxs == NULL) n_auxiliaries = 0;
+         #pragma omp parallel for
+-        for (size_t idx = 0; idx < size; idx++) {
++        for (int idx = 0; idx < size; idx++) {
+             warped_rocks(
+                 positions[idx], sdfs + idx, auxs + n_auxiliaries * idx, meta_param,
+                 d_i_params, d_f_params, second_d_i_params, second_d_f_params
+diff --git a/worldgen/terrain/source/cpu/elements/waterbody.cpp b/worldgen/terrain/source/cpu/elements/waterbody.cpp
+index 9733931..08a9c9e 100644
+--- a/worldgen/terrain/source/cpu/elements/waterbody.cpp
++++ b/worldgen/terrain/source/cpu/elements/waterbody.cpp
+@@ -17,7 +17,7 @@ extern "C" {
+         int n_auxiliaries = 1;
+         if (auxs == NULL) n_auxiliaries = 0;
+         #pragma omp parallel for
+-        for (size_t idx = 0; idx < size; idx++) {
++        for (int idx = 0; idx < size; idx++) {
+             waterbody(
+                 positions[idx], sdfs + idx, auxs + n_auxiliaries * idx, meta_param, second_meta_param,
+                 d_i_params, d_f_params, second_d_i_params, second_d_f_params, third_d_i_params, third_d_f_params
+diff --git a/worldgen/terrain/source/cpu/meshing/visibility_test.cpp b/worldgen/terrain/source/cpu/meshing/visibility_test.cpp
+index 5aae9c1..3146413 100644
+--- a/worldgen/terrain/source/cpu/meshing/visibility_test.cpp
++++ b/worldgen/terrain/source/cpu/meshing/visibility_test.cpp
+@@ -488,7 +488,7 @@ void convex_hull_cutting_update() {
+             bool aligned_flag = 1;
+             for (int iv = 0; iv < 3; iv++)
+                 aligned_flag &= aligned[iv * 2] || aligned[iv * 2 + 1];
+-            if (not aligned_flag) {
++            if (! aligned_flag) {
+                 mesh::visibility[f] = 1;
+                 continue;
+             }
+diff --git a/worldgen/terrain/source/cpu/surfaces/chunkyrock.cpp b/worldgen/terrain/source/cpu/surfaces/chunkyrock.cpp
+index 4dba551..8c826bb 100644
+--- a/worldgen/terrain/source/cpu/surfaces/chunkyrock.cpp
++++ b/worldgen/terrain/source/cpu/surfaces/chunkyrock.cpp
+@@ -19,7 +19,7 @@ extern "C" {
+         float3_nonbuiltin *offsets
+     ) {
+         #pragma omp parallel for
+-        for (size_t idx = 0; idx < size; idx++) {
++        for (int idx = 0; idx < size; idx++) {
+             geo_rocks(
+                 positions[idx], normals[idx], f_params, f3_params, f4_params,
+                 offsets + idx
+diff --git a/worldgen/terrain/source/cpu/surfaces/cobble_stone.cpp b/worldgen/terrain/source/cpu/surfaces/cobble_stone.cpp
+index 080f05a..2d50335 100644
+--- a/worldgen/terrain/source/cpu/surfaces/cobble_stone.cpp
++++ b/worldgen/terrain/source/cpu/surfaces/cobble_stone.cpp
+@@ -18,7 +18,7 @@ extern "C" {
+         float3_nonbuiltin *offsets
+     ) {
+         #pragma omp parallel for
+-        for (size_t idx = 0; idx < size; idx++) {
++        for (int idx = 0; idx < size; idx++) {
+             geo_cobblestone(
+                 positions[idx], normals[idx], f_params, f4_params, 
+                 offsets + idx
+diff --git a/worldgen/terrain/source/cpu/surfaces/cracked_ground.cpp b/worldgen/terrain/source/cpu/surfaces/cracked_ground.cpp
+index e3d5e84..37f47ac 100644
+--- a/worldgen/terrain/source/cpu/surfaces/cracked_ground.cpp
++++ b/worldgen/terrain/source/cpu/surfaces/cracked_ground.cpp
+@@ -17,7 +17,7 @@ extern "C" {
+         float3_nonbuiltin *offsets
+     ) {
+         #pragma omp parallel for
+-        for (size_t idx = 0; idx < size; idx++) {
++        for (int idx = 0; idx < size; idx++) {
+             geo_cracked_ground(
+                 positions[idx], normals[idx], f_params, 
+                 offsets + idx
+diff --git a/worldgen/terrain/source/cpu/surfaces/dirt.cpp b/worldgen/terrain/source/cpu/surfaces/dirt.cpp
+index 26407f8..95ba218 100644
+--- a/worldgen/terrain/source/cpu/surfaces/dirt.cpp
++++ b/worldgen/terrain/source/cpu/surfaces/dirt.cpp
+@@ -18,7 +18,7 @@ extern "C" {
+         float3_nonbuiltin *offsets
+     ) {
+         #pragma omp parallel for
+-        for (size_t idx = 0; idx < size; idx++) {
++        for (int idx = 0; idx < size; idx++) {
+             geo_dirt(
+                 positions[idx], normals[idx], f_params, f3_params,
+                 offsets + idx
+diff --git a/worldgen/terrain/source/cpu/surfaces/ice.cpp b/worldgen/terrain/source/cpu/surfaces/ice.cpp
+index 85fd111..4f3e526 100644
+--- a/worldgen/terrain/source/cpu/surfaces/ice.cpp
++++ b/worldgen/terrain/source/cpu/surfaces/ice.cpp
+@@ -17,7 +17,7 @@ extern "C" {
+         float3_nonbuiltin *offsets
+     ) {
+         #pragma omp parallel for
+-        for (size_t idx = 0; idx < size; idx++) {
++        for (int idx = 0; idx < size; idx++) {
+             geo_ice(
+                 positions[idx], normals[idx], f_params,
+                 offsets + idx
+diff --git a/worldgen/terrain/source/cpu/surfaces/mountain.cpp b/worldgen/terrain/source/cpu/surfaces/mountain.cpp
+index f70040a..ecebbb0 100644
+--- a/worldgen/terrain/source/cpu/surfaces/mountain.cpp
++++ b/worldgen/terrain/source/cpu/surfaces/mountain.cpp
+@@ -18,7 +18,7 @@ extern "C" {
+         float3_nonbuiltin *offsets
+     ) {
+         #pragma omp parallel for
+-        for (size_t idx = 0; idx < size; idx++) {
++        for (int idx = 0; idx < size; idx++) {
+             geo_MOUNTAIN(
+                 positions[idx], normals[idx], f_params, f3_params, 
+                 offsets + idx
+diff --git a/worldgen/terrain/source/cpu/surfaces/mud.cpp b/worldgen/terrain/source/cpu/surfaces/mud.cpp
+index c40ba47..acdf0f6 100644
+--- a/worldgen/terrain/source/cpu/surfaces/mud.cpp
++++ b/worldgen/terrain/source/cpu/surfaces/mud.cpp
+@@ -17,7 +17,7 @@ extern "C" {
+         float3_nonbuiltin *offsets
+     ) {
+         #pragma omp parallel for
+-        for (size_t idx = 0; idx < size; idx++) {
++        for (int idx = 0; idx < size; idx++) {
+             geo_mud(
+                 positions[idx], normals[idx], f_params, 
+                 offsets + idx
+diff --git a/worldgen/terrain/source/cpu/surfaces/sand.cpp b/worldgen/terrain/source/cpu/surfaces/sand.cpp
+index 50ba327..3d447cd 100644
+--- a/worldgen/terrain/source/cpu/surfaces/sand.cpp
++++ b/worldgen/terrain/source/cpu/surfaces/sand.cpp
+@@ -18,7 +18,7 @@ extern "C" {
+         float3_nonbuiltin *offsets
+     ) {
+         #pragma omp parallel for
+-        for (size_t idx = 0; idx < size; idx++) {
++        for (int idx = 0; idx < size; idx++) {
+             geo_SAND(
+                 positions[idx], normals[idx], f_params, f3_params, 
+                 offsets + idx
+diff --git a/worldgen/terrain/source/cpu/surfaces/sandstone.cpp b/worldgen/terrain/source/cpu/surfaces/sandstone.cpp
+index 78d3ed4..9221ed8 100644
+--- a/worldgen/terrain/source/cpu/surfaces/sandstone.cpp
++++ b/worldgen/terrain/source/cpu/surfaces/sandstone.cpp
+@@ -18,7 +18,7 @@ extern "C" {
+         float3_nonbuiltin *offsets
+     ) {
+         #pragma omp parallel for
+-        for (size_t idx = 0; idx < size; idx++) {
++        for (int idx = 0; idx < size; idx++) {
+             geometry_sandstone(
+                 positions[idx], normals[idx], f_params, f3_params, 
+                 offsets + idx
+diff --git a/worldgen/terrain/source/cpu/surfaces/snow.cpp b/worldgen/terrain/source/cpu/surfaces/snow.cpp
+index 6b69dee..5ae5e76 100644
+--- a/worldgen/terrain/source/cpu/surfaces/snow.cpp
++++ b/worldgen/terrain/source/cpu/surfaces/snow.cpp
+@@ -16,7 +16,7 @@ extern "C" {
+         float3_nonbuiltin *offsets
+     ) {
+         #pragma omp parallel for
+-        for (size_t idx = 0; idx < size; idx++) {
++        for (int idx = 0; idx < size; idx++) {
+             geo_snowtexture(
+                 positions[idx], normals[idx],
+                 offsets + idx
+diff --git a/worldgen/terrain/source/cpu/surfaces/soil.cpp b/worldgen/terrain/source/cpu/surfaces/soil.cpp
+index d16b842..703dfae 100644
+--- a/worldgen/terrain/source/cpu/surfaces/soil.cpp
++++ b/worldgen/terrain/source/cpu/surfaces/soil.cpp
+@@ -18,7 +18,7 @@ extern "C" {
+         float3_nonbuiltin *offsets
+     ) {
+         #pragma omp parallel for
+-        for (size_t idx = 0; idx < size; idx++) {
++        for (int idx = 0; idx < size; idx++) {
+             geometry_soil(
+                 positions[idx], normals[idx], f_params, f4_params, 
+                 offsets + idx
+diff --git a/worldgen/terrain/source/cpu/surfaces/stone.cpp b/worldgen/terrain/source/cpu/surfaces/stone.cpp
+index 7542680..817478f 100644
+--- a/worldgen/terrain/source/cpu/surfaces/stone.cpp
++++ b/worldgen/terrain/source/cpu/surfaces/stone.cpp
+@@ -19,7 +19,7 @@ extern "C" {
+         float3_nonbuiltin *offsets
+     ) {
+         #pragma omp parallel for
+-        for (size_t idx = 0; idx < size; idx++) {
++        for (int idx = 0; idx < size; idx++) {
+             geo_stone(
+                 positions[idx], normals[idx], f_params, f3_params, f4_params, 
+                 offsets + idx
+diff --git a/worldgen/terrain/utils/ctype_util.py b/worldgen/terrain/utils/ctype_util.py
+index 71862a7..009e68c 100644
+--- a/worldgen/terrain/utils/ctype_util.py
++++ b/worldgen/terrain/utils/ctype_util.py
+@@ -25,4 +25,10 @@ def register_func(me, dll, name, argtypes=[], restype=None, caller_name=None):
+     func.restype = restype
+ 
+ def load_cdll(path):
+-    return CDLL(Path(sys.path[-1]) / path, mode=RTLD_LOCAL)
+\ No newline at end of file
++    if sys.platform == 'win32':
++        #replace suffix .so to .dll
++        path = Path(path)
++        path = path.with_suffix('.dll')
++    
++    _path:Path = Path(sys.path[-1]) / path
++    return CDLL(_path.as_posix(), mode=RTLD_LOCAL)
+\ No newline at end of file
+-- 
+2.34.1.windows.1
+
