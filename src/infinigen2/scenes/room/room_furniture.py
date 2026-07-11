@@ -20,11 +20,9 @@ from infinigen2.objects import (
     triangle_shelf,
     vase,
 )
-from infinigen2.scenes import collision_collection as ccol
-from infinigen2.scenes.placement_utils import (
-    keep_non_colliding,
-    snap_to_plane,
-)
+from infinigen2.scenes.placement import collision as ccol
+from infinigen2.scenes.placement.culling import keep_non_colliding
+from infinigen2.scenes.placement.snap import snap_to_plane
 
 __all__ = [
     "ArrangementResult",

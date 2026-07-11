@@ -10,8 +10,8 @@ import bpy
 import numpy as np
 import procfunc as pf
 
-import infinigen2.scenes.collision_collection as ccol
-from infinigen2.scenes.placement_utils import repeat_attempts
+import infinigen2.scenes.placement.collision as ccol
+from infinigen2.scenes.placement.retry import repeat_attempts
 from infinigen2.util.errors import RejectedScene
 
 __all__ = [

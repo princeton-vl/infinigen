@@ -1,0 +1,110 @@
+# Copyright (C) 2026, Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
+
+# Authors: Alexander Raistrick
+
+import numpy as np
+import procfunc as pf
+
+__all__ = [
+    "snap_to_plane",
+]
+
+_SIDES = {
+    "front": (0, 1),
+    "back": (0, -1),
+    "left": (1, -1),
+    "right": (1, 1),
+    "top": (2, 1),
+    "bottom": (2, -1),
+}
+
+
+def _project(a, b):
+    return (np.dot(a, b) / np.dot(b, b)) * b
+
+
+def snap_to_plane(
+    child: pf.Object,
+    parent: pf.Object,
+    placement: float = 0.5,
+    child_side: str = "back",
+    parent_side: str = "front",
+    margin: float = 0.1,
+    constraint_axis: pf.Vector = pf.Vector((0, 0, 1)),
+    overhang: bool = False,
+):
+    """Snap child to parent using bbox sides with canonical local coordinates.
+
+    TODO: allow constraint_axis=None and 2D offsets within bounding box free dirs
+
+    Args:
+        child: Object to position
+        parent: Object to snap to
+        placement: How far left or right along to place the object, relative to the parent and the constraint axis
+            e.g. if constraint_axis=(0, 0, 1), placement=0.5 means centered, 0 means left edge of parent's bbox, 1 means right edge of parent's bbox.
+        child_side: Which side of child touches the parent
+        parent_side: Which side of parent touches the child
+        margin: Gap between surfaces
+        constraint_axis: Axis to constrain the placement to.
+            The location wont change along this axis, and we may rotate the object around this axis to snap it.
+        overhang: If true, only the center of the childs bbox must attach to the parent, rather than the entire side of the bbox touching the parent.
+    """
+
+    constraint_axis = pf.Vector(constraint_axis).normalized()
+
+    child_axis, child_sign = _SIDES[child_side]
+    parent_axis, parent_sign = _SIDES[parent_side]
+
+    c_normal_local = pf.Vector(np.eye(3)[child_axis] * child_sign)
+    p_normal_local = pf.Vector(np.eye(3)[parent_axis] * parent_sign)
+
+    # Transform parent's normal to world space
+    p_normal_world = parent.item().matrix_world.to_3x3() @ p_normal_local
+    target_normal = -p_normal_world.normalized()
+
+    c_proj = c_normal_local - c_normal_local.project(constraint_axis)
+    t_proj = target_normal - target_normal.project(constraint_axis)
+    angle = np.arctan2(c_proj.cross(t_proj).dot(constraint_axis), c_proj.dot(t_proj))
+    rotation_euler = pf.Vector(constraint_axis) * angle
+    rotation_matrix = pf.Euler(rotation_euler, "XYZ").to_matrix()
+
+    cbb = np.stack(pf.ops.attr.bbox_min_max(child, global_coords=False), axis=0)
+    c_bbside = cbb[int(child_sign > 0), child_axis]
+    c_attach_base_local = _project(c_bbside, c_normal_local)
+
+    pbb = np.stack(pf.ops.attr.bbox_min_max(parent, global_coords=False), axis=0)
+    p_bbside = pbb[int(parent_sign > 0), parent_axis]
+    p_attach_base_local = _project(p_bbside, p_normal_local)
+
+    p_ca_local = parent.item().matrix_world.to_3x3().inverted() @ constraint_axis
+    p_orthogonal_dir_local = pf.Vector(np.cross(p_normal_local, p_ca_local))
+    p_min_point = _project(pbb[0], p_orthogonal_dir_local)
+    p_max_point = _project(pbb[1], p_orthogonal_dir_local)
+
+    c_ca_local = rotation_matrix.inverted() @ constraint_axis
+    c_orthogonal_dir_local = pf.Vector(np.cross(c_normal_local, c_ca_local))
+    c_min_point = _project(cbb[0], c_orthogonal_dir_local)
+    c_max_point = _project(cbb[1], c_orthogonal_dir_local)
+
+    if not overhang:
+        p_min_point = p_min_point - c_min_point
+        p_max_point = p_max_point - c_max_point
+
+    p_parent_local = (
+        p_attach_base_local + p_min_point + (p_max_point - p_min_point) * placement
+    )
+    p_parent_attach = p_parent_local + margin * p_normal_local
+    p_parent_attach_global = parent.item().matrix_world @ pf.Vector(p_parent_attach)
+
+    c_attach_base_global = pf.Vector(rotation_matrix @ pf.Vector(c_attach_base_local))
+
+    child_offset = pf.Vector(p_parent_attach_global) - c_attach_base_global
+    child_offset = child_offset - child_offset.project(constraint_axis)
+    child_location = (
+        pf.Vector(child.item().location).project(constraint_axis) + child_offset
+    )
+
+    pf.ops.object.set_transform(child, child_location, rotation_euler=rotation_euler)
+
+    return child

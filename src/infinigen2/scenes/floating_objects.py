@@ -25,8 +25,8 @@ from infinigen2.objects import (
     vase,
     wall_art,
 )
-from infinigen2.scenes import collision_collection as ccol
-from infinigen2.scenes import placement_utils
+from infinigen2.scenes.placement import collision as ccol
+from infinigen2.scenes.placement.distribute import distribute_in_bbox
 from infinigen2.shaders.dev import bsdf_simple_rand
 from infinigen2.util.external_assets import pregenerated_asset_rand
 
@@ -186,9 +186,7 @@ def floating_objects_rand(
             _sample_object_transform(obj_rngs[i], obj)
 
     place_colliders = colliders if check_collisions else None
-    result = placement_utils.distribute_in_bbox(
-        rng, floating_objects, bbox, place_colliders
-    )
+    result = distribute_in_bbox(rng, floating_objects, bbox, place_colliders)
 
     if check_collisions:
         collider_candidates = [o for o in result if isinstance(o, pf.MeshObject)]

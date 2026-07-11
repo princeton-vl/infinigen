@@ -15,11 +15,9 @@ from infinigen2.curves.skirting_board_profile import (
 )
 from infinigen2.objects import lamp, storage, wall_art, window
 from infinigen2.objects.ceiling_light import ceiling_light_rand
-from infinigen2.scenes import collision_collection as ccol
-from infinigen2.scenes.placement_utils import (
-    duplicates,
-    keep_non_colliding,
-)
+from infinigen2.scenes.placement import collision as ccol
+from infinigen2.scenes.placement.culling import keep_non_colliding
+from infinigen2.scenes.placement.distribute import duplicates
 from infinigen2.scenes.room.room_shape import RoomShapeResult
 from infinigen2.shaders.functionality_lists import (
     ceiling_material_rand,

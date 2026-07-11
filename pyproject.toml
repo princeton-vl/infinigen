@@ -133,6 +133,19 @@ filterwarnings = [
 
 ]
 
+[tool.coverage.run]
+# parallel + relative_files so per-render subprocess data combines across checkouts
+parallel = true
+relative_files = true
+source = ["infinigen2"]
+
+[tool.coverage.paths]
+source = ["src/", "*/site-packages/"]
+
+[tool.coverage.report]
+show_missing = false
+skip_empty = true
+
 [tool.cibuildwheel]
 test-extras = ["dev"]
 test-command = "pytest tests"

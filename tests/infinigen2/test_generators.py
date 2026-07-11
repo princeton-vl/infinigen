@@ -22,7 +22,7 @@ from infinigen2.exporters.render_error_check import (
     assert_shader_complexity_ok,
     assert_uv_coords_satisfied,
 )
-from infinigen2.util.codestats import compute_stats
+from infinigen2.util.codestats.setup import build_model_from_compute_graph
 
 T = TypeVar("T")
 
@@ -62,8 +62,8 @@ def validate_trace_generator(
         ast.parse(_code)
     except SyntaxError as e:
         raise ValueError(f"Generated code has syntax error: {e}") from e
-    stats = compute_stats(graph)
-    assert stats["continuous_params"] >= min_parameters
+    model = build_model_from_compute_graph(graph)
+    assert model["n_continuous_params"] >= min_parameters
 
 
 _MATERIAL_FUNCS = pf.util.manifest.filter_manifest(

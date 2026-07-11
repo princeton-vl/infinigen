@@ -8,7 +8,7 @@ import logging
 import numpy as np
 import procfunc as pf
 
-import infinigen2.scenes.collision_collection as ccol
+import infinigen2.scenes.placement.collision as ccol
 from infinigen2.animations.random_walk import RandomWalkSampler, walk_loop
 from infinigen2.cameras.util import (
     AcceptPred,

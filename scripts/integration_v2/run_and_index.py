@@ -6,6 +6,7 @@
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 import time
@@ -83,11 +84,6 @@ def main() -> int:
     events_dir.mkdir(parents=True, exist_ok=True)
     logs_dir.mkdir(parents=True, exist_ok=True)
 
-    event_id = str(uuid.uuid4())
-    started = time.time()
-    proc = subprocess.run(args.cmd, text=True, capture_output=True)
-    ended = time.time()
-
     output_dir_arg = parse_output_dir(args.cmd)
     asset_output_dir = output_dir_arg.resolve() if output_dir_arg else None
     asset_dir_rel = ""
@@ -97,11 +93,24 @@ def main() -> int:
         except Exception:
             asset_dir_rel = asset_output_dir.as_posix()
 
+    asset_type, generator, variant_key = parse_asset_fields(asset_dir_rel)
+
+    # isolate this asset's coverage under coverage_data/<generator>
+    env = None
+    if os.environ.get("INFINIGEN_COVERAGE"):
+        cov_dir = index_root / "coverage_data" / generator
+        cov_dir.mkdir(parents=True, exist_ok=True)
+        env = os.environ.copy()
+        env["COVERAGE_FILE"] = str(cov_dir / "data")
+
+    event_id = str(uuid.uuid4())
+    started = time.time()
+    proc = subprocess.run(args.cmd, text=True, capture_output=True, env=env)
+    ended = time.time()
+
     pngs = collect_pngs(asset_output_dir, index_root) if asset_output_dir else []
 
     status = "success" if pngs else "no_outputs"
-
-    asset_type, generator, variant_key = parse_asset_fields(asset_dir_rel)
 
     stderr_path = ""
     if proc.stderr:

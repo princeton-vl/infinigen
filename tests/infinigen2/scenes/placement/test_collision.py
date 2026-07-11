@@ -9,7 +9,7 @@ import math
 import numpy as np
 import procfunc as pf
 
-from infinigen2.scenes.collision_collection import (
+from infinigen2.scenes.placement.collision import (
     any_self_collision,
     box_intersection_test,
     collision_set,
@@ -304,7 +304,7 @@ def test_collision_cube_passes_through(tmp_path, save_blend=True):
     fresh by intersection_test, so it does not test sync).
 
     Run with:
-        uv run pytest tests/infinigen2/util/test_collision_collection.py::test_collision_cube_passes_through -v -s
+        uv run pytest tests/infinigen2/scenes/placement/test_collision.py::test_collision_cube_passes_through -v -s
     """
     moving = pf.ops.primitives.mesh_cube()
     moving.item().name = "moving"

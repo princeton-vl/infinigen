@@ -26,12 +26,153 @@ def parse_args() -> argparse.Namespace:
         help='GPU selection: empty=all, "available"=memory heuristic, or csv like "0,1".',
     )
     parser.add_argument(
+        "--changed-only",
+        action="store_true",
+        default=bool(os.environ.get("INFINIGEN_CHANGED_ONLY")),
+        help="Render only assets whose recorded codepath intersects the diff vs --base-ref.",
+    )
+    parser.add_argument(
+        "--base-ref",
+        default=os.environ.get("COVERAGE_BASE_REF", ""),
+        help="Git ref to diff against when --changed-only is set.",
+    )
+    parser.add_argument(
+        "--baseline",
+        type=Path,
+        default=os.environ.get("ASSET_COVERAGE_BASELINE", "") or None,
+        help="asset_coverage.json mapping generator -> covered files (from the base branch).",
+    )
+    parser.add_argument(
         "--args",
         nargs=argparse.REMAINDER,
         default=[],
         help="Additional args forwarded to infinigen2.list and launch.sh.",
     )
     return parser.parse_args()
+
+
+# changed files matching these force a full render (coverage cannot vouch for them)
+FRAMEWORK_PATTERNS = (
+    "pyproject.toml",
+    "uv.lock",
+    "scripts/integration_v2/",
+    ".github/workflows/",
+)
+
+MANIFEST_PATH = "src/infinigen2/manifest.json"
+
+
+def changed_files(base_ref: str) -> set[str]:
+    cmd = ["git", "diff", "--name-only", f"{base_ref}...HEAD"]
+    out = run_capture(cmd)
+    return {line.strip() for line in out.splitlines() if line.strip()}
+
+
+def manifest_entries(text: str) -> dict[str, dict]:
+    return {entry["name"]: entry for entry in json.loads(text)}
+
+
+def manifest_changed_shortnames(base_ref: str) -> set[str] | None:
+    try:
+        merge_base = run_capture(["git", "merge-base", base_ref, "HEAD"]).strip()
+        base = manifest_entries(
+            run_capture(["git", "show", f"{merge_base}:{MANIFEST_PATH}"])
+        )
+        head = manifest_entries(Path(MANIFEST_PATH).read_text())
+    except (subprocess.CalledProcessError, json.JSONDecodeError, KeyError):
+        return None
+    changed = {name for name in head if base.get(name) != head[name]}
+    return {name.split(".")[-1] for name in changed}
+
+
+def load_baseline(path: Path | None) -> dict[str, list[str]]:
+    if path is None or not Path(path).is_file():
+        return {}
+    return json.loads(Path(path).read_text())
+
+
+def select_changed(
+    items: list[str],
+    baseline: dict[str, list[str]],
+    changed: set[str],
+    forced: set[str],
+) -> tuple[list[str], dict[str, list[str]], list[str]]:
+    kept = []
+    triggers = {}
+    skipped = []
+    for item in items:
+        covered = baseline.get(item)
+        hits = sorted(changed.intersection(covered)) if covered is not None else []
+        if item in forced:
+            hits.append("<manifest entry changed>")
+        if covered is None:
+            kept.append(item)
+            triggers[item] = ["<not in baseline coverage>"]
+        elif hits:
+            kept.append(item)
+            triggers[item] = hits
+        else:
+            skipped.append(item)
+    return kept, triggers, skipped
+
+
+def framework_triggers(changed: set[str]) -> list[str]:
+    return sorted(
+        f for f in changed for p in FRAMEWORK_PATTERNS if f.startswith(p) or f == p
+    )
+
+
+def gate_by_diff(
+    args: argparse.Namespace,
+    materials: list[str],
+    objects: list[str],
+    scenes: list[str],
+    masks: list[str],
+) -> tuple[tuple[list[str], list[str], list[str], list[str]], dict]:
+    changed = changed_files(args.base_ref or "HEAD~1")
+    baseline = load_baseline(args.baseline)
+    lists = [materials, objects, scenes, masks]
+    report = {"enabled": True, "mode": "full", "changed_files": sorted(changed)}
+
+    if not baseline:
+        report["reason"] = "no baseline coverage available"
+        print("changed-only: no baseline, rendering all assets", file=sys.stderr)
+        return (materials, objects, scenes, masks), report
+
+    framework_hits = framework_triggers(changed)
+    if framework_hits:
+        report["reason"] = "framework file changed"
+        report["framework_triggers"] = framework_hits
+        print(
+            "changed-only: framework file changed, rendering all assets",
+            file=sys.stderr,
+        )
+        return (materials, objects, scenes, masks), report
+
+    forced = set()
+    if MANIFEST_PATH in changed:
+        manifest_forced = manifest_changed_shortnames(args.base_ref or "HEAD~1")
+        if manifest_forced is None:
+            report["reason"] = "manifest diff unreadable"
+            print("changed-only: manifest diff unreadable", file=sys.stderr)
+            return (materials, objects, scenes, masks), report
+        forced = manifest_forced
+        changed = changed - {MANIFEST_PATH}
+        report["manifest_changed"] = sorted(forced)
+
+    report["mode"] = "gated"
+    report["categories"] = {}
+    names = ["materials", "objects", "scenes", "masks"]
+    results = [select_changed(items, baseline, changed, forced) for items in lists]
+    for name, items, (keep, triggers, skipped) in zip(names, lists, results):
+        report["categories"][name] = {
+            "total": len(items),
+            "kept": triggers,
+            "skipped": skipped,
+        }
+        print(f"changed-only: {name} {len(keep)}/{len(items)}", file=sys.stderr)
+    kept = [keep for keep, _, _ in results]
+    return (kept[0], kept[1], kept[2], kept[3]), report
 
 
 def run_capture(cmd: list[str]) -> str:
@@ -163,9 +304,16 @@ def render_runner(output_path: Path) -> str:
         raise RuntimeError("Expected .venv/bin/python to exist")
     if not infinigen_bin.exists():
         raise RuntimeError("Expected .venv/bin/infinigen2 to exist")
+
+    coverage_prefix = ""
+    if os.environ.get("INFINIGEN_COVERAGE"):
+        coverage_prefix = (
+            f"{python_bin} -m coverage run --parallel-mode --rcfile=pyproject.toml "
+        )
+
     return (
         f"{python_bin} scripts/integration_v2/run_and_index.py "
-        f"--index-root {output_path} -- {infinigen_bin}"
+        f"--index-root {output_path} -- {coverage_prefix}{infinigen_bin}"
     )
 
 
@@ -201,6 +349,15 @@ def main() -> int:
     masks_all = list_items(["--categories", "Mask"], extra_args)
     presets_all = list_items(["--presets"], extra_args)
     environments_all = list_items(["--categories", "Environment"], extra_args)
+
+    gating_report = {"enabled": False}
+    if args.changed_only:
+        gated, gating_report = gate_by_diff(
+            args, materials_all, objects_all, scenes_all, masks_all
+        )
+        materials_all, objects_all, scenes_all, masks_all = gated
+    output_path.mkdir(parents=True, exist_ok=True)
+    (output_path / "gating_report.json").write_text(json.dumps(gating_report, indent=2))
 
     procs: list[tuple[int, str, subprocess.Popen[str]]] = []
     runner = render_runner(output_path)

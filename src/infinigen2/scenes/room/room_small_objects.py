@@ -22,8 +22,8 @@ import procfunc as pf
 from procfunc.nodes import types as t
 
 from infinigen2.objects import random_primitives
-from infinigen2.scenes import collision_collection as ccol
-from infinigen2.scenes.placement_utils import keep_non_colliding
+from infinigen2.scenes.placement import collision as ccol
+from infinigen2.scenes.placement.culling import keep_non_colliding
 
 __all__ = [
     "objects_scatter_rand",

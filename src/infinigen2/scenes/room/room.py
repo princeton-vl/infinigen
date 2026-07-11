@@ -8,7 +8,7 @@ from typing import NamedTuple
 
 import procfunc as pf
 
-from infinigen2.scenes import collision_collection as ccol
+from infinigen2.scenes.placement import collision as ccol
 from infinigen2.scenes.room.room_furniture import (
     room_furniture_rand,
 )

@@ -52,11 +52,11 @@ from infinigen2.exporters.util.format import (
 )
 from infinigen2.exporters.util.blender_render import DisplacementMode
 from infinigen2 import GENERATORS_MANIFEST
-from infinigen2.scenes.placement_utils import delete_object
 from infinigen2.exporters.realize_mesh import realize_scene
 from procfunc.util.manifest import import_item
 from procfunc.util.teardown import skip_teardown_on_exit
 from infinigen2.util.hardware_info import get_hardware_info
+from infinigen2.util.scene_cleanup import delete_object
 from infinigen2.util.codestats import compute_stats
 from infinigen2 import graph_json
 
@@ -783,9 +783,23 @@ def _main():  # noqa: C901
             print(f)
 
 
+def _flush_coverage() -> None:
+    # skip_teardown_on_exit os._exit()s past coverage.py's atexit save; flush it here
+    try:
+        import coverage
+    except ImportError:
+        return
+    cov = coverage.Coverage.current()
+    if cov is not None:
+        cov.save()
+
+
 def main():
     with skip_teardown_on_exit():
-        _main()
+        try:
+            _main()
+        finally:
+            _flush_coverage()
 
 
 if __name__ == "__main__":

@@ -50,7 +50,7 @@ def _bake_displacement_to_vcols(obj, vcol_name="Displacement"):
         "view": scn.view_settings.view_transform,
     }
     scn.render.engine = "CYCLES"
-    configure_cycles_devices()
+    configure_cycles_devices("BEST_AVAILABLE")
     scn.cycles.samples = 1
     scn.view_settings.view_transform = "Standard"
 
