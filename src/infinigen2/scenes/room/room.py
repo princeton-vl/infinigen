@@ -35,8 +35,8 @@ logger = logging.getLogger(__name__)
 
 
 class LivingroomResult(NamedTuple):
-    all_objects: list
-    lights: list
+    all_objects: list[pf.MeshObject]
+    lights: list[pf.LightObject]
     colliders: ccol.CollisionSet
     floor: pf.MeshObject
     dimensions: pf.Vector | None = None

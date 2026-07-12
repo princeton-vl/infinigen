@@ -27,6 +27,7 @@ __all__ = [
     "configure_compositor_viewlayer_output",
     "configure_material_index_table",
     "configure_object_index_table",
+    "isolate_render_objects",
     "load_single_channel",
     "override_shading_for_gt",
     "postprocess_renderpass_frame",
@@ -483,6 +484,25 @@ def disconnect_output_links(targets, socket_names):
 def relink_output_links(removed):
     for nt, from_socket, to_socket in removed:
         nt.links.new(from_socket, to_socket)
+
+
+@contextmanager
+def isolate_render_objects(
+    objects: list[pf.MeshObject], lights: list[pf.LightObject] | None = None
+):
+    keep = {obj.item() for obj in objects}
+    keep |= {light.item() for light in lights or []}
+    saved = {}
+    for obj in bpy.context.scene.objects:
+        if obj.type == "CAMERA":
+            continue
+        saved[obj] = obj.hide_render
+        obj.hide_render = obj not in keep
+    try:
+        yield
+    finally:
+        for obj, state in saved.items():
+            obj.hide_render = state
 
 
 @contextmanager

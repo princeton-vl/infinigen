@@ -123,7 +123,7 @@ def main():
         )
     camera = cameras[0]
 
-    cleanup_except(objects + list(cameras) + list(living.lights))
+    cleanup_except(objects + list(living.lights) + list(cameras))
 
     if args.save_blend is not None:
         pf.ops.file.save_blend(output_path=args.save_blend)
@@ -137,6 +137,7 @@ def main():
 
     render_kwargs = dict(
         objects=objects,
+        lights=list(living.lights),
         camera=camera,
         output_folder=output,
         frame_start=render_start,

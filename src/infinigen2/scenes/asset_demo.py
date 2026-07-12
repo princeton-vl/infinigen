@@ -44,7 +44,8 @@ def _demo_sky() -> pf.World:
 class DevSceneResult(NamedTuple):
     all_objects: list
     cameras: list
-    lights: list
+    lights: list = ()
+    environment: pf.World | None = None
 
 
 @pf.tracer.generator
@@ -146,7 +147,7 @@ def object_demo(
     scale_ref = scale_reference(location=pos, radius=ref_rad)
 
     return DevSceneResult(
-        lights=[environment],
+        environment=environment,
         all_objects=[*all_objects, background, scale_ref],
         cameras=[camera],
     )
@@ -179,7 +180,7 @@ def material_sphere(
     ref = scale_reference(location=t.Vector((0.38, 0.76, -0.05)))
 
     return DevSceneResult(
-        lights=[environment], all_objects=[sphere, plane, ref], cameras=[cam]
+        environment=environment, all_objects=[sphere, plane, ref], cameras=[cam]
     )
 
 
@@ -221,7 +222,7 @@ def material_torus_uv(
     ref = scale_reference(location=t.Vector((0.38, 0.76, -0.05)))
 
     return DevSceneResult(
-        lights=[environment], all_objects=[obj, plane, ref], cameras=[cam]
+        environment=environment, all_objects=[obj, plane, ref], cameras=[cam]
     )
 
 
@@ -262,7 +263,7 @@ def material_plane_uv(
     ref = scale_reference(location=t.Vector((0.38, 0.76, -0.05)))
 
     return DevSceneResult(
-        lights=[environment], all_objects=[obj, plane, ref], cameras=[cam]
+        environment=environment, all_objects=[obj, plane, ref], cameras=[cam]
     )
 
 
@@ -301,7 +302,7 @@ def material_plane_horizontal_uv(
         environment = _demo_sky()
 
     return DevSceneResult(
-        lights=[environment], all_objects=[obj, plane, ref], cameras=[cam]
+        environment=environment, all_objects=[obj, plane, ref], cameras=[cam]
     )
 
 
@@ -333,7 +334,7 @@ def material_monkey(
     )
 
     return DevSceneResult(
-        lights=[environment], all_objects=[obj, plane, ref], cameras=[cam]
+        environment=environment, all_objects=[obj, plane, ref], cameras=[cam]
     )
 
 
@@ -373,7 +374,7 @@ def material_plane_orthographic(
     if environment is None:
         environment = sky_lighting.nishita_sky().environment
 
-    return DevSceneResult(lights=[environment], all_objects=[obj], cameras=[cam])
+    return DevSceneResult(environment=environment, all_objects=[obj], cameras=[cam])
 
 
 @pf.tracer.grammar
@@ -409,7 +410,7 @@ def material_cube(
     )
 
     return DevSceneResult(
-        lights=[environment], all_objects=[obj, plane, ref], cameras=[cam]
+        environment=environment, all_objects=[obj, plane, ref], cameras=[cam]
     )
 
 
@@ -437,5 +438,5 @@ def material_banana(
         environment = _demo_sky()
     ref = scale_reference(location=t.Vector((0.38, 0.76, -0.05)))
     return DevSceneResult(
-        lights=[environment], all_objects=[obj, plane, ref], cameras=[cam]
+        environment=environment, all_objects=[obj, plane, ref], cameras=[cam]
     )

@@ -32,6 +32,7 @@ from infinigen2.exporters.util.blender_render import (
     configure_compositor_viewlayer_output,
     configure_material_index_table,
     configure_object_index_table,
+    isolate_render_objects,
     override_shading_for_gt,
     postprocess_renderpass_paths,
 )
@@ -275,6 +276,7 @@ def _render_cycles_impl(
     camera: pf.CameraObject,
     output_folder: Path,
     render_passes: list[RenderPass],
+    lights: list[pf.LightObject] | None = None,
     frame_start: int = 1,
     frame_end: int = 1,
     resolution: tuple[int, int] = (1280, 720),
@@ -440,7 +442,7 @@ def _render_cycles_impl(
     assert_uv_coords_satisfied(objects)
     assert_material_nodes_valid(objects)
     replay = logger.getEffectiveLevel() <= logging.INFO
-    with detect_cycles_errors(replay=replay):
+    with isolate_render_objects(objects, lights), detect_cycles_errors(replay=replay):
         bpy.ops.render.render(animation=True)
 
     if render_output_subdir is not None and render_filepath_folder.exists():
@@ -469,6 +471,7 @@ def render_cycles(
     camera: pf.CameraObject,
     output_folder: Path,
     render_passes: list[RenderPass],
+    lights: list[pf.LightObject] | None = None,
     frame_start: int = 1,
     frame_end: int = 1,
     resolution: tuple[int, int] = (1280, 720),
@@ -507,6 +510,7 @@ def render_cycles(
         ]
     return _render_cycles_impl(
         objects=objects,
+        lights=lights,
         camera=camera,
         output_folder=output_folder,
         render_passes=render_passes,
@@ -544,6 +548,7 @@ def render_cycles_ground_truth(
     camera: pf.CameraObject,
     output_folder: Path,
     render_passes: list[RenderPass],
+    lights: list[pf.LightObject] | None = None,
     frame_start: int = 1,
     frame_end: int = 1,
     resolution: tuple[int, int] = (1280, 720),
@@ -583,6 +588,7 @@ def render_cycles_ground_truth(
     with override_shading_for_gt(objects):
         return _render_cycles_impl(
             objects=objects,
+            lights=lights,
             camera=camera,
             output_folder=output_folder,
             render_passes=render_passes,

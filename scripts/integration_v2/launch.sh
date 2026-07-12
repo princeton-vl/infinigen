@@ -23,7 +23,6 @@ MATERIAL_XARGS="-t -I {} -P $MATERIAL_PARALLEL"
 
 MATERIALS=${MATERIALS-$(uv run python -m infinigen2.list $LIST_ARGS --categories Material --missing_values drop --columns shortname $REST_ARGS)}
 OBJECTS=${OBJECTS-$(uv run python -m infinigen2.list $LIST_ARGS --categories Object --missing_values drop --columns shortname $REST_ARGS)}
-SCENES=${SCENES-$(uv run python -m infinigen2.list $LIST_ARGS --categories Scene --missing_values drop --columns shortname $REST_ARGS)}
 MASKS=${MASKS-$(uv run python -m infinigen2.list $LIST_ARGS --categories Mask --missing_values drop --columns shortname $REST_ARGS)}
 PRESETS=${PRESETS-$(uv run python -m infinigen2.list $LIST_ARGS --presets --missing_values drop --columns shortname $REST_ARGS)}
 ENVIRONMENTS=${ENVIRONMENTS-$(uv run python -m infinigen2.list $LIST_ARGS --categories Environment --missing_values drop --columns shortname $REST_ARGS)}
@@ -98,14 +97,23 @@ done
 for i in {0..5}; do
     echo "$OBJECTS" | xargs $XARGS "${RENDER_RUNNER_ARGS[@]}" {} object_demo render_cycles \
         $GEN_ARGS --output $OUTPUT_PATH/object-{}-demo-cycles-$i --seed $i \
-        --passes rgb -r 512 512 -s 128
+        --passes rgb -r 384 384 -s 128
 done
 
-# SCENES VISUAL CHECK
+# SCENES VISUAL CHECK (integration_test_string = full command tail; absent -> "<sn> render_cycles")
+SCENE_CMDS=${SCENE_CMDS-$(uv run python -m infinigen2.list $LIST_ARGS --categories Scene \
+    --columns shortname integration_test_string --missing_values keep \
+    --separator $'\t' $REST_ARGS)}
+
 for i in {0..8}; do
-    echo "$SCENES" | xargs $XARGS "${RENDER_RUNNER_ARGS[@]}" {} render_cycles \
-        $GEN_ARGS --output $OUTPUT_PATH/scene-{}-demo-cycles-$i --seed $i \
-        --passes rgb -r 480 480 -s 256
+    while IFS=$'\t' read -r sn cmd; do
+        [ -z "$sn" ] && continue
+        cmd=${cmd:-"$sn render_cycles"}
+        echo "+ scene $sn -> $cmd (seed $i)"
+        "${RENDER_RUNNER_ARGS[@]}" $cmd \
+            $GEN_ARGS --output $OUTPUT_PATH/scene-$sn-demo-cycles-$i --seed $i \
+            --passes rgb -r 384 384 -s 256
+    done <<< "$SCENE_CMDS"
 done
 
 # ENVIRONMENTS VISUAL CHECK (each lighting/sky generator lights a demo monkey)

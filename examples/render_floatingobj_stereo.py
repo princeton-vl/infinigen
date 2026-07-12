@@ -178,9 +178,11 @@ def main():
             speed_mps_range=(1.5, 2.25),
         )
     camera_left, camera_right = cameras
+    render_lights = list(living.lights) + list(lights)
     render_kwargs["objects"] = objects
+    render_kwargs["lights"] = render_lights
 
-    cleanup_except(objects + list(cameras) + list(living.lights) + list(lights))
+    cleanup_except(objects + render_lights + list(cameras))
 
     rgb_passes = [
         RenderPass(ExportType.IMAGE, Path("%c/%f.png"), np.dtype(np.uint8)),

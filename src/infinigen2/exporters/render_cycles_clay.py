@@ -58,7 +58,7 @@ def override_shading_clay(objects: list[pf.MeshObject], keep_displacement: bool 
 @contextmanager
 def clay_fill_light(enabled: bool, camera: pf.CameraObject):
     if not enabled:
-        yield
+        yield []
         return
     light_data = bpy.data.lights.new(name="clay_fill", type="POINT")
     light_data.energy = 700.0
@@ -69,7 +69,7 @@ def clay_fill_light(enabled: bool, camera: pf.CameraObject):
     light_obj.location = (0.0, 0.0, 0.0)
     bpy.context.scene.collection.objects.link(light_obj)
     try:
-        yield
+        yield [pf.LightObject(light_obj)]
     finally:
         bpy.data.objects.remove(light_obj, do_unlink=True)
         bpy.data.lights.remove(light_data, do_unlink=True)
@@ -81,6 +81,7 @@ def render_cycles_clay(
     camera: pf.CameraObject,
     output_folder: Path,
     render_passes: list[RenderPass],
+    lights: list[pf.LightObject] | None = None,
     frame_start: int = 1,
     frame_end: int = 1,
     resolution: tuple[int, int] = (1280, 720),
@@ -127,10 +128,11 @@ def render_cycles_clay(
     keep_displacement = displacement_mode != DisplacementMode.NONE
     with (
         override_shading_clay(objects, keep_displacement=keep_displacement),
-        clay_fill_light(fill_light, camera),
+        clay_fill_light(fill_light, camera) as extra_lights,
     ):
         return _render_cycles_impl(
             objects=objects,
+            lights=(lights or []) + extra_lights,
             camera=camera,
             output_folder=output_folder,
             render_passes=render_passes,

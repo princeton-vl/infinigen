@@ -382,7 +382,8 @@ def _ensure_cameras_and_lights(data: dict):
         cameras = data["cameras"]
 
     lights = data.get("lights", [])
-    if not isinstance(lights, cg.Proxy) and len(lights) == 0:
+    has_environment = data.get("environment") is not None
+    if not isinstance(lights, cg.Proxy) and len(lights) == 0 and not has_environment:
         light = pf.ops.primitives.point_lamp(energy=1500)
         loc = cameras[0].item().matrix_world @ pf.Vector((0, 0.5, -1))
         pf.ops.object.set_transform(light, location=loc)
@@ -513,6 +514,8 @@ def _unpack_by_category(category: str, result, data: dict):
             data["all_objects"] = result.all_objects
             data["cameras"] += getattr(result, "cameras", [])
             data["lights"] += getattr(result, "lights", [])
+            if getattr(result, "environment", None) is not None:
+                data["environment"] = result.environment
             if hasattr(result, "colliders"):
                 data["colliders"] = result.colliders
             if getattr(result, "floor", None) is not None:
@@ -581,11 +584,9 @@ def execute_generators(
 
         if category == "Exporter":
             _ensure_cameras_and_lights(data)
-            exp_data = {
-                **data,
-                "frame_start": data["exporter_frame_start"],
-                "frame_end": data["exporter_frame_end"],
-            }
+            exp_data = dict(data)
+            exp_data["frame_start"] = data["exporter_frame_start"]
+            exp_data["frame_end"] = data["exporter_frame_end"]
             for cam_idx in data.get("camera_indices", [0]):
                 exp_data["camera"] = data["cameras"][cam_idx]
                 result = _execute_step(
