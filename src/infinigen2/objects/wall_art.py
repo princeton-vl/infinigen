@@ -7,6 +7,7 @@
 
 from typing import NamedTuple
 
+import numpy as np
 import procfunc as pf
 from procfunc.nodes import types as t
 
@@ -130,7 +131,7 @@ def wall_art_rand(
         6
     )
     if dimensions is None:
-        height = pf.random.log_uniform(r_dims, 0.4, 2.0)
+        height = np.exp(pf.random.uniform(r_dims, np.log(0.4), np.log(2.0)))
         aspect = pf.random.uniform(r_dims, 0.7, 2.0)
         depth = pf.random.uniform(r_dims, 0.02, 0.05)
         width = height / aspect

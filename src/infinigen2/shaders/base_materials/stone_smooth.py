@@ -308,7 +308,7 @@ def _stone_red_sandstone_rand(
     )
     base_color = pf.color.hsv_to_rgba(base_color_hsv)
 
-    h_perturb = (pf.random.beta(rng, 0.4, 0.9) - 0.3) * 0.16
+    h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.3) * 0.16
     s_perturb = pf.random.uniform(rng, -0.175, 0.175)
     v_perturb = pf.random.uniform(rng, -0.112, 0.168)
     texture_color_1_hsv = np.array([h_perturb, s_perturb, v_perturb]) + base_color_hsv
@@ -326,7 +326,7 @@ def _stone_red_sandstone_rand(
         smoothness=smoothness_layer1,
     )
 
-    h_perturb = (pf.random.beta(rng, 0.5, 0.5) - 0.5) * 0.20
+    h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.5) * 0.20
     s_perturb = pf.random.uniform(rng, -0.172, 0.258)
     v_perturb = pf.random.uniform(rng, -0.135, 0.135)
     texture_color_2_hsv = np.array([h_perturb, s_perturb, v_perturb]) + base_color_hsv
@@ -345,7 +345,7 @@ def _stone_red_sandstone_rand(
         smoothness=1.0,
         mask=mask_layer2,
     )
-    h_perturb = (pf.random.beta(rng, 0.6, 0.6) - 0.5) * 0.12
+    h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.5) * 0.12
     s_perturb = pf.random.uniform(rng, -0.175, 0.175)
     v_perturb = pf.random.uniform(rng, -0.168, 0.112)
     texture_color_3_hsv = np.array([h_perturb, s_perturb, v_perturb]) + base_color_hsv
@@ -623,7 +623,7 @@ def _stone_sandstone_rand(  # noqa: C901
         base_color_hsv = np.array(base_color.hsv)
 
     if texture_color_layer1 is None:
-        h_perturb = (pf.random.beta(rng, 0.4, 0.9) - 0.3) * 0.16
+        h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.3) * 0.16
         s_perturb = pf.random.uniform(rng, -0.20, 0.20)
         v_perturb = pf.random.uniform(rng, -0.12, 0.18)
         texture_color_layer1_hsv = (
@@ -649,7 +649,7 @@ def _stone_sandstone_rand(  # noqa: C901
     )
 
     if texture_color_layer2 is None:
-        h_perturb = (pf.random.beta(rng, 0.5, 0.5) - 0.5) * 0.20
+        h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.5) * 0.20
         s_perturb = pf.random.uniform(rng, -0.20, 0.30)
         v_perturb = pf.random.uniform(rng, -0.15, 0.15)
         texture_color_layer2_hsv = (
@@ -679,7 +679,7 @@ def _stone_sandstone_rand(  # noqa: C901
     )
 
     if texture_color_layer3 is None:
-        h_perturb = (pf.random.beta(rng, 0.6, 0.6) - 0.5) * 0.12
+        h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.5) * 0.12
         s_perturb = pf.random.uniform(rng, -0.225, 0.225)
         v_perturb = pf.random.uniform(rng, -0.15, 0.15)
         texture_color_layer3_hsv = (
@@ -876,7 +876,7 @@ def _stone_limestone_rand(  # noqa: C901
         base_color_hsv = np.array(base_color.hsv)
 
     if texture_color_layer1 is None:
-        h_perturb = (pf.random.beta(rng, 0.4, 0.8) - 0.35) * 0.12
+        h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.35) * 0.12
         s_perturb = pf.random.uniform(rng, -0.125, 0.125)
         v_perturb = pf.random.uniform(rng, -0.112, 0.168)
         texture_color_layer1_hsv = (
@@ -904,7 +904,7 @@ def _stone_limestone_rand(  # noqa: C901
     )
 
     if texture_color_layer2 is None:
-        h_perturb = (pf.random.beta(rng, 0.6, 0.5) - 0.5) * 0.14
+        h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.5) * 0.14
         s_perturb = pf.random.uniform(rng, -0.112, 0.168)
         v_perturb = pf.random.uniform(rng, -0.15, 0.15)
         texture_color_layer2_hsv = (
@@ -936,7 +936,7 @@ def _stone_limestone_rand(  # noqa: C901
     )
 
     if texture_color_layer3 is None:
-        h_perturb = (pf.random.beta(rng, 0.5, 0.4) - 0.5) * 0.12
+        h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.5) * 0.12
         s_perturb = pf.random.uniform(rng, -0.11, 0.11)
         v_perturb = pf.random.uniform(rng, -0.176, 0.144)
         texture_color_layer3_hsv = (
@@ -964,7 +964,7 @@ def _stone_limestone_rand(  # noqa: C901
     )
 
     if texture_color_layer4 is None:
-        h_perturb = (pf.random.beta(rng, 0.4, 0.5) - 0.45) * 0.11
+        h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.45) * 0.11
         s_perturb = pf.random.uniform(rng, -0.12, 0.12)
         v_perturb = pf.random.uniform(rng, -0.104, 0.156)
         texture_color_layer4_hsv = (
@@ -1132,7 +1132,7 @@ def _stone_basalt_rand(  # noqa: C901
         base_color_hsv = np.array(base_color.hsv)
 
     if texture_color_layer1 is None:
-        h_perturb = (pf.random.beta(rng, 0.4, 0.7) - 0.4) * 0.06
+        h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.4) * 0.06
         s_perturb = pf.random.uniform(rng, -0.04, 0.04)
         v_perturb = pf.random.uniform(rng, -0.016, 0.016)
         texture_color_layer1_hsv = (
@@ -1158,7 +1158,7 @@ def _stone_basalt_rand(  # noqa: C901
     )
 
     if texture_color_layer2 is None:
-        h_perturb = (pf.random.beta(rng, 0.6, 0.6) - 0.5) * 0.06
+        h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.5) * 0.06
         s_perturb = pf.random.uniform(rng, -0.054, 0.066)
         v_perturb = pf.random.uniform(rng, -0.0175, 0.0175)
         texture_color_layer2_hsv = (
@@ -1188,7 +1188,7 @@ def _stone_basalt_rand(  # noqa: C901
     )
 
     if texture_color_layer3 is None:
-        h_perturb = (pf.random.beta(rng, 0.5, 0.5) - 0.5) * 0.06
+        h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.5) * 0.06
         s_perturb = pf.random.uniform(rng, -0.06, 0.06)
         v_perturb = pf.random.uniform(rng, -0.0175, 0.0175)
         texture_color_layer3_hsv = (
@@ -1348,7 +1348,7 @@ def _stone_volcanic_rand(  # noqa: C901
         base_color_hsv = np.array(base_color.hsv)
 
     if texture_color_layer1 is None:
-        h_perturb = (pf.random.beta(rng, 0.3, 0.8) - 0.35) * 0.08
+        h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.35) * 0.08
         s_perturb = pf.random.uniform(rng, -0.14, 0.14)
         v_perturb = pf.random.uniform(rng, -0.0175, 0.0175)
         texture_color_layer1_hsv = (
@@ -1374,7 +1374,7 @@ def _stone_volcanic_rand(  # noqa: C901
     )
 
     if texture_color_layer2 is None:
-        h_perturb = (pf.random.beta(rng, 0.5, 0.6) - 0.45) * 0.08
+        h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.45) * 0.08
         s_perturb = pf.random.uniform(rng, -0.088, 0.132)
         v_perturb = pf.random.uniform(rng, -0.016, 0.016)
         texture_color_layer2_hsv = (
@@ -1406,7 +1406,7 @@ def _stone_volcanic_rand(  # noqa: C901
     )
 
     if texture_color_layer3 is None:
-        h_perturb = (pf.random.beta(rng, 0.5, 0.7) - 0.5) * 0.06
+        h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.5) * 0.06
         s_perturb = pf.random.uniform(rng, -0.12, 0.12)
         v_perturb = pf.random.uniform(rng, -0.0121, 0.0099)
         texture_color_layer3_hsv = (
@@ -1635,7 +1635,7 @@ def _stone_tuff_rand(  # noqa: C901
         base_color_hsv = np.array(base_color.hsv)
 
     if texture_color_layer1 is None:
-        h_perturb = (pf.random.beta(rng, 0.5, 0.6) - 0.45) * 0.16
+        h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.45) * 0.16
         s_perturb = pf.random.uniform(rng, -0.13, 0.13)
         v_perturb = pf.random.uniform(rng, -0.14, 0.14)
         texture_color_layer1_hsv = (
@@ -1661,7 +1661,7 @@ def _stone_tuff_rand(  # noqa: C901
     )
 
     if texture_color_layer2 is None:
-        h_perturb = (pf.random.beta(rng, 0.4, 0.4) - 0.3) * 0.32
+        h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.3) * 0.32
         s_perturb = pf.random.uniform(rng, -0.18, 0.22)
         v_perturb = pf.random.uniform(rng, -0.13, 0.13)
         texture_color_layer2_hsv = (
@@ -1688,7 +1688,7 @@ def _stone_tuff_rand(  # noqa: C901
     )
 
     if texture_color_layer3 is None:
-        h_perturb = (pf.random.beta(rng, 0.7, 0.5) - 0.55) * 0.16
+        h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.55) * 0.16
         s_perturb = pf.random.uniform(rng, -0.11, 0.09)
         v_perturb = pf.random.uniform(rng, -0.176, 0.144)
         texture_color_layer3_hsv = (
@@ -1846,7 +1846,7 @@ def _stone_grey_rand(  # noqa: C901
         )
 
     if texture_color_layer1 is None:
-        h_perturb = (pf.random.beta(rng, 0.5, 0.6) - 0.45) * 0.08
+        h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.45) * 0.08
         s_perturb = pf.random.uniform(rng, -0.04, 0.04)
         v_perturb = pf.random.uniform(rng, -0.088, 0.132)
         texture_color_layer1_hsv = (
@@ -1872,7 +1872,7 @@ def _stone_grey_rand(  # noqa: C901
     )
 
     if texture_color_layer2 is None:
-        h_perturb = (pf.random.beta(rng, 0.6, 0.6) - 0.5) * 0.10
+        h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.5) * 0.10
         s_perturb = pf.random.uniform(rng, -0.054, 0.066)
         v_perturb = pf.random.uniform(rng, -0.07, 0.07)
         texture_color_layer2_hsv = (
@@ -1900,7 +1900,7 @@ def _stone_grey_rand(  # noqa: C901
     )
 
     if texture_color_layer3 is None:
-        h_perturb = (pf.random.beta(rng, 0.5, 0.5) - 0.5) * 0.10
+        h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.5) * 0.10
         s_perturb = pf.random.uniform(rng, -0.04, 0.04)
         v_perturb = pf.random.uniform(rng, -0.09, 0.09)
         texture_color_layer3_hsv = (
@@ -2041,16 +2041,16 @@ def stone_smooth_styles_rand(  # noqa: C901
     if base_color is None:
         h_base = pf.random.clip_gaussian(rng, 0.15, 0.1, 0.05, 0.25)
         s_base = pf.random.uniform(rng, 0.2, 0.80)
-        v_base = pf.random.log_uniform(rng, 0.01, 0.5)
+        v_base = pf.random.uniform(rng, 0.01, 0.5)
         base_color_hsv = np.array([h_base, s_base, v_base])
         base_color = pf.color.hsv_to_rgba(base_color_hsv)
     else:
         base_color_hsv = np.array(base_color.hsv)
 
     if texture_color_layer1 is None:
-        h_perturb = (pf.random.beta(rng, 0.8, 0.9) - 0.5) * 0.05
+        h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.5) * 0.05
         s_perturb = pf.random.uniform(rng, -0.175, 0.175)
-        v_mult = pf.random.log_uniform(rng, 0.5, 2.0)
+        v_mult = pf.random.uniform(rng, 0.5, 2.0)
         texture_color_layer1_hsv = np.array(
             [h_base + h_perturb, s_base + s_perturb, v_base * v_mult]
         )
@@ -2076,9 +2076,9 @@ def stone_smooth_styles_rand(  # noqa: C901
     )
 
     if texture_color_layer2 is None:
-        h_perturb = (pf.random.beta(rng, 0.3, 0.4) - 0.5) * 0.40
+        h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.5) * 0.40
         s_perturb = pf.random.uniform(rng, -0.40, 0.40)
-        v_mult = pf.random.log_uniform(rng, 0.15, 4.0)
+        v_mult = pf.random.uniform(rng, 0.15, 4.0)
         texture_color_layer2_hsv = np.array(
             [h_base + h_perturb, s_base + s_perturb, v_base * v_mult]
         )
@@ -2108,9 +2108,9 @@ def stone_smooth_styles_rand(  # noqa: C901
     )
 
     if texture_color_layer3 is None:
-        h_perturb = (pf.random.beta(rng, 0.3, 0.4) - 0.5) * 0.40
+        h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.5) * 0.40
         s_perturb = pf.random.uniform(rng, -0.35, 0.35)
-        v_mult = pf.random.log_uniform(rng, 0.2, 3.0)
+        v_mult = pf.random.uniform(rng, 0.2, 3.0)
         texture_color_layer3_hsv = np.array(
             [h_base + h_perturb, s_base + s_perturb, v_base * v_mult]
         )
@@ -2136,9 +2136,9 @@ def stone_smooth_styles_rand(  # noqa: C901
     )
 
     if texture_color_layer4 is None:
-        h_perturb = (pf.random.beta(rng, 0.3, 0.4) - 0.5) * 0.55
+        h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.5) * 0.55
         s_perturb = pf.random.uniform(rng, -0.275, 0.275)
-        v_mult = pf.random.log_uniform(rng, 0.2, 5.0)
+        v_mult = pf.random.uniform(rng, 0.2, 5.0)
         texture_color_layer4_hsv = np.array(
             [h_base + h_perturb, s_base + s_perturb, v_base * v_mult]
         )

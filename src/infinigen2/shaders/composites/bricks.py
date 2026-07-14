@@ -1292,8 +1292,10 @@ def brick_shader_composite_rand(
     Chooses a brick material, and when possible chooses a per-brick color scheme, e.g random, checkered, striped, etc
     """
 
+    rng_with, rng_no, rng_pattern, rng_withcall, rng_nocall, rng_final = rng.spawn(6)
+
     with_color = pf.control.choice(
-        rng,
+        rng_with,
         [
             # TODO: more materials with the `base_color` argument
             (brick_concrete.brick_concrete_rand, 2.0),
@@ -1301,7 +1303,7 @@ def brick_shader_composite_rand(
     )
 
     no_color = pf.control.choice(
-        rng,
+        rng_no,
         [
             # TODO: more materials with no `base_color` argument
             (granite.granite_rand, 1.0),
@@ -1310,11 +1312,13 @@ def brick_shader_composite_rand(
         ],
     )
 
-    color_pattern = brick_color_pattern_rand(rng, vector, brick_id, brick_random)
-    mat_with_pattern = with_color(rng, vector, base_color=color_pattern)
-    mat_no_pattern = no_color(rng, vector)
+    color_pattern = brick_color_pattern_rand(
+        rng_pattern, vector, brick_id, brick_random
+    )
+    mat_with_pattern = with_color(rng_withcall, vector, base_color=color_pattern)
+    mat_no_pattern = no_color(rng_nocall, vector)
     return pf.control.choice(
-        rng,
+        rng_final,
         [
             (mat_with_pattern, 2.0),
             (mat_no_pattern, 1.0),
@@ -1378,10 +1382,10 @@ def bricks_pristine_rand(
     rng: pf.RNG,
     vector: pf.ProcNode[pf.Vector],
 ) -> pf.Material:
-    r1, r2, r3, r4 = rng.spawn(4)
+    r_shader, r_dims, r_cutter, r_shadercall, r_bricks, r_grout = rng.spawn(6)
 
     shader = pf.control.choice(
-        r1,
+        r_shader,
         [
             (brick_concrete_pristine, 0.5),
             (concrete.concrete_rand, 0.5),
@@ -1390,19 +1394,22 @@ def bricks_pristine_rand(
         ],
     )
 
-    dimensions = brick_dimensions_rand(r1)
+    dimensions = brick_dimensions_rand(r_dims)
     dimensions = pf.nodes.math.vector_multiply(dimensions, (1, 2, 1))
 
     cutter = brick_cutter_rand(
-        r2, vector, irregularity=0, warp_strength=pf.random.uniform(rng, 0.05, 0.3)
+        r_cutter,
+        vector,
+        irregularity=0,
+        warp_strength=pf.random.uniform(rng, 0.05, 0.3),
     )
 
     return bricks_rand(
-        r3,
+        r_bricks,
         vector,
         brick_cutter=cutter,
-        brick_shader=shader(r2, cutter.vector),
-        grout_shader=brick_concrete.brick_concrete_grout_rand(r4, vector),
+        brick_shader=shader(r_shadercall, cutter.vector),
+        grout_shader=brick_concrete.brick_concrete_grout_rand(r_grout, vector),
     )
 
 

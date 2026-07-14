@@ -143,10 +143,18 @@ def _plane_rand(rng: pf.RNG) -> pf.MeshObject:
 
 
 def _uv_sphere_rand(rng: pf.RNG) -> pf.MeshObject:
-    return pf.ops.primitives.mesh_uv_sphere(
+    sphere = pf.nodes.geo.mesh_uv_sphere(
         segments=pf.random.randint(rng, 3, 33),
-        ring_count=pf.random.randint(rng, 3, 17),
+        rings=pf.random.randint(rng, 3, 17),
     )
+    mesh = pf.nodes.geo.store_named_attribute(
+        geometry=sphere.mesh,
+        name="uv_map",
+        value=sphere.uv_map,
+        domain="CORNER",
+        data_type="FLOAT2",
+    )
+    return pf.nodes.to_mesh_object(mesh)
 
 
 @pf.nodes.node_function

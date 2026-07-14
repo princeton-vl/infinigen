@@ -517,7 +517,9 @@ def lamp_rand(
     )
     # Sit the bulb just above the stem top (the head mounts at z=height) so its
     # radius clears the post mesh by 5% instead of intersecting it.
-    point_light.item().location.z = height + 1.05 * bulb_radius
+    pf.ops.object.set_transform(
+        point_light, location=(0.0, 0.0, height + 1.05 * bulb_radius)
+    )
     point_light.item().parent = lamp.item()
 
     return LampResult(mesh=lamp, light=point_light)

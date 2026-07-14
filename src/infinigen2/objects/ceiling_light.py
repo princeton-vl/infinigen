@@ -234,6 +234,6 @@ def ceiling_light_rand(
             temperature=temperature,
             shadow_soft_size=shadow_soft_size if shadow_soft_size is not None else 0.0,
         )
-        light.item().location.z = -0.03
+        pf.ops.object.set_transform(light, location=(0.0, 0.0, -0.03))
 
     return CeilingLightResult(mesh=obj, light=light)

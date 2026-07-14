@@ -3,6 +3,7 @@
 
 # Authors: Karhan Kayan
 
+import functools
 from typing import NamedTuple
 
 import numpy as np
@@ -1231,93 +1232,76 @@ def _create_gradient_color(
     )
 
 
+def _hsv_mode_color(
+    rng: pf.RNG,
+    mode: tuple[tuple[float, float], ...],
+    low: tuple[float, float, float],
+    high: tuple[float, float, float],
+) -> pf.Color:
+    (h_m, h_s), (s_m, s_s), (v_m, v_s) = mode
+    rng_h, rng_s, rng_v = rng.spawn(3)
+    h = pf.random.clip_gaussian(rng_h, h_m, h_s, low[0], high[0])
+    s = pf.random.clip_gaussian(rng_s, s_m, s_s, low[1], high[1])
+    v = pf.random.clip_gaussian(rng_v, v_m, v_s, low[2], high[2])
+    return pf.color.hsv_color(hsv=(h, s, v))
+
+
+def _hsv_modes_color_rand(
+    rng: pf.RNG,
+    modes: list[tuple[tuple[tuple[float, float], ...], float]],
+    low: tuple[float, float, float],
+    high: tuple[float, float, float],
+) -> pf.Color:
+    rng_choice, rng_draw = rng.spawn(2)
+    fn = pf.control.choice(
+        rng_choice,
+        [
+            (functools.partial(_hsv_mode_color, mode=mode, low=low, high=high), weight)
+            for mode, weight in modes
+        ],
+    )
+    return fn(rng=rng_draw)
+
+
 def _warm_color_rand(rng: pf.RNG) -> pf.Color:
     """Sample warm colors (yellow, orange, tan, brown) for granite background."""
-    hsv = pf.random.mixture_of_gaussian(
-        rng=rng,
-        means=np.array(
-            [
-                [0.11, 0.5, 0.15],  # Yellow-orange (like granite_yellow_preset)
-                [0.08, 0.55, 0.12],  # Orange-tan
-                [0.05, 0.4, 0.2],  # Tan-brown
-                [0.12, 0.6, 0.25],  # Golden yellow
-                [0.15, 0.45, 0.18],  # Yellow-green tint
-                [0.03, 0.5, 0.15],  # Salmon/peach
-            ]
-        ),
-        stds=np.array(
-            [
-                [0.02, 0.15, 0.08],
-                [0.02, 0.12, 0.06],
-                [0.02, 0.1, 0.08],
-                [0.02, 0.15, 0.1],
-                [0.02, 0.12, 0.08],
-                [0.015, 0.12, 0.06],
-            ]
-        ),
-        weights=[0.25, 0.2, 0.15, 0.15, 0.15, 0.1],
-        low=np.array([0.0, 0.2, 0.01]),
-        high=np.array([0.2, 0.8, 0.4]),
-    )
-    return pf.color.hsv_color(hsv=hsv)
+    modes = [
+        (((0.11, 0.02), (0.5, 0.15), (0.15, 0.08)), 0.25),  # Yellow-orange
+        (((0.08, 0.02), (0.55, 0.12), (0.12, 0.06)), 0.2),  # Orange-tan
+        (((0.05, 0.02), (0.4, 0.1), (0.2, 0.08)), 0.15),  # Tan-brown
+        (((0.12, 0.02), (0.6, 0.15), (0.25, 0.1)), 0.15),  # Golden yellow
+        (((0.15, 0.02), (0.45, 0.12), (0.18, 0.08)), 0.15),  # Yellow-green tint
+        (((0.03, 0.015), (0.5, 0.12), (0.15, 0.06)), 0.1),  # Salmon/peach
+    ]
+    return _hsv_modes_color_rand(rng, modes, low=(0.0, 0.2, 0.01), high=(0.2, 0.8, 0.4))
 
 
 def _cool_color_rand(rng: pf.RNG) -> pf.Color:
     """Sample cool colors (grey, blue-grey, white) for granite background."""
-    hsv = pf.random.mixture_of_gaussian(
-        rng=rng,
-        means=np.array(
-            [
-                [0.0, 0.05, 0.35],  # Neutral grey
-                [0.6, 0.1, 0.4],  # Blue-grey
-                [0.55, 0.08, 0.5],  # Light blue-grey
-                [0.0, 0.0, 0.25],  # Dark grey
-                [0.08, 0.1, 0.45],  # Warm grey
-            ]
-        ),
-        stds=np.array(
-            [
-                [0.05, 0.03, 0.15],
-                [0.05, 0.05, 0.12],
-                [0.04, 0.04, 0.1],
-                [0.03, 0.02, 0.1],
-                [0.03, 0.05, 0.12],
-            ]
-        ),
-        weights=[0.35, 0.2, 0.2, 0.15, 0.1],
-        low=np.array([0.0, 0.0, 0.05]),
-        high=np.array([1.0, 0.25, 0.7]),
+    modes = [
+        (((0.0, 0.05), (0.05, 0.03), (0.35, 0.15)), 0.35),  # Neutral grey
+        (((0.6, 0.05), (0.1, 0.05), (0.4, 0.12)), 0.2),  # Blue-grey
+        (((0.55, 0.04), (0.08, 0.04), (0.5, 0.1)), 0.2),  # Light blue-grey
+        (((0.0, 0.03), (0.0, 0.02), (0.25, 0.1)), 0.15),  # Dark grey
+        (((0.08, 0.03), (0.1, 0.05), (0.45, 0.12)), 0.1),  # Warm grey
+    ]
+    return _hsv_modes_color_rand(
+        rng, modes, low=(0.0, 0.0, 0.05), high=(1.0, 0.25, 0.7)
     )
-    return pf.color.hsv_color(hsv=hsv)
 
 
 def _dark_accent_color_rand(rng: pf.RNG) -> pf.Color:
     """Sample dark accent colors (black, dark brown, dark green) for mica/hornblende."""
-    hsv = pf.random.mixture_of_gaussian(
-        rng=rng,
-        means=np.array(
-            [
-                [0.0, 0.1, 0.02],  # Near black
-                [0.08, 0.4, 0.05],  # Dark brown
-                [0.35, 0.3, 0.06],  # Dark green
-                [0.0, 0.0, 0.01],  # Pure black
-                [0.12, 0.5, 0.08],  # Dark bronze
-            ]
-        ),
-        stds=np.array(
-            [
-                [0.05, 0.08, 0.015],
-                [0.03, 0.1, 0.02],
-                [0.05, 0.1, 0.025],
-                [0.02, 0.02, 0.008],
-                [0.03, 0.12, 0.03],
-            ]
-        ),
-        weights=[0.3, 0.25, 0.15, 0.2, 0.1],
-        low=np.array([0.0, 0.0, 0.005]),
-        high=np.array([1.0, 0.6, 0.15]),
+    modes = [
+        (((0.0, 0.05), (0.1, 0.08), (0.02, 0.015)), 0.3),  # Near black
+        (((0.08, 0.03), (0.4, 0.1), (0.05, 0.02)), 0.25),  # Dark brown
+        (((0.35, 0.05), (0.3, 0.1), (0.06, 0.025)), 0.15),  # Dark green
+        (((0.0, 0.02), (0.0, 0.02), (0.01, 0.008)), 0.2),  # Pure black
+        (((0.12, 0.03), (0.5, 0.12), (0.08, 0.03)), 0.1),  # Dark bronze
+    ]
+    return _hsv_modes_color_rand(
+        rng, modes, low=(0.0, 0.0, 0.005), high=(1.0, 0.6, 0.15)
     )
-    return pf.color.hsv_color(hsv=hsv)
 
 
 def _sample_pair_bounded(
@@ -1330,31 +1314,14 @@ def _sample_pair_bounded(
 
 def _light_accent_color_rand(rng: pf.RNG) -> pf.Color:
     """Sample light accent colors (white, cream, light grey) for quartz/feldspar."""
-    hsv = pf.random.mixture_of_gaussian(
-        rng=rng,
-        means=np.array(
-            [
-                [0.0, 0.02, 0.7],  # Near white
-                [0.08, 0.08, 0.6],  # Cream
-                [0.0, 0.0, 0.5],  # Medium grey
-                [0.05, 0.1, 0.55],  # Light tan
-                [0.6, 0.05, 0.65],  # Light blue-grey
-            ]
-        ),
-        stds=np.array(
-            [
-                [0.03, 0.02, 0.12],
-                [0.03, 0.05, 0.1],
-                [0.02, 0.02, 0.15],
-                [0.03, 0.06, 0.1],
-                [0.05, 0.03, 0.1],
-            ]
-        ),
-        weights=[0.3, 0.25, 0.2, 0.15, 0.1],
-        low=np.array([0.0, 0.0, 0.3]),
-        high=np.array([1.0, 0.2, 0.85]),
-    )
-    return pf.color.hsv_color(hsv=hsv)
+    modes = [
+        (((0.0, 0.03), (0.02, 0.02), (0.7, 0.12)), 0.3),  # Near white
+        (((0.08, 0.03), (0.08, 0.05), (0.6, 0.1)), 0.25),  # Cream
+        (((0.0, 0.02), (0.0, 0.02), (0.5, 0.15)), 0.2),  # Medium grey
+        (((0.05, 0.03), (0.1, 0.06), (0.55, 0.1)), 0.15),  # Light tan
+        (((0.6, 0.05), (0.05, 0.03), (0.65, 0.1)), 0.1),  # Light blue-grey
+    ]
+    return _hsv_modes_color_rand(rng, modes, low=(0.0, 0.0, 0.3), high=(1.0, 0.2, 0.85))
 
 
 def _granite_yellow_rand(
@@ -1377,7 +1344,7 @@ def _granite_yellow_rand(
 
     # Sample parameters around template anchors
     # Anchor values from granite_yellow_preset
-    size = pf.random.log_normal(rng, 10.0, 0.25)
+    size = pf.random.uniform(rng, 7.788, 12.8403)
     if min_roughness is None or max_roughness is None:
         mean_roughness_min = pf.random.uniform(rng, 0.1, 0.3)
         mean_roughness_max = pf.random.uniform(rng, mean_roughness_min, 0.5)
@@ -1385,29 +1352,29 @@ def _granite_yellow_rand(
             rng_rough, mean_roughness_min, mean_roughness_max, std=0.05
         )
     min_spec, max_spec = _sample_pair_bounded(rng_spec, 0.1, 0.1, std=0.05)
-    height_scale = pf.random.log_normal(rng, 0.05, 0.3)
+    height_scale = pf.random.uniform(rng, 0.037, 0.0675)
 
-    hornblende_size = pf.random.log_normal(rng, 0.3, 0.25)
+    hornblende_size = pf.random.uniform(rng, 0.2336, 0.3852)
     hornblende_color_variation = pf.random.clip_gaussian(rng, 0.7549, 0.15)
-    hornblende_height = pf.random.log_normal(rng, 0.1, 0.3)
+    hornblende_height = pf.random.uniform(rng, 0.0741, 0.135)
 
-    mica_size = pf.random.log_normal(rng, 0.5, 0.25)
+    mica_size = pf.random.uniform(rng, 0.3894, 0.642)
     mica_spread = pf.random.clip_gaussian(rng, 0.2647, 0.1)
     mica_smoothness = pf.random.clip_gaussian(rng, 0.0245, 0.02, low=0.0, high=0.2)
     mica_color_variation = pf.random.clip_gaussian(rng, 0.6716, 0.15)
-    mica_height = pf.random.log_normal(rng, 0.15, 0.3)
+    mica_height = pf.random.uniform(rng, 0.1111, 0.2025)
 
-    quartz_size = pf.random.log_normal(rng, 0.1, 0.25)
+    quartz_size = pf.random.uniform(rng, 0.0779, 0.1284)
     quartz_spread = pf.random.clip_gaussian(rng, 0.3725, 0.1)
     quartz_smoothness = pf.random.clip_gaussian(rng, 0.02, 0.02, low=0.0, high=0.2)
     quartz_color_variation = pf.random.clip_gaussian(rng, 0.452, 0.15)
-    quartz_height = pf.random.log_normal(rng, 0.22, 0.3)
+    quartz_height = pf.random.uniform(rng, 0.163, 0.297)
 
-    feldspar_size = pf.random.log_normal(rng, 0.3, 0.25)
+    feldspar_size = pf.random.uniform(rng, 0.2336, 0.3852)
     feldspar_spread = pf.random.clip_gaussian(rng, 0.2059, 0.1)
     feldspar_smoothness = pf.random.clip_gaussian(rng, 0.1, 0.05)
     feldspar_color_variation = pf.random.clip_gaussian(rng, 0.6078, 0.15)
-    feldspar_height = pf.random.log_normal(rng, 0.3, 0.3)
+    feldspar_height = pf.random.uniform(rng, 0.2222, 0.405)
 
     return granite(
         vector=vector,
@@ -1462,7 +1429,7 @@ def _granite_white_brown_rand(
     feldspar_color = _light_accent_color_rand(rng)
 
     # Sample parameters
-    size = pf.random.log_normal(rng, 10.0, 0.25)
+    size = pf.random.uniform(rng, 7.788, 12.8403)
     if min_roughness is None or max_roughness is None:
         mean_roughness_min = pf.random.uniform(rng, 0.2554, 0.4118)
         mean_roughness_max = pf.random.uniform(rng, mean_roughness_min, 0.6118)
@@ -1470,28 +1437,28 @@ def _granite_white_brown_rand(
             rng, mean_roughness_min, mean_roughness_max, std=0.08
         )
     min_spec, max_spec = _sample_pair_bounded(rng, 0.026, 0.1299, std=0.04)
-    height_scale = pf.random.log_normal(rng, 0.5, 0.3)
+    height_scale = pf.random.uniform(rng, 0.3704, 0.6749)
 
     hornblende_color_variation = pf.random.clip_gaussian(
         rng, 0.0, 0.05, low=0.0, high=0.2
     )
-    hornblende_height = pf.random.log_normal(rng, 0.1, 0.3)
+    hornblende_height = pf.random.uniform(rng, 0.0741, 0.135)
 
     mica_spread = pf.random.clip_gaussian(rng, 0.5, 0.15)
     mica_smoothness = pf.random.clip_gaussian(rng, 0.05, 0.03)
     mica_color_variation = pf.random.clip_gaussian(rng, 0.451, 0.15)
-    mica_height = pf.random.log_normal(rng, 0.25, 0.3)
+    mica_height = pf.random.uniform(rng, 0.1852, 0.3375)
 
-    quartz_size = pf.random.log_normal(rng, 0.2, 0.25)
+    quartz_size = pf.random.uniform(rng, 0.1558, 0.2568)
     quartz_spread = pf.random.clip_gaussian(rng, 0.5, 0.15)
     quartz_smoothness = pf.random.clip_gaussian(rng, 0.05, 0.03)
     quartz_color_variation = pf.random.clip_gaussian(rng, 0.3235, 0.15)
-    quartz_height = pf.random.log_normal(rng, 0.5, 0.3)
+    quartz_height = pf.random.uniform(rng, 0.3704, 0.6749)
 
-    feldspar_size = pf.random.log_normal(rng, 0.3, 0.25)
+    feldspar_size = pf.random.uniform(rng, 0.2336, 0.3852)
     feldspar_spread = pf.random.clip_gaussian(rng, 0.2, 0.1)
     feldspar_smoothness = pf.random.clip_gaussian(rng, 0.1, 0.05)
-    feldspar_height = pf.random.log_normal(rng, 0.75, 0.3)
+    feldspar_height = pf.random.uniform(rng, 0.5556, 1.0124)
 
     return granite(
         vector=vector,
@@ -1542,34 +1509,34 @@ def _granite_no_displacement_rand(
     feldspar_color = _light_accent_color_rand(rng)
 
     # Sample parameters
-    size = pf.random.log_normal(rng, 10.0, 0.25)
+    size = pf.random.uniform(rng, 7.788, 12.8403)
     if min_roughness is None or max_roughness is None:
         min_roughness, max_roughness = _sample_pair_bounded(
             rng, 0.0824, 0.1522, std=0.05
         )
     min_spec, max_spec = _sample_pair_bounded(rng, 0.05, 0.1, std=0.03)
 
-    hornblende_size = pf.random.log_normal(rng, 0.3, 0.25)
+    hornblende_size = pf.random.uniform(rng, 0.2336, 0.3852)
     hornblende_color_variation = pf.random.clip_gaussian(rng, 0.7549, 0.15)
-    hornblende_height = pf.random.log_normal(rng, 0.1, 0.3)
+    hornblende_height = pf.random.uniform(rng, 0.0741, 0.135)
 
-    mica_size = pf.random.log_normal(rng, 0.5, 0.25)
+    mica_size = pf.random.uniform(rng, 0.3894, 0.642)
     mica_spread = pf.random.clip_gaussian(rng, 0.5741, 0.15)
     mica_smoothness = pf.random.clip_gaussian(rng, 0.05, 0.03)
     mica_color_variation = pf.random.clip_gaussian(rng, 0.6716, 0.15)
-    mica_height = pf.random.log_normal(rng, 0.25, 0.3)
+    mica_height = pf.random.uniform(rng, 0.1852, 0.3375)
 
-    quartz_size = pf.random.log_normal(rng, 0.2, 0.25)
+    quartz_size = pf.random.uniform(rng, 0.1558, 0.2568)
     quartz_spread = pf.random.clip_gaussian(rng, 0.5, 0.15)
     quartz_smoothness = pf.random.clip_gaussian(rng, 0.02, 0.02, low=0.0, high=0.15)
     quartz_color_variation = pf.random.clip_gaussian(rng, 0.452, 0.15)
-    quartz_height = pf.random.log_normal(rng, 0.22, 0.3)
+    quartz_height = pf.random.uniform(rng, 0.163, 0.297)
 
-    feldspar_size = pf.random.log_normal(rng, 0.2, 0.25)
+    feldspar_size = pf.random.uniform(rng, 0.1558, 0.2568)
     feldspar_spread = pf.random.clip_gaussian(rng, 0.25, 0.1)
     feldspar_smoothness = pf.random.clip_gaussian(rng, 0.2, 0.08)
     feldspar_color_variation = pf.random.clip_gaussian(rng, 0.6078, 0.15)
-    feldspar_height = pf.random.log_normal(rng, 0.15, 0.3)
+    feldspar_height = pf.random.uniform(rng, 0.1111, 0.2025)
 
     granite_result = granite(
         vector=vector,
@@ -1626,8 +1593,8 @@ def _granite_crystals_rand(
     feldspar_color = _light_accent_color_rand(rng)
 
     # Sample parameters
-    size = pf.random.log_normal(rng, 100.0, 0.25)
-    height_scale = pf.random.log_normal(rng, 0.01, 0.3)
+    size = pf.random.uniform(rng, 77.8801, 128.4025)
+    height_scale = pf.random.uniform(rng, 0.0074, 0.0135)
     if min_roughness is None or max_roughness is None:
         mean_roughness_min = pf.random.uniform(rng, 0.2, 0.3)
         mean_roughness_max = pf.random.uniform(rng, mean_roughness_min, 0.5)
@@ -1636,27 +1603,27 @@ def _granite_crystals_rand(
         )
     min_spec, max_spec = _sample_pair_bounded(rng, 0.05, 0.1, std=0.03)
 
-    hornblende_size = pf.random.log_normal(rng, 0.3, 0.25)
+    hornblende_size = pf.random.uniform(rng, 0.2336, 0.3852)
     hornblende_color_variation = pf.random.clip_gaussian(rng, 0.7549, 0.15)
-    hornblende_height = pf.random.log_normal(rng, 0.1, 0.3)
+    hornblende_height = pf.random.uniform(rng, 0.0741, 0.135)
 
-    mica_size = pf.random.log_normal(rng, 0.5, 0.25)
+    mica_size = pf.random.uniform(rng, 0.3894, 0.642)
     mica_spread = pf.random.clip_gaussian(rng, 0.5741, 0.15)
     mica_smoothness = pf.random.clip_gaussian(rng, 0.05, 0.03)
     mica_color_variation = pf.random.clip_gaussian(rng, 0.6716, 0.15)
-    mica_height = pf.random.log_normal(rng, 0.25, 0.3)
+    mica_height = pf.random.uniform(rng, 0.1852, 0.3375)
 
-    quartz_size = pf.random.log_normal(rng, 0.15, 0.25)
+    quartz_size = pf.random.uniform(rng, 0.1168, 0.1926)
     quartz_spread = pf.random.clip_gaussian(rng, 0.45, 0.15)
     quartz_smoothness = pf.random.clip_gaussian(rng, 0.02, 0.02, low=0.0, high=0.15)
     quartz_color_variation = pf.random.clip_gaussian(rng, 0.452, 0.15)
-    quartz_height = pf.random.log_normal(rng, 0.3, 0.3)
+    quartz_height = pf.random.uniform(rng, 0.2222, 0.405)
 
-    feldspar_size = pf.random.log_normal(rng, 0.2, 0.25)
+    feldspar_size = pf.random.uniform(rng, 0.1558, 0.2568)
     feldspar_spread = pf.random.clip_gaussian(rng, 0.2608, 0.1)
     feldspar_smoothness = pf.random.clip_gaussian(rng, 0.2, 0.08)
     feldspar_color_variation = pf.random.clip_gaussian(rng, 0.6078, 0.15)
-    feldspar_height = pf.random.log_normal(rng, 0.15, 0.3)
+    feldspar_height = pf.random.uniform(rng, 0.1111, 0.2025)
 
     return granite(
         vector=vector,
@@ -1710,34 +1677,34 @@ def _granite_cobble_rand(
     feldspar_color = _light_accent_color_rand(rng_c3)
 
     # Sample parameters
-    size = pf.random.log_normal(rng, 7.0, 0.25)
+    size = pf.random.uniform(rng, 5.4516, 8.9882)
     if min_roughness is None or max_roughness is None:
         min_roughness, max_roughness = _sample_pair_bounded(
             rng_rough, 0.5013, 0.8333, std=0.1
         )
     min_spec, max_spec = _sample_pair_bounded(rng_spec, 0.0538, 0.0753, std=0.02)
-    height_scale = pf.random.log_normal(rng, 0.25, 0.3)
+    height_scale = pf.random.uniform(rng, 0.1852, 0.3375)
 
     hornblende_color_variation = pf.random.clip_gaussian(rng, 0.4355, 0.15)
     # hornblende_height stays 0 for cobble style
 
-    mica_size = pf.random.log_normal(rng, 0.4, 0.25)
+    mica_size = pf.random.uniform(rng, 0.3115, 0.5136)
     mica_spread = pf.random.clip_gaussian(rng, 1.0, 0.1, low=0.5, high=1.0)
     mica_smoothness = pf.random.clip_gaussian(rng, 0.2113, 0.08)
     mica_color_variation = pf.random.clip_gaussian(rng, 0.5645, 0.15)
-    mica_height = pf.random.log_normal(rng, 1.8, 0.3)
+    mica_height = pf.random.uniform(rng, 1.3335, 2.4297)
 
-    quartz_size = pf.random.log_normal(rng, 0.5, 0.25)
+    quartz_size = pf.random.uniform(rng, 0.3894, 0.642)
     quartz_spread = pf.random.clip_gaussian(rng, 0.8548, 0.1)
     quartz_smoothness = pf.random.clip_gaussian(rng, 0.5554, 0.15)
     quartz_color_variation = pf.random.clip_gaussian(rng, 0.3871, 0.15)
-    quartz_height = pf.random.log_normal(rng, 2.7, 0.3)
+    quartz_height = pf.random.uniform(rng, 2.0002, 3.6446)
 
-    feldspar_size = pf.random.log_normal(rng, 0.3, 0.25)
+    feldspar_size = pf.random.uniform(rng, 0.2336, 0.3852)
     feldspar_spread = pf.random.clip_gaussian(rng, 0.3, 0.1)
     feldspar_smoothness = pf.random.clip_gaussian(rng, 0.25, 0.1)
     feldspar_color_variation = pf.random.clip_gaussian(rng, 0.6075, 0.15)
-    feldspar_height = pf.random.log_normal(rng, 0.5, 0.3)
+    feldspar_height = pf.random.uniform(rng, 0.3704, 0.6749)
 
     return granite(
         vector=vector,
@@ -1789,7 +1756,7 @@ def _granite_masonry_rand(
     feldspar_color = _light_accent_color_rand(rng)
 
     # Sample parameters
-    size = pf.random.log_normal(rng, 1.0, 0.25)
+    size = pf.random.uniform(rng, 0.7788, 1.284)
     if min_roughness is None or max_roughness is None:
         mean_roughness_min = pf.random.uniform(rng, 0.6583, 0.8333)
         mean_roughness_max = pf.random.uniform(rng, mean_roughness_min, 0.90)
@@ -1797,23 +1764,23 @@ def _granite_masonry_rand(
             rng, mean_roughness_min, mean_roughness_max, std=0.1
         )
     min_spec, max_spec = _sample_pair_bounded(rng, 0.075, 0.2083, std=0.05)
-    height_scale = pf.random.log_normal(rng, 0.5, 0.3)
+    height_scale = pf.random.uniform(rng, 0.3704, 0.6749)
 
-    hornblende_height = pf.random.log_normal(rng, 0.1, 0.3)
+    hornblende_height = pf.random.uniform(rng, 0.0741, 0.135)
 
     mica_spread = pf.random.clip_gaussian(rng, 0.45, 0.15)
     mica_smoothness = pf.random.clip_gaussian(rng, 0.05, 0.03)
-    mica_height = pf.random.log_normal(rng, 0.25, 0.3)
+    mica_height = pf.random.uniform(rng, 0.1852, 0.3375)
 
-    quartz_size = pf.random.log_normal(rng, 0.2, 0.25)
+    quartz_size = pf.random.uniform(rng, 0.1558, 0.2568)
     quartz_spread = pf.random.clip_gaussian(rng, 0.5, 0.15)
     quartz_smoothness = pf.random.clip_gaussian(rng, 0.05, 0.03)
-    quartz_height = pf.random.log_normal(rng, 0.5, 0.3)
+    quartz_height = pf.random.uniform(rng, 0.3704, 0.6749)
 
-    feldspar_size = pf.random.log_normal(rng, 0.3, 0.25)
+    feldspar_size = pf.random.uniform(rng, 0.2336, 0.3852)
     feldspar_spread = pf.random.clip_gaussian(rng, 0.2, 0.1)
     feldspar_smoothness = pf.random.clip_gaussian(rng, 0.1, 0.05)
-    feldspar_height = pf.random.log_normal(rng, 0.75, 0.3)
+    feldspar_height = pf.random.uniform(rng, 0.5556, 1.0124)
 
     return granite(
         vector=vector,
@@ -1860,35 +1827,35 @@ def _granite_sandy_rand(
     feldspar_color = _light_accent_color_rand(rng)
 
     # Sample parameters
-    size = pf.random.log_normal(rng, 7.0, 0.25)
+    size = pf.random.uniform(rng, 5.4516, 8.9882)
     if min_roughness is None or max_roughness is None:
         min_roughness, max_roughness = _sample_pair_bounded(
             rng, 0.6013, 0.8533, std=0.1
         )
     min_spec, max_spec = _sample_pair_bounded(rng, 0.0538, 0.0753, std=0.02)
-    height_scale = pf.random.log_normal(rng, 0.25, 0.3)
+    height_scale = pf.random.uniform(rng, 0.1852, 0.3375)
 
-    hornblende_size = pf.random.log_normal(rng, 0.1, 0.25)
+    hornblende_size = pf.random.uniform(rng, 0.0779, 0.1284)
     hornblende_color_variation = pf.random.clip_gaussian(rng, 0.3817, 0.15)
-    hornblende_height = pf.random.log_normal(rng, 0.1, 0.3)
+    hornblende_height = pf.random.uniform(rng, 0.0741, 0.135)
 
-    mica_size = pf.random.log_normal(rng, 0.5, 0.25)
+    mica_size = pf.random.uniform(rng, 0.3894, 0.642)
     mica_spread = pf.random.clip_gaussian(rng, 0.4892, 0.15)
     mica_smoothness = pf.random.clip_gaussian(rng, 0.1522, 0.08)
     mica_color_variation = pf.random.clip_gaussian(rng, 0.5645, 0.15)
-    mica_height = pf.random.log_normal(rng, 1.8, 0.3)
+    mica_height = pf.random.uniform(rng, 1.3335, 2.4297)
 
-    quartz_size = pf.random.log_normal(rng, 0.2, 0.25)
+    quartz_size = pf.random.uniform(rng, 0.1558, 0.2568)
     quartz_spread = pf.random.clip_gaussian(rng, 0.6882, 0.15)
     quartz_smoothness = pf.random.clip_gaussian(rng, 0.2167, 0.08)
     quartz_color_variation = pf.random.clip_gaussian(rng, 0.3871, 0.15)
-    quartz_height = pf.random.log_normal(rng, 2.7, 0.3)
+    quartz_height = pf.random.uniform(rng, 2.0002, 3.6446)
 
-    feldspar_size = pf.random.log_normal(rng, 0.1, 0.25)
+    feldspar_size = pf.random.uniform(rng, 0.0779, 0.1284)
     feldspar_spread = pf.random.clip_gaussian(rng, 0.0, 0.05, low=0.0, high=0.15)
     feldspar_smoothness = pf.random.clip_gaussian(rng, 0.25, 0.1)
     feldspar_color_variation = pf.random.clip_gaussian(rng, 0.6075, 0.15)
-    feldspar_height = pf.random.log_normal(rng, 0.5, 0.3)
+    feldspar_height = pf.random.uniform(rng, 0.3704, 0.6749)
 
     return granite(
         vector=vector,

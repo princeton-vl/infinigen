@@ -835,11 +835,14 @@ def window_rand(
         glass_material = glass_material_rand(rng_glass, vec, glass_height=dimensions.z)
 
     if curtain is None:
+        rng_curtain_choice, rng_curtain_build = rng_curtain.spawn(2)
         curtain_fn = pf.control.choice(
-            rng_curtain,
+            rng_curtain_choice,
             [
                 (
-                    lambda: (curtain_rand(rng_curtain, dimensions=dimensions).mesh),
+                    lambda: (
+                        curtain_rand(rng_curtain_build, dimensions=dimensions).mesh
+                    ),
                     1.0,
                 ),
                 (lambda: pf.ops.primitives.mesh_single_vertex(), 2.0),  # none
@@ -903,6 +906,8 @@ def window_rand(
     # the window plane facing along the wall normal (+X)
     reorient = Euler(_WALL_REORIENT).to_matrix()
     flip = Euler((np.pi, 0.0, 0.0)).to_matrix()
-    portal_light.item().rotation_euler = (reorient @ flip).to_euler()
+    pf.ops.object.set_transform(
+        portal_light, rotation_euler=tuple((reorient @ flip).to_euler())
+    )
 
     return WindowResult(mesh=frame_obj, light=portal_light)

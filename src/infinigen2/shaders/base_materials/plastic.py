@@ -44,7 +44,7 @@ def plastic_translucent_rand(
     ior = pf.random.uniform(rng, 1.2, 1.35)
     transmission = pf.random.uniform(rng, 0.4, 1.0)
 
-    noise_size = pf.random.log_uniform(rng, 0.0001, 2.0)
+    noise_size = pf.random.uniform(rng, 0.0001, 2.0)
     noise_height = pf.random.uniform(rng, 0.05, 0.55)
     specular = pf.random.uniform(rng, 0.3, 1.0)
     noise_detail = pf.random.uniform(rng, 0.0, 4.0)
@@ -344,7 +344,7 @@ def plastic_grayscale_rand(
 ) -> pf.Material:
     h = pf.random.uniform(rng, 0.0, 1.0)
     s = 0.0
-    v = pf.random.log_uniform(rng, 0.02, 0.9)
+    v = pf.random.uniform(rng, 0.02, 0.9)
     base_color = pf.color.hsv_to_rgba((h, s, v))
     return plastic_opaque_rand(rng, vector, base_color=base_color)
 
@@ -357,7 +357,7 @@ def plastic_opaque_rand(
     if base_color is None:
         h = pf.random.uniform(rng, 0.0, 1.0)
         s = pf.random.uniform(rng, 0.2, 0.8)
-        v = pf.random.log_uniform(rng, 0.01, 0.8)
+        v = pf.random.uniform(rng, 0.01, 0.8)
         base_color = pf.color.hsv_to_rgba((h, s, v))
 
     roughness = pf.random.uniform(rng, 0.3, 1.0)
@@ -365,7 +365,7 @@ def plastic_opaque_rand(
     ior = pf.random.uniform(rng, 1.2, 1.55)
 
     scale = pf.random.uniform(rng, 2.0, 7.0)
-    noise_size = pf.random.log_uniform(rng, 0.002, 0.02)
+    noise_size = pf.random.uniform(rng, 0.002, 0.02)
     noise_detail = pf.random.uniform(rng, 1.0, 6.0)
     noise_seed = pf.random.uniform(rng, -1000.0, 1000.0)
 
