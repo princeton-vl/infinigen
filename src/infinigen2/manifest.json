@@ -520,6 +520,34 @@
   },
   {
     "category": "Object",
+    "name": "infinigen2.objects.chair.office_chair_rand"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen2.objects.chair.chair_back_rand"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen2.objects.chair.dining_chair_rand"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen2.objects.chair.chair_rand"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen2.objects.chair.curvy_seat_rand"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen2.objects.chair.round_seat_rand"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen2.objects.chair.wheeled_base_rand"
+  },
+  {
+    "category": "Object",
     "name": "infinigen2.objects.flower.flower_rand"
   },
   {

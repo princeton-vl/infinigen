@@ -49,6 +49,7 @@ from infinigen2.shaders.masks.tile_shapes import (
 __all__ = [
     "art_color_rand",
     "art_pattern_material_rand",
+    "castor_wheel_material_rand",
     "ceiling_material_rand",
     "decorative_material_rand",
     "floor_material_rand",
@@ -206,6 +207,21 @@ def furniture_material_rand(rng: pf.RNG, vec) -> pf.Material:
         ],
     )
     return wear(rng_wear, vec, material)
+
+
+def castor_wheel_material_rand(
+    rng: pf.RNG, vec, base_material: pf.Material
+) -> pf.Material:
+    """Caster wheel material; a hard decorative material, or inherits the base's."""
+    rng_choice, rng_mat = rng.spawn(2)
+    material_func = pf.control.choice(
+        rng_choice,
+        [
+            (decorative_material_rand, 0.7),
+            (lambda r, v: base_material, 0.3),
+        ],
+    )
+    return material_func(rng_mat, vec)
 
 
 def _dark_scratches_overlay(rng: pf.RNG, vector, material: pf.Material) -> pf.Material:

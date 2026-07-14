@@ -8,18 +8,156 @@ from typing import NamedTuple
 import numpy as np
 import procfunc as pf
 from procfunc.nodes import types as t
+from procfunc.nodes.util.bpy_node_info import NodeDataType
 
 __all__ = [
     "CubeWithVertexIndicesResult",
     "ExtrudeSeamlessResult",
+    "LoftingResult",
     "WallCutoutResult",
     "corner_box",
     "crease_sharp",
     "extrude_mesh_seamless_uvs",
+    "fill_between_curves",
     "grid_from_corners",
+    "lofting",
     "uv_winding_sign",
     "wall_cutout_split",
 ]
+
+
+class _CylinderSideResult(NamedTuple):
+    geometry: pf.ProcNode[pf.MeshObject]
+    top: pf.ProcNode[pf.MeshObject]
+    side: pf.ProcNode[pf.MeshObject]
+    bottom: pf.ProcNode[pf.MeshObject]
+
+
+@pf.nodes.node_function
+def _cylinder_side(
+    u_resolution: t.SocketOrVal[int] = 32, v_resolution: t.SocketOrVal[int] = 0
+) -> _CylinderSideResult:
+    cylinder_side_segments = v_resolution.astype(dtype=float) - 1.0
+    cylinder = pf.nodes.geo.mesh_cylinder(
+        vertices=u_resolution, side_segments=cylinder_side_segments.astype(dtype=int)
+    )
+    store_named_attribute = pf.nodes.geo.store_named_attribute(
+        geometry=cylinder.mesh,
+        name="uv_map",
+        value=cylinder.uv_map,
+        domain="CORNER",
+        data_type=NodeDataType.FLOAT_VECTOR,
+    )
+    return _CylinderSideResult(
+        store_named_attribute, cylinder.top, cylinder.side, cylinder.bottom
+    )
+
+
+@pf.nodes.node_function
+def _flip_index(
+    v_resolution: t.SocketOrVal[int] = 0, u_resolution: t.SocketOrVal[int] = 0
+) -> pf.ProcNode[float]:
+    input_index = pf.nodes.geo.input_index()
+    result_0_a_0 = input_index.astype(dtype=float) % v_resolution.astype(dtype=float)
+    result_0_b = pf.nodes.math.floor(
+        input_index.astype(dtype=float) / v_resolution.astype(dtype=float)
+    )
+    add = result_0_a_0 * u_resolution.astype(dtype=float) + result_0_b
+    return add
+
+
+class LoftingResult(NamedTuple):
+    geometry: pf.ProcNode[pf.CurveObject]
+    top: pf.ProcNode[bool]
+    side: pf.ProcNode[bool]
+    bottom: pf.ProcNode[bool]
+
+
+@pf.nodes.node_function
+def lofting(
+    profile_curves: t.ProcNode[pf.CurveObject],
+    u_resolution: t.SocketOrVal[int] = 32,
+    v_resolution: t.SocketOrVal[int] = 32,
+    use_nurb: t.SocketOrVal[bool] = False,
+) -> LoftingResult:
+    """Loft a tube surface through a stack of cross-section profile curves.
+
+    profile_curves is a single geometry holding N separate profile splines, one
+    per cross-section ordered along the loft (spline 0 = bottom rim ... spline
+    N-1 = top rim). Each profile is resampled to u_resolution points and the N
+    profiles are interpolated (Catmull-Rom, or NURBS if use_nurb) into
+    v_resolution rows, yielding a u_resolution x v_resolution cylinder-topology
+    mesh. Returns the lofted geometry plus the cylinder's top/side/bottom masks.
+    """
+    cylinder_side_result = _cylinder_side(
+        u_resolution=u_resolution, v_resolution=v_resolution
+    )
+    input_index = pf.nodes.geo.input_index()
+    field_on_domain = pf.nodes.geo.field_on_domain(
+        value=input_index, domain="CURVE", data_type=NodeDataType.INT
+    )
+    curve_line = pf.nodes.geo.curve_line(start=(0.0, 0.0, 0.0), end=(0.0, 0.0, 1.0))
+    attribute_domain_size = pf.nodes.geo.attribute_domain_size(
+        geometry=profile_curves, component="CURVE"
+    )
+    resample_curve_count = pf.nodes.geo.resample_curve_count(
+        curve=curve_line, count=attribute_domain_size.spline_count
+    )
+    instance_on_points = pf.nodes.geo.instance_on_points(
+        points=profile_curves,
+        instance=resample_curve_count,
+        selection=field_on_domain == 0,
+    )
+    realize_instances = pf.nodes.geo.realize_instances(instance_on_points)
+    input_position = pf.nodes.geo.input_position()
+    flip_index_result = _flip_index(
+        v_resolution=attribute_domain_size.spline_count, u_resolution=u_resolution
+    )
+    sample_index = pf.nodes.geo.sample_index(
+        geometry=profile_curves,
+        index=flip_index_result.astype(dtype=int),
+        value=input_position,
+        data_type=NodeDataType.FLOAT_VECTOR,
+    )
+    set_position_1 = pf.nodes.geo.set_position(
+        geometry=realize_instances, position=sample_index, offset=(0.0, 0.0, 0.0)
+    )
+    curve_spline_type = pf.nodes.geo.curve_spline_type(
+        curve=set_position_1, spline_type="CATMULL_ROM"
+    )
+    curve_spline_type_1 = pf.nodes.geo.curve_spline_type(
+        curve=set_position_1, spline_type="NURBS"
+    )
+    resample_curve = pf.nodes.func.switch(
+        switch=use_nurb,
+        a=curve_spline_type,
+        b=curve_spline_type_1,
+        data_type=NodeDataType.GEOMETRY,
+    )
+    resample_curve_count_1 = pf.nodes.geo.resample_curve_count(
+        curve=resample_curve, count=v_resolution
+    )
+    input_position_1 = pf.nodes.geo.input_position()
+    flip_index_result_1 = _flip_index(
+        v_resolution=u_resolution, u_resolution=v_resolution
+    )
+    sample_index_1 = pf.nodes.geo.sample_index(
+        geometry=resample_curve_count_1,
+        index=flip_index_result_1.astype(dtype=int),
+        value=input_position_1,
+        data_type=NodeDataType.FLOAT_VECTOR,
+    )
+    set_position = pf.nodes.geo.set_position(
+        geometry=cylinder_side_result.geometry,
+        position=sample_index_1,
+        offset=(0.0, 0.0, 0.0),
+    )
+    return LoftingResult(
+        set_position,
+        cylinder_side_result.top,
+        cylinder_side_result.side,
+        cylinder_side_result.bottom,
+    )
 
 
 class ExtrudeSeamlessResult(NamedTuple):
@@ -454,6 +592,44 @@ def corner_box(
         index_x=cube.index_x,
         index_y=cube.index_y,
         index_z=cube.index_z,
+    )
+
+
+@pf.nodes.node_function
+def fill_between_curves(
+    curve_left: t.SocketOrVal[pf.CurveObject],
+    curve_right: t.SocketOrVal[pf.CurveObject],
+    n_points: t.SocketOrVal[int] = 8,
+    n_rows: t.SocketOrVal[int] = 2,
+) -> pf.ProcNode[pf.MeshObject]:
+    """Ruled surface bridging two curves: resample both to n_points, then lerp
+    an n_rows x n_points grid between the sample positions. n_rows > 2 keeps
+    faces small and near-planar so downstream bevel/warp modifiers behave."""
+    grid = pf.nodes.geo.mesh_grid(vertices_x=n_rows, vertices_y=n_points)
+    left = pf.nodes.geo.resample_curve_count(curve=curve_left, count=n_points)
+    right = pf.nodes.geo.resample_curve_count(curve=curve_right, count=n_points)
+    index = pf.nodes.geo.input_index()
+    index_f = index.astype(dtype=float)
+    n_points_f = n_points.astype(dtype=float)
+    row = pf.nodes.math.floor(index_f / n_points_f)
+    along = index_f - row * n_points_f
+    factor = row / (n_rows.astype(dtype=float) - 1.0)
+    position = pf.nodes.geo.input_position()
+    left_pos = pf.nodes.geo.sample_index(
+        geometry=left,
+        index=along.astype(dtype=int),
+        value=position,
+        data_type=NodeDataType.FLOAT_VECTOR,
+    )
+    right_pos = pf.nodes.geo.sample_index(
+        geometry=right,
+        index=along.astype(dtype=int),
+        value=position,
+        data_type=NodeDataType.FLOAT_VECTOR,
+    )
+    lerped = left_pos + (right_pos - left_pos) * factor
+    return pf.nodes.geo.set_position(
+        geometry=grid.mesh, position=lerped, offset=(0.0, 0.0, 0.0)
     )
 
 
