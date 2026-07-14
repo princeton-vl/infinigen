@@ -47,7 +47,7 @@ def _rounded_prism(
     height: t.SocketOrVal[float],
     depth: t.SocketOrVal[float],
     radius: t.SocketOrVal[float],
-    count: t.SocketOrVal[int] = 32,
+    count: t.SocketOrVal[int] = 8,
 ) -> pf.ProcNode[pf.MeshObject]:
     quad = pf.nodes.geo.curve_quadrilateral(width=width, height=height)
     profile = pf.nodes.geo.fillet_curve_poly(
@@ -124,7 +124,7 @@ def handle_lock(
     mini_lock_depth: t.SocketOrVal[float] = 0.002,
 ) -> pf.ProcNode[pf.MeshObject]:
     cylinder = pf.nodes.geo.mesh_cylinder(
-        vertices=64, radius=value * 0.5, depth=button_depth
+        vertices=16, radius=value * 0.5, depth=button_depth
     )
     base = pf.nodes.geo.transform(geometry=cylinder.mesh, rotation=(0.0, 1.5708, 0.0))
 
@@ -216,7 +216,7 @@ def _knob_handle_geometry(
         geometry=base.mesh, translation=pf.nodes.math.combine_xyz(z=base_depth * 0.5)
     )
     stem = pf.nodes.geo.mesh_cylinder(
-        vertices=24, radius=stem_radius, depth=stem_length
+        vertices=16, radius=stem_radius, depth=stem_length
     )
     stem = pf.nodes.geo.transform(
         geometry=stem.mesh,
@@ -254,7 +254,7 @@ def _bar_pull_handle_geometry(
     standoff_radius: t.SocketOrVal[float] = 0.006,
 ) -> pf.ProcNode[pf.MeshObject]:
     grip = pf.nodes.geo.mesh_cylinder(
-        vertices=24, radius=grip_radius, depth=grip_length
+        vertices=16, radius=grip_radius, depth=grip_length
     )
     grip = pf.nodes.geo.transform(
         geometry=grip.mesh, translation=pf.nodes.math.combine_xyz(y=standoff_length)

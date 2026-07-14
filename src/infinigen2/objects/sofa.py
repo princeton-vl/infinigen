@@ -619,6 +619,8 @@ def _sofa_geometry(
         geometry, translation=translation_for_legs, rotation=(0, 0, 0), scale=(1, 1, 1)
     )
 
+    geometry = pf.nodes.geo.merge_by_distance(geometry, distance=1e-5)
+
     return geometry
 
 

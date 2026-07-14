@@ -16,6 +16,7 @@ from infinigen2.shaders.composites import fabric_patterned
 from infinigen2.shaders.functionality_lists import (
     furniture_material_rand,
 )
+from infinigen2.util import mesh as mesh_util
 from infinigen2.util.curve import curve_to_mesh_with_uv
 
 __all__ = [
@@ -78,7 +79,7 @@ def _bulb_rack(
     curve_circle_radius = pf.nodes.math.multiply_add(
         a=thickness, b=0.5, addend=inner_radius
     )
-    curve_circle = pf.nodes.geo.curve_circle(resolution=100, radius=curve_circle_radius)
+    curve_circle = pf.nodes.geo.curve_circle(resolution=24, radius=curve_circle_radius)
 
     transform_translation = pf.nodes.math.combine_xyz(z=inner_height)
     transform = pf.nodes.geo.transform(
@@ -101,7 +102,7 @@ def _bulb_rack(
     realize_instances = pf.nodes.geo.realize_instances(duplicate_elements.geometry)
 
     curve_endpoint_selection = pf.nodes.geo.curve_endpoint_selection(0)
-    curve_circle_1 = pf.nodes.geo.curve_circle(resolution=100, radius=outer_radius)
+    curve_circle_1 = pf.nodes.geo.curve_circle(resolution=24, radius=outer_radius)
 
     transform_1_translation = pf.nodes.math.combine_xyz(z=outer_height)
     transform_1 = pf.nodes.geo.transform(
@@ -145,7 +146,7 @@ def _bulb_rack(
 
     join = pf.nodes.geo.join_geometry([transform, set_position_1, transform_1])
 
-    curve_circle_2 = pf.nodes.geo.curve_circle(resolution=100, radius=thickness)
+    curve_circle_2 = pf.nodes.geo.curve_circle(resolution=6, radius=thickness)
     curve_to = pf.nodes.geo.curve_to_mesh(
         curve=join, profile_curve=curve_circle_2, fill_caps=True
     )
@@ -174,6 +175,7 @@ def _lamp_head(
     curve_b = bulb_rack_outer_height_b * -1.0
     curve_line_end = pf.nodes.math.combine_xyz(z=curve_a * curve_b)
     curve_line = pf.nodes.geo.curve_line(start=curve_line_start, end=curve_line_end)
+    curve_line = pf.nodes.geo.resample_curve_count(curve=curve_line, count=4)
 
     spline_parameter = pf.nodes.geo.spline_parameter()
 
@@ -187,7 +189,7 @@ def _lamp_head(
         curve=curve_line, radius=curve_to_curve_radius
     )
 
-    curve_circle = pf.nodes.geo.curve_circle(100)
+    curve_circle = pf.nodes.geo.curve_circle(16)
     shade_with_uv = curve_to_mesh_with_uv(curve=set_curve_radius, profile=curve_circle)
     curve_to = shade_with_uv.mesh
 
@@ -276,7 +278,7 @@ def _lamp_geometry(
     sample_curve_curves_start = pf.nodes.math.combine_xyz(z=base_height)
 
     curve_bezier_segment = pf.nodes.geo.curve_bezier_segment(
-        resolution=100,
+        resolution=32,
         start=sample_curve_curves_start,
         start_handle=curve_point1,
         end_handle=curve_point2,
@@ -306,13 +308,13 @@ def _lamp_geometry(
 
     join_1 = pf.nodes.geo.join_geometry([curve_line, curve_bezier_segment])
 
-    curve_circle = pf.nodes.geo.curve_circle(resolution=100, radius=stand_radius)
+    curve_circle = pf.nodes.geo.curve_circle(resolution=8, radius=stand_radius)
     curve_to = pf.nodes.geo.curve_to_mesh(
         curve=join_1, profile_curve=curve_circle, fill_caps=True
     )
     curve_line_1_end = pf.nodes.math.combine_xyz(z=base_height)
     curve_line_1 = pf.nodes.geo.curve_line(end=curve_line_1_end, start=(0, 0, 0))
-    curve_circle_1 = pf.nodes.geo.curve_circle(resolution=100, radius=base_radius)
+    curve_circle_1 = pf.nodes.geo.curve_circle(resolution=16, radius=base_radius)
     curve_to_1 = pf.nodes.geo.curve_to_mesh(
         curve=curve_line_1,
         profile_curve=curve_circle_1,
@@ -443,7 +445,9 @@ def lamp(
         metal_material=metal_material,
     )
 
-    mesh = pf.nodes.to_mesh_object(result.geometry)
+    geo = mesh_util.crease_sharp(result.geometry, threshold_degrees=70.0)
+    mesh = pf.nodes.to_mesh_object(geo)
+    pf.ops.modifier.subdivide_surface(mesh, levels=2, _skip_apply=True)
 
     bulb_radius = 0.02
     point_light = point_light_indoor(
@@ -507,7 +511,9 @@ def lamp_rand(
         metal_material=stem_mat,
     )
 
-    lamp = pf.nodes.to_mesh_object(result.geometry)
+    geo = mesh_util.crease_sharp(result.geometry, threshold_degrees=70.0)
+    lamp = pf.nodes.to_mesh_object(geo)
+    pf.ops.modifier.subdivide_surface(lamp, levels=2, _skip_apply=True)
 
     if energy is None:
         energy = pf.random.clip_gaussian(rng, 7, 4, 5, 18)

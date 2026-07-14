@@ -112,7 +112,7 @@ def _n_gon_cylinder(
     height: t.SocketOrVal[float] = 1.0,
     aspect_ratio: t.SocketOrVal[float] = 1.0,
     fillet_ratio: t.SocketOrVal[float] = 0.2,
-    profile_resolution: t.SocketOrVal[int] = 64,
+    profile_resolution: t.SocketOrVal[int] = 16,
     resolution: t.SocketOrVal[int] = 64,
 ) -> _NGonCylinderResult:
     mesh_position_z_to_min = height * -1.0
@@ -222,7 +222,7 @@ def _strecher(
         profile_width=profile_width,
         aspect_ratio=1.0,
         fillet_ratio=0.2,
-        profile_resolution=64,
+        profile_resolution=16,
         resolution=64,
     )
     return n_gon_cylinder_result.mesh
@@ -585,7 +585,7 @@ def _leg_straight(
         profile_width=leg_diameter,
         aspect_ratio=1.0,
         fillet_ratio=fillet_ratio,
-        profile_resolution=64,
+        profile_resolution=16,
         resolution=resolution,
     )
     return n_gon_cylinder_result.mesh
@@ -738,7 +738,10 @@ def base_straight(
         stretcher_increment=stretcher_increment,
         stretcher_relative_pos=stretcher_relative_pos,
     )
-    return TableResult(mesh=pf.nodes.to_mesh_object(geo))
+    geo = mesh.crease_sharp(geo, threshold_degrees=40.0)
+    obj = pf.nodes.to_mesh_object(geo)
+    pf.ops.modifier.subdivide_surface(obj, levels=2, _skip_apply=True)
+    return TableResult(mesh=obj)
 
 
 def base_straight_rand(
@@ -758,12 +761,14 @@ def base_straight_rand(
         stretcher_increment=pf.control.choice(rng, [(0, 1.0), (1, 1.0), (2, 1.0)]),
         stretcher_relative_pos=pf.random.uniform(rng, 0.2, 0.6),
     )
+    geo = mesh.crease_sharp(geo, threshold_degrees=40.0)
     obj = pf.nodes.to_mesh_object(geo)
     if material is None:
         material = furniture_material_rand(rng_mat, pf.nodes.shader.geometry().position)
     pf.ops.object.set_material(
         obj, surface=material.surface, displacement=material.displacement
     )
+    pf.ops.modifier.subdivide_surface(obj, levels=2, _skip_apply=True)
     return TableResult(mesh=obj)
 
 
@@ -788,7 +793,10 @@ def pedestal_base(
         resolution=resolution,
     )
     geo = _pedestal_sweep(radius_curve, resolution=resolution)
-    return TableResult(mesh=pf.nodes.to_mesh_object(geo))
+    geo = mesh.crease_sharp(geo, threshold_degrees=40.0)
+    obj = pf.nodes.to_mesh_object(geo)
+    pf.ops.modifier.subdivide_surface(obj, levels=2, _skip_apply=True)
+    return TableResult(mesh=obj)
 
 
 def _pedestal_profile_rand(
@@ -828,12 +836,14 @@ def pedestal_base_rand(
     bottom_radius = pf.random.uniform(rng, *bottom_radius_range)
     radius_curve = _pedestal_profile_rand(rng_profile, z, top_radius, bottom_radius)
     geo = _pedestal_sweep(radius_curve)
+    geo = mesh.crease_sharp(geo, threshold_degrees=40.0)
     obj = pf.nodes.to_mesh_object(geo)
     if material is None:
         material = furniture_material_rand(rng_mat, pf.nodes.shader.coord().uv)
     pf.ops.object.set_material(
         obj, surface=material.surface, displacement=material.displacement
     )
+    pf.ops.modifier.subdivide_surface(obj, levels=2, _skip_apply=True)
     return TableResult(mesh=obj)
 
 
@@ -854,7 +864,10 @@ def base_square(
         leg_placement_bottom_scale=leg_placement_bottom_scale,
         has_bottom_connector=has_bottom_connector,
     )
-    return TableResult(mesh=pf.nodes.to_mesh_object(geo))
+    geo = mesh.crease_sharp(geo, threshold_degrees=40.0)
+    obj = pf.nodes.to_mesh_object(geo)
+    pf.ops.modifier.subdivide_surface(obj, levels=2, _skip_apply=True)
+    return TableResult(mesh=obj)
 
 
 def base_square_rand(
@@ -873,12 +886,14 @@ def base_square_rand(
         leg_placement_bottom_scale=1.0,
         has_bottom_connector=pf.control.choice(rng, [(True, 2.0), (False, 1.0)]),
     )
+    geo = mesh.crease_sharp(geo, threshold_degrees=40.0)
     obj = pf.nodes.to_mesh_object(geo)
     if material is None:
         material = furniture_material_rand(rng_mat, pf.nodes.shader.geometry().position)
     pf.ops.object.set_material(
         obj, surface=material.surface, displacement=material.displacement
     )
+    pf.ops.modifier.subdivide_surface(obj, levels=2, _skip_apply=True)
     return TableResult(mesh=obj)
 
 
@@ -954,8 +969,6 @@ def dining_table_rand(
     pf.ops.object.set_material(
         base, surface=leg_material.surface, displacement=leg_material.displacement
     )
-
-    pf.ops.attr.write_attribute(base, data=1.0, key="crease_edge", domain="EDGE")
 
     pf.ops.object.join(top, base)
     pf.ops.modifier.subdivide_surface(top, levels=3, _skip_apply=True)
