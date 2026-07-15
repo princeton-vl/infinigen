@@ -95,7 +95,7 @@ def livingroom_rand(
         floor=shape.floor,
         frame_start=frame_start,
         frame_end=frame_end,
-        extra_colliders=storage_surfaces + windows,
+        extra_colliders=storage_surfaces + windows + [shape.walls],
         wall_storage=storage_surfaces,
     )
 

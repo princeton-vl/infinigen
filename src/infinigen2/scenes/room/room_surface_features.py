@@ -131,6 +131,11 @@ def _finish_cutout_mesh(
     return obj
 
 
+def _wall_uv_width(wall: pf.MeshObject) -> float:
+    uvs = pf.ops.attr.uv_coords(wall)
+    return uvs[:, 0].max() - uvs[:, 0].min()
+
+
 def _arrange_window_portals(
     walls_window_aliases: list[pf.MeshObject],
     window_obj: pf.MeshObject,
@@ -167,11 +172,12 @@ def window_spaced_rand(
     width = window_obj.item().dimensions.y
     wmin, _ = pf.ops.attr.bbox_min_max(window_obj)
 
-    wall_uvs = pf.ops.attr.uv_coords(wall)
-    wall_uv_width = wall_uvs[:, 0].max() - wall_uvs[:, 0].min()
+    wall_uv_width = _wall_uv_width(wall)
 
-    max_margin = min(0.3 * wall_uv_width, 2.0 * width)
-    edge_margin = pf.random.uniform(rng, 0.1, max_margin) if max_margin > 0.1 else 0.1
+    # the window is sized to fit the narrowest wall, so slack is always positive
+    slack = max(0.0, wall_uv_width - width - 0.01)
+    max_margin = min(0.3 * wall_uv_width, 2.0 * width, slack)
+    edge_margin = pf.random.uniform(rng, min(0.1, max_margin), max_margin)
     margin_split = pf.random.clip_gaussian(rng, 0.5, 0.3, 0.05, 0.95)
     margin_low_x = edge_margin * margin_split
     margin_high_x = edge_margin * (1.0 - margin_split)
@@ -1451,10 +1457,11 @@ def wall_feature_rand(
         rng_window, 0.75, 0.2, 0.6, 1.0 - 2.0 * edge_gap_pct
     )
     window_height = shape.dimensions.z * window_height_pct
-    # squared uniform biases width narrow
-    max_window_width = max(2.0, max(shape.dimensions.x, shape.dimensions.y) - 0.5)
-    window_width = (
-        1.0 + (max_window_width - 1.0) * pf.random.uniform(rng_window, 0.0, 1.0) ** 2
+    # one window object is reused on every wall, so it must fit the narrowest one
+    narrowest_wall = min(_wall_uv_width(w) for w in shape.flat_walls)
+    max_window_width = 0.7 * narrowest_wall
+    window_width = max_window_width * (
+        0.4 + 0.6 * pf.random.uniform(rng_window, 0.0, 1.0) ** 2
     )
     window_dimensions = window.window_dimensions_rand(
         rng_window, width=window_width, height=window_height
