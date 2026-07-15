@@ -115,7 +115,29 @@ def _skirting_profile(
         selection=selection,
     )
 
-    return fillet_mask_result.curve
+    return _append_back_corner(fillet_mask_result.curve)
+
+
+@pf.nodes.node_function
+def _append_back_corner(
+    curve: pf.ProcNode[pf.CurveObject],
+) -> pf.ProcNode[pf.CurveObject]:
+    # append the back-top corner at the wall plane (x=0) to square the swept cap
+    input_position = pf.nodes.geo.input_position()
+    end_x = pf.nodes.geo.sample_index(
+        clamp=True, geometry=curve, value=input_position.x, index=1 << 20
+    )
+    end_y = pf.nodes.geo.sample_index(
+        clamp=True, geometry=curve, value=input_position.y, index=1 << 20
+    )
+    back_top = pf.nodes.geo.curve_line(
+        start=pf.nodes.math.combine_xyz(x=end_x, y=end_y), end=(0.0, 0.0, 0.0)
+    )
+    joined = pf.nodes.geo.join_geometry([curve, back_top])
+    welded = pf.nodes.geo.merge_by_distance(
+        pf.nodes.geo.curve_to_mesh(joined), distance=0.0005
+    )
+    return pf.nodes.geo.mesh_to_curve(welded)
 
 
 def skirting_profile(

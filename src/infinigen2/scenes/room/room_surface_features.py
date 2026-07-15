@@ -1203,6 +1203,26 @@ class CeilingFeaturesResult(NamedTuple):
     lights: list[pf.LightObject]
 
 
+def _skirting_path_curve(
+    joined: pf.ProcNode,
+    selection: pf.ProcNode,
+    outward: pf.ProcNode,
+    up_sign: float,
+) -> pf.ProcNode:
+    curve = pf.nodes.geo.mesh_to_curve(joined, selection=selection)
+    # unify winding vs the wall normal: profile up for floor, mirrored down for ceiling
+    chirality = pf.nodes.math.vector_cross_product(
+        a=pf.nodes.geo.input_tangent(), b=outward
+    ).z
+    curve = pf.nodes.geo.reverse_curve(curve, selection=chirality * up_sign > 0.0)
+    # fillet rounds corner junctions; resample drops degenerate T-junction points
+    curve = pf.nodes.geo.fillet_curve_poly(
+        curve, radius=0.02, limit_radius=True, count=2
+    )
+    curve = pf.nodes.geo.resample_curve_length(curve, length=0.04)
+    return pf.nodes.geo.set_curve_normal(curve, normal=outward, mode="FREE")
+
+
 @pf.tracer.grammar
 def skirting_on_walls_rand(
     rng: pf.RNG,
@@ -1213,6 +1233,8 @@ def skirting_on_walls_rand(
     if profile_curve is None:
         profile_curve = skirting_profile_rand(rng)
     profile_curve_geo = pf.nodes.geo.object_info(profile_curve).geometry
+    # close the silhouette so fill_caps can seal the cut ends at door gaps
+    profile_curve_geo = pf.nodes.geo.set_spline_cyclic(profile_curve_geo, cyclic=True)
 
     # follow the bottom/top boundary edges of the wall meshes
     wall_geos = [
@@ -1227,34 +1249,44 @@ def skirting_on_walls_rand(
     # weld coincident verts so boundary slivers collapse
     joined = pf.nodes.geo.merge_by_distance(joined, distance=0.005)
 
+    # outward wall normal (swept depth is -normal): stable per-point across splits
+    cap = pf.nodes.geo.capture_attribute(
+        joined, domain="POINT", wall_outward=-pf.nodes.geo.input_normal()
+    )
+    joined = cap.geometry
+
     position_z = pf.nodes.geo.input_position().z
     z_stat = pf.nodes.geo.attribute_statistic(geometry=joined, attribute=position_z)
-    # tight band: only edges flat at the extremes (avoids corner-junction spikes)
-    near_bottom = position_z < z_stat.min + 0.005
-    near_top = position_z > z_stat.max - 0.005
+    # horizontal edges with both endpoints at the extreme
+    edge_v = pf.nodes.geo.input_mesh_edge_vertices()
+    floor_z = z_stat.min + 0.02
+    ceil_z = z_stat.max - 0.02
+    near_bottom = pf.nodes.func.boolean_and(
+        a=edge_v.position_1.z < floor_z, b=edge_v.position_2.z < floor_z
+    )
+    near_top = pf.nodes.func.boolean_and(
+        a=edge_v.position_1.z > ceil_z, b=edge_v.position_2.z > ceil_z
+    )
 
-    # fillet rounds corner junctions; resample then drops the degenerate clustered
-    # points feature wall-plane T-junctions inject (they pinch the swept profile)
-    floor_curve_node = pf.nodes.geo.mesh_to_curve(joined, selection=near_bottom)
-    floor_curve_node = pf.nodes.geo.fillet_curve_poly(
-        floor_curve_node, radius=0.02, limit_radius=True, count=2
+    # drop short jamb-chamfer sliver edges that tilt the fill_caps door-gap ends
+    long_edge = (
+        pf.nodes.math.vector_distance(edge_v.position_1, edge_v.position_2) > 0.02
     )
-    floor_curve_node = pf.nodes.geo.resample_curve_length(floor_curve_node, length=0.04)
+    near_bottom = pf.nodes.func.boolean_and(a=near_bottom, b=long_edge)
+    near_top = pf.nodes.func.boolean_and(a=near_top, b=long_edge)
 
-    ceiling_curve_node = pf.nodes.geo.mesh_to_curve(joined, selection=near_top)
-    ceiling_curve_node = pf.nodes.geo.fillet_curve_poly(
-        ceiling_curve_node, radius=0.02, limit_radius=True, count=2
+    # gap the floor curve under doorways: drop edges with open wall at knee height
+    mid = (edge_v.position_1 + edge_v.position_2) * 0.5
+    knee = pf.nodes.math.combine_xyz(x=mid.x, y=mid.y, z=z_stat.min + 0.5)
+    knee_prox = pf.nodes.geo.proximity(geometry=joined, sample_position=knee)
+    near_bottom = pf.nodes.func.boolean_and(a=near_bottom, b=knee_prox.distance < 0.05)
+
+    floor_curve_node = _skirting_path_curve(
+        joined, near_bottom, cap.wall_outward, up_sign=1.0
     )
-    ceiling_curve_node = pf.nodes.geo.resample_curve_length(
-        ceiling_curve_node, length=0.04
+    ceiling_curve_node = _skirting_path_curve(
+        joined, near_top, cap.wall_outward, up_sign=-1.0
     )
-    ceiling_curve_node = pf.nodes.geo.reverse_curve(ceiling_curve_node)
-    # Z_UP gives the horizontal loop a stable sweep frame so reverse_curve cannot
-    # flip it (normal=None: the Normal socket is disabled in Z_UP mode)
-    ceiling_curve_node = pf.nodes.geo.set_curve_normal(
-        ceiling_curve_node, normal=None, mode="Z_UP"
-    )
-    ceiling_curve_node = pf.nodes.geo.set_curve_tilt(ceiling_curve_node, tilt=np.pi)
 
     geoms = pf.control.choice(
         rng,
@@ -1266,7 +1298,7 @@ def skirting_on_walls_rand(
     )
     path_curves = pf.nodes.geo.join_geometry(geoms)
 
-    skirt = curve_to_mesh_with_uv(path_curves, profile_curve_geo).mesh
+    skirt = curve_to_mesh_with_uv(path_curves, profile_curve_geo, fill_caps=True).mesh
     skirt = pf.nodes.geo.flip_faces(skirt)
     skirt = pf.nodes.to_mesh_object(skirt)
 
