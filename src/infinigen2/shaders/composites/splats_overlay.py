@@ -46,11 +46,23 @@ def splats_overlay_rand(
     material: pf.Material,
     overlay_material: pf.Material | None = None,
     size: t.SocketOrVal[float] | None = None,
+    allow_gradient: bool = False,
+    gradient_fac: t.SocketOrVal[float] | None = None,
+    gradient_start: t.SocketOrVal[float] | None = None,
+    gradient_end: t.SocketOrVal[float] | None = None,
 ) -> pf.Material:
     if overlay_material is None:
         overlay_material = splats_base_material_rand(rng=rng, vector=vector)
 
-    mask = splats.splats_mask_rand(rng=rng, vector=vector, size=size).mask
+    mask = splats.splats_mask_rand(
+        rng=rng,
+        vector=vector,
+        size=size,
+        allow_gradient=allow_gradient,
+        gradient_fac=gradient_fac,
+        gradient_start=gradient_start,
+        gradient_end=gradient_end,
+    ).mask
     shader = pf.nodes.shader.mix_shader(
         factor=mask, a=material.surface, b=overlay_material.surface
     )

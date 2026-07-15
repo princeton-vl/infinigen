@@ -678,8 +678,15 @@ def _glass_pane(
         end=pf.nodes.math.combine_xyz(x=width * 0.5),
     )
     mesh = curve_to_mesh_with_uv(curve=curve, profile=profile)
+    # uncreased, the frame's boundary_smooth=ALL subsurf rounds the pane inwards
+    creased = pf.nodes.geo.store_named_attribute(
+        domain="EDGE",
+        geometry=mesh.mesh,
+        name="crease_edge",
+        value=1.0,
+    )
     glass = pf.nodes.geo.set_material(
-        geometry=mesh.mesh, selection=True, material=material
+        geometry=creased, selection=True, material=material
     )
     return pf.nodes.geo.transform(geometry=glass, rotation=_WALL_REORIENT)
 

@@ -511,8 +511,25 @@ def rug_material_rand(
     return func(rng_func, vector)
 
 
+def _mirror_splats_gradient(
+    rng: pf.RNG, vector: pf.ProcNode[pf.Vector], material: pf.Material
+) -> pf.Material:
+    rng_reach, rng_splats = rng.spawn(2)
+    uv = pf.nodes.shader.coord().uv
+    reach = pf.random.log_uniform(rng_reach, 0.05, 0.5)
+    return splats_overlay_rand(
+        rng_splats,
+        vector,
+        material,
+        allow_gradient=True,
+        gradient_fac=uv.y,
+        gradient_start=reach,
+        gradient_end=0.0,
+    )
+
+
 def mirror_material_rand(rng: pf.RNG, vector: pf.ProcNode[pf.Vector]) -> pf.Material:
-    rng_rough, rng_splats, rng_scratches = rng.spawn(3)
+    rng_rough, rng_choice, rng_splats, rng_scratches = rng.spawn(4)
     roughness = pf.random.clip_gaussian(rng_rough, 0.01, 0.05, 0.005, 0.2)
     surface = pf.nodes.shader.principled_bsdf(
         base_color=(1.0, 1.0, 1.0, 1.0),
@@ -525,5 +542,12 @@ def mirror_material_rand(rng: pf.RNG, vector: pf.ProcNode[pf.Vector]) -> pf.Mate
         surface=surface,
         displacement=pf.nodes.math.constant((0.0, 0.0, 0.0)),
     )
-    material = splats_overlay_rand(rng_splats, vector, material)
+    splats_func = pf.control.choice(
+        rng_choice,
+        [
+            (splats_overlay_rand, 4.0),
+            (_mirror_splats_gradient, 1.0),
+        ],
+    )
+    material = splats_func(rng_splats, vector, material)
     return scratches_overlay_rand(rng_scratches, vector, material)
