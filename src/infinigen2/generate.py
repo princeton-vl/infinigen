@@ -534,6 +534,24 @@ def _unpack_by_category(category: str, result, data: dict):
             raise ValueError(f"Unknown category: {category}")
 
 
+def _evaluated_tris(objects: list) -> int:
+    """Total evaluated triangle count across the object list, for render metrics."""
+    deps = bpy.context.evaluated_depsgraph_get()
+    total = 0
+    for obj in objects:
+        item = obj.item()
+        if item.type != "MESH":
+            continue
+        evaluated = item.evaluated_get(deps)
+        mesh = evaluated.to_mesh()
+        try:
+            mesh.calc_loop_triangles()
+            total += len(mesh.loop_triangles)
+        finally:
+            evaluated.to_mesh_clear()
+    return total
+
+
 def execute_generators(
     output_folder: Path,
     generators: list[tuple[str, str, Callable]],
@@ -564,6 +582,7 @@ def execute_generators(
 
     realized = False
     generator_times = {}
+    render_time_sec = 0.0
 
     for generator_str, category, generator_func in generators:
         gen_rng, rng = rng.spawn(2)
@@ -608,13 +627,23 @@ def execute_generators(
 
         elapsed = time.perf_counter() - start_time
         generator_times[generator_str] = elapsed
+        if category == "Exporter":
+            render_time_sec += elapsed
 
         logger.info(f"Finished {generator_str} in {elapsed:.3f}s")
 
     for name, elapsed in generator_times.items():
         logger.info(f"{name}: {elapsed:.3f}s")
 
+    try:
+        tris = _evaluated_tris(data["objects"])
+    except Exception as e:
+        logger.warning(f"Could not count triangles for render metrics: {e}")
+        tris = 0
+
     data["generator_times"] = generator_times
+    data["tris"] = tris
+    data["render_time_sec"] = round(render_time_sec, 3)
     return {k: v for k, v in data.items() if k not in pipeline_parameters}
 
 
@@ -784,6 +813,8 @@ def _main():  # noqa: C901
         "seed": hex(seed),
         "hardware": get_hardware_info(),
         "generator_times": generator_times,
+        "tris": results.get("tris"),
+        "render_time_sec": results.get("render_time_sec"),
         "exports": {k.value: [str(p) for p in v] for k, v in exports.items()},
     }
     with open(args.output / "metadata.json", "w") as f:

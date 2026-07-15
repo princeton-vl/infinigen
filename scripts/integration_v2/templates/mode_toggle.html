@@ -1,5 +1,8 @@
 {% extends "base.html" %}
 {% import "_image_tile.html" as tile %}
+{% import "_metrics.html" as metrics %}
+{% import "_perf_bar.html" as perf %}
+{% import "_version_header.html" as vh %}
 
 {% block styles %}
 .comparison-container {
@@ -19,9 +22,13 @@
     text-align: center;
 }
 
-.version-name {
-    font-weight: bold;
+.version-header {
+    display: none;
     font-size: 14px;
+}
+
+.version-header.active {
+    display: inline;
 }
 
 .comparison-row {
@@ -121,15 +128,19 @@ img {
 {% block content %}
 <div class="comparison-container">
     <div class="header-row">
-        <div class="version-name" id="current-version-name">{{ version_names[0] }}</div>
+        {% for version in version_meta %}<span class="version-header {% if loop.index0 == 0 %}active{% endif %}" data-version="{{ version.name }}">{{ vh.version_header(version) }}{{ metrics.metrics_inline(version_totals.get(version.name)) }}</span>{% endfor %}
     </div>
 
     {% for row in rows %}
-    <div class="comparison-row" data-asset-type="{{ row.asset_type }}" data-asset="{{ row.asset }}">
-        <div class="asset-name">{{ row.asset_label }}</div>
+    <div class="comparison-row{% if row.not_run %} folded{% endif %}" data-asset-type="{{ row.asset_type }}" data-asset="{{ row.asset }}" data-not-run="{{ 'true' if row.not_run else 'false' }}" data-perf="{% if row.perf_approved %}approved{% elif row.perf_regressed %}changed{% else %}unchanged{% endif %}">
+        <div class="asset-name">{{ row.asset_label }}{% if row.is_new %} <span class="new-badge" title="new asset — not present in {{ row.missing_versions | join(', ') }}">NEW</span>{% endif %}{% if row.not_run %} <span class="skip-badge" title="not rendered in {{ row.missing_versions | join(', ') }}">SKIPPED</span>{% endif %}</div>
+        {% if perf_approve_enabled and row.perf_regressed %}
+        {{ perf.perf_bar(row) }}
+        {% endif %}
 
         {% for obj in row.objects %}
         <div class="version-layer {% if loop.index0 == 0 %}active{% endif %}" data-version="{{ obj.version }}">
+            <div class="section-title">Render metrics{{ metrics.metrics_inline(obj.metrics) }}</div>
             {% if obj.images %}
             {% set preset_images = obj.images | selectattr('is_preset') | list %}
             {% set distribution_images = obj.images | selectattr('category', 'equalto', 'distribution') | rejectattr('is_preset') | list %}
@@ -137,7 +148,7 @@ img {
 
             {% if distribution_images %}
             <div class="image-section" data-category="distribution">
-                <div class="section-title">Random seeds</div>
+                <div class="section-title">Random seeds{{ metrics.metrics_inline(obj.section_metrics.get('distribution')) }}</div>
                 <div class="images-container">
                     {% for img in distribution_images %}
                     {{ tile.image_tile(img) }}
@@ -148,7 +159,7 @@ img {
 
             {% if preset_images %}
             <div class="image-section" data-category="distribution">
-                <div class="section-title">Presets</div>
+                <div class="section-title">Presets{{ metrics.metrics_inline(obj.section_metrics.get('preset')) }}</div>
                 <div class="images-container preset-strip">
                     {% for img in preset_images %}
                     {{ tile.image_tile(img) }}
@@ -159,7 +170,7 @@ img {
 
             {% if displacement_images %}
             <div class="image-section" data-category="displacement">
-                <div class="section-title">Displacement tests</div>
+                <div class="section-title">Displacement tests{{ metrics.metrics_inline(obj.section_metrics.get('displacement')) }}</div>
                 <div class="images-container">
                     {% for img in displacement_images %}
                     {{ tile.image_tile(img) }}
@@ -183,7 +194,7 @@ const versionNames = {{ version_names|tojson }};
 
 function toggleVersion() {
     // Hide current version
-    document.querySelectorAll('.version-layer.active').forEach(el => {
+    document.querySelectorAll('.version-layer.active, .version-header.active').forEach(el => {
         el.classList.remove('active');
     });
 
@@ -194,9 +205,6 @@ function toggleVersion() {
     document.querySelectorAll(`[data-version="${versionNames[currentVersionIndex]}"]`).forEach(el => {
         el.classList.add('active');
     });
-
-    // Update header
-    document.getElementById('current-version-name').textContent = versionNames[currentVersionIndex];
 }
 
 document.addEventListener('keydown', (e) => {

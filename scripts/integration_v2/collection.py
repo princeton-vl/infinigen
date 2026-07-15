@@ -25,11 +25,19 @@ class ImageInfo(NamedTuple):
     stderr_text: str
 
 
+class RenderStat(NamedTuple):
+    variant_key: str
+    tris: int | None
+    cpu_time_sec: float | None
+    gpu_time_sec: float | None
+
+
 class AssetData(NamedTuple):
     asset_name: str
     asset_type: str
     version_name: str
     images: list[ImageInfo]
+    stats: list[RenderStat]
 
 
 class CollectionResult(NamedTuple):
@@ -95,6 +103,7 @@ def _merge_asset(assets: dict[str, AssetData], new_asset: AssetData):
         asset_type=existing.asset_type,
         version_name=existing.version_name,
         images=existing.images + new_asset.images,
+        stats=existing.stats + new_asset.stats,
     )
 
 
@@ -174,6 +183,13 @@ def collect_images_structured(
                 )
             )
 
+        stat = RenderStat(
+            variant_key=variant_key,
+            tris=event.get("tris"),
+            cpu_time_sec=event.get("cpu_time_sec"),
+            gpu_time_sec=event.get("gpu_time_sec"),
+        )
+
         _merge_asset(
             assets,
             AssetData(
@@ -181,6 +197,7 @@ def collect_images_structured(
                 asset_type=asset_type,
                 version_name=version_name,
                 images=images,
+                stats=[stat],
             ),
         )
 

@@ -42,6 +42,8 @@ if [ ! -f "$OUTPUT_PATH/git_info.toml" ]; then
         echo "branch = \"$GIT_BRANCH\""
         echo "commit = \"$GIT_COMMIT\""
         echo "timestamp = \"$TIMESTAMP\""
+        [ -n "${PR_NUMBER:-}" ] && echo "pr = \"$PR_NUMBER\""
+        [ -n "${GITHUB_REPOSITORY:-}" ] && echo "repo = \"$GITHUB_REPOSITORY\""
     } > "$OUTPUT_PATH/git_info.toml"
 fi
 

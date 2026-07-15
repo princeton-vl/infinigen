@@ -212,6 +212,152 @@
             font-size: 10px;
         }
 
+        .comparison-row[data-not-run="true"] .asset-name {
+            background: #eee;
+            color: #888;
+        }
+
+        .fold-arrow {
+            cursor: pointer;
+            user-select: none;
+            display: inline-block;
+            width: 12px;
+            margin-right: 2px;
+            color: #888;
+        }
+
+        .section-title,
+        .asset-name {
+            user-select: none;
+        }
+
+        .image-section.folded > .images-container {
+            display: none;
+        }
+
+        .comparison-row.folded .image-section,
+        .comparison-row.folded .empty-cell,
+        .comparison-row.folded .version-layer {
+            display: none !important;
+        }
+
+        .skip-badge {
+            display: inline-block;
+            margin-left: 6px;
+            padding: 0 4px;
+            background: #b0803a;
+            color: #fff;
+            border-radius: 3px;
+            font-size: 9px;
+            vertical-align: middle;
+        }
+
+        .new-badge {
+            display: inline-block;
+            margin-left: 6px;
+            padding: 0 4px;
+            background: #2e7d32;
+            color: #fff;
+            border-radius: 3px;
+            font-size: 9px;
+            vertical-align: middle;
+        }
+
+        .metrics {
+            font-weight: normal;
+            color: #999;
+            font-size: 9px;
+            margin-left: 6px;
+            white-space: nowrap;
+        }
+
+        .m-worse {
+            color: #c0392b;
+            font-weight: bold;
+        }
+
+        .m-better {
+            color: #2e7d32;
+            font-weight: bold;
+        }
+
+        .approve-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .approve-btn {
+            font-size: 11px;
+            padding: 2px 10px;
+            cursor: pointer;
+            background: #fff3cd;
+            border: 1px solid #d0a000;
+            border-radius: 3px;
+        }
+
+        .approve-btn:hover {
+            background: #ffe08a;
+        }
+
+        .approved-badge {
+            font-size: 11px;
+            color: #1a7f37;
+            font-weight: bold;
+        }
+
+        .perf-regressed {
+            font-size: 10px;
+            color: #c0392b;
+            font-weight: bold;
+        }
+
+        .comparison-row[data-perf="changed"] .asset-name {
+            background: #fff0e6;
+        }
+
+        .ba-badge {
+            display: inline-block;
+            padding: 1px 8px;
+            margin-right: 6px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+            color: #fff;
+            vertical-align: middle;
+        }
+
+        .ba-badge.before {
+            background: #888;
+        }
+
+        .ba-badge.after {
+            background: #2e7d32;
+        }
+
+        .vh-branch {
+            font-weight: bold;
+        }
+
+        .vh-commit {
+            font-family: monospace;
+            font-size: 11px;
+        }
+
+        .vh-pr {
+            font-weight: bold;
+        }
+
+        .vh-branch, .vh-commit, .vh-pr {
+            color: #1a5fb4;
+            text-decoration: none;
+        }
+
+        a.vh-branch:hover, a.vh-commit:hover, a.vh-pr:hover {
+            text-decoration: underline;
+        }
+
         {% block styles %}{% endblock %}
     </style>
 </head>
@@ -241,6 +387,10 @@
                 {% endif %}
             </span>
             <span class="filter-toggle" onclick="toggleFilters()">⚙ Filters</span>
+            {% set skipped_count = rows | selectattr('not_run') | list | length %}
+            {% if skipped_count %}
+            <span class="filter-toggle" id="skipped-toggle" data-count="{{ skipped_count }}" data-folded="1" onclick="toggleSkipped()">▸ Unfold {{ skipped_count }} not-rendered</span>
+            {% endif %}
             <a href="/help" style="color: #0066cc; text-decoration: none; font-size: 10px;">Help</a>
             <a href="/select-versions" style="color: #0066cc; text-decoration: none; font-size: 10px;">Select versions</a>
         </div>
@@ -454,6 +604,18 @@
 
         function toggleFilters() {
             document.getElementById('filters').classList.toggle('expanded');
+        }
+
+        function toggleSkipped() {
+            const t = document.getElementById('skipped-toggle');
+            if (!t) return;
+            const fold = t.dataset.folded !== '1';
+            document.querySelectorAll('.comparison-row[data-not-run="true"]').forEach(row => {
+                const header = row.querySelector('.asset-name');
+                if (header) setFolded(header, fold);
+            });
+            t.dataset.folded = fold ? '1' : '0';
+            t.textContent = (fold ? '▸ Unfold ' : '▾ Fold ') + t.dataset.count + ' not-rendered';
         }
 
         function buildUrlWithState(newMode) {
@@ -704,6 +866,88 @@
         document.querySelectorAll('.filter-checkbox[data-filter-type="asset_type"]').forEach(cb => {
             cb.addEventListener('change', applyAssetFilters);
         });
+
+        const APPROVE_RUN_PATH = {{ run_path|default('')|tojson }};
+        const APPROVE_BASELINE = {{ baseline_name|default('')|tojson }};
+
+        async function approvePerf(btn) {
+            const row = btn.closest('.comparison-row');
+            const asset = row ? row.dataset.asset : '';
+            let token = localStorage.getItem('approveToken') || '';
+            if (!token) {
+                token = prompt('Approval token (set once, stored in this browser):') || '';
+                if (!token) return;
+                localStorage.setItem('approveToken', token);
+            }
+            btn.disabled = true;
+            btn.textContent = 'Approving...';
+            const body = new URLSearchParams({
+                asset: asset,
+                run_path: APPROVE_RUN_PATH,
+                baseline: APPROVE_BASELINE,
+                token: token,
+            });
+            try {
+                const resp = await fetch('/approve-perf', {method: 'POST', body});
+                const data = await resp.json();
+                if (!data.ok) {
+                    if (resp.status === 403) localStorage.removeItem('approveToken');
+                    throw new Error(data.error || 'failed');
+                }
+                btn.parentElement.innerHTML = '<span class="approved-badge">✓ perf approved</span>';
+                if (row) row.setAttribute('data-perf', 'approved');
+            } catch (err) {
+                btn.disabled = false;
+                btn.textContent = 'Approve perf';
+                alert('Approve failed: ' + err.message);
+            }
+        }
+
+        let folding = false, foldMode = true;
+
+        function _foldTarget(header) {
+            if (header.classList.contains('section-title')) return header.closest('.image-section');
+            if (header.classList.contains('asset-name')) return header.closest('.comparison-row');
+            return null;
+        }
+
+        function setFolded(header, folded) {
+            const target = _foldTarget(header);
+            if (!target) return;
+            target.classList.toggle('folded', folded);
+            const arrow = header.querySelector('.fold-arrow');
+            if (arrow) arrow.textContent = folded ? '▸' : '▾';
+        }
+
+        function _syncArrow(header) {
+            const target = _foldTarget(header);
+            const arrow = header.querySelector('.fold-arrow');
+            if (target && arrow) arrow.textContent = target.classList.contains('folded') ? '▸' : '▾';
+        }
+
+        function initFolding() {
+            document.querySelectorAll('.section-title, .asset-name').forEach(header => {
+                if (!_foldTarget(header) || header.querySelector('.fold-arrow')) return;
+                const arrow = document.createElement('span');
+                arrow.className = 'fold-arrow';
+                header.insertBefore(arrow, header.firstChild);
+                _syncArrow(header);
+                header.addEventListener('mousedown', e => {
+                    if (e.button !== 0) return;
+                    e.preventDefault();
+                    const target = _foldTarget(header);
+                    folding = true;
+                    foldMode = target ? !target.classList.contains('folded') : true;
+                    setFolded(header, foldMode);
+                });
+                header.addEventListener('mouseenter', () => {
+                    if (folding) setFolded(header, foldMode);
+                });
+            });
+            document.addEventListener('mouseup', () => { folding = false; });
+        }
+
+        initFolding();
 
         {% block scripts %}{% endblock %}
     </script>

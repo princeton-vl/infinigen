@@ -11,6 +11,8 @@ import json
 from pathlib import Path
 
 MAX_TRIGGER_ROWS = 40
+MAX_CRASH_ROWS = 40
+MAX_ERROR_CHARS = 160
 
 
 def parse_args() -> argparse.Namespace:
@@ -21,6 +23,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--target-dir", required=True)
     parser.add_argument("--gating-report", type=Path, default=None)
     parser.add_argument("--pixel-summary", type=Path, default=None)
+    parser.add_argument("--perf-summary", type=Path, default=None)
+    parser.add_argument("--render-index", type=Path, default=None)
     parser.add_argument("--out", type=Path, required=True)
     return parser.parse_args()
 
@@ -75,12 +79,68 @@ def gating_section(report: dict) -> list[str]:
     return lines
 
 
-def pixel_section(summary_path: Path | None) -> list[str]:
+def last_error_line(index_root: Path, stderr_rel: str) -> str:
+    if not stderr_rel:
+        return ""
+    stderr_file = index_root / stderr_rel
+    if not stderr_file.is_file():
+        return ""
+    text = stderr_file.read_text(errors="replace")
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    if not lines:
+        return ""
+    line = lines[-1]
+    if len(line) > MAX_ERROR_CHARS:
+        line = line[: MAX_ERROR_CHARS - 1] + "…"
+    return line.replace("|", "\\|")
+
+
+def crash_rows(index_root: Path | None) -> list[tuple[str, str]]:
+    if index_root is None:
+        return []
+    events_dir = index_root / "render_index" / "events"
+    if not events_dir.is_dir():
+        return []
+
+    rows = []
+    for event_path in sorted(events_dir.glob("*.json")):
+        try:
+            payload = json.loads(event_path.read_text())
+        except Exception:
+            continue
+        if payload.get("returncode", 0) == 0:
+            continue
+        asset = payload.get("asset_dir") or event_path.stem
+        error = last_error_line(index_root, payload.get("stderr_path", ""))
+        rows.append((asset, error))
+    return sorted(rows)
+
+
+def crash_section(index_root: Path | None) -> list[str]:
+    rows = crash_rows(index_root)
+    if not rows:
+        return []
+
+    lines = [
+        f"<details><summary>Crashes: {len(rows)} assets had errors</summary>",
+        "",
+        "| asset | error |",
+        "|---|---|",
+    ]
+    for asset, error in rows[:MAX_CRASH_ROWS]:
+        lines.append(f"| {asset} | {error} |")
+    if len(rows) > MAX_CRASH_ROWS:
+        lines.append(f"\n_…{len(rows) - MAX_CRASH_ROWS} more omitted_")
+    lines += ["", "</details>", ""]
+    return lines
+
+
+def _collapsible_section(summary_path: Path | None, title: str) -> list[str]:
     if summary_path is None or not summary_path.is_file():
         return []
     text = summary_path.read_text().strip()
     return [
-        "<details><summary>Pixel diff vs baseline</summary>",
+        f"<details><summary>{title}</summary>",
         "",
         text,
         "",
@@ -101,8 +161,10 @@ def main() -> int:
         f"Path: {args.target_dir}",
         "",
     ]
+    lines += crash_section(args.render_index)
     lines += gating_section(load_json(args.gating_report))
-    lines += pixel_section(args.pixel_summary)
+    lines += _collapsible_section(args.pixel_summary, "Pixel diff vs baseline")
+    lines += _collapsible_section(args.perf_summary, "Perf diff vs baseline")
     args.out.write_text("\n".join(lines).strip() + "\n")
     print(f"Wrote {args.out}")
     return 0

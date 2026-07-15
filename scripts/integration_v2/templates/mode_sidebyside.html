@@ -1,5 +1,8 @@
 {% extends "base.html" %}
 {% import "_image_tile.html" as tile %}
+{% import "_metrics.html" as metrics %}
+{% import "_perf_bar.html" as perf %}
+{% import "_version_header.html" as vh %}
 
 {% block styles %}
 .comparison-container {
@@ -125,16 +128,19 @@ img {
 {% block content %}
 <div class="comparison-container">
     <div class="header-row">
-        {% for version in version_names %}
-        <div class="header-cell">{{ version }}</div>
+        {% for version in version_meta %}
+        <div class="header-cell">{{ vh.version_header(version) }}{{ metrics.metrics_inline(version_totals.get(version.name)) }}</div>
         {% endfor %}
     </div>
 
     {% for row in rows %}
-    <div class="comparison-row" data-asset-type="{{ row.asset_type }}" data-asset="{{ row.asset }}">
+    <div class="comparison-row{% if row.not_run %} folded{% endif %}" data-asset-type="{{ row.asset_type }}" data-asset="{{ row.asset }}" data-not-run="{{ 'true' if row.not_run else 'false' }}" data-perf="{% if row.perf_approved %}approved{% elif row.perf_regressed %}changed{% else %}unchanged{% endif %}">
         {% for obj in row.objects %}
         <div class="object-cell">
-            <div class="asset-name">{{ row.asset_label }}</div>
+            <div class="asset-name">{{ row.asset_label }}{% if row.is_new %} <span class="new-badge" title="new asset — not present in {{ row.missing_versions | join(', ') }}">NEW</span>{% endif %}{% if row.not_run %} <span class="skip-badge" title="not rendered in {{ row.missing_versions | join(', ') }}">SKIPPED</span>{% endif %}{{ metrics.metrics_inline(obj.metrics) }}</div>
+            {% if perf_approve_enabled and loop.last and row.perf_regressed %}
+            {{ perf.perf_bar(row) }}
+            {% endif %}
             {% if obj.images %}
             {% set preset_images = obj.images | selectattr('is_preset') | list %}
             {% set distribution_images = obj.images | selectattr('category', 'equalto', 'distribution') | rejectattr('is_preset') | list %}
@@ -142,7 +148,7 @@ img {
 
             {% if distribution_images %}
             <div class="image-section" data-category="distribution">
-                <div class="section-title">Random seeds</div>
+                <div class="section-title">Random seeds{{ metrics.metrics_inline(obj.section_metrics.get('distribution')) }}</div>
                 <div class="images-container">
                     {% for img in distribution_images %}
                     {{ tile.image_tile(img) }}
@@ -153,7 +159,7 @@ img {
 
             {% if preset_images %}
             <div class="image-section" data-category="distribution">
-                <div class="section-title">Presets</div>
+                <div class="section-title">Presets{{ metrics.metrics_inline(obj.section_metrics.get('preset')) }}</div>
                 <div class="images-container preset-strip">
                     {% for img in preset_images %}
                     {{ tile.image_tile(img) }}
@@ -164,7 +170,7 @@ img {
 
             {% if displacement_images %}
             <div class="image-section" data-category="displacement">
-                <div class="section-title">Displacement tests</div>
+                <div class="section-title">Displacement tests{{ metrics.metrics_inline(obj.section_metrics.get('displacement')) }}</div>
                 <div class="images-container">
                     {% for img in displacement_images %}
                     {{ tile.image_tile(img) }}

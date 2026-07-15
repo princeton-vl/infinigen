@@ -59,6 +59,20 @@ def parse_asset_fields(asset_dir: str) -> tuple[str, str, str]:
     return asset_type, generator, f"{obj_name}-{renderer}-{variant}"
 
 
+def read_render_stats(asset_output_dir: Path | None) -> dict:
+    """Read the render metrics (tris, render_time_sec) generate.py wrote into this
+    asset's metadata.json."""
+    if asset_output_dir is None:
+        return {}
+    path = asset_output_dir / "metadata.json"
+    if not path.exists():
+        return {}
+    try:
+        return json.loads(path.read_text())
+    except (OSError, ValueError):
+        return {}
+
+
 def collect_pngs(asset_output_dir: Path, index_root: Path) -> list[str]:
     if not asset_output_dir.exists():
         return []
@@ -118,11 +132,20 @@ def main() -> int:
         stderr_file.write_text(proc.stderr)
         stderr_path = stderr_file.relative_to(index_root).as_posix()
 
+    duration_sec = round(ended - started, 3)
+    render_stats = read_render_stats(asset_output_dir)
+    tris = render_stats.get("tris")
+    gpu_time_sec = render_stats.get("render_time_sec")
+    # CPU (scene-build) time is the wall-clock left after the GPU render.
+    cpu_time_sec = None
+    if gpu_time_sec is not None:
+        cpu_time_sec = round(max(0.0, duration_sec - gpu_time_sec), 3)
+
     event = {
         "event_id": event_id,
         "timestamp_start": started,
         "timestamp_end": ended,
-        "duration_sec": round(ended - started, 3),
+        "duration_sec": duration_sec,
         "status": status,
         "returncode": proc.returncode,
         "cmd": args.cmd,
@@ -132,6 +155,9 @@ def main() -> int:
         "variant_key": variant_key,
         "images": pngs,
         "stderr_path": stderr_path,
+        "tris": tris,
+        "cpu_time_sec": cpu_time_sec,
+        "gpu_time_sec": gpu_time_sec,
     }
 
     event_path = events_dir / f"{event_id}.json"

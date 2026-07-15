@@ -21,6 +21,8 @@ concurrency:
 env:
   RENDER_ARCHIVE_ROOT: /home/renderbot/integration_test_archive/renders/integration
   VIEWER_BASE_URL: https://pvlbox.princeton.edu
+  # Set "1" to fail the check on an unapproved perf regression; keep "0" until validated.
+  PERF_GATE_ENFORCE: "0"
 
 jobs:
   render:
@@ -75,6 +77,7 @@ jobs:
         env:
           GPU_MEM_USED_MAX_MB: 10000
           GIT_BRANCH_OVERRIDE: ${{ github.head_ref || github.ref_name }}
+          PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
           MATERIAL_PARALLEL: 1
           MATERIAL_LIMIT: -1
           OBJECT_LIMIT: -1
@@ -122,6 +125,18 @@ jobs:
             --report "$OUTPUT_DIR/pixel_diff.json" \
             --summary "$OUTPUT_DIR/pixel_diff.md"
 
+      - name: Perf diff vs baseline
+        id: perfdiff
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        run: |
+          uv run python scripts/integration_v2/perf_diff.py \
+            --pr "$OUTPUT_DIR" \
+            --baseline "$RENDER_ARCHIVE_ROOT/$BASELINE" \
+            --report "$OUTPUT_DIR/perf_diff.json" \
+            --summary "$OUTPUT_DIR/perf_diff.md" \
+            --approvals-root "$RENDER_ARCHIVE_ROOT"
+
       - name: Archive renders to permanent storage
         if: ${{ !cancelled() }}
         run: |
@@ -165,6 +180,8 @@ jobs:
             --target-dir "$TARGET_DIR" \
             --gating-report "$OUTPUT_DIR/gating_report.json" \
             --pixel-summary "$OUTPUT_DIR/pixel_diff.md" \
+            --perf-summary "$OUTPUT_DIR/perf_diff.md" \
+            --render-index "$OUTPUT_DIR" \
             --out "$RUNNER_TEMP/comment_body.md"
 
       - name: Comment PR with viewer link
@@ -187,5 +204,9 @@ jobs:
         run: |
           if [ "${{ steps.render.outcome }}" = "failure" ]; then
             echo "One or more renders failed — marking job red."
+            exit 1
+          fi
+          if [ "$PERF_GATE_ENFORCE" = "1" ] && [ "${{ steps.perfdiff.outcome }}" = "failure" ]; then
+            echo "Unapproved perf regressions vs baseline — marking job red (see PR comment)."
             exit 1
           fi
