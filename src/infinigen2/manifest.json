@@ -464,6 +464,10 @@
   },
   {
     "category": "Scene",
+    "name": "infinigen2.scenes.curve_demo.curve_demo"
+  },
+  {
+    "category": "Scene",
     "name": "infinigen2.scenes.room.room.livingroom_rand"
   },
   {
