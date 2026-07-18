@@ -3,6 +3,8 @@
 
 import math
 
+import bmesh
+import bpy
 import procfunc as pf
 import pytest
 
@@ -11,20 +13,27 @@ from infinigen2.util import mesh as mesh_util
 
 def _creased_edges(mesh_node: pf.ProcNode, threshold_degrees: float):
     geo = mesh_util.crease_sharp(mesh_node, threshold_degrees=threshold_degrees)
-    angle = pf.nodes.geo.input_mesh_edge_angle().unsigned_angle
-    geo = pf.nodes.geo.store_named_attribute(
-        geometry=geo, name="face_angle", value=angle, domain="EDGE"
-    )
     obj = pf.nodes.to_mesh_object(geo)
     me = obj.item().data
 
     assert "crease_edge" in me.attributes
     creased = [d.value > 0.5 for d in me.attributes["crease_edge"].data]
-    angles = [math.degrees(d.value) for d in me.attributes["face_angle"].data]
-    return list(zip(angles, creased))
+
+    bm = bmesh.new()
+    bm.from_mesh(me)
+    bm.edges.ensure_lookup_table()
+    assert len(list(bm.edges)) == len(creased)
+
+    out = [
+        (math.degrees(edge.calc_face_angle(0.0)), is_creased)
+        for edge, is_creased in zip(bm.edges, creased)
+    ]
+    bm.free()
+    return out
 
 
 def test_crease_sharp_marks_edges_above_threshold():
+    bpy.ops.wm.read_homefile(use_empty=True)
     cube = pf.nodes.geo.mesh_cube(size=(1.0, 1.0, 1.0)).mesh
 
     # Every box edge folds at 90deg: all crease below 90, none above.
@@ -34,6 +43,7 @@ def test_crease_sharp_marks_edges_above_threshold():
 
 @pytest.mark.parametrize("vertices", [8, 16, 24])
 def test_crease_sharp_cylinder_creases_rims_not_round_wall(vertices):
+    bpy.ops.wm.read_homefile(use_empty=True)
     cyl = pf.nodes.geo.mesh_cylinder(vertices=vertices, radius=0.5, depth=1.0).mesh
 
     # Threshold 70 sits between the round-wall seams (<=45deg) and the 90deg cap rims.
@@ -47,6 +57,7 @@ def test_crease_sharp_cylinder_creases_rims_not_round_wall(vertices):
 
 
 def test_crease_sharp_flat_grid_creases_nothing():
+    bpy.ops.wm.read_homefile(use_empty=True)
     grid = pf.nodes.geo.mesh_grid(
         size_x=1.0, size_y=1.0, vertices_x=4, vertices_y=4
     ).mesh

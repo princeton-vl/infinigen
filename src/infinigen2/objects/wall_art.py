@@ -19,6 +19,7 @@ from infinigen2.shaders.functionality_lists import (
     furniture_material_rand,
     mirror_material_rand,
 )
+from infinigen2.util.curve import curve_to_mesh_with_uv
 
 __all__ = [
     "WallArtResult",
@@ -75,25 +76,21 @@ def art_frame(
 
     join_geometries_1_switch = pf.nodes.func.greater_than(a=frame_width, b=0.0)
 
-    curve_quadrilateral = pf.nodes.geo.curve_quadrilateral(
-        width=grid_size_x, height=grid_size_y
+    perimeter = pf.nodes.geo.curve_quadrilateral(width=grid_size_x, height=grid_size_y)
+    # 90-degree miters project radial width by 1/sqrt(2); widen so rails stay frame_width
+    profile_width = frame_width * 2**0.5
+    profile_rect = pf.nodes.geo.curve_quadrilateral(
+        width=profile_width, height=dimensions.x
     )
-    curve_line_start = pf.nodes.math.combine_xyz(frame_width)
-    curve_line = pf.nodes.geo.curve_line(start=curve_line_start, end=(0.0, 0.0, 0.0))
-    curve_to = pf.nodes.geo.curve_to_mesh(
-        curve=curve_quadrilateral, profile_curve=curve_line
+    # base curve hugs the panel edge; push profile fully outward + forward so it clears the panel
+    profile_offset = pf.nodes.math.combine_xyz(
+        x=profile_width * 0.5, y=dimensions.x * -0.5
     )
-
-    flip_faces = pf.nodes.geo.flip_faces(curve_to)
-
-    extrude_1 = pf.nodes.geo.extrude_mesh(
-        mesh=flip_faces,
-        offset_scale=dimensions.x,
-        individual=False,
-    )
+    profile = pf.nodes.geo.transform(geometry=profile_rect, translation=profile_offset)
+    frame_sweep = curve_to_mesh_with_uv(curve=perimeter, profile=profile, swap_uv=True)
 
     set_material_1 = pf.nodes.geo.set_material(
-        geometry=extrude_1.mesh,
+        geometry=frame_sweep.mesh,
         material=frame_material,
         selection=True,
     )
@@ -141,7 +138,7 @@ def wall_art_rand(
     panel_depth_pct = pf.random.uniform(r_panel_d, 0.2, 1.2)
 
     if frame_material is None:
-        vec = pf.nodes.shader.geometry().position
+        vec = pf.nodes.shader.coord().uv
         frame_material = furniture_material_rand(r_frame_mat, vec)
 
     if panel_material is None:

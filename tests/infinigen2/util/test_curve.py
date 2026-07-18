@@ -49,7 +49,8 @@ def test_cyclic_profile_seam_continuous():
     obj = pf.nodes.to_mesh_object(_cyclic_profile_tube(circle_res=16))
     me, arr = _corner_uvs(obj)
     perimeter = arr[:, 1].max()
-    assert perimeter > 6.0
+    # V is metric: the widest station's real circumference is 2*pi*0.185, not the unit 2*pi
+    assert abs(perimeter - 2 * np.pi * 0.185) < 0.02
     single_segment = perimeter / 16
     assert _max_face_span(me, arr, 1) < 2 * single_segment
     assert not np.isnan(arr).any()
@@ -62,5 +63,6 @@ def test_cyclic_rail_seam_still_handled():
     perimeter = arr[:, 0].max()
     assert perimeter > 12.0
     assert _max_face_span(me, arr, 0) < perimeter / 4
-    assert arr[:, 1].max() <= 1.0 + 1e-4
+    # unset rail radius falls back to 1.0 so V stays metric (profile length 1.0), not collapsed
+    assert 0.99 < arr[:, 1].max() <= 1.0 + 1e-4
     assert not np.isnan(arr).any()

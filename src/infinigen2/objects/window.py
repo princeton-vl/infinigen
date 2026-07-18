@@ -166,9 +166,9 @@ def _curtain_geometry(
     join_1 = pf.nodes.geo.join_geometry([curve_line_3, curve_line_4, curve_line_2])
 
     curve_circle_1 = pf.nodes.geo.curve_circle(radius=radius)
-    curve_to_2 = pf.nodes.geo.curve_to_mesh(
-        curve=join_1, profile_curve=curve_circle_1, fill_caps=True
-    )
+    curve_to_2 = curve_to_mesh_with_uv(
+        curve=join_1, profile=curve_circle_1, fill_caps=True
+    ).mesh
 
     icosphere_1 = pf.nodes.geo.mesh_icosphere(radius=icosphere_radius, subdivisions=4)
 

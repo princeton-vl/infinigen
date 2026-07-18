@@ -41,14 +41,20 @@ def curve_to_mesh_with_uv(
     curve: pf.ProcNode[pf.CurveObject],
     profile: pf.ProcNode[pf.CurveObject],
     fill_caps: t.SocketOrVal[bool] = False,
+    swap_uv: t.SocketOrVal[bool] = False,
 ) -> CurveToMeshWithUvResult:
     input_index = pf.nodes.geo.input_index()
     index_on_curve = pf.nodes.geo.capture_attribute(geometry=curve, index=input_index)
 
     spline_parameter = pf.nodes.geo.spline_parameter()
+    # unset curves report radius 0 but curve_to_mesh sweeps them at 1.0; keep V metric
+    input_radius = pf.nodes.geo.input_radius()
+    is_unset = pf.nodes.func.less_than(a=input_radius, b=1e-6)
+    effective_radius = pf.nodes.func.switch(switch=is_unset, a=input_radius, b=1.0)
     length_on_curve = pf.nodes.geo.capture_attribute(
         geometry=index_on_curve.geometry,
         length=spline_parameter.length,
+        radius=effective_radius,
     )
 
     profile_input_index = pf.nodes.geo.input_index()
@@ -90,7 +96,10 @@ def curve_to_mesh_with_uv(
         length_on_profile.length,
         index_on_profile.geometry,
     )
-    vector = pf.nodes.math.combine_xyz(x=u, y=v)
+    v_metric = v * length_on_curve.radius
+    out_x = pf.nodes.func.switch(switch=swap_uv, a=u, b=v_metric)
+    out_y = pf.nodes.func.switch(switch=swap_uv, a=v_metric, b=u)
+    vector = pf.nodes.math.combine_xyz(x=out_x, y=out_y)
 
     store_named_attribute = pf.nodes.geo.store_named_attribute(
         domain="CORNER",
