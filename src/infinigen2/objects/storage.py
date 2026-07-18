@@ -8,16 +8,20 @@ from typing import NamedTuple
 import procfunc as pf
 from procfunc.nodes import types as t
 
-from infinigen2.objects.door import door_with_handle, door_with_handle_rand
+from infinigen2.objects import handles
+from infinigen2.objects.door import (
+    door_with_handle,
+    door_with_handle_rand,
+)
 from infinigen2.shaders.functionality_lists import (
     furniture_material_rand,
 )
+from infinigen2.util.mesh import metric_box_uv
 
 __all__ = [
     "StorageResult",
     "cabinet_with_door",
     "cabinet_with_door_rand",
-    "metric_box_uv",
     "shelves",
     "shelves_rand",
 ]
@@ -57,32 +61,6 @@ def _box(
     )
 
     return set_position
-
-
-def metric_box_uv(geometry: pf.ProcNode) -> pf.ProcNode:
-    """Store metric box-projection UVs computed from the current positions.
-
-    Per face, picks the two in-plane position axes so texture directions stay
-    aligned with the board edges, rotated 90deg so grain runs along the
-    boards, then writes them as a CORNER "UVMap".
-    """
-    position = pf.nodes.geo.input_position()
-    abs_normal = pf.nodes.math.vector_absolute(pf.nodes.geo.input_normal())
-    uv_facing_x = pf.nodes.math.combine_xyz(x=position.y, y=position.z)
-    uv_facing_y = pf.nodes.math.combine_xyz(x=position.x, y=position.z)
-    uv_facing_z = pf.nodes.math.combine_xyz(x=position.x, y=position.y)
-    uv_side = pf.nodes.func.switch(
-        switch=abs_normal.y > 0.5, a=uv_facing_x, b=uv_facing_y
-    )
-    uv = pf.nodes.func.switch(switch=abs_normal.z > 0.5, a=uv_side, b=uv_facing_z)
-    uv = pf.nodes.math.combine_xyz(x=uv.y * -1.0, y=uv.x)
-    return pf.nodes.geo.store_named_attribute(
-        geometry=geometry,
-        name="UVMap",
-        value=uv,
-        domain="CORNER",
-        data_type="FLOAT2",
-    )
 
 
 @pf.nodes.node_function
@@ -479,7 +457,7 @@ def cabinet_with_door(
 def cabinet_with_door_rand(
     rng: pf.RNG, dimensions: pf.Vector | None = None
 ) -> StorageResult:
-    rng, rng_shelves, rng_door, rng_mat, rng_door_mat = rng.spawn(5)
+    rng, rng_shelves, rng_door, rng_mat, rng_door_mat, rng_handle = rng.spawn(6)
     if dimensions is None:
         depth = pf.random.uniform(rng, 0.25, 0.45)
         width = pf.random.uniform(rng, 0.3, 0.9)
@@ -496,10 +474,20 @@ def cabinet_with_door_rand(
     carcass = shelves_rand(
         rng_shelves, dimensions=shelf_dimensions, frame_material=frame_material
     ).mesh
+    rng_handle, rng_handle_choice = rng_handle.spawn(2)
+    handle_func = pf.control.choice(
+        rng_handle_choice,
+        [
+            (handles.bar_pull_handle_rand, 6.0),
+            (handles.knob_handle_rand, 2.0),
+            (handles.lever_handle_rand, 1.0),
+        ],
+    )
     door = door_with_handle_rand(
         rng_door,
         dimensions=pf.Vector((thickness, dimensions.y, dimensions.z)),
         material=door_material,
+        handle=handle_func(rng_handle).mesh,
     ).mesh
     pf.ops.object.set_transform(door, location=(dimensions.x - thickness, 0.0, 0.0))
     pf.ops.object.join(carcass, door)

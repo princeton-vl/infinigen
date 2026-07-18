@@ -21,9 +21,49 @@ __all__ = [
     "fill_between_curves",
     "grid_from_corners",
     "lofting",
+    "metric_box_uv",
     "uv_winding_sign",
     "wall_cutout_split",
 ]
+
+
+def metric_box_uv(geometry: pf.ProcNode) -> pf.ProcNode:
+    """Store metric box-projection UVs computed from the current positions.
+
+    Per face, picks the two in-plane position axes (U/V in meters) and puts V on
+    the axis with the larger board extent so woodgrain runs along the board's
+    long dimension, then writes them as a CORNER "UVMap".
+    """
+    bbox = pf.nodes.geo.bound_box(geometry)
+    size = bbox.max - bbox.min
+    position = pf.nodes.geo.input_position()
+    abs_normal = pf.nodes.math.vector_absolute(pf.nodes.geo.input_normal())
+    uv_facing_x = pf.nodes.func.switch(
+        switch=size.z > size.y,
+        a=pf.nodes.math.combine_xyz(x=position.z, y=position.y),
+        b=pf.nodes.math.combine_xyz(x=position.y, y=position.z),
+    )
+    uv_facing_y = pf.nodes.func.switch(
+        switch=size.z > size.x,
+        a=pf.nodes.math.combine_xyz(x=position.z, y=position.x),
+        b=pf.nodes.math.combine_xyz(x=position.x, y=position.z),
+    )
+    uv_facing_z = pf.nodes.func.switch(
+        switch=size.y > size.x,
+        a=pf.nodes.math.combine_xyz(x=position.y, y=position.x),
+        b=pf.nodes.math.combine_xyz(x=position.x, y=position.y),
+    )
+    uv_side = pf.nodes.func.switch(
+        switch=abs_normal.y > 0.5, a=uv_facing_x, b=uv_facing_y
+    )
+    uv = pf.nodes.func.switch(switch=abs_normal.z > 0.5, a=uv_side, b=uv_facing_z)
+    return pf.nodes.geo.store_named_attribute(
+        geometry=geometry,
+        name="UVMap",
+        value=uv,
+        domain="CORNER",
+        data_type="FLOAT2",
+    )
 
 
 class _CylinderSideResult(NamedTuple):

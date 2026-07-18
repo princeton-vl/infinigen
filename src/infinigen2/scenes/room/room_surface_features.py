@@ -433,7 +433,7 @@ def wall_board_shelf_rand(
     slab_geo = pf.nodes.geo.transform(
         cube.mesh, translation=(shelf_depth * 0.5, 0.0, 0.0)
     )
-    slab_geo = storage.metric_box_uv(slab_geo)
+    slab_geo = mesh_util.metric_box_uv(slab_geo)
     slab = pf.nodes.to_mesh_object(slab_geo)
 
     footprint = pf.nodes.to_mesh_object(

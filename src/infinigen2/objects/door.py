@@ -11,6 +11,7 @@ from infinigen2.shaders.functionality_lists import (
     furniture_material_rand,
     glass_material_rand,
 )
+from infinigen2.util.mesh import metric_box_uv
 
 __all__ = [
     "DoorResult",
@@ -115,8 +116,8 @@ def _door_body_finish(geo: pf.ProcNode, bevel_width: float) -> DoorResult:
         value=sharp.astype(dtype=float),
         data_type="FLOAT",
     )
+    geo = metric_box_uv(geo)
     obj = pf.nodes.to_mesh_object(geo)
-    pf.ops.uv.cube_project(obj, uv_name="UVMap")
     pf.ops.modifier.bevel(obj, width=bevel_width, segments=2)
     pf.ops.modifier.subdivide_surface(obj, levels=6, _skip_apply=True)
     return DoorResult(mesh=obj)
@@ -211,10 +212,23 @@ def door_with_handle(
     return DoorResult(mesh=door)
 
 
+def _choose_handle_rand(rng_choice: pf.RNG, rng_handle: pf.RNG) -> pf.MeshObject:
+    handle_func = pf.control.choice(
+        rng_choice,
+        [
+            (handles.lever_handle_rand, 2.0),
+            (handles.bar_pull_handle_rand, 1.5),
+            (handles.knob_handle_rand, 1.0),
+        ],
+    )
+    return handle_func(rng_handle).mesh
+
+
 def door_with_handle_rand(
     rng: pf.RNG,
     dimensions: pf.Vector | None = None,
     material: pf.Material | None = None,
+    handle: pf.MeshObject | None = None,
 ) -> DoorResult:
     rng, rng_door, rng_handle_choice, rng_handle, rng_place = rng.spawn(5)
     if dimensions is None:
@@ -230,15 +244,8 @@ def door_with_handle_rand(
         panel_material=material,
     ).mesh
 
-    handle_func = pf.control.choice(
-        rng_handle_choice,
-        [
-            (handles.lever_handle_rand, 2.0),
-            (handles.bar_pull_handle_rand, 1.5),
-            (handles.knob_handle_rand, 1.0),
-        ],
-    )
-    handle = handle_func(rng_handle).mesh
+    if handle is None:
+        handle = _choose_handle_rand(rng_handle_choice, rng_handle)
 
     edge_offset = pf.random.uniform(rng_place, 0.04, 0.08)
     handle_z_frac = pf.random.uniform(rng_place, 0.42, 0.5)

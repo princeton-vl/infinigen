@@ -1450,6 +1450,8 @@ def wood_grain_rand(
     """
     Intended for indoor wooden floors and furniture
     """
+    # swap U/V so grain runs along the long-axis convention; planks bypass this
+    vector = pf.nodes.math.combine_xyz(x=vector.y, y=vector.x)
     generator_result = wood_grain_generator_rand(rng, vector)
 
     color_1, color_2, flake_color, fiber_color, knot_color = wood_color_rand(rng)
