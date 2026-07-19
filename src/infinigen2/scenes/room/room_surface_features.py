@@ -1046,10 +1046,12 @@ def wall_doors_rand(
             margin_high_x,
         )
 
+    # a door reveal reaches the floor and is never a placeable sill, so group it with backs
+    reveal = [sill] if sill is not None else []
     return WallFeatureResult(
         wall_geom=[geom],
-        backs=[lightblocker] if lightblocker is not None else [],
-        sills=[sill] if sill is not None else [],
+        backs=([lightblocker] if lightblocker is not None else []) + reveal,
+        sills=[],
         storage=[],
         lights=[],
         decorations={"door": door_aliases},

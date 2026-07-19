@@ -4,14 +4,16 @@
 # Authors: Alexander Raistrick
 
 import logging
+import math
 from typing import Callable, NamedTuple, Protocol, TypeVar, runtime_checkable
 
 import numpy as np
 import procfunc as pf
+from procfunc.nodes import types as t
 
-from infinigen2.lighting import sky_lighting
 from infinigen2.objects import (
     bookcase,
+    chair,
     lamp,
     rug,
     sofa,
@@ -21,23 +23,35 @@ from infinigen2.objects import (
     vase,
 )
 from infinigen2.scenes.placement import collision as ccol
-from infinigen2.scenes.placement.culling import keep_non_colliding
+from infinigen2.scenes.placement.culling import (
+    keep_non_colliding,
+    keep_unobstructed,
+    place_surrounding,
+)
 from infinigen2.scenes.placement.snap import snap_to_plane
 
 __all__ = [
-    "ArrangementResult",
+    "CenteredSofaSetupResult",
+    "DiningSetupResult",
+    "DiningTableSetupResult",
     "MeshResult",
-    "RoomFurnitureResult",
+    "SofaSetupResult",
+    "WallSofaSetupResult",
+    "arrange_dining_chairs",
     "back_face_grounded",
     "centered_sofa_setup_rand",
-    "keep_unobstructed",
-    "place_dining_table",
+    "dining_setup_rand",
+    "dining_table_setup_rand",
     "random_bbox_poses_animation_rand",
     "retry_place",
-    "room_furniture_rand",
     "side_table_object_rand",
+    "snap_back_front",
+    "snap_on_top",
+    "sofa_lamps_rand",
+    "sofa_setup_rand",
     "storage_object_rand",
     "table_decoration_object_rand",
+    "wall_sofa_setup_rand",
 ]
 
 logger = logging.getLogger(__name__)
@@ -55,18 +69,39 @@ class _BareMeshResult(NamedTuple):
     mesh: pf.MeshObject
 
 
-class RoomFurnitureResult(NamedTuple):
-    furniture: list[pf.MeshObject]
-    storage_surfaces: list[pf.MeshObject]
-    lights: list[pf.LightObject]
-    colliders: ccol.CollisionSet
-    floor: pf.MeshObject
-    storage_objects: list[pf.MeshObject]
-    coffee_tables: list[pf.MeshObject]
-    side_tables: list[pf.MeshObject]
-    diningtable_objs: list[pf.MeshObject]
-    sofas: list[pf.MeshObject]
+class DiningSetupResult(NamedTuple):
+    dining_table: pf.MeshObject
+    chairs: list[pf.MeshObject]
+    all_objects: list[pf.MeshObject]
+
+
+class WallSofaSetupResult(NamedTuple):
+    sofas: list[MeshResult]
+    coffee_tables: list[MeshResult]
     rugs: list[pf.MeshObject]
+    all_objects: list[pf.MeshObject]
+
+
+class CenteredSofaSetupResult(NamedTuple):
+    sofas: list[MeshResult]
+    coffee_tables: list[MeshResult]
+    rugs: list[pf.MeshObject]
+    all_objects: list[pf.MeshObject]
+
+
+class SofaSetupResult(NamedTuple):
+    sofas: list[MeshResult]
+    coffee_tables: list[MeshResult]
+    side_tables: list[MeshResult]
+    rugs: list[pf.MeshObject]
+    all_objects: list[pf.MeshObject]
+
+
+class DiningTableSetupResult(NamedTuple):
+    dining_tables: list[MeshResult]
+    dining_chairs: list[MeshResult]
+    rugs: list[pf.MeshObject]
+    all_objects: list[pf.MeshObject]
 
 
 @pf.tracer.grammar
@@ -198,7 +233,7 @@ def _snap_to_wall(
     )
 
 
-def _snap_back_front(
+def snap_back_front(
     rng: pf.RNG,
     child: MR,
     parents: list[pf.MeshObject],
@@ -257,7 +292,7 @@ def _snap_side_by_side(rng: pf.RNG, child: MR, parents: list[pf.MeshObject]) -> 
     )
 
 
-def _snap_on_top(
+def snap_on_top(
     rng: pf.RNG,
     child: MR,
     parents: list[pf.MeshObject],
@@ -275,67 +310,6 @@ def _snap_on_top(
 def _world_vert_bbox(obj: pf.MeshObject) -> tuple[np.ndarray, np.ndarray]:
     bmin, bmax = pf.ops.attr.bbox_min_max(obj, global_coords=True)
     return np.array(bmin), np.array(bmax)
-
-
-def _collider_blocks_segment(
-    a: np.ndarray, b: np.ndarray, colliders: ccol.CollisionSet
-) -> bool:
-    d = b - a
-    dist = float(np.linalg.norm(d))
-    origin = np.array([[a[0], a[1], 0.3]])
-    hit, idx, _ = ccol.raycast(
-        colliders, origin, np.array([[d[0] / dist, d[1] / dist, 0.0]])
-    )
-    return len(idx) > 0 and np.linalg.norm(hit[0] - origin[0]) < dist
-
-
-def keep_unobstructed(
-    results: list[MR | None],
-    center: np.ndarray,
-    colliders: ccol.CollisionSet,
-) -> list[MR]:
-    """Drop results whose center a collider separates from `center` (e.g. a wall
-    between the rug and the sofa). Returns the unobstructed results; reads colliders
-    but does not update them.
-    """
-    kept: list[MR] = []
-    for r in results:
-        if r is None:
-            continue
-        bmin, bmax = _world_vert_bbox(r.mesh)
-        if _collider_blocks_segment(center[:2], (bmin[:2] + bmax[:2]) / 2, colliders):
-            r.mesh.item().name = r.mesh.item().name + "_OBSTRUCTED"
-            continue
-        kept.append(r)
-    return kept
-
-
-class ArrangementResult(NamedTuple):
-    sofas: list[MeshResult]
-    dining_tables: list[MeshResult]
-    rugs: list[pf.MeshObject]
-    center_coffee_tables: list[MeshResult]
-
-
-def _rug_in_front_of_storage(
-    rng: pf.RNG,
-    storage_objects: list[MeshResult],
-) -> list[pf.MeshObject] | None:
-    """Snap a rug to the front of a chosen storage unit, or None."""
-    if not storage_objects:
-        return None
-    rug_result = rug.rug_rand(rng)
-    storage = rng.choice(storage_objects)
-    snap_to_plane(
-        child=rug_result.mesh,
-        parent=storage.mesh,
-        placement=pf.random.uniform(rng, 0.35, 0.65),
-        margin=pf.random.uniform(rng, 0.3, 1.0),
-        child_side="back",
-        parent_side="front",
-        constraint_axis=pf.Vector((0, 0, 1)),
-    )
-    return [rug_result.mesh]
 
 
 def _placed_rug(
@@ -404,43 +378,48 @@ def _place_on_floor(rng: pf.RNG, child: MR, room_dimensions: pf.Vector) -> None:
     )
 
 
-def _sofas_on_wall_setup(
+def wall_sofa_setup_rand(
     rng: pf.RNG,
     wall_planes: list[pf.MeshObject],
-    floor: pf.MeshObject,
     room_dimensions: pf.Vector,
-    colliders: ccol.CollisionSet,
-    storage_objects: list[MeshResult],
-) -> tuple[ArrangementResult, ccol.CollisionSet]:
-    del storage_objects
+    colliders: ccol.CollisionSet | None = None,
+) -> WallSofaSetupResult:
+    """Sofas snapped against the walls, plus an optional rug. Needs posed wall
+    planes, so it is not registered as a standalone Scene."""
+    if colliders is None:
+        colliders = ccol.collision_set(wall_planes)
     n = pf.random.randint(rng, 0, 8)
     rngs = rng.spawn(n)
     sofas = [sofa.sofa_rand(rngs[i]) for i in range(n)]
     placed_sofas = []
     for i in range(n):
         sofa_obj = retry_place(
-            rngs[i], sofas[i], colliders, _snap_back_front, parents=wall_planes
+            rngs[i], sofas[i], colliders, snap_back_front, parents=wall_planes
         )
         placed_sofas.append(sofa_obj)
     sofas = placed_sofas
     sofa_objs, colliders = keep_non_colliding(sofas, colliders)
     logger.info(f"Placed {len(sofa_objs)} wall sofas out of {n} attempts")
     rug_objs = _maybe_rug(rng, room_dimensions)
-    return ArrangementResult(sofa_objs, [], rug_objs, []), colliders
+    all_objects = [r.mesh for r in sofa_objs] + rug_objs
+    return WallSofaSetupResult(sofa_objs, [], rug_objs, all_objects)
 
 
 def centered_sofa_setup_rand(
     rng: pf.RNG,
-    wall_planes: list[pf.MeshObject],
-    floor: pf.MeshObject,
-    room_dimensions: pf.Vector,
-    colliders: ccol.CollisionSet,
-    storage_objects: list[MeshResult],
-) -> tuple[ArrangementResult, ccol.CollisionSet]:
-    del wall_planes, floor
-    rug_objs = _rug_in_front_of_storage(rng, storage_objects)
-    if rug_objs is None:
-        rug_objs = _placed_rug(rng, room_dimensions=room_dimensions, wall_clearance=1.2)
+    room_dimensions: pf.Vector | None = None,
+    colliders: ccol.CollisionSet | None = None,
+    wall_planes: list[pf.MeshObject] | None = None,
+) -> CenteredSofaSetupResult:
+    """Sofas ringing a central rug facing inward, with an optional center coffee
+    table. Works without walls, so it is registered as a standalone Scene;
+    `wall_planes` is accepted only for signature parity with the wall variant."""
+    del wall_planes
+    if room_dimensions is None:
+        room_dimensions = pf.Vector((5.0, 5.0, 3.0))
+    if colliders is None:
+        colliders = ccol.collision_set([])
+    rug_objs = _placed_rug(rng, room_dimensions=room_dimensions, wall_clearance=1.2)
     carpet = rug_objs[0]
     cmin, cmax = _world_vert_bbox(carpet)
     center = (cmin + cmax) / 2
@@ -490,7 +469,8 @@ def centered_sofa_setup_rand(
     # sofas already ringed the carpet above; drop the rug ~1/3 of the time
     out_rugs = pf.control.choice(rng, [(rug_objs, 2.0), ([], 1.0)])
 
-    return ArrangementResult(sofa_objs, [], out_rugs, center_coffee), colliders
+    all_objects = [r.mesh for r in sofa_objs + center_coffee] + out_rugs
+    return CenteredSofaSetupResult(sofa_objs, center_coffee, out_rugs, all_objects)
 
 
 def _place_in_free_floorspace(
@@ -528,159 +508,262 @@ def _place_in_free_floorspace(
     )
 
 
-def place_dining_table(
+@pf.nodes.node_function
+def _chair_row(
+    chair_geo: pf.ProcNode[pf.MeshObject],
+    count: t.SocketOrVal[int],
+    dist: t.SocketOrVal[float],
+    span: t.SocketOrVal[float],
+    theta: t.SocketOrVal[float] = 0.0,
+    seed: t.SocketOrVal[int] = 0,
+    rot_jitter: t.SocketOrVal[float] = 0.0,
+) -> pf.ProcNode[t.Instances]:
+    """One row of `count` chairs centered over `span` along +Y at local +X=dist,
+    each facing -X (toward the origin) with a small random z jitter, then the whole
+    row rotated by `theta` about Z to reach any of the table's four sides."""
+    count_f = count.astype(dtype=float)
+    is_multi = pf.nodes.func.greater_than(a=count_f, b=1.0).astype(dtype=float)
+    start = span * -0.5 * is_multi
+    step = span / pf.nodes.math.maximum(count_f - 1.0, 1.0) * is_multi
+    line = pf.nodes.geo.mesh_line(
+        count=count,
+        start_location=pf.nodes.math.combine_xyz(x=dist, y=start),
+        offset=pf.nodes.math.combine_xyz(y=step),
+    )
+    jitter = pf.nodes.func.random_value(min=-1.0, max=1.0, seed=seed) * rot_jitter
+    row = pf.nodes.geo.instance_on_points(
+        points=line,
+        instance=chair_geo,
+        rotation=pf.nodes.math.combine_xyz(z=math.pi + jitter).astype(dtype=pf.Euler),
+    )
+    return pf.nodes.geo.transform(
+        row, rotation=pf.nodes.math.combine_xyz(z=theta).astype(dtype=pf.Euler)
+    )
+
+
+def arrange_dining_chairs(
+    chair_obj: pf.MeshObject,
+    dining_table: pf.MeshObject,
+    chair_spacing: float,
+    tuck: float,
+    edge_margin: float,
+    rot_jitter: float,
+    include_ends: bool = True,
+) -> list[pf.MeshObject]:
+    """Instance `chair_obj` around the sides of `dining_table`, facing inward, posed
+    by the table's current transform, and realize the instances into one object per
+    chair. Table and chair footprints are measured from bounding boxes inside the
+    nodegraph. `chair_spacing` is the gap between adjacent chairs, `tuck` the meters
+    the chair front is pulled in past the table edge (negative leaves a gap),
+    `edge_margin` the clearance kept at each table corner so chairs never overhang
+    the ends, `rot_jitter` the random per-chair z rotation (radians). `include_ends`
+    toggles the chairs on the +/-Y ends."""
+    # TODO replace the four per-side rows with one geonode pass: split the table bbox
+    # into disconnected edge curves, resample each by length for spacing/count, then
+    # instance chairs facing inward -- drops most of these args. Needs visual iteration.
+    collection = pf.types.Collection([chair_obj], name="dining_chair")
+    chair_geo = pf.nodes.geo.collection_info(collection, separate_children=True)
+
+    table_info = pf.nodes.geo.object_info(dining_table)
+    tbox = pf.nodes.geo.bound_box(table_info.geometry)
+    tsize = pf.nodes.math.separate_xyz(tbox.max - tbox.min)
+    # the bound_box min/max sockets ignore instances, so realize the chair first
+    cbox = pf.nodes.geo.bound_box(pf.nodes.geo.realize_instances(chair_geo))
+    csize = pf.nodes.math.separate_xyz(cbox.max - cbox.min)
+    chair_depth, chair_width = csize.x, csize.y
+
+    dist_x = tsize.x * 0.5 + chair_depth * 0.5 - tuck
+    dist_y = tsize.y * 0.5 + chair_depth * 0.5 - tuck
+    # subtract end margins and a half-chair per end so chair edges, not centers, fit
+    avail_x = tsize.x - 2.0 * edge_margin
+    avail_y = tsize.y - 2.0 * edge_margin
+    pitch = chair_width + chair_spacing
+    n_x = pf.nodes.math.maximum(
+        pf.nodes.math.floor((avail_x + chair_spacing) / pitch), 1.0
+    ).astype(dtype=int)
+    n_y = pf.nodes.math.maximum(
+        pf.nodes.math.floor((avail_y + chair_spacing) / pitch), 1.0
+    ).astype(dtype=int)
+    span_x = pf.nodes.math.maximum(avail_x - chair_width, 0.0)
+    span_y = pf.nodes.math.maximum(avail_y - chair_width, 0.0)
+
+    def make_row(count, dist, span, theta, seed):
+        return _chair_row(
+            chair_geo=chair_geo,
+            count=count,
+            dist=dist,
+            span=span,
+            theta=theta,
+            seed=seed,
+            rot_jitter=rot_jitter,
+        )
+
+    rows = [
+        make_row(n_y, dist_x, span_y, 0.0, 1),
+        make_row(n_y, dist_x, span_y, math.pi, 2),
+    ]
+    if include_ends:
+        rows.append(make_row(n_x, dist_y, span_x, math.pi * 0.5, 3))
+        rows.append(make_row(n_x, dist_y, span_x, math.pi * 1.5, 4))
+    # chairs stand on the floor (z=0.001 like _place_on_floor), not at the table's z
+    table_loc = pf.nodes.math.separate_xyz(table_info.location)
+    chair_bottom = pf.nodes.math.separate_xyz(cbox.min).z
+    posed = pf.nodes.geo.transform(
+        pf.nodes.geo.join_geometry(rows),
+        translation=pf.nodes.math.combine_xyz(
+            x=table_loc.x, y=table_loc.y, z=0.001 - chair_bottom
+        ),
+        rotation=table_info.rotation,
+    )
+    return pf.nodes.to_aliases(posed)
+
+
+def dining_setup_rand(
+    rng: pf.RNG,
+    chair_spacing: float | None = None,
+    tuck: float | None = None,
+    edge_margin: float | None = None,
+    rot_jitter: float | None = None,
+    include_ends: bool | None = None,
+    dining_table: pf.MeshObject | None = None,
+) -> DiningSetupResult:
+    """A dining table with a single dining chair design instanced around all four
+    sides facing inward. Builds the table, one chair, then arranges copies of the
+    chair around it; chairs follow the table's pose. Pass `dining_table` to arrange
+    chairs around an existing (already posed) table instead of sampling one."""
+    rng, rng_dims, rng_table, rng_chair_dims, rng_chair = rng.spawn(5)
+    if chair_spacing is None:
+        chair_spacing = pf.random.uniform(rng, 0.0625, 0.1875)
+    if tuck is None:
+        tuck = pf.random.clip_gaussian(rng, 0.1, 0.12, -0.08, 0.3)
+    if edge_margin is None:
+        edge_margin = pf.random.uniform(rng, 0.08, 0.20)
+    if rot_jitter is None:
+        rot_jitter = pf.random.uniform(rng, 0.05, 0.10)
+    if include_ends is None:
+        include_ends = pf.control.choice(rng, [(True, 1.0), (False, 1.0)])
+
+    if dining_table is None:
+        dims = table.table_dimensions_rand(rng_dims)
+        dining_table = table.dining_table_rand(rng_table, dimensions=dims).mesh
+
+    chair_dims = chair.dining_chair_dimensions_rand(rng_chair_dims)
+    chair_res = chair.chair_rand(rng_chair, dimensions=chair_dims)
+
+    chairs = arrange_dining_chairs(
+        chair_res.mesh,
+        dining_table,
+        chair_spacing,
+        tuck,
+        edge_margin,
+        rot_jitter,
+        include_ends,
+    )
+
+    all_objects = [dining_table, *chairs]
+    return DiningSetupResult(
+        dining_table=dining_table, chairs=chairs, all_objects=all_objects
+    )
+
+
+def _arrange_chairs_around(rng: pf.RNG, dining_table: pf.MeshObject) -> list:
+    return dining_setup_rand(rng, dining_table=dining_table).chairs
+
+
+def dining_table_setup_rand(
     rng: pf.RNG,
     wall_planes: list[pf.MeshObject],
     room_dimensions: pf.Vector,
-    colliders: ccol.CollisionSet,
-) -> tuple[list[MeshResult], ccol.CollisionSet]:
-    """Place a single dining table: 2/3 in clear floor space, 1/3 snapped to a
-    wall. Returns the placed result (length 0 or 1) and updated colliders.
-    """
-    dining_table = table.dining_table_rand(rng)
+    colliders: ccol.CollisionSet | None = None,
+) -> DiningTableSetupResult:
+    """Place a dining table (3/4 in clear floor space, 1/4 snapped to a wall), then
+    arrange chairs around the posed table, plus an optional rug. Chairs are culled
+    against `colliders` and dropped when a wall separates them from the table (a
+    wall-snapped table's wall-side chairs land outside the room), retrying the
+    arrangement with a fresh chair design and margins when too few survive."""
+    if colliders is None:
+        colliders = ccol.collision_set(wall_planes)
+    rng_table, rng_place, rng_setup, rng_rug = rng.spawn(4)
+
+    dims = table.table_dimensions_rand(rng_table)
+    table_res = table.dining_table_rand(rng_table, dimensions=dims)
+    dining_table = _BareMeshResult(mesh=table_res.mesh)
 
     def in_free_floorspace():
-        return _place_in_free_floorspace(rng, dining_table, room_dimensions, colliders)
+        return _place_in_free_floorspace(
+            rng_place, dining_table, room_dimensions, colliders
+        )
 
     def against_wall():
         return retry_place(
-            rng,
+            rng_place,
             dining_table,
             colliders,
             _snap_to_wall,
             parents=wall_planes,
-            margin=pf.random.uniform(rng, 0.03, 0.10),
+            margin=pf.random.uniform(rng_place, 0.03, 0.10),
         )
 
     placed = pf.control.choice(
-        rng,
+        rng_place,
         [
-            (in_free_floorspace, 2.0),
+            (in_free_floorspace, 3.0),
             (against_wall, 1.0),
         ],
     )()
-    diningtable_objs, colliders = keep_non_colliding([placed], colliders)
+    diningtable_objs = [placed] if placed is not None else []
     logger.info(f"Placed {len(diningtable_objs)} dining tables")
-    return diningtable_objs, colliders
+
+    chair_objs: list[MeshResult] = []
+    if diningtable_objs:
+        # colliders here excludes the table so the obstruction ray hits the wall behind it
+        chair_meshes, colliders = place_surrounding(
+            rng_setup, diningtable_objs[0].mesh, _arrange_chairs_around, colliders
+        )
+        chair_objs = [_BareMeshResult(mesh=c) for c in chair_meshes]
+        logger.info(f"Kept {len(chair_objs)} dining chairs after obstruction/collision")
+
+    colliders = ccol.collision_set(
+        colliders.objs + [r.mesh for r in diningtable_objs], existing=colliders
+    )
+    rug_objs = _maybe_rug(rng_rug, room_dimensions)
+    all_objects = [r.mesh for r in diningtable_objs + chair_objs] + rug_objs
+    return DiningTableSetupResult(diningtable_objs, chair_objs, rug_objs, all_objects)
 
 
-# ruff: noqa: C901
-@pf.tracer.grammar
-def room_furniture_rand(
+def sofa_setup_rand(
     rng: pf.RNG,
-    dimensions: pf.Vector,
     wall_planes: list[pf.MeshObject],
-    floor: pf.MeshObject,
-    frame_start: int = 1,
-    frame_end: int = 1,
-    extra_colliders: list[pf.MeshObject] | None = None,
-    wall_storage: list[pf.MeshObject] | None = None,
-) -> RoomFurnitureResult:
-    (
-        rng_sky,
-        rng_big,
-        rng_decoration_object,
-        rng_table,
-        rng_lamp,
-        rng_table_lamp,
-        rng_dining_table,
-        _rng_wall_object,
-        rng_plants,
-        rng_rug,
-        rng_dining_place,
-    ) = rng.spawn(11)
+    room_dimensions: pf.Vector,
+    colliders: ccol.CollisionSet | None = None,
+) -> SofaSetupResult:
+    """A sofa grouping (choice of wall-snapped or rug-centered) plus side tables beside
+    the sofas. `wall_planes` passes through to the wall-snapped variant. Lamps are
+    placed by the caller from the returned sofas and side tables (see sofa_lamps_rand)."""
+    if colliders is None:
+        colliders = ccol.collision_set(wall_planes)
+    rng_arr, rng_side = rng.spawn(2)
 
-    room_dimensions = dimensions
-
-    # dedicated lanes so the sun angle/intensity are identical across sky models
-    # (Nishita vs Hosek-Wilkie+lamp) for the same seed; only model-specific params differ
-    rng_elev, rng_rot, rng_intensity, rng_size, rng_sky_model = rng_sky.spawn(5)
-    sun_elevation_deg = pf.random.uniform(rng_elev, 5, 80)
-    sun_rotation_deg = pf.random.uniform(rng_rot, 0, 360)
-    sun_intensity = pf.random.uniform(rng_intensity, 0.8, 1.0)
-    sun_size_deg = pf.random.clip_gaussian(rng_size, 0.5, 0.3, 0.25, 5)
-    sky_env = sky_lighting.hosek_wilkie_sky_with_sun_lamp_rand(
-        rng_sky_model,
-        sun_elevation_deg=sun_elevation_deg,
-        sun_rotation_deg=sun_rotation_deg,
-        sun_intensity=sun_intensity,
-        sun_size_deg=sun_size_deg,
-    )
-    sun_lamp = sky_env.lights[0]
-
-    if extra_colliders is None:
-        extra_colliders = []
-    if wall_storage is None:
-        wall_storage = []
-    colliders = ccol.collision_set(wall_planes + [floor] + extra_colliders)
-    logger.info(
-        f"Created collision set with {len(colliders.mesh_fcl_colliders)} underlying BVHs"
-    )
-
-    # arrangement goes first so wall storage can avoid it (storage doesn't exist
-    # yet, so the arrangement gets an empty storage list to anchor against)
     arrangement_func = pf.control.choice(
-        rng_big,
+        rng_arr,
         [
-            (_sofas_on_wall_setup, 2.0),
+            (wall_sofa_setup_rand, 2.0),
             (centered_sofa_setup_rand, 3.0),
         ],
     )
-    arrangement, colliders = arrangement_func(
-        rng_big,
+    arrangement = arrangement_func(
+        rng_arr,
         wall_planes=wall_planes,
-        floor=floor,
         room_dimensions=room_dimensions,
         colliders=colliders,
-        storage_objects=[],
     )
-
-    # dining table placed in half of scenes, independent of the sofa arrangement
-    def with_dining_table():
-        return place_dining_table(
-            rng_dining_place,
-            wall_planes=wall_planes,
-            room_dimensions=room_dimensions,
-            colliders=colliders,
-        )
-
-    dining_tables, colliders = pf.control.choice(
-        rng_dining_place,
-        [(with_dining_table, 1.0), (lambda: ([], colliders), 1.0)],
-    )()
-
-    n = pf.random.randint(rng_big, 4, 10)
-    rngs = rng_big.spawn(n)
-    storage = [storage_object_rand(rngs[i]) for i in range(n)]
-    wall_margins = [pf.random.uniform(rngs[i], 0.03, 0.10) for i in range(n)]
-    wall_colliders = ccol.collision_set(wall_planes)
-    placed_storage = []
-    for i in range(n):
-        storage_obj = retry_place(
-            rngs[i],
-            storage[i],
-            colliders,
-            _snap_back_front,
-            attempts=12,
-            parents=wall_planes,
-            margin=wall_margins[i],
-            accept_fn=lambda m, margin=wall_margins[i]: back_face_grounded(
-                m, wall_colliders, margin
-            ),
-        )
-        placed_storage.append(storage_obj)
-    storage = placed_storage
-    storage_objects, colliders = keep_non_colliding(storage, colliders)
-    logger.info(f"Placed {len(storage_objects)} storage objects out of {n} attempts")
-
     sofa_meshes = [r.mesh for r in arrangement.sofas]
+    coffee_tables = list(arrangement.coffee_tables)
+    solid = sofa_meshes + [r.mesh for r in coffee_tables]
+    colliders = ccol.collision_set(colliders.objs + solid, existing=colliders)
 
-    # the center coffee table from the arrangement is the only coffee table now
-    coffee_tables: list[MeshResult] = list(arrangement.center_coffee_tables)
-
-    # SIDETABLES BY BIG OBJECTS
-    n = min(pf.random.randint(rng_table, 0, 6), len(arrangement.sofas))
-    rngs = rng_table.spawn(n)
+    n = min(pf.random.randint(rng_side, 0, 6), len(arrangement.sofas))
+    rngs = rng_side.spawn(n)
     side_tables = [table.side_table_rand(rngs[i]) for i in range(n)]
     placed_side_tables = []
     for i in range(n):
@@ -697,9 +780,28 @@ def room_furniture_rand(
     side_tables, colliders = keep_non_colliding(side_tables, colliders)
     logger.info(f"Placed {len(side_tables)} side tables out of {n} attempts")
 
-    # FLOOR LAMPS beside seating / floor storage (not wall-mounted storage)
-    big_meshes = sofa_meshes + [r.mesh for r in storage_objects]
-    n = min(pf.random.randint(rng_lamp, 0, 3), len(big_meshes))
+    all_objects = arrangement.all_objects + [r.mesh for r in side_tables]
+    return SofaSetupResult(
+        sofas=arrangement.sofas,
+        coffee_tables=coffee_tables,
+        side_tables=side_tables,
+        rugs=list(arrangement.rugs),
+        all_objects=all_objects,
+    )
+
+
+def sofa_lamps_rand(
+    rng: pf.RNG,
+    sofa_meshes: list[pf.MeshObject],
+    side_table_meshes: list[pf.MeshObject],
+    colliders: ccol.CollisionSet,
+) -> tuple[list[MeshResult], list[MeshResult], list[pf.LightObject], ccol.CollisionSet]:
+    """Place floor lamps beside `sofa_meshes` and table lamps atop `side_table_meshes`,
+    culling against `colliders`. Returns (floor_lamps, table_lamps, lights, colliders);
+    each lamp's light is kept in `lights` ~2/3 of the time."""
+    rng_lamp, rng_table_lamp = rng.spawn(2)
+
+    n = min(pf.random.randint(rng_lamp, 0, 3), len(sofa_meshes))
     rngs = rng_lamp.spawn(n)
     floor_lamps = [
         lamp.lamp_rand(rngs[i], pf.random.uniform(rngs[i], 1.0, 2.0)) for i in range(n)
@@ -711,39 +813,15 @@ def room_furniture_rand(
             floor_lamps[i],
             colliders,
             _snap_side_by_side,
-            parents=big_meshes,
+            parents=sofa_meshes,
         )
         placed_floor_lamps.append(floor_lamp)
-    floor_lamps = placed_floor_lamps
-    floor_lamps, colliders = keep_non_colliding(floor_lamps, colliders)
+    floor_lamps, colliders = keep_non_colliding(placed_floor_lamps, colliders)
     logger.info(f"Placed {len(floor_lamps)} floor lamps out of {n} attempts")
     floor_lamp_lights = [r.light for r in floor_lamps if r.light is not None]
-    lights: list[pf.LightObject] = [sun_lamp]
+    lights: list[pf.LightObject] = []
     lights += pf.control.choice(rng_lamp, [(floor_lamp_lights, 2), ([], 1)])
 
-    # vases/lamps sit on the tops of all tables and storage units
-    surface_meshes = [
-        r.mesh for r in dining_tables + coffee_tables + storage_objects + side_tables
-    ]
-    n = min(pf.random.randint(rng_decoration_object, 1, 4), 2 * len(surface_meshes))
-    rngs = rng_decoration_object.spawn(n)
-    decorations = [table_decoration_object_rand(rngs[i]) for i in range(n)]
-    placed_decorations = []
-    for i in range(n):
-        decoration = retry_place(
-            rngs[i],
-            decorations[i],
-            colliders,
-            _snap_on_top,
-            parents=surface_meshes,
-        )
-        placed_decorations.append(decoration)
-    decorations = placed_decorations
-    decorations, colliders = keep_non_colliding(decorations, colliders)
-    logger.info(f"Placed {len(decorations)} decoration objects out of {n} attempts")
-
-    # table lamps only on side tables, never dining/coffee tables
-    side_table_meshes = [r.mesh for r in side_tables + storage_objects]
     n = min(pf.random.randint(rng_table_lamp, 1, 3), len(side_table_meshes))
     rngs = rng_table_lamp.spawn(n)
     table_lamps = [lamp.desk_lamp_rand(rngs[i]) for i in range(n)]
@@ -753,60 +831,13 @@ def room_furniture_rand(
             rngs[i],
             table_lamps[i],
             colliders,
-            _snap_on_top,
+            snap_on_top,
             parents=side_table_meshes,
         )
         placed_table_lamps.append(table_lamp)
-    table_lamps = placed_table_lamps
-    table_lamps, colliders = keep_non_colliding(table_lamps, colliders)
+    table_lamps, colliders = keep_non_colliding(placed_table_lamps, colliders)
     logger.info(f"Placed {len(table_lamps)} table lamps out of {n} attempts")
     table_lamp_lights = [r.light for r in table_lamps if r.light is not None]
     lights += pf.control.choice(rng_table_lamp, [(table_lamp_lights, 2), ([], 1)])
 
-    logger.info(f"Placed {len(arrangement.rugs)} rugs")
-
-    placed_results: dict[str, list[MeshResult]] = {
-        "sofa": arrangement.sofas,
-        "storage": storage_objects,
-        "coffee_table": coffee_tables,
-        "side_table": side_tables,
-        "floor_lamp": floor_lamps,
-        "table_lamp": table_lamps,
-        "decoration": decorations,
-        "dining_table": dining_tables,
-    }
-    furniture_named: dict[str, list[pf.MeshObject]] = {
-        "rug": arrangement.rugs,
-    }
-    for name, results in placed_results.items():
-        furniture_named[name] = [r.mesh for r in results]
-
-    for name, objs in furniture_named.items():
-        for i, obj in enumerate(objs):
-            obj.item().name = f"{name}_{i}"
-            for j, slot in enumerate(obj.item().material_slots):
-                if slot.material is not None:
-                    slot.material.name = f"{name}_{i}_{j}"
-
-    all_furniture = [obj for objs in furniture_named.values() for obj in objs]
-
-    storage_surfaces = (
-        [r.mesh for r in dining_tables]
-        + [r.mesh for r in coffee_tables]
-        + [r.mesh for r in storage_objects]
-        + [r.mesh for r in side_tables]
-    )
-
-    return RoomFurnitureResult(
-        furniture=all_furniture,
-        storage_surfaces=storage_surfaces,
-        lights=lights,
-        colliders=colliders,
-        floor=floor,
-        storage_objects=[r.mesh for r in storage_objects],
-        coffee_tables=[r.mesh for r in coffee_tables],
-        side_tables=[r.mesh for r in side_tables],
-        diningtable_objs=[r.mesh for r in dining_tables],
-        sofas=sofa_meshes,
-        rugs=list(arrangement.rugs),
-    )
+    return floor_lamps, table_lamps, lights, colliders

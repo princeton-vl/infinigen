@@ -491,7 +491,21 @@
   },
   {
     "category": "Scene",
+    "name": "infinigen2.scenes.room.room_furniture.dining_setup_rand",
+    "integration_test_string": "dining_setup_rand object_demo render_cycles"
+  },
+  {
+    "category": "Scene",
+    "name": "infinigen2.scenes.room.room_furniture.centered_sofa_setup_rand",
+    "integration_test_string": "centered_sofa_setup_rand object_demo render_cycles"
+  },
+  {
+    "category": "Scene",
     "name": "infinigen2.scenes.room.room.livingroom_rand"
+  },
+  {
+    "category": "Scene",
+    "name": "infinigen2.scenes.room.room.room_rand"
   },
   {
     "category": "Scene",
