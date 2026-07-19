@@ -21,6 +21,7 @@ from infinigen2.shaders.functionality_lists import (
     furniture_material_rand,
 )
 from infinigen2.util import mesh
+from infinigen2.util.curve import curve_to_mesh_with_uv
 
 __all__ = [
     "ChairResult",
@@ -1350,9 +1351,7 @@ def _chair_back_geometry(
         rotation=(0, 0, 0),
         scale=pf.nodes.math.combine_xyz(x=slat_depth, y=slat_width, z=1.0),
     )
-    slat = pf.nodes.geo.curve_to_mesh(
-        curve=slat_line, profile_curve=profile, fill_caps=True
-    )
+    slat = curve_to_mesh_with_uv(curve=slat_line, profile=profile, fill_caps=True).mesh
 
     half = ((dimensions.y - slat_width) * 0.5 - crest_offset.y) * slat_span
     forward = (dimensions.x - slat_depth) * 0.5
@@ -1376,6 +1375,16 @@ def _chair_back_geometry(
         translation=pf.nodes.math.combine_xyz(z=dimensions.z - crest_height * 0.5),
         rotation=(0, 0, 0),
         scale=(1, 1, 1),
+    )
+    crest_uv = pf.nodes.geo.input_named_attribute(
+        "uv_map", data_type="FLOAT_VECTOR"
+    ).attribute
+    crest = pf.nodes.geo.store_named_attribute(
+        geometry=crest,
+        name="UVMap",
+        value=crest_uv,
+        domain="CORNER",
+        data_type="FLOAT2",
     )
 
     if slat_material is not None:
@@ -1412,7 +1421,6 @@ def chair_back(
         slat_span=slat_span,
     )
     obj = pf.nodes.to_mesh_object(geo)
-    pf.ops.uv.cube_project(obj, uv_name="UVMap")
     return ChairResult(mesh=obj)
 
 
@@ -1466,7 +1474,6 @@ def chair_back_rand(
     pf.ops.object.set_material(
         obj, surface=material.surface, displacement=material.displacement
     )
-    pf.ops.uv.cube_project(obj, uv_name="UVMap")
     return ChairResult(mesh=obj)
 
 

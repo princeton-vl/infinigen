@@ -13,6 +13,7 @@ from procfunc.nodes import types as t
 from procfunc.nodes.util.bpy_node_info import NodeDataType
 
 from infinigen2.shaders.functionality_lists import decorative_material_rand
+from infinigen2.util.curve import curve_to_mesh_with_uv
 
 __all__ = [
     "HandleResult",
@@ -29,16 +30,22 @@ class HandleResult(NamedTuple):
     mesh: pf.MeshObject
 
 
-def _quad_cap(profile: pf.ProcNode, insets: int = 1) -> pf.ProcNode[pf.MeshObject]:
+def _quad_cap(
+    profile: pf.ProcNode, insets: int = 3, scale: float = 0.5
+) -> pf.ProcNode[pf.MeshObject]:
     cap = pf.nodes.geo.fill_curve(profile, mode="NGONS")
     for _ in range(insets):
         extruded = pf.nodes.geo.extrude_mesh(
             cap, offset_scale=0.0, individual=False, mode="FACES"
         )
         cap = pf.nodes.geo.scale_elements(
-            extruded.mesh, scale=0.5, selection=extruded.top
+            extruded.mesh, scale=scale, selection=extruded.top
         )
-    return cap
+    position = pf.nodes.geo.input_position()
+    uv = pf.nodes.math.combine_xyz(x=position.x, y=position.y)
+    return pf.nodes.geo.store_named_attribute(
+        geometry=cap, name="UVMap", value=uv, domain="CORNER", data_type="FLOAT2"
+    )
 
 
 @pf.nodes.node_function
@@ -56,15 +63,28 @@ def _rounded_prism(
     line = pf.nodes.geo.curve_line(
         start=(0.0, 0.0, 0.0), end=pf.nodes.math.combine_xyz(z=depth)
     )
-    walls = pf.nodes.geo.curve_to_mesh(
-        curve=line, profile_curve=profile, fill_caps=False
-    )
+    walls = curve_to_mesh_with_uv(curve=line, profile=profile, fill_caps=False).mesh
     cap_start = pf.nodes.geo.flip_faces(_quad_cap(profile))
     cap_end = pf.nodes.geo.transform(
         geometry=_quad_cap(profile), translation=pf.nodes.math.combine_xyz(z=depth)
     )
     solid = pf.nodes.geo.join_geometry([walls, cap_start, cap_end])
     return pf.nodes.geo.merge_by_distance(solid, distance=1e-5)
+
+
+@pf.nodes.node_function
+def _cylinder_with_uv(
+    radius: t.SocketOrVal[float],
+    depth: t.SocketOrVal[float],
+    vertices: t.SocketOrVal[int] = 16,
+) -> pf.ProcNode[pf.MeshObject]:
+    cyl = pf.nodes.geo.mesh_cylinder(vertices=vertices, radius=radius, depth=depth)
+    uv = pf.nodes.math.combine_xyz(
+        x=cyl.uv_map.y * depth, y=cyl.uv_map.x * radius * 6.283185307179586
+    )
+    return pf.nodes.geo.store_named_attribute(
+        geometry=cyl.mesh, name="UVMap", value=uv, domain="CORNER", data_type="FLOAT2"
+    )
 
 
 @pf.nodes.node_function
@@ -123,10 +143,8 @@ def handle_lock(
     button_depth: t.SocketOrVal[float] = 0.007,
     mini_lock_depth: t.SocketOrVal[float] = 0.002,
 ) -> pf.ProcNode[pf.MeshObject]:
-    cylinder = pf.nodes.geo.mesh_cylinder(
-        vertices=16, radius=value * 0.5, depth=button_depth
-    )
-    base = pf.nodes.geo.transform(geometry=cylinder.mesh, rotation=(0.0, 1.5708, 0.0))
+    cylinder = _cylinder_with_uv(radius=value * 0.5, depth=button_depth)
+    base = pf.nodes.geo.transform(geometry=cylinder, rotation=(0.0, 1.5708, 0.0))
 
     mini_mesh = _rounded_prism(
         width=0.002, height=value * 0.8, depth=mini_lock_depth, radius=0.25
@@ -229,6 +247,15 @@ def _knob_handle_geometry(
         translation=pf.nodes.math.combine_xyz(z=base_depth + stem_length),
     )
     geo = pf.nodes.geo.join_geometry([base, stem, head])
+    position = pf.nodes.geo.input_position()
+    uv = pf.nodes.math.combine_xyz(x=position.x, y=position.y)
+    geo = pf.nodes.geo.store_named_attribute(
+        geometry=geo,
+        name="UVMap",
+        value=uv,
+        domain="CORNER",
+        data_type="FLOAT2",
+    )
     return pf.nodes.geo.transform(geometry=geo, rotation=(0.0, 1.5708, 0.0))
 
 
@@ -238,9 +265,9 @@ def _standoff_post(
     radius: t.SocketOrVal[float],
     z: t.SocketOrVal[float],
 ) -> pf.ProcNode[pf.MeshObject]:
-    post = pf.nodes.geo.mesh_cylinder(vertices=16, radius=radius, depth=length)
+    post = _cylinder_with_uv(radius=radius, depth=length)
     return pf.nodes.geo.transform(
-        geometry=post.mesh,
+        geometry=post,
         rotation=(-1.5708, 0.0, 0.0),
         translation=pf.nodes.math.combine_xyz(y=length * 0.5, z=z),
     )
@@ -253,11 +280,9 @@ def _bar_pull_handle_geometry(
     standoff_length: t.SocketOrVal[float] = 0.035,
     standoff_radius: t.SocketOrVal[float] = 0.006,
 ) -> pf.ProcNode[pf.MeshObject]:
-    grip = pf.nodes.geo.mesh_cylinder(
-        vertices=16, radius=grip_radius, depth=grip_length
-    )
+    grip = _cylinder_with_uv(radius=grip_radius, depth=grip_length)
     grip = pf.nodes.geo.transform(
-        geometry=grip.mesh, translation=pf.nodes.math.combine_xyz(y=standoff_length)
+        geometry=grip, translation=pf.nodes.math.combine_xyz(y=standoff_length)
     )
     post_z = grip_length * 0.5 - grip_radius
     top = _standoff_post(standoff_length, standoff_radius, post_z)
