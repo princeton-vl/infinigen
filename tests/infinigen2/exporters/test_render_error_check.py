@@ -4,19 +4,29 @@
 # Authors: Alexander Raistrick
 
 import bpy
+import imageio.v3 as iio
 import numpy as np
 import procfunc as pf
 import pytest
 from procfunc.util.manifest import import_item
 
-from infinigen2 import GENERATORS_MANIFEST
+from infinigen2 import GENERATORS_MANIFEST, context
 from infinigen2.exporters.render_error_check import (
     SHADER_NODE_COUNT_FAIL,
+    AdaptiveSamplingError,
     DisplacementCoordError,
+    FrameCheckError,
+    assert_adaptive_sampling_converged,
+    assert_frames_not_black,
     check_material_uv_coords,
+    configure_sample_count_output,
     count_material_nodes,
+    detect_cycles_errors,
     material_node_issues,
     unsafe_displacement_materials,
+)
+from infinigen2.exporters.render_error_check.adaptive_sampling import (
+    _frames_at_sample_cap,
 )
 from infinigen2.shaders import functionality_lists
 from infinigen2.shaders.composites import bricks
@@ -360,3 +370,95 @@ def test_top_level_output_not_flagged():
 def test_real_material_no_issues():
     mat = _bricks_material(pf.nodes.shader.coord().object)
     assert material_node_issues(mat) == []
+
+
+def test_black_frame_check(tmp_path):
+    black = tmp_path / "black.png"
+    bright = tmp_path / "bright.png"
+    iio.imwrite(black, np.zeros((8, 8, 3), dtype=np.uint8))
+    iio.imwrite(bright, np.full((8, 8, 3), 128, dtype=np.uint8))
+
+    assert assert_frames_not_black([bright], mean_pixel_thresh=0.02) == {}
+    assert assert_frames_not_black([black], mean_pixel_thresh=None) == {}
+
+    with context.override_globals(error_mode_black_frame="warn"):
+        dark = assert_frames_not_black([black, bright], mean_pixel_thresh=0.02)
+    assert set(dark) == {"black.png"}
+
+    with context.override_globals(error_mode_black_frame="ignore"):
+        assert assert_frames_not_black([black], mean_pixel_thresh=0.02) == {}
+
+    with context.override_globals(error_mode_black_frame="error"):
+        with pytest.raises(FrameCheckError):
+            assert_frames_not_black([black], mean_pixel_thresh=0.02)
+
+
+def test_override_globals_restores():
+    orig = context.globals.error_mode_black_frame
+    with context.override_globals(error_mode_black_frame="ignore"):
+        assert context.globals.error_mode_black_frame == "ignore"
+    assert context.globals.error_mode_black_frame == orig
+
+
+def test_frames_at_sample_cap_parsing():
+    log = (
+        "Fra:1 Mem:10M | Scene, ViewLayer | Sample 0/64\n"
+        "Fra:1 Mem:12M | Scene, ViewLayer | Sample 64/64\n"
+        "Fra:2 Mem:10M | Scene, ViewLayer | Sample 0/64\n"
+        "Fra:2 Mem:12M | Scene, ViewLayer | Sample 48/64\n"
+    )
+    assert _frames_at_sample_cap(log, 64) == {1}
+    assert _frames_at_sample_cap(log, 256) == set()
+
+
+def _adaptive_test_render(tmp_path, max_samples, threshold):
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    bpy.ops.mesh.primitive_monkey_add()
+    bpy.ops.object.camera_add(location=(0, -4, 0), rotation=(1.5708, 0, 0))
+    bpy.context.scene.camera = bpy.context.object
+    bpy.ops.object.light_add(type="AREA", location=(2, -2, 3))
+    bpy.context.object.data.energy = 200
+
+    scene = bpy.context.scene
+    scene.render.engine = "CYCLES"
+    scene.render.resolution_x = 96
+    scene.render.resolution_y = 64
+    scene.render.filepath = str(tmp_path / "rgb_")
+    scene.cycles.device = "CPU"
+    scene.cycles.use_adaptive_sampling = True
+    scene.cycles.samples = max_samples
+    scene.cycles.adaptive_min_samples = 0
+    scene.cycles.adaptive_threshold = threshold
+
+    configure_sample_count_output(scene.view_layers["ViewLayer"], tmp_path)
+    with detect_cycles_errors(replay=False) as render_log:
+        bpy.ops.render.render(animation=True)
+    return render_log["text"], tmp_path
+
+
+def test_adaptive_sampling_unconverged_raises(tmp_path):
+    log, folder = _adaptive_test_render(tmp_path, max_samples=8, threshold=0.0001)
+    with (
+        context.override_globals(error_mode_unconverged_samples="error"),
+        pytest.raises(AdaptiveSamplingError),
+    ):
+        assert_adaptive_sampling_converged(
+            log, folder, max_samples=8, fail_fraction=0.05
+        )
+
+
+def test_adaptive_sampling_converged_passes(tmp_path):
+    log, folder = _adaptive_test_render(tmp_path, max_samples=4096, threshold=0.25)
+    fractions = assert_adaptive_sampling_converged(
+        log, folder, max_samples=4096, fail_fraction=0.05
+    )
+    assert all(v <= 0.05 for v in fractions.values())
+
+
+def test_adaptive_sampling_unconverged_warn_mode(tmp_path):
+    log, folder = _adaptive_test_render(tmp_path, max_samples=8, threshold=0.0001)
+    with context.override_globals(error_mode_unconverged_samples="warn"):
+        fractions = assert_adaptive_sampling_converged(
+            log, folder, max_samples=8, fail_fraction=0.05
+        )
+    assert max(fractions.values()) > 0.05

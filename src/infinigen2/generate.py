@@ -25,6 +25,7 @@ from pathlib import Path
 from typing import Any, Callable
 import bpy
 import numpy as np
+from infinigen2 import context
 from infinigen2 import list as list_command
 
 os.environ["OPENCV_IO_ENABLE_OPENEXR"] = "1"
@@ -216,6 +217,27 @@ def get_parser():
         type=str,
         choices=["delete", "cleanstate", "exit", "none"],
         default="none",
+    )
+
+    parser.add_argument(
+        "--strict",
+        nargs="*",
+        default=[],
+        metavar="CHECK",
+        choices=context.strict_names(),
+        help="Runtime checks to upgrade to fatal severity (upgrade-only), across the "
+        "infinigen and procfunc contexts; choices: "
+        + ", ".join(context.strict_names()),
+    )
+
+    parser.add_argument(
+        "--sampling_noise_threshold",
+        type=float,
+        default=0.005,
+        help="Cycles adaptive-sampling noise threshold (adaptive_threshold): the "
+        "per-pixel noise level below which a pixel stops sampling. Raise it to let "
+        "noisier pixels converge sooner; a future noise regression then trips the "
+        "unconverged-samples check.",
     )
 
     return parser
@@ -706,7 +728,7 @@ def _main():  # noqa: C901
     args.output.mkdir(parents=True, exist_ok=True)
     _configure_log_level(args)
 
-    # pf.context.globals.set_strict()
+    context.set_strict(args.strict)
 
     seed = args.seed if args.seed is not None else int.from_bytes(os.urandom(8), "big")
     rng = np.random.default_rng(seed)
@@ -739,7 +761,7 @@ def _main():  # noqa: C901
         resolution=args.resolution,
         min_samples=32,
         max_samples=args.samples,
-        samples_adaptive_threshold=0.005,
+        samples_adaptive_threshold=args.sampling_noise_threshold,
         export_passes=args.passes,
         film_exposure=2.0,
         displacement_mode=getattr(DisplacementMode, args.displacement_mode),
