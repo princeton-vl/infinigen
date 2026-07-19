@@ -34,6 +34,7 @@
   {
     "category": "Material",
     "name": "infinigen2.shaders.composites.bricks.bricks_rand",
+    "integration_test_string": "bricks_rand material_plane_uv render_cycles",
     "presets": [
       "bricks_checkered_preset",
       "bricks_checkered_sparse_preset",
@@ -47,11 +48,13 @@
   },
   {
     "category": "Material",
-    "name": "infinigen2.shaders.composites.bricks.bricks_pristine_rand"
+    "name": "infinigen2.shaders.composites.bricks.bricks_pristine_rand",
+    "integration_test_string": "bricks_pristine_rand material_plane_uv render_cycles"
   },
   {
     "category": "Material",
     "name": "infinigen2.shaders.composites.bricks.bricks_paint_rand",
+    "integration_test_string": "bricks_paint_rand material_plane_uv render_cycles",
     "presets": [
       "bricks_paint_bumpy_preset",
       "bricks_paint_spots_preset",
@@ -62,6 +65,7 @@
   {
     "category": "Material",
     "name": "infinigen2.shaders.composites.bricks.bricks_masonry_rand",
+    "integration_test_string": "bricks_masonry_rand material_plane_uv render_cycles",
     "presets": [
       "brick_masonry_brown_preset",
       "brick_masonry_granite_preset",
@@ -78,7 +82,8 @@
   },
   {
     "category": "Material",
-    "name": "infinigen2.shaders.base_materials.brick_concrete.brick_concrete_rand"
+    "name": "infinigen2.shaders.base_materials.brick_concrete.brick_concrete_rand",
+    "integration_test_string": "brick_concrete_rand material_plane_uv render_cycles"
   },
   {
     "category": "Mask",
@@ -326,27 +331,32 @@
   },
   {
     "category": "Material",
-    "name": "infinigen2.shaders.composites.tiles.tile_rand"
+    "name": "infinigen2.shaders.composites.tiles.tile_rand",
+    "integration_test_string": "tile_rand material_plane_uv render_cycles"
   },
   {
     "original_proj": "Procfunc",
     "category": "Material",
-    "name": "infinigen2.shaders.composites.tiles.tile_indoor_wall_rand"
+    "name": "infinigen2.shaders.composites.tiles.tile_indoor_wall_rand",
+    "integration_test_string": "tile_indoor_wall_rand material_plane_uv render_cycles"
   },
   {
     "original_proj": "Procfunc",
     "category": "Material",
-    "name": "infinigen2.shaders.composites.tiles.tile_indoor_ground_rand"
+    "name": "infinigen2.shaders.composites.tiles.tile_indoor_ground_rand",
+    "integration_test_string": "tile_indoor_ground_rand material_plane_uv render_cycles"
   },
   {
     "original_proj": "Procfunc",
     "category": "Material",
-    "name": "infinigen2.shaders.composites.tiles.tile_outdoor_wall_rand"
+    "name": "infinigen2.shaders.composites.tiles.tile_outdoor_wall_rand",
+    "integration_test_string": "tile_outdoor_wall_rand material_plane_uv render_cycles"
   },
   {
     "original_proj": "Procfunc",
     "category": "Material",
-    "name": "infinigen2.shaders.composites.tiles.tile_outdoor_ground_rand"
+    "name": "infinigen2.shaders.composites.tiles.tile_outdoor_ground_rand",
+    "integration_test_string": "tile_outdoor_ground_rand material_plane_uv render_cycles"
   },
   {
     "category": "Material",
@@ -428,39 +438,48 @@
   },
   {
     "category": "Scene",
-    "name": "infinigen2.scenes.asset_demo.material_sphere"
+    "name": "infinigen2.scenes.asset_demo.material_sphere",
+    "num_seeds": 1
   },
   {
     "category": "Scene",
-    "name": "infinigen2.scenes.asset_demo.material_torus_uv"
+    "name": "infinigen2.scenes.asset_demo.material_torus_uv",
+    "num_seeds": 1
   },
   {
     "category": "Scene",
-    "name": "infinigen2.scenes.asset_demo.material_banana"
+    "name": "infinigen2.scenes.asset_demo.material_banana",
+    "num_seeds": 1
   },
   {
     "category": "Scene",
-    "name": "infinigen2.scenes.asset_demo.material_monkey"
+    "name": "infinigen2.scenes.asset_demo.material_monkey",
+    "num_seeds": 1
   },
   {
     "category": "Scene",
-    "name": "infinigen2.scenes.asset_demo.material_cube"
+    "name": "infinigen2.scenes.asset_demo.material_cube",
+    "num_seeds": 1
   },
   {
     "category": "Scene",
-    "name": "infinigen2.scenes.asset_demo.material_plane_uv"
+    "name": "infinigen2.scenes.asset_demo.material_plane_uv",
+    "num_seeds": 1
   },
   {
     "category": "Scene",
-    "name": "infinigen2.scenes.asset_demo.material_plane_orthographic"
+    "name": "infinigen2.scenes.asset_demo.material_plane_orthographic",
+    "num_seeds": 1
   },
   {
     "category": "Scene",
-    "name": "infinigen2.scenes.asset_demo.material_plane_horizontal_uv"
+    "name": "infinigen2.scenes.asset_demo.material_plane_horizontal_uv",
+    "num_seeds": 1
   },
   {
     "category": "Scene",
-    "name": "infinigen2.scenes.asset_demo.object_demo"
+    "name": "infinigen2.scenes.asset_demo.object_demo",
+    "num_seeds": 1
   },
   {
     "category": "Scene",

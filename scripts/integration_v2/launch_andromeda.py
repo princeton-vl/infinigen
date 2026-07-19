@@ -43,6 +43,11 @@ def parse_args() -> argparse.Namespace:
         help="asset_coverage.json mapping generator -> covered files (from the base branch).",
     )
     parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print the gating report and exit without rendering or touching a GPU.",
+    )
+    parser.add_argument(
         "--args",
         nargs=argparse.REMAINDER,
         default=[],
@@ -62,9 +67,12 @@ FRAMEWORK_PATTERNS = (
 MANIFEST_PATH = "src/infinigen2/manifest.json"
 
 
-def changed_files(base_ref: str) -> set[str]:
+def changed_files(base_ref: str) -> set[str] | None:
     cmd = ["git", "diff", "--name-only", f"{base_ref}...HEAD"]
-    out = run_capture(cmd)
+    try:
+        out = run_capture(cmd)
+    except subprocess.CalledProcessError:
+        return None
     return {line.strip() for line in out.splitlines() if line.strip()}
 
 
@@ -117,9 +125,7 @@ def select_changed(
 
 
 def framework_triggers(changed: set[str]) -> list[str]:
-    return sorted(
-        f for f in changed for p in FRAMEWORK_PATTERNS if f.startswith(p) or f == p
-    )
+    return sorted(f for f in changed for p in FRAMEWORK_PATTERNS if f.startswith(p))
 
 
 def gate_by_diff(
@@ -129,9 +135,24 @@ def gate_by_diff(
     scenes: list[str],
     masks: list[str],
 ) -> tuple[tuple[list[str], list[str], list[str], list[str]], dict]:
-    changed = changed_files(args.base_ref or "HEAD~1")
-    baseline = load_baseline(args.baseline)
+    base_ref = args.base_ref or "HEAD~1"
+    changed = changed_files(base_ref)
     lists = [materials, objects, scenes, masks]
+
+    # a deleted or unfetched base branch must not stop the whole render
+    if changed is None:
+        report = {
+            "enabled": True,
+            "mode": "full",
+            "reason": f"base ref {base_ref} could not be resolved",
+        }
+        print(
+            f"changed-only: base ref {base_ref} unresolvable, rendering all assets",
+            file=sys.stderr,
+        )
+        return (materials, objects, scenes, masks), report
+
+    baseline = load_baseline(args.baseline)
     report = {"enabled": True, "mode": "full", "changed_files": sorted(changed)}
 
     if not baseline:
@@ -151,7 +172,7 @@ def gate_by_diff(
 
     forced = set()
     if MANIFEST_PATH in changed:
-        manifest_forced = manifest_changed_shortnames(args.base_ref or "HEAD~1")
+        manifest_forced = manifest_changed_shortnames(base_ref)
         if manifest_forced is None:
             report["reason"] = "manifest diff unreadable"
             print("changed-only: manifest diff unreadable", file=sys.stderr)
@@ -327,9 +348,6 @@ def main() -> int:
     if extra_args and extra_args[0] == "--":
         extra_args = extra_args[1:]
 
-    gpu_ids = resolve_gpu_ids(args.gpus)
-    slot_gpus = [gpu_id for gpu_id in gpu_ids for _ in range(args.jobs_per_gpu)]
-
     # Limit semantics:
     #   -1: no limit
     #    0: disable category
@@ -342,7 +360,8 @@ def main() -> int:
     environment_limit = int(os.environ.get("ENVIRONMENT_LIMIT", "-1"))
 
     output_path = args.output_path
-    slot_count = len(slot_gpus)
+    # create the events index up front so the viewer loads even when zero assets render
+    (output_path / "render_index" / "events").mkdir(parents=True, exist_ok=True)
     materials_all = list_items(["--categories", "Material"], extra_args)
     objects_all = list_items(["--categories", "Object"], extra_args)
     scenes_all = list_items(["--categories", "Scene"], extra_args)
@@ -356,8 +375,16 @@ def main() -> int:
             args, materials_all, objects_all, scenes_all, masks_all
         )
         materials_all, objects_all, scenes_all, masks_all = gated
-    output_path.mkdir(parents=True, exist_ok=True)
     (output_path / "gating_report.json").write_text(json.dumps(gating_report, indent=2))
+
+    if args.dry_run:
+        print(json.dumps(gating_report, indent=2))
+        return 0
+
+    # After the gate so --dry-run needs no GPU: this raises without nvidia-smi.
+    gpu_ids = resolve_gpu_ids(args.gpus)
+    slot_gpus = [gpu_id for gpu_id in gpu_ids for _ in range(args.jobs_per_gpu)]
+    slot_count = len(slot_gpus)
 
     procs: list[tuple[int, str, subprocess.Popen[str]]] = []
     runner = render_runner(output_path)

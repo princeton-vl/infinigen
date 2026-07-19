@@ -3,18 +3,224 @@
 
 # Authors: Jack Nugent
 
-"""Display module: transform collected data into template-ready structures."""
+"""Display module: collect integration render data from render_index events and
+transform it into template-ready structures."""
 
 import json
 import math
 import os
+import re
+import shlex
 from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache
 from pathlib import Path
+from typing import NamedTuple
 
 import numpy as np
-from collection import classify_image
 from PIL import Image
+
+
+class ImageInfo(NamedTuple):
+    path: str
+    variant_key: str
+    renderer: str
+    variant_type: str
+    category: str
+    pass_type: str
+    filename: str
+    label: str
+    command_text: str
+    stderr_text: str
+
+
+class RenderStat(NamedTuple):
+    variant_key: str
+    tris: int | None
+    cpu_time_sec: float | None
+    gpu_time_sec: float | None
+
+
+class AssetData(NamedTuple):
+    asset_name: str
+    asset_type: str
+    version_name: str
+    images: list[ImageInfo]
+    stats: list[RenderStat]
+
+
+class CollectionResult(NamedTuple):
+    version_name: str
+    version_path: Path
+    assets: dict[str, AssetData]
+    matched_assets: int
+    no_output_events: int
+
+
+def classify_image(variant_key: str, filename: str) -> dict[str, str]:
+    variant_match = re.match(r"(\w+)-(\w+)-(.*)", variant_key)
+    if variant_match:
+        renderer = variant_match.group(2)
+        variant_type = variant_match.group(3)
+    else:
+        renderer = "unknown"
+        variant_type = variant_key
+
+    # DISPLACEMENT_AND_BUMP under cycles is the default look, so it stays a distribution render.
+    if renderer == "eevee" or variant_type in {"BUMP", "DISPLACEMENT", "REALIZE_MESH"}:
+        category = "exports"
+    else:
+        category = "distribution"
+
+    if filename.startswith("image_") or filename == "Image" or filename == "image":
+        pass_type = "image"
+    elif filename.startswith("surface-normal_"):
+        pass_type = "surface-normal"
+    elif filename == "error":
+        pass_type = "error"
+    else:
+        pass_type = "other"
+
+    return {
+        "renderer": renderer,
+        "variant_type": variant_type,
+        "category": category,
+        "pass_type": pass_type,
+    }
+
+
+def _normalize_stem(path_str: str) -> str:
+    rel = Path(path_str)
+    stem = rel.stem
+    if stem.isdigit() and rel.parts and rel.parts[-2].lower().startswith("camera"):
+        return f"image_{rel.parts[-2]}_{stem}"
+    return stem
+
+
+def _merge_asset(assets: dict[str, AssetData], new_asset: AssetData):
+    if new_asset.asset_name not in assets:
+        assets[new_asset.asset_name] = new_asset
+        return
+
+    existing = assets[new_asset.asset_name]
+    assets[new_asset.asset_name] = AssetData(
+        asset_name=existing.asset_name,
+        asset_type=existing.asset_type,
+        version_name=existing.version_name,
+        images=existing.images + new_asset.images,
+        stats=existing.stats + new_asset.stats,
+    )
+
+
+def _command_text(cmd_field) -> str:
+    if isinstance(cmd_field, list):
+        return shlex.join(cmd_field)
+    return str(cmd_field or "")
+
+
+def collect_images_structured(
+    version_path: Path,
+    version_name: str,
+    material_files=None,
+    manifest_file=None,
+) -> CollectionResult:
+    del material_files, manifest_file
+
+    events_dir = version_path / "render_index" / "events"
+    if not events_dir.is_dir():
+        raise FileNotFoundError(
+            f"Missing index directory: {events_dir}. This viewer now requires render_index events."
+        )
+
+    assets: dict[str, AssetData] = {}
+    no_output_events = 0
+
+    for event_file in sorted(events_dir.glob("*.json")):
+        event = json.loads(event_file.read_text())
+        asset_name = event.get("generator", "unknown")
+        asset_type = event.get("asset_type", "unknown")
+        variant_key = event.get("variant_key", "unknown")
+        status = event.get("status", "no_outputs")
+        cmd_text = _command_text(event.get("cmd"))
+
+        images: list[ImageInfo] = []
+
+        for image_path in event.get("images", []):
+            stem = _normalize_stem(image_path)
+            meta = classify_image(variant_key, stem)
+            images.append(
+                ImageInfo(
+                    path=f"{version_name}/{image_path}",
+                    variant_key=f"{variant_key}/{stem}",
+                    renderer=meta["renderer"],
+                    variant_type=meta["variant_type"],
+                    category=meta["category"],
+                    pass_type=meta["pass_type"],
+                    filename=image_path,
+                    label=f"{meta['renderer']} / {meta['variant_type']} / {meta['pass_type']}",
+                    command_text=cmd_text,
+                    stderr_text="",
+                )
+            )
+
+        if status == "no_outputs":
+            no_output_events += 1
+            stderr_text = ""
+            stderr_path = event.get("stderr_path", "")
+            if stderr_path:
+                stderr_file = version_path / stderr_path
+                if stderr_file.exists():
+                    stderr_text = stderr_file.read_text()
+
+            meta = classify_image(variant_key, "error")
+            images.append(
+                ImageInfo(
+                    path="",
+                    variant_key=f"{variant_key}/error",
+                    renderer=meta["renderer"],
+                    variant_type=meta["variant_type"],
+                    category=meta["category"],
+                    pass_type="error",
+                    filename="",
+                    label=f"{meta['renderer']} / {meta['variant_type']} / error",
+                    command_text=cmd_text,
+                    stderr_text=stderr_text,
+                )
+            )
+
+        stat = RenderStat(
+            variant_key=variant_key,
+            tris=event.get("tris"),
+            cpu_time_sec=event.get("cpu_time_sec"),
+            gpu_time_sec=event.get("gpu_time_sec"),
+        )
+
+        _merge_asset(
+            assets,
+            AssetData(
+                asset_name=asset_name,
+                asset_type=asset_type,
+                version_name=version_name,
+                images=images,
+                stats=[stat],
+            ),
+        )
+
+    return CollectionResult(
+        version_name=version_name,
+        version_path=version_path,
+        assets=assets,
+        matched_assets=len(assets),
+        no_output_events=no_output_events,
+    )
+
+
+def print_collection_summary(results: list[CollectionResult]):
+    print("\n=== Collection Summary ===")
+    for result in results:
+        print(
+            f"{result.version_name}: assets {result.matched_assets}; no_outputs {result.no_output_events}"
+        )
+    print()
 
 
 @lru_cache(maxsize=2048)
@@ -85,7 +291,7 @@ def _format_mse_value(mse: float) -> str:
     return f"{mse:.2f}"
 
 
-# AFTER-version red/green threshold; matches the perf gate in perf_diff.py.
+# AFTER-version red/green threshold; matches the perf gate in baseline_diff.py.
 PERF_THRESHOLD = 0.05
 
 
@@ -102,6 +308,8 @@ def _fmt_tris(n: int | None) -> str | None:
 def _fmt_time(s: float | None) -> str | None:
     if s is None:
         return None
+    if s >= 60:
+        return f"{s / 60:.1f}m"
     return f"{s:.1f}s"
 
 
@@ -378,6 +586,79 @@ def _fold_presets(rows: list[dict], parents: dict) -> list[dict]:
     return [row for row in rows if row["asset"] not in folded]
 
 
+# key, title, stats category, folded-by-default. Normals reuse the rgb pass's render, so no metrics.
+SECTION_SPECS = [
+    ("seeds", "Random seeds", "distribution", False),
+    ("presets", "Presets", "preset", False),
+    ("normals", "Normals", None, True),
+    ("exports", "Exports", "exports", True),
+]
+
+
+# Export variants keep their normals beside their rgb; only default-setting normals split out.
+def _image_section(img: dict) -> str:
+    if img.get("is_preset"):
+        return "presets"
+    if img.get("category") == "exports":
+        return "exports"
+    if img.get("pass_type") == "surface-normal":
+        return "normals"
+    return "seeds"
+
+
+def _group_images_by_section(images: list[dict]) -> dict[str, list[dict]]:
+    by_key: dict[str, list[dict]] = {}
+    for img in images:
+        by_key.setdefault(_image_section(img), []).append(img)
+    return by_key
+
+
+def _make_section(spec: tuple, images: list[dict], section_metrics: dict) -> dict:
+    key, title, stat_cat, folded = spec
+    metrics = section_metrics.get(stat_cat) if stat_cat else None
+    return {
+        "key": key,
+        "title": title,
+        "images": images,
+        "metrics": metrics,
+        "folded": folded,
+    }
+
+
+def _build_sections(obj: dict) -> list[dict]:
+    by_key = _group_images_by_section(obj["images"])
+    return [
+        _make_section(spec, by_key[spec[0]], obj["section_metrics"])
+        for spec in SECTION_SPECS
+        if spec[0] in by_key
+    ]
+
+
+def _present_section_keys(rows: list[dict]) -> set[str]:
+    keys: set[str] = set()
+    for row in rows:
+        for obj in row["objects"]:
+            keys.update(section["key"] for section in obj["sections"])
+    return keys
+
+
+def build_section_controls(rows: list[dict]) -> list[dict]:
+    """Top-bar fold buttons: one per section type present, plus not-rendered rows
+    (which fold whole rows rather than a section)."""
+    present = _present_section_keys(rows)
+    controls = [
+        {"key": key, "title": title, "folded": folded}
+        for key, title, _cat, folded in SECTION_SPECS
+        if key in present
+    ]
+
+    not_run = sum(1 for row in rows if row["not_run"])
+    if not_run:
+        title = f"{not_run} not-rendered"
+        controls.append({"key": "not-run", "title": title, "folded": True})
+    return controls
+
+
 def _attach_obj_metrics(
     obj: dict, before_overall: dict, before_cats: dict, is_after: bool
 ) -> None:
@@ -388,6 +669,7 @@ def _attach_obj_metrics(
     for cat, agg in _category_aggregates(stats).items():
         cat_base = before_cats.get(cat) if is_after else None
         obj["section_metrics"][cat] = _format_metrics(agg, cat_base)
+    obj["sections"] = _build_sections(obj)
 
 
 def _attach_metrics(rows: list[dict], version_names: list[str]) -> None:

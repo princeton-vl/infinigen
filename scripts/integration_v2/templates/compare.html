@@ -1,3 +1,67 @@
+{% macro metrics_inline(m) -%}
+{%- if m and (m.tris or m.cpu or m.gpu) -%}
+<span class="metrics">{% if m.tris %}Tris <span class="m-{{ m.tris_cls }}">{{ m.tris }}</span>{% endif %}{% if m.cpu %} · CPU <span class="m-{{ m.cpu_cls }}">{{ m.cpu }}</span>{% endif %}{% if m.gpu %} · GPU <span class="m-{{ m.gpu_cls }}">{{ m.gpu }}</span>{% endif %}</span>
+{%- endif -%}
+{%- endmacro %}
+
+{% macro version_header(v) %}
+{% if v.role %}<span class="ba-badge {{ v.role }}">{{ v.role | upper }}</span>{% endif %}
+{% if v.branch_url %}<a class="vh-branch" href="{{ v.branch_url }}" target="_blank" rel="noopener" title="{{ v.name }}">{{ v.branch }}</a>{% else %}<span class="vh-branch" title="{{ v.name }}">{{ v.branch or v.name }}</span>{% endif %}
+{% if v.commit %} <a class="vh-commit" href="{{ v.commit_url }}" target="_blank" rel="noopener">{{ v.commit }}</a>{% endif %}
+{% if v.pr %} <a class="vh-pr" href="{{ v.pr_url }}" target="_blank" rel="noopener">PR #{{ v.pr }}</a>{% endif %}
+{% endmacro %}
+
+{% macro image_tile(img) -%}
+<div class="image-wrapper"
+     data-category="{{ img.category }}"
+     data-pass-type="{{ img.pass_type }}"
+     data-renderer="{{ img.renderer }}"
+     data-path="{{ img.path }}"
+     data-filtered="false">
+    <div class="image-label">{{ img.label }}</div>
+    {% if img.path %}
+    <img src="/images/{{ img.path }}" loading="lazy" alt="{{ img.label }}">
+    {% else %}
+    <div class="missing-placeholder">
+        {% if img.command_text or img.stderr_text %}
+        Error (no image)
+        {% else %}
+        Not generated in this run
+        {% endif %}
+    </div>
+    {% endif %}
+    {% if img.command_text %}
+    <details class="error-details">
+        <summary>Show command</summary>
+        <pre>{{ img.command_text }}</pre>
+    </details>
+    {% endif %}
+    {% if img.stderr_text %}
+    <details class="error-details">
+        <summary>Show stderr</summary>
+        <pre>{{ img.stderr_text }}</pre>
+    </details>
+    {% endif %}
+</div>
+{%- endmacro %}
+
+{% macro sections(obj) -%}
+{% if obj.sections %}
+{% for section in obj.sections %}
+<div class="image-section{% if section.folded %} folded{% endif %}" data-section="{{ section.key }}">
+    <div class="section-title">{{ section.title }}{{ metrics_inline(section.metrics) }}</div>
+    <div class="images-container{% if section.key == 'presets' %} preset-strip{% endif %}">
+        {% for img in section.images %}
+        {{ image_tile(img) }}
+        {% endfor %}
+    </div>
+</div>
+{% endfor %}
+{% else %}
+<div class="empty-cell">No images</div>
+{% endif %}
+{%- endmacro %}
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -61,6 +125,35 @@
             color: #0066cc;
             text-decoration: underline;
             font-size: 10px;
+        }
+
+        .fold-bar {
+            gap: 6px;
+            margin-bottom: 0;
+        }
+
+        .fold-bar-label {
+            font-size: 10px;
+            color: #666;
+        }
+
+        .fold-btn {
+            font-family: monospace;
+            font-size: 10px;
+            padding: 2px 8px;
+            cursor: pointer;
+            background: #fff;
+            border: 1px solid #999;
+            border-radius: 3px;
+        }
+
+        .fold-btn:hover {
+            background: #e0e0e0;
+        }
+
+        .fold-btn[data-folded="1"] {
+            background: #f0f0f0;
+            color: #777;
         }
 
         .tooltip {
@@ -281,36 +374,11 @@
             font-weight: bold;
         }
 
-        .approve-bar {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 4px;
-        }
-
-        .approve-btn {
-            font-size: 11px;
-            padding: 2px 10px;
-            cursor: pointer;
-            background: #fff3cd;
-            border: 1px solid #d0a000;
-            border-radius: 3px;
-        }
-
-        .approve-btn:hover {
-            background: #ffe08a;
-        }
-
-        .approved-badge {
-            font-size: 11px;
-            color: #1a7f37;
-            font-weight: bold;
-        }
-
-        .perf-regressed {
+        .perf-note {
             font-size: 10px;
             color: #c0392b;
             font-weight: bold;
+            margin-bottom: 4px;
         }
 
         .comparison-row[data-perf="changed"] .asset-name {
@@ -358,7 +426,170 @@
             text-decoration: underline;
         }
 
-        {% block styles %}{% endblock %}
+        .comparison-container {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .asset-name {
+            font-weight: bold;
+            font-size: 12px;
+            margin-bottom: 4px;
+            padding: 2px 4px;
+            background: #f0f0f0;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .images-container {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: var(--gap);
+            align-items: flex-start;
+            overflow-x: auto;
+            overflow-y: hidden;
+            overscroll-behavior-x: contain;
+            padding-bottom: 4px;
+        }
+
+        .image-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 0 0 auto;
+        }
+
+        .image-label {
+            font-size: 9px;
+            color: #666;
+            margin-bottom: 2px;
+            text-align: center;
+            word-break: break-word;
+            max-width: var(--img-width);
+        }
+
+        .error-details {
+            width: var(--img-width);
+            margin-top: 4px;
+            font-size: 10px;
+        }
+
+        .error-details pre {
+            max-height: 180px;
+            overflow: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+            border: 1px solid #ddd;
+            padding: 6px;
+            background: #fafafa;
+        }
+
+        img {
+            width: var(--img-width);
+            height: auto;
+            display: block;
+            border: 1px solid #ddd;
+        }
+
+        .empty-cell {
+            color: #999;
+            font-style: italic;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .image-section {
+            margin-bottom: 8px;
+        }
+
+        .section-title {
+            font-size: 10px;
+            font-weight: bold;
+            padding: 2px 4px;
+            background: #e8e8e8;
+            border-left: 3px solid #666;
+            margin-bottom: 4px;
+        }
+
+        .preset-strip {
+            flex-wrap: nowrap;
+        }
+
+        {% if mode == 'toggle' %}
+        .header-row {
+            position: sticky;
+            top: 30px;
+            background: white;
+            z-index: 50;
+            padding: 8px;
+            border: 2px solid var(--border-color);
+            margin-bottom: 4px;
+            text-align: center;
+        }
+
+        .version-header {
+            display: none;
+            font-size: 14px;
+        }
+
+        .version-header.active {
+            display: inline;
+        }
+
+        .comparison-row {
+            margin-bottom: 8px;
+            border: 1px solid var(--border-color);
+            padding: 4px;
+        }
+
+        .version-layer {
+            display: none;
+        }
+
+        .version-layer.active {
+            display: block;
+        }
+
+        .version-layer .images-container {
+            padding: 4px;
+        }
+        {% else %}
+        .header-row {
+            display: grid;
+            grid-template-columns: repeat({{ version_names|length }}, 1fr);
+            gap: var(--gap);
+            position: sticky;
+            top: 30px;
+            background: white;
+            z-index: 50;
+            padding: 4px 0;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 2px;
+        }
+
+        .header-cell {
+            font-weight: bold;
+            padding: 4px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .comparison-row {
+            display: grid;
+            grid-template-columns: repeat({{ version_names|length }}, 1fr);
+            gap: var(--gap);
+            margin-bottom: 8px;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 4px;
+        }
+
+        .object-cell {
+            border: 1px solid var(--border-color);
+            padding: 4px;
+            min-height: 50px;
+            min-width: 0;
+        }
+        {% endif %}
     </style>
 </head>
 <body>
@@ -387,13 +618,20 @@
                 {% endif %}
             </span>
             <span class="filter-toggle" onclick="toggleFilters()">⚙ Filters</span>
-            {% set skipped_count = rows | selectattr('not_run') | list | length %}
-            {% if skipped_count %}
-            <span class="filter-toggle" id="skipped-toggle" data-count="{{ skipped_count }}" data-folded="1" onclick="toggleSkipped()">▸ Unfold {{ skipped_count }} not-rendered</span>
-            {% endif %}
             <a href="/help" style="color: #0066cc; text-decoration: none; font-size: 10px;">Help</a>
             <a href="/select-versions" style="color: #0066cc; text-decoration: none; font-size: 10px;">Select versions</a>
         </div>
+
+        {% if section_controls %}
+        <div class="controls-row fold-bar">
+            <span class="fold-bar-label">Sections:</span>
+            {% for c in section_controls %}
+            <button class="fold-btn" data-section="{{ c.key }}" data-title="{{ c.title }}"
+                    data-folded="{{ '1' if c.folded else '0' }}" onclick="toggleSectionFold(this)"
+                    title="Fold/unfold {{ c.title }} everywhere">{{ '▸' if c.folded else '▾' }} {{ c.title }}</button>
+            {% endfor %}
+        </div>
+        {% endif %}
 
         <div id="filters">
             <div class="filter-section">
@@ -415,23 +653,6 @@
                     <label><input type="checkbox" class="filter-checkbox" data-filter-type="asset_type" data-filter-value="material" checked> Materials</label>
                     <label><input type="checkbox" class="filter-checkbox" data-filter-type="asset_type" data-filter-value="object" checked> Objects</label>
                     <label><input type="checkbox" class="filter-checkbox" data-filter-type="asset_type" data-filter-value="scene" checked> Scenes</label>
-                </div>
-            </div>
-
-            <div class="filter-section">
-                <div class="filter-section-title">Categories:</div>
-                <div class="filter-group">
-                    <label><input type="checkbox" class="filter-checkbox" data-filter-type="category" data-filter-value="distribution" checked> Distribution tests (seeds 0-3)</label>
-                    <label><input type="checkbox" class="filter-checkbox" data-filter-type="category" data-filter-value="displacement" checked> Displacement tests</label>
-                </div>
-            </div>
-
-            <div class="filter-section">
-                <div class="filter-section-title">Pass Types:</div>
-                <div class="filter-group">
-                    <label><input type="checkbox" class="filter-checkbox" data-filter-type="pass_type" data-filter-value="image" checked> RGB images</label>
-                    <label><input type="checkbox" class="filter-checkbox" data-filter-type="pass_type" data-filter-value="surface-normal" checked> Surface normals</label>
-                    <label><input type="checkbox" class="filter-checkbox" data-filter-type="pass_type" data-filter-value="error" checked> Errors</label>
                 </div>
             </div>
 
@@ -503,7 +724,51 @@
         </div>
     </div>
 
-    {% block content %}{% endblock %}
+    {% if mode == 'toggle' %}
+    <div class="comparison-container">
+        <div class="header-row">
+            {% for version in version_meta %}<span class="version-header {% if loop.index0 == 0 %}active{% endif %}" data-version="{{ version.name }}">{{ version_header(version) }}{{ metrics_inline(version_totals.get(version.name)) }}</span>{% endfor %}
+        </div>
+
+        {% for row in rows %}
+        <div class="comparison-row{% if row.not_run %} folded{% endif %}" data-asset-type="{{ row.asset_type }}" data-asset="{{ row.asset }}" data-not-run="{{ 'true' if row.not_run else 'false' }}" data-perf="{{ 'changed' if row.perf_regressed else 'unchanged' }}">
+            <div class="asset-name">{{ row.asset_label }}{% if row.is_new %} <span class="new-badge" title="new asset — not present in {{ row.missing_versions | join(', ') }}">NEW</span>{% endif %}{% if row.not_run %} <span class="skip-badge" title="not rendered in {{ row.missing_versions | join(', ') }}">SKIPPED</span>{% endif %}</div>
+            {% if perf_enabled and row.perf_regressed %}
+            <div class="perf-note">⚠ perf: {{ row.perf_summary }}</div>
+            {% endif %}
+
+            {% for obj in row.objects %}
+            <div class="version-layer {% if loop.index0 == 0 %}active{% endif %}" data-version="{{ obj.version }}">
+                <div class="section-title">Render metrics{{ metrics_inline(obj.metrics) }}</div>
+                {{ sections(obj) }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="comparison-container">
+        <div class="header-row">
+            {% for version in version_meta %}
+            <div class="header-cell">{{ version_header(version) }}{{ metrics_inline(version_totals.get(version.name)) }}</div>
+            {% endfor %}
+        </div>
+
+        {% for row in rows %}
+        <div class="comparison-row{% if row.not_run %} folded{% endif %}" data-asset-type="{{ row.asset_type }}" data-asset="{{ row.asset }}" data-not-run="{{ 'true' if row.not_run else 'false' }}" data-perf="{{ 'changed' if row.perf_regressed else 'unchanged' }}">
+            {% for obj in row.objects %}
+            <div class="object-cell">
+                <div class="asset-name">{{ row.asset_label }}{% if row.is_new %} <span class="new-badge" title="new asset — not present in {{ row.missing_versions | join(', ') }}">NEW</span>{% endif %}{% if row.not_run %} <span class="skip-badge" title="not rendered in {{ row.missing_versions | join(', ') }}">SKIPPED</span>{% endif %}{{ metrics_inline(obj.metrics) }}</div>
+                {% if perf_enabled and loop.last and row.perf_regressed %}
+                <div class="perf-note">⚠ perf: {{ row.perf_summary }}</div>
+                {% endif %}
+                {{ sections(obj) }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
 
     <script>
         const slider = document.querySelector('input[type="range"]');
@@ -569,24 +834,6 @@
             document.getElementById('align-checkbox').checked = (alignParam !== '0');
         }
 
-        // Restore category filters from URL
-        const categoryParam = urlParams.get('category');
-        if (categoryParam) {
-            const categories = new Set(categoryParam.split(','));
-            document.querySelectorAll('.filter-checkbox[data-filter-type="category"]').forEach(cb => {
-                cb.checked = categories.has(cb.dataset.filterValue);
-            });
-        }
-
-        // Restore pass_type filters from URL
-        const passParam = urlParams.get('pass_type');
-        if (passParam) {
-            const passTypes = new Set(passParam.split(','));
-            document.querySelectorAll('.filter-checkbox[data-filter-type="pass_type"]').forEach(cb => {
-                cb.checked = passTypes.has(cb.dataset.filterValue);
-            });
-        }
-
         // Restore renderer filters from URL
         const rendererParam = urlParams.get('renderer');
         if (rendererParam) {
@@ -597,7 +844,7 @@
         }
 
         // Apply filters after all state is restored
-        if (assetsParam || versionsParam || categoryParam || passParam || rendererParam || assetTypeParam) {
+        if (assetsParam || versionsParam || rendererParam || assetTypeParam) {
             applyFilters();
             applyAssetFilters();
         }
@@ -606,16 +853,18 @@
             document.getElementById('filters').classList.toggle('expanded');
         }
 
-        function toggleSkipped() {
-            const t = document.getElementById('skipped-toggle');
-            if (!t) return;
-            const fold = t.dataset.folded !== '1';
-            document.querySelectorAll('.comparison-row[data-not-run="true"]').forEach(row => {
-                const header = row.querySelector('.asset-name');
-                if (header) setFolded(header, fold);
-            });
-            t.dataset.folded = fold ? '1' : '0';
-            t.textContent = (fold ? '▸ Unfold ' : '▾ Fold ') + t.dataset.count + ' not-rendered';
+        function _sectionHeaders(key) {
+            if (key === 'not-run') {
+                return document.querySelectorAll('.comparison-row[data-not-run="true"] .asset-name');
+            }
+            return document.querySelectorAll(`.image-section[data-section="${key}"] > .section-title`);
+        }
+
+        function toggleSectionFold(btn) {
+            const fold = btn.dataset.folded !== '1';
+            _sectionHeaders(btn.dataset.section).forEach(header => setFolded(header, fold));
+            btn.dataset.folded = fold ? '1' : '0';
+            btn.textContent = (fold ? '▸ ' : '▾ ') + btn.dataset.title;
         }
 
         function buildUrlWithState(newMode) {
@@ -659,18 +908,6 @@
             }
 
             // Save filter states
-            const categoryFilters = Array.from(document.querySelectorAll('.filter-checkbox[data-filter-type="category"]:checked'))
-                .map(cb => cb.dataset.filterValue);
-            if (categoryFilters.length > 0) {
-                params.set('category', categoryFilters.join(','));
-            }
-
-            const passFilters = Array.from(document.querySelectorAll('.filter-checkbox[data-filter-type="pass_type"]:checked'))
-                .map(cb => cb.dataset.filterValue);
-            if (passFilters.length > 0) {
-                params.set('pass_type', passFilters.join(','));
-            }
-
             const rendererFilters = Array.from(document.querySelectorAll('.filter-checkbox[data-filter-type="renderer"]:checked'))
                 .map(cb => cb.dataset.filterValue);
             if (rendererFilters.length > 0) {
@@ -718,28 +955,14 @@
             });
 
             document.querySelectorAll('.image-wrapper').forEach(wrapper => {
-                const category = wrapper.dataset.category;
-                const passType = wrapper.dataset.passType;
                 const renderer = wrapper.dataset.renderer;
-
-                // For each filter type, check if the value matches or if it's "other" (unfiltered category)
-                const hasCategoryFilter = activeFilters.category && activeFilters.category.length > 0;
-                const categoryMatch = hasCategoryFilter ? activeFilters.category.includes(category) : true;
-                const categoryIsOther = category === 'other';
-                const categoryOk = categoryMatch || (!hasCategoryFilter && categoryIsOther) || categoryIsOther;
-
-                const hasPassFilter = activeFilters.pass_type && activeFilters.pass_type.length > 0;
-                const passMatch = hasPassFilter ? activeFilters.pass_type.includes(passType) : true;
-                const passIsOther = passType === 'other';
-                const passOk = passMatch || (!hasPassFilter && passIsOther) || passIsOther;
 
                 const hasRendererFilter = activeFilters.renderer && activeFilters.renderer.length > 0;
                 const rendererMatch = hasRendererFilter ? activeFilters.renderer.includes(renderer) : true;
                 const rendererIsUnknown = renderer === 'unknown';
                 const rendererOk = rendererMatch || (!hasRendererFilter && rendererIsUnknown) || rendererIsUnknown;
 
-                // Show if ALL filter types pass (AND logic)
-                if (categoryOk && passOk && rendererOk) {
+                if (rendererOk) {
                     wrapper.dataset.filtered = 'false';
                 } else {
                     wrapper.dataset.filtered = 'true';
@@ -867,42 +1090,6 @@
             cb.addEventListener('change', applyAssetFilters);
         });
 
-        const APPROVE_RUN_PATH = {{ run_path|default('')|tojson }};
-        const APPROVE_BASELINE = {{ baseline_name|default('')|tojson }};
-
-        async function approvePerf(btn) {
-            const row = btn.closest('.comparison-row');
-            const asset = row ? row.dataset.asset : '';
-            let token = localStorage.getItem('approveToken') || '';
-            if (!token) {
-                token = prompt('Approval token (set once, stored in this browser):') || '';
-                if (!token) return;
-                localStorage.setItem('approveToken', token);
-            }
-            btn.disabled = true;
-            btn.textContent = 'Approving...';
-            const body = new URLSearchParams({
-                asset: asset,
-                run_path: APPROVE_RUN_PATH,
-                baseline: APPROVE_BASELINE,
-                token: token,
-            });
-            try {
-                const resp = await fetch('/approve-perf', {method: 'POST', body});
-                const data = await resp.json();
-                if (!data.ok) {
-                    if (resp.status === 403) localStorage.removeItem('approveToken');
-                    throw new Error(data.error || 'failed');
-                }
-                btn.parentElement.innerHTML = '<span class="approved-badge">✓ perf approved</span>';
-                if (row) row.setAttribute('data-perf', 'approved');
-            } catch (err) {
-                btn.disabled = false;
-                btn.textContent = 'Approve perf';
-                alert('Approve failed: ' + err.message);
-            }
-        }
-
         let folding = false, foldMode = true;
 
         function _foldTarget(header) {
@@ -949,7 +1136,44 @@
 
         initFolding();
 
-        {% block scripts %}{% endblock %}
+        {% if mode == 'toggle' %}
+        let currentVersionIndex = 0;
+        const versionNames = {{ version_names|tojson }};
+
+        function toggleVersion() {
+            // Hide current version
+            document.querySelectorAll('.version-layer.active, .version-header.active').forEach(el => {
+                el.classList.remove('active');
+            });
+
+            // Move to next version
+            currentVersionIndex = (currentVersionIndex + 1) % versionNames.length;
+
+            // Show next version
+            document.querySelectorAll(`[data-version="${versionNames[currentVersionIndex]}"]`).forEach(el => {
+                el.classList.add('active');
+            });
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 't' || e.key === 'T') {
+                e.preventDefault();
+                toggleVersion();
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 's' || e.key === 'S') {
+                toggleMode();
+            }
+        });
+        {% else %}
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 't' || e.key === 'T') {
+                toggleMode();
+            }
+        });
+        {% endif %}
     </script>
 </body>
 </html>

@@ -16,13 +16,12 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  # Only supersede PR runs; let push/baseline runs finish so develop_latest is repointed.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   RENDER_ARCHIVE_ROOT: /home/renderbot/integration_test_archive/renders/integration
   VIEWER_BASE_URL: https://pvlbox.princeton.edu
-  # Set "1" to fail the check on an unapproved perf regression; keep "0" until validated.
-  PERF_GATE_ENFORCE: "0"
 
 jobs:
   render:
@@ -70,6 +69,39 @@ jobs:
             echo "BASELINE=$BASELINE"
             echo "BASELINE_COVERAGE=$RENDER_ARCHIVE_ROOT/$BASELINE/asset_coverage.json"
           } >> "$GITHUB_ENV"
+
+      # Gating runs before any GPU work, so say what the render covers up front.
+      - name: Announce planned renders
+        if: ${{ github.event.pull_request.number || inputs.pr_number }}
+        continue-on-error: true
+        env:
+          INFINIGEN_CHANGED_ONLY: ${{ github.event_name == 'pull_request' && github.base_ref != 'main' && vars.INTEGRATION_CHANGED_ONLY || '' }}
+          COVERAGE_BASE_REF: origin/${{ github.base_ref }}
+          ASSET_COVERAGE_BASELINE: ${{ env.BASELINE_COVERAGE }}
+        run: |
+          set -e
+          mkdir -p "$OUTPUT_DIR"
+          uv run python scripts/integration_v2/launch_andromeda.py \
+            --output_path "$OUTPUT_DIR" \
+            --dry-run
+          uv run python scripts/integration_v2/compose_pr_comment.py \
+            --phase planned \
+            --commit "$GITHUB_SHA" \
+            --run-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            --gating-report "$OUTPUT_DIR/gating_report.json" \
+            --out "$RUNNER_TEMP/planned_body.md"
+
+      - name: Post planned render comment
+        if: ${{ github.event.pull_request.number || inputs.pr_number }}
+        continue-on-error: true
+        uses: actions/github-script@v7
+        env:
+          BODY_FILE: planned_body.md
+          PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
+        with:
+          script: |
+            const sticky = require(`${process.env.GITHUB_WORKSPACE}/.github/scripts/sticky_comment.js`);
+            await sticky({github, context});
 
       - name: Run integration renders
         id: render
@@ -119,23 +151,21 @@ jobs:
         if: ${{ !cancelled() }}
         continue-on-error: true
         run: |
-          uv run python scripts/integration_v2/pixel_diff.py \
+          uv run python scripts/integration_v2/baseline_diff.py pixel \
             --pr "$OUTPUT_DIR" \
             --baseline "$RENDER_ARCHIVE_ROOT/$BASELINE" \
             --report "$OUTPUT_DIR/pixel_diff.json" \
             --summary "$OUTPUT_DIR/pixel_diff.md"
 
       - name: Perf diff vs baseline
-        id: perfdiff
         if: ${{ !cancelled() }}
         continue-on-error: true
         run: |
-          uv run python scripts/integration_v2/perf_diff.py \
+          uv run python scripts/integration_v2/baseline_diff.py perf \
             --pr "$OUTPUT_DIR" \
             --baseline "$RENDER_ARCHIVE_ROOT/$BASELINE" \
             --report "$OUTPUT_DIR/perf_diff.json" \
-            --summary "$OUTPUT_DIR/perf_diff.md" \
-            --approvals-root "$RENDER_ARCHIVE_ROOT"
+            --summary "$OUTPUT_DIR/perf_diff.md"
 
       - name: Archive renders to permanent storage
         if: ${{ !cancelled() }}
@@ -153,13 +183,9 @@ jobs:
           mkdir -p "$TARGET_DIR"
           rsync -a --exclude coverage_data "$OUTPUT_DIR"/ "$TARGET_DIR"/
 
-          # On a push to a tracked branch, point that branch's baseline at this
-          # run. develop_materials also keeps the historical develop_latest alias.
+          # Push to a tracked branch repoints <branch>_latest so later PRs diff against fresh renders.
           if [ "${{ github.event_name }}" = "push" ]; then
             ln -sfn "$TARGET_DIR" "$RENDER_ARCHIVE_ROOT/${{ github.ref_name }}_latest"
-            if [ "${{ github.ref_name }}" = "develop_materials" ]; then
-              ln -sfn "$TARGET_DIR" "$RENDER_ARCHIVE_ROOT/develop_latest"
-            fi
           fi
 
       - name: Print viewer link
@@ -174,10 +200,13 @@ jobs:
         if: ${{ !cancelled() && (github.event.pull_request.number || inputs.pr_number) }}
         run: |
           uv run python scripts/integration_v2/compose_pr_comment.py \
+            --phase done \
             --viewer-base "$VIEWER_BASE_URL" \
             --rel-path "$REL_PATH" \
             --baseline "$BASELINE" \
             --target-dir "$TARGET_DIR" \
+            --commit "$GITHUB_SHA" \
+            --run-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
             --gating-report "$OUTPUT_DIR/gating_report.json" \
             --pixel-summary "$OUTPUT_DIR/pixel_diff.md" \
             --perf-summary "$OUTPUT_DIR/perf_diff.md" \
@@ -187,26 +216,18 @@ jobs:
       - name: Comment PR with viewer link
         if: ${{ !cancelled() && (github.event.pull_request.number || inputs.pr_number) }}
         uses: actions/github-script@v7
+        env:
+          BODY_FILE: comment_body.md
+          PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
         with:
           script: |
-            const fs = require('fs');
-            const pr = context.payload.pull_request?.number || core.getInput('pr_number');
-            const body = fs.readFileSync(`${process.env.RUNNER_TEMP}/comment_body.md`, 'utf8');
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: pr,
-              body,
-            });
+            const sticky = require(`${process.env.GITHUB_WORKSPACE}/.github/scripts/sticky_comment.js`);
+            await sticky({github, context});
 
       - name: Fail job if any render failed
         if: always()
         run: |
           if [ "${{ steps.render.outcome }}" = "failure" ]; then
             echo "One or more renders failed — marking job red."
-            exit 1
-          fi
-          if [ "$PERF_GATE_ENFORCE" = "1" ] && [ "${{ steps.perfdiff.outcome }}" = "failure" ]; then
-            echo "Unapproved perf regressions vs baseline — marking job red (see PR comment)."
             exit 1
           fi

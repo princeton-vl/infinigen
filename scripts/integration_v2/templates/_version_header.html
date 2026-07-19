@@ -1,6 +1,0 @@
-{% macro version_header(v) %}
-{% if v.role %}<span class="ba-badge {{ v.role }}">{{ v.role | upper }}</span>{% endif %}
-{% if v.branch_url %}<a class="vh-branch" href="{{ v.branch_url }}" target="_blank" rel="noopener" title="{{ v.name }}">{{ v.branch }}</a>{% else %}<span class="vh-branch" title="{{ v.name }}">{{ v.branch or v.name }}</span>{% endif %}
-{% if v.commit %} <a class="vh-commit" href="{{ v.commit_url }}" target="_blank" rel="noopener">{{ v.commit }}</a>{% endif %}
-{% if v.pr %} <a class="vh-pr" href="{{ v.pr_url }}" target="_blank" rel="noopener">PR #{{ v.pr }}</a>{% endif %}
-{% endmacro %}

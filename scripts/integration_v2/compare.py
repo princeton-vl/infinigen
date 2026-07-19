@@ -9,13 +9,17 @@ import os
 import subprocess
 from pathlib import Path
 
-import perf_diff
+import baseline_diff
 import tomllib
-from collection import collect_images_structured, print_collection_summary
-from display import build_comparison_data, build_version_totals
+from display import (
+    build_comparison_data,
+    build_section_controls,
+    build_version_totals,
+    collect_images_structured,
+    print_collection_summary,
+)
 from flask import (
     Flask,
-    jsonify,
     redirect,
     render_template,
     request,
@@ -36,8 +40,6 @@ scan_directory = None
 default_versions = []
 safe_mode = False
 allowed_root: Path | None = None
-archive_root: Path | None = None
-approve_token = os.environ.get("APPROVE_TOKEN", "")
 
 
 def get_network_ips():
@@ -180,16 +182,11 @@ def index():
     rows_data = build_comparison_data(collection_results, version_names)
     version_totals = build_version_totals(rows_data, version_names)
 
-    perf_approve_enabled = False
-    baseline_name = version_names[0] if version_names else ""
-    run_path = str(version_paths[1]) if len(version_paths) == 2 else ""
-    if len(version_names) == 2 and archive_root is not None:
-        perf_approve_enabled = _annotate_perf(
-            rows_data, version_paths[1], version_paths[0]
-        )
+    perf_enabled = False
+    if len(version_names) == 2:
+        perf_enabled = _annotate_perf(rows_data, version_paths[1], version_paths[0])
 
     mode = request.args.get("mode", "sidebyside")
-    template = "mode_toggle.html" if mode == "toggle" else "mode_sidebyside.html"
 
     all_assets_sets = [set(result.assets.keys()) for result in collection_results]
     assets_match = len(all_assets_sets) <= 1 or all(
@@ -197,54 +194,27 @@ def index():
     )
 
     return render_template(
-        template,
+        "compare.html",
         rows=rows_data,
         version_names=version_names,
         version_meta=version_meta,
         version_totals=version_totals,
+        section_controls=build_section_controls(rows_data),
         mode=mode,
         assets_match=assets_match,
-        perf_approve_enabled=perf_approve_enabled,
-        baseline_name=baseline_name,
-        run_path=run_path,
+        perf_enabled=perf_enabled,
     )
 
 
 def _annotate_perf(rows_data: list, run_path: Path, base_path: Path) -> bool:
     try:
-        perf_diff.annotate_rows(
-            rows_data, run_path, base_path, archive_root, perf_diff.get_threshold()
+        baseline_diff.annotate_rows(
+            rows_data, run_path, base_path, baseline_diff.get_threshold()
         )
         return True
     except Exception as e:
-        print(f"Perf approval annotation skipped: {e}")
+        print(f"Perf annotation skipped: {e}")
         return False
-
-
-@app.route("/approve-perf", methods=["POST"])
-def approve_perf():
-    if approve_token and request.form.get("token") != approve_token:
-        return jsonify({"ok": False, "error": "bad token"}), 403
-    if archive_root is None:
-        return jsonify({"ok": False, "error": "approvals not configured"}), 400
-
-    asset = request.form.get("asset", "")
-    run_path = Path(request.form.get("run_path", "")).resolve()
-    if not asset or not run_path.exists():
-        return jsonify({"ok": False, "error": "missing asset or run"}), 400
-    if safe_mode and (not allowed_root or not run_path.is_relative_to(allowed_root)):
-        return jsonify({"ok": False, "error": "path outside allowed"}), 403
-
-    record = perf_diff.make_approval(
-        archive_root,
-        asset,
-        run_path,
-        request.form.get("baseline", ""),
-        request.form.get("pr", ""),
-        request.form.get("approver", "viewer"),
-    )
-    perf_diff.append_approval(archive_root, record)
-    return jsonify({"ok": True, "approved_run": record["approved_run"]})
 
 
 @app.route("/select-versions")
@@ -314,7 +284,6 @@ def serve_image(filepath):
 
 def main():
     global available_versions, scan_directory, default_versions, safe_mode, allowed_root
-    global archive_root
     usage = """This is a script to visualize Infinigen Material renders. It can be run with:
 1. A directory containing versions (e.g. `outputs/v1`, `outputs/v2`): `python scripts/integration_v2/compare.py --scan-dir outputs`
 2. Any number of specific versions folders: `python scripts/integration_v2/compare.py <version1> <version2> ...`
@@ -330,13 +299,6 @@ def main():
         action="store_true",
         help="enforces that all paths are contained in ALLOWED_DIRECTORY env variable",
     )
-    parser.add_argument(
-        "--archive-root",
-        type=Path,
-        default=None,
-        help="Root the perf approval store lives in (enables approve buttons)."
-        " Defaults to RENDER_ARCHIVE_ROOT, then --scan-dir, then ALLOWED_DIRECTORY.",
-    )
     args = parser.parse_args()
 
     safe_mode = args.safe
@@ -344,12 +306,6 @@ def main():
     allowed_root = Path(allowed_env).resolve() if allowed_env else None
     if safe_mode and not allowed_root:
         raise SystemExit("ALLOWED_DIRECTORY must be set when using --safe")
-
-    archive_env = os.environ.get("RENDER_ARCHIVE_ROOT")
-    archive_candidate = args.archive_root or (
-        Path(archive_env) if archive_env else args.scan_dir or allowed_root
-    )
-    archive_root = archive_candidate.resolve() if archive_candidate else None
 
     if args.scan_dir:
         scan_directory = args.scan_dir.resolve()

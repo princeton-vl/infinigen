@@ -14,19 +14,34 @@ MAX_TRIGGER_ROWS = 40
 MAX_CRASH_ROWS = 40
 MAX_ERROR_CHARS = 160
 
+# Lets the workflow update its own comment. Changing it orphans posted ones.
+STATUS_MARKER = "<!-- integration-render-status -->"
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--viewer-base", required=True)
-    parser.add_argument("--rel-path", required=True)
-    parser.add_argument("--baseline", required=True)
-    parser.add_argument("--target-dir", required=True)
+    parser.add_argument("--phase", choices=["planned", "done"], default="done")
+    parser.add_argument("--viewer-base", default="")
+    parser.add_argument("--rel-path", default="")
+    parser.add_argument("--baseline", default="")
+    parser.add_argument("--target-dir", default="")
+    parser.add_argument("--commit", default="")
+    parser.add_argument("--run-url", default="")
     parser.add_argument("--gating-report", type=Path, default=None)
     parser.add_argument("--pixel-summary", type=Path, default=None)
     parser.add_argument("--perf-summary", type=Path, default=None)
     parser.add_argument("--render-index", type=Path, default=None)
     parser.add_argument("--out", type=Path, required=True)
-    return parser.parse_args()
+    args = parser.parse_args()
+    if args.phase == "done":
+        missing = [
+            f"--{name.replace('_', '-')}"
+            for name in ("viewer_base", "rel_path", "baseline", "target_dir")
+            if not getattr(args, name)
+        ]
+        if missing:
+            raise SystemExit(f"--phase done requires: {', '.join(missing)}")
+    return args
 
 
 def load_json(path: Path | None) -> dict:
@@ -35,11 +50,12 @@ def load_json(path: Path | None) -> dict:
     return json.loads(path.read_text())
 
 
-def gating_section(report: dict) -> list[str]:
+def gating_section(report: dict, planned: bool = False) -> list[str]:
     if not report:
         return []
     if not report.get("enabled"):
-        return ["**Gating:** disabled — all assets rendered.", ""]
+        tail = "all assets will render." if planned else "all assets rendered."
+        return [f"**Gating:** disabled — {tail}", ""]
     if report.get("mode") == "full":
         lines = [f"**Gating:** full render — {report.get('reason', 'unknown')}."]
         triggers = report.get("framework_triggers", [])
@@ -52,7 +68,8 @@ def gating_section(report: dict) -> list[str]:
     counts = ", ".join(
         f"{name} {len(cat['kept'])}/{cat['total']}" for name, cat in categories.items()
     )
-    lines = [f"**Gating:** rerendered {counts}.", ""]
+    verb = "will rerender" if planned else "rerendered"
+    lines = [f"**Gating:** {verb} {counts}.", ""]
 
     rows = []
     for name, cat in categories.items():
@@ -63,7 +80,7 @@ def gating_section(report: dict) -> list[str]:
         return lines
 
     lines += [
-        "<details><summary>Why each asset was rerun</summary>",
+        f"<details><summary>Why each asset {'is being' if planned else 'was'} rerun</summary>",
         "",
         "| category | asset | changed files hit |",
         "|---|---|---|",
@@ -149,9 +166,32 @@ def _collapsible_section(summary_path: Path | None, title: str) -> list[str]:
     ]
 
 
-def main() -> int:
-    args = parse_args()
+def provenance(args: argparse.Namespace) -> list[str]:
+    bits = []
+    if args.commit:
+        bits.append(f"commit `{args.commit[:7]}`")
+    if args.run_url:
+        bits.append(f"[run log]({args.run_url})")
+    return [" · ".join(bits), ""] if bits else []
+
+
+def planned_body(args: argparse.Namespace) -> list[str]:
     lines = [
+        STATUS_MARKER,
+        "### Integration render — rendering now",
+        "",
+    ]
+    lines += gating_section(load_json(args.gating_report), planned=True)
+    lines += provenance(args)
+    lines += ["_Results will replace this comment when the render finishes._", ""]
+    return lines
+
+
+def done_body(args: argparse.Namespace) -> list[str]:
+    lines = [
+        STATUS_MARKER,
+        "### Integration render — done",
+        "",
         "Integration renders are ready:",
         f"{args.viewer_base}/?v={args.rel_path}",
         "",
@@ -165,6 +205,13 @@ def main() -> int:
     lines += gating_section(load_json(args.gating_report))
     lines += _collapsible_section(args.pixel_summary, "Pixel diff vs baseline")
     lines += _collapsible_section(args.perf_summary, "Perf diff vs baseline")
+    lines += provenance(args)
+    return lines
+
+
+def main() -> int:
+    args = parse_args()
+    lines = planned_body(args) if args.phase == "planned" else done_body(args)
     args.out.write_text("\n".join(lines).strip() + "\n")
     print(f"Wrote {args.out}")
     return 0
