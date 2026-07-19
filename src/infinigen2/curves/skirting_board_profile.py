@@ -12,6 +12,8 @@ from infinigen2.util.math import offset_spacing
 __all__ = [
     "skirting_profile",
     "skirting_profile_rand",
+    "trim_profile",
+    "trim_profile_rand",
 ]
 
 
@@ -54,7 +56,7 @@ def _staircase_translation(
 
 
 @pf.nodes.node_function
-def _skirting_profile(
+def _staircase_profile(
     seed: t.SocketOrVal[int],
     count: t.SocketOrVal[int],
     width: t.SocketOrVal[float],
@@ -115,7 +117,73 @@ def _skirting_profile(
         selection=selection,
     )
 
-    return _append_back_corner(fillet_mask_result.curve)
+    return fillet_mask_result.curve
+
+
+@pf.nodes.node_function
+def _skirting_profile(
+    seed: t.SocketOrVal[int],
+    count: t.SocketOrVal[int],
+    width: t.SocketOrVal[float],
+    height: t.SocketOrVal[float],
+    fillet_vertices: t.SocketOrVal[int],
+    fillet_radius: t.SocketOrVal[float],
+    fillet_probability: t.SocketOrVal[float],
+    max_offset_pct: t.SocketOrVal[float],
+) -> pf.ProcNode[pf.CurveObject]:
+    staircase = _staircase_profile(
+        seed=seed,
+        count=count,
+        width=width,
+        height=height,
+        fillet_vertices=fillet_vertices,
+        fillet_radius=fillet_radius,
+        fillet_probability=fillet_probability,
+        max_offset_pct=max_offset_pct,
+    )
+    return _append_back_corner(staircase)
+
+
+@pf.nodes.node_function
+def _mirror_across_y(
+    curve: pf.ProcNode[pf.CurveObject],
+) -> pf.ProcNode[pf.CurveObject]:
+    mirrored = pf.nodes.geo.transform(
+        geometry=curve,
+        translation=(0, 0, 0),
+        rotation=(0, 0, 0),
+        scale=(1.0, -1.0, 1.0),
+    )
+    joined = pf.nodes.geo.join_geometry([curve, mirrored])
+    welded = pf.nodes.geo.merge_by_distance(
+        pf.nodes.geo.curve_to_mesh(joined), distance=0.0005
+    )
+    return pf.nodes.geo.mesh_to_curve(welded)
+
+
+@pf.nodes.node_function
+def _trim_profile(
+    seed: t.SocketOrVal[int],
+    count: t.SocketOrVal[int],
+    width: t.SocketOrVal[float],
+    height: t.SocketOrVal[float],
+    fillet_vertices: t.SocketOrVal[int],
+    fillet_radius: t.SocketOrVal[float],
+    fillet_probability: t.SocketOrVal[float],
+    max_offset_pct: t.SocketOrVal[float],
+) -> pf.ProcNode[pf.CurveObject]:
+    # symmetric about y=0: staircase half spanning [-height/2, 0], mirrored back up
+    half = _staircase_profile(
+        seed=seed,
+        count=count,
+        width=width,
+        height=height.astype(dtype=float) / 2.0,
+        fillet_vertices=fillet_vertices,
+        fillet_radius=fillet_radius,
+        fillet_probability=fillet_probability,
+        max_offset_pct=max_offset_pct,
+    )
+    return _mirror_across_y(half)
 
 
 @pf.nodes.node_function
@@ -189,6 +257,74 @@ def skirting_profile_rand(
         max_offset_pct = pf.random.uniform(rng, 0.01, 0.05)
 
     res = _skirting_profile(
+        seed=pf.random.randint(rng, 0, 1000),
+        count=count,
+        width=width,
+        height=height,
+        fillet_vertices=fillet_vertices,
+        fillet_radius=fillet_radius,
+        fillet_probability=fillet_probability,
+        max_offset_pct=max_offset_pct,
+    )
+    return pf.nodes.to_curve_object(res)
+
+
+def trim_profile(
+    seed: int = 0,
+    count: int = 2,
+    width: float = 0.03,
+    height: float = 0.08,
+    fillet_vertices: int = 4,
+    fillet_radius: float = 0.01,
+    fillet_probability: float = 1.0,
+    max_offset_pct: float = 0.03,
+) -> pf.CurveObject:
+    """Symmetric moulding profile: spans y in [-height/2, height/2], bulges to x=-width.
+
+    Both endpoints lie on the x=0 base plane, so the strip sits flush on a flat
+    surface and the relief protrudes outward when swept (see skirting sweep
+    conventions). Unlike `skirting_profile` it is not corner-shaped, so it suits
+    frames and trim rings around openings.
+    """
+    res = _trim_profile(
+        seed=seed,
+        count=count,
+        width=width,
+        height=height,
+        fillet_vertices=fillet_vertices,
+        fillet_radius=fillet_radius,
+        fillet_probability=fillet_probability,
+        max_offset_pct=max_offset_pct,
+    )
+    return pf.nodes.to_curve_object(res)
+
+
+def trim_profile_rand(
+    rng: pf.RNG,
+    count: int | None = None,
+    width: float | None = None,
+    height: float | None = None,
+    fillet_vertices: int | None = None,
+    fillet_radius: float | None = None,
+    fillet_probability: float | None = None,
+    max_offset_pct: float | None = None,
+) -> pf.CurveObject:
+    if count is None:
+        count = pf.random.randint(rng, 2, 6)
+    if height is None:
+        height = pf.random.uniform(rng, 0.04, 0.12)
+    if width is None:
+        width = height * pf.random.uniform(rng, 0.25, 0.5)
+    if fillet_vertices is None:
+        fillet_vertices = pf.control.choice(rng, [(1, 0.3), (4, 0.7)])
+    if fillet_radius is None:
+        fillet_radius = height / count * pf.random.uniform(rng, 0.05, 0.2)
+    if fillet_probability is None:
+        fillet_probability = pf.random.uniform(rng, 0.0, 1.0)
+    if max_offset_pct is None:
+        max_offset_pct = pf.random.uniform(rng, 0.01, 0.05)
+
+    res = _trim_profile(
         seed=pf.random.randint(rng, 0, 1000),
         count=count,
         width=width,

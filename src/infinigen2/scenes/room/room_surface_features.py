@@ -12,6 +12,7 @@ from mathutils import Euler
 
 from infinigen2.curves.skirting_board_profile import (
     skirting_profile_rand,
+    trim_profile_rand,
 )
 from infinigen2.objects import lamp, storage, wall_art, window
 from infinigen2.objects.ceiling_light import ceiling_light_rand
@@ -32,6 +33,7 @@ from infinigen2.uv_surface import grid_placement
 
 __all__ = [
     "CeilingFeaturesResult",
+    "CutoutResult",
     "WallFeatureResult",
     "WallFeaturesResult",
     "ceiling_feature_rand",
@@ -39,6 +41,7 @@ __all__ = [
     "ceiling_light_placement_rand",
     "ceiling_skylights_rand",
     "cutout_spaced_instances",
+    "cutout_trim_rand",
     "skirting_on_walls_rand",
     "skirting_rand",
     "upright_cabinet_footprint",
@@ -166,9 +169,7 @@ def window_spaced_rand(
     spacing: float,
     window_bottom: float,
     wall_thickness: float = 0.05,
-) -> tuple[
-    pf.MeshObject, pf.MeshObject | None, pf.MeshObject | None, list[pf.MeshObject]
-]:
+) -> "CutoutResult":
     width = window_obj.item().dimensions.y
     wmin, _ = pf.ops.attr.bbox_min_max(window_obj)
 
@@ -193,12 +194,12 @@ def window_spaced_rand(
             margin_high_x,
         )
         wall, wall_thick = _plain_wall(wall, wall_material, wall_thickness)
-        return wall, None, wall_thick, []
+        return CutoutResult(wall, None, wall_thick, [], None)
 
     reveal_depth = pf.random.uniform(rng, 0.1, 0.7)
     recess_pct = 0.9 + 0.1 * pf.random.uniform(rng, 0.0, 1.0)
 
-    geom, sill, lightblocker, window_aliases = cutout_spaced_instances(
+    res = cutout_spaced_instances(
         surface=wall,
         instance=window_obj,
         surface_material=wall_material,
@@ -209,7 +210,7 @@ def window_spaced_rand(
         recess_pct=recess_pct,
         chamfer=pf.random.clip_gaussian(rng, 0.006, 0.002, 0.004, 0.010),
     )
-    if not window_aliases:
+    if not res.aliases:
         logger.warning(
             "window: grid fit 0 windows on %.2fm wall (window %.2f, spacing %.2f)",
             wall_uv_width,
@@ -217,7 +218,7 @@ def window_spaced_rand(
             spacing,
         )
 
-    return geom, sill, lightblocker, window_aliases
+    return res
 
 
 def _plain_wall(
@@ -265,7 +266,7 @@ def wall_windows_rand(
     window_bottom: float,
     wall_thickness: float = 0.05,
 ) -> WallFeatureResult:
-    geom, sill, lightblocker, window_aliases = window_spaced_rand(
+    res = window_spaced_rand(
         rng,
         wall,
         window_obj,
@@ -275,15 +276,33 @@ def wall_windows_rand(
         wall_thickness,
     )
     portals = []
-    if window_portal is not None and window_aliases:
-        portals = _arrange_window_portals(window_aliases, window_obj, window_portal)
+    if window_portal is not None and res.aliases:
+        portals = _arrange_window_portals(res.aliases, window_obj, window_portal)
+
+    trims = []
+    if res.trim_edges is not None and res.aliases:
+        rng_mat, rng_choice, rng_trim = rng.spawn(3)
+
+        def _with_trim() -> list[pf.MeshObject]:
+            vec = pf.nodes.shader.coord().uv
+            trim_mat = skirt_material_rand(rng_mat, vec)
+            return [cutout_trim_rand(rng_trim, res.trim_edges, trim_mat)]
+
+        def _no_trim() -> list[pf.MeshObject]:
+            return []
+
+        trim_option = pf.control.choice(
+            rng_choice, [(_with_trim, 0.4), (_no_trim, 0.6)]
+        )
+        trims = trim_option()
+
     return WallFeatureResult(
-        wall_geom=[geom],
-        backs=[lightblocker] if lightblocker is not None else [],
-        sills=[sill] if sill is not None else [],
+        wall_geom=[res.geom],
+        backs=[res.lightblocker] if res.lightblocker is not None else [],
+        sills=[res.sill] if res.sill is not None else [],
         storage=[],
         lights=portals,
-        decorations={"window": window_aliases},
+        decorations={"window": res.aliases, "window_trim": trims},
     )
 
 
@@ -369,7 +388,7 @@ def wall_painting_grid_rand(
     margin_bottom = bottom_min + v_slack * up_bias
     margin_top = top_gap + v_slack * (1.0 - up_bias)
 
-    geom, _sill, _lightblocker, painting_aliases = cutout_spaced_instances(
+    geom, _sill, _lightblocker, painting_aliases, _trim_edges = cutout_spaced_instances(
         surface=wall,
         instance=art,
         surface_material=wall_material,
@@ -506,6 +525,14 @@ def wall_board_shelf_rand(
     )
 
 
+class CutoutResult(NamedTuple):
+    geom: pf.MeshObject  # posed holed surface
+    sill: pf.MeshObject | None  # reveal/jamb tunnels
+    lightblocker: pf.MeshObject | None  # opaque backing
+    aliases: list[pf.MeshObject]  # placed instance aliases
+    trim_edges: pf.CurveObject | None  # mouth outline loops, posed like the surface
+
+
 def cutout_spaced_instances(
     surface: pf.MeshObject,
     instance: pf.MeshObject,
@@ -525,13 +552,12 @@ def cutout_spaced_instances(
     footprint: pf.MeshObject | None = None,
     chamfer: float = 0.006,
     standoff: float = 0.0,
-) -> tuple[
-    pf.MeshObject, pf.MeshObject | None, pf.MeshObject | None, list[pf.MeshObject]
-]:
+) -> CutoutResult:
     """Cut instance-footprint niches in a surface and place instance aliases over them.
 
-    Returns (posed surface, sill or None, lightblocker or None, aliases).
     Instance template must be x-centered (flip-invariant w.r.t. UV sign).
+    `trim_edges` is the sharp mouth outline of every cutout on the wall surface,
+    posed like the wall, with curve normals pre-set for sweeping a trim profile.
     """
     uv_meters = pf.nodes.geo.input_named_attribute(
         name="UVMap", data_type=pf.NodeDataType.FLOAT_VECTOR
@@ -569,6 +595,15 @@ def cutout_spaced_instances(
         face_expand_margin=pf.Vector((cutout_chamfer, cutout_chamfer, 0.0)),
         rotation_offset=rotation_offset,
     )
+
+    trim_curve = mesh_util.face_selection_boundary_curve(
+        mesh=faces_res.mesh, selection=faces_res.is_instance_face
+    )
+    trim_edges = pf.nodes.to_curve_object(trim_curve)
+    pf.ops.object.set_transform(
+        trim_edges, surface.item().location, surface.item().rotation_euler
+    )
+    trim_edges.item().name = "cutout_trim_edges"
 
     sill: pf.MeshObject | None = None
     lightblocker: pf.MeshObject | None = None
@@ -624,7 +659,32 @@ def cutout_spaced_instances(
     aliases = pf.nodes.to_aliases(instances)
 
     geom = _plane_to_posed_canonical_mesh(geom, up_axis=canonical_up_axis)
-    return geom, sill, lightblocker, aliases
+    return CutoutResult(geom, sill, lightblocker, aliases, trim_edges)
+
+
+def cutout_trim_rand(
+    rng: pf.RNG,
+    trim_edges: pf.CurveObject,
+    material: pf.Material,
+    profile_curve: pf.CurveObject | None = None,
+) -> pf.MeshObject:
+    """Sweep a symmetric trim profile around cutout mouth outlines (window casing)."""
+    if profile_curve is None:
+        height = pf.random.uniform(rng, 0.05, 0.12)
+        width = height * pf.random.uniform(rng, 0.2, 0.5)
+        profile_curve = trim_profile_rand(rng, width=width, height=height)
+    curve_geo = pf.nodes.geo.object_info(trim_edges).geometry
+    profile_geo = pf.nodes.geo.object_info(profile_curve).geometry
+    trim = curve_to_mesh_with_uv(curve_geo, profile_geo).mesh
+    trim = pf.nodes.geo.flip_faces(trim)
+    obj = pf.nodes.to_mesh_object(trim)
+    pf.ops.object.set_transform(
+        obj, trim_edges.item().location, trim_edges.item().rotation_euler
+    )
+    pf.ops.object.set_material(
+        obj, surface=material.surface, displacement=material.displacement
+    )
+    return obj
 
 
 def upright_cabinet_footprint(width: float, height: float) -> pf.MeshObject:
@@ -719,7 +779,7 @@ def wall_storage_shelf_rand(
     cab = _seat_upright_cabinet(cab, width, height, back_depth=depth)
     footprint = upright_cabinet_footprint(width, height)
 
-    geom, sill, lightblocker, cabinet_aliases = cutout_spaced_instances(
+    geom, sill, lightblocker, cabinet_aliases, _trim_edges = cutout_spaced_instances(
         surface=wall,
         instance=cab,
         surface_material=wall_material,
@@ -796,7 +856,7 @@ def wall_cubby_rand(
     cab = _seat_upright_cabinet(cab, width, height, back_depth=hole_depth)
     footprint = upright_cabinet_footprint(width, height)
 
-    geom, sill, lightblocker, cabinet_aliases = cutout_spaced_instances(
+    geom, sill, lightblocker, cabinet_aliases, _trim_edges = cutout_spaced_instances(
         surface=wall,
         instance=cab,
         surface_material=wall_material,
@@ -964,7 +1024,7 @@ def wall_doors_rand(
     # lift the door 1cm off the wall's bottom edge (V is the .y margin) so its chamfered
     # cutout stays inside the wall UV; below that sample_uv_surface returns origin verts
     floor_lift = 0.01
-    geom, sill, lightblocker, door_aliases = cutout_spaced_instances(
+    geom, sill, lightblocker, door_aliases, _trim_edges = cutout_spaced_instances(
         surface=wall,
         instance=door,
         surface_material=wall_material,
@@ -1039,7 +1099,7 @@ def wall_full_window_rand(
     split_x = pf.random.uniform(rng, 0.0, 1.0)
     split_y = pf.random.uniform(rng, 0.0, 1.0)
 
-    geom, _sill, _lightblocker, win_aliases = cutout_spaced_instances(
+    geom, _sill, _lightblocker, win_aliases, _trim_edges = cutout_spaced_instances(
         surface=wall,
         instance=win_obj,
         surface_material=wall_material,
@@ -1612,7 +1672,7 @@ def ceiling_skylights_rand(
     reveal_depth = pf.random.uniform(rng, 0.1, 1.0)
     recess_pct = pf.random.uniform(rng, 0.0, 1.0)
 
-    geom, sill, lightblocker, skylight_aliases = cutout_spaced_instances(
+    geom, sill, lightblocker, skylight_aliases, _trim_edges = cutout_spaced_instances(
         surface=ceiling,
         instance=win,
         surface_material=ceiling_material,
@@ -1689,7 +1749,7 @@ def ceiling_light_bars_rand(
     reveal_depth = pf.random.uniform(rng, 0.1, 1.0)
     recess_pct = pf.random.uniform(rng, 0.0, 1.0)
 
-    geom, sill, lightblocker, bar_aliases = cutout_spaced_instances(
+    geom, sill, lightblocker, bar_aliases, _trim_edges = cutout_spaced_instances(
         surface=ceiling,
         instance=housing,
         surface_material=ceiling_material,

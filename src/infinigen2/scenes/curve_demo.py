@@ -3,17 +3,25 @@
 
 # Authors: Alexander Raistrick
 
+import logging
+
 import procfunc as pf
 from procfunc.nodes import types as t
 
-from infinigen2.curves.skirting_board_profile import skirting_profile_rand
+from infinigen2.curves.skirting_board_profile import (
+    skirting_profile_rand,
+    trim_profile_rand,
+)
 from infinigen2.scenes.asset_demo import DevSceneResult, object_demo
 from infinigen2.shaders.functionality_lists import skirt_material_rand
 from infinigen2.util.curve import curve_to_mesh_with_uv, fillet_mask
 
 __all__ = [
     "curve_demo",
+    "trim_demo",
 ]
+
+logger = logging.getLogger(__name__)
 
 
 @pf.nodes.node_function
@@ -49,26 +57,51 @@ def _demo_base_curve(
 @pf.tracer.grammar
 def curve_demo(
     rng: pf.RNG,
-    size: float = 3.0,
-    fillet_large: float = 1.5,
-    fillet_small: float = 0.2,
+    profile: pf.CurveObject | None = None,
+    material: pf.Material | None = None,
+    size: float = 1.5,
+    fillet_large: float = 0.75,
+    fillet_small: float = 0.1,
 ) -> DevSceneResult:
     rng_profile, rng_mat, rng_scene = rng.spawn(3)
+
+    if profile is None:
+        logger.warning("No profile provided; using a default skirting profile.")
+        profile = skirting_profile_rand(rng_profile)
+    if material is None:
+        material = skirt_material_rand(rng_mat, pf.nodes.shader.coord().uv)
 
     base = _demo_base_curve(
         size=size, fillet_large=fillet_large, fillet_small=fillet_small
     )
-    profile = pf.nodes.geo.object_info(skirting_profile_rand(rng_profile)).geometry
+    profile_geo = pf.nodes.geo.object_info(profile).geometry
 
-    skirt = curve_to_mesh_with_uv(base, profile, fill_caps=True).mesh
-    skirt = pf.nodes.geo.flip_faces(skirt)
-    skirt = pf.nodes.to_mesh_object(skirt)
+    swept = curve_to_mesh_with_uv(base, profile_geo, fill_caps=True).mesh
+    swept = pf.nodes.geo.flip_faces(swept)
+    swept = pf.nodes.to_mesh_object(swept)
 
-    material = skirt_material_rand(rng_mat, pf.nodes.shader.coord().uv)
     pf.ops.object.set_material(
-        skirt,
+        swept,
         surface=material.surface,
         displacement=material.displacement,
     )
 
-    return object_demo(rng_scene, all_objects=[skirt])
+    return object_demo(rng_scene, all_objects=[swept])
+
+
+@pf.tracer.grammar
+def trim_demo(
+    rng: pf.RNG,
+    size: float = 1.5,
+    fillet_large: float = 0.75,
+    fillet_small: float = 0.1,
+) -> DevSceneResult:
+    rng_profile, rng_demo = rng.spawn(2)
+    profile = trim_profile_rand(rng_profile)
+    return curve_demo(
+        rng_demo,
+        profile=profile,
+        size=size,
+        fillet_large=fillet_large,
+        fillet_small=fillet_small,
+    )

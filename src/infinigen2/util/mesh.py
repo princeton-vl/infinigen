@@ -18,6 +18,7 @@ __all__ = [
     "corner_box",
     "crease_sharp",
     "extrude_mesh_seamless_uvs",
+    "face_selection_boundary_curve",
     "fill_between_curves",
     "grid_from_corners",
     "lofting",
@@ -373,6 +374,32 @@ def _extrude_inwards_with_chamfer(
     return _ExtrudeChamferResult(
         mesh=deep.mesh, top=deep.top, chamfer=lip.side, side=deep.side
     )
+
+
+@pf.nodes.node_function
+def face_selection_boundary_curve(
+    mesh: pf.ProcNode[pf.MeshObject],
+    selection: t.SocketOrVal[bool],
+) -> pf.ProcNode[pf.CurveObject]:
+    """Extract the edge loops separating selected from unselected faces as curves.
+
+    Curve normals are set to the inward surface direction (-mesh normal), matching
+    the skirting sweep convention: a profile authored in -X/-Y swept along the
+    result protrudes out the front of the surface.
+    """
+    cap_p = pf.nodes.geo.capture_attribute(
+        geometry=mesh, domain="POINT", inward=-pf.nodes.geo.input_normal()
+    )
+    # capture as float on FACE so the EDGE read averages adjacent faces (bools OR)
+    cap_f = pf.nodes.geo.capture_attribute(
+        geometry=cap_p.geometry, domain="FACE", sel=selection.astype(dtype=float)
+    )
+    cap_e = pf.nodes.geo.capture_attribute(
+        geometry=cap_f.geometry, domain="EDGE", sel=cap_f.sel
+    )
+    boundary = pf.nodes.func.boolean_and(a=cap_e.sel > 0.01, b=cap_e.sel < 0.99)
+    curve = pf.nodes.geo.mesh_to_curve(cap_e.geometry, selection=boundary)
+    return pf.nodes.geo.set_curve_normal(curve, normal=cap_p.inward, mode="FREE")
 
 
 class WallCutoutResult(NamedTuple):
