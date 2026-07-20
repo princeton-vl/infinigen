@@ -218,6 +218,7 @@ def _choose_handle_rand(rng_choice: pf.RNG, rng_handle: pf.RNG) -> pf.MeshObject
         [
             (handles.lever_handle_rand, 2.0),
             (handles.bar_pull_handle_rand, 1.5),
+            (handles.curved_pull_handle_rand, 1.5),
             (handles.knob_handle_rand, 1.0),
         ],
     )

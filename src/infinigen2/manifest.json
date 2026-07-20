@@ -621,6 +621,10 @@
   },
   {
     "category": "Object",
+    "name": "infinigen2.objects.handles.curved_pull_handle_rand"
+  },
+  {
+    "category": "Object",
     "name": "infinigen2.objects.handles.knob_handle_rand"
   },
   {

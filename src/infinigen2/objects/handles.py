@@ -1,10 +1,15 @@
 # Copyright (C) 2026, Princeton University.
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
-# The lever handle geometry (rose / lever / lock) is extracted (sim articulation
-# stripped) and ported to infinigen2 from infinigen/assets/sim_objects/door_handle.py
-# Authors: Anna Calveri (primary), Max Gonzalez Saez-Diez, Abhishek Joshi
-# The ball knob and the bar (D) pull are authored directly in infinigen2.
+# Authors:
+# - Anna Calveri (primary), Max Gonzalez Saez-Diez, Abhishek Joshi: original
+#   Infinigen v1 lever handle (rose / lever / lock), from
+#   infinigen/assets/sim_objects/door_handle.py
+# - Abhishek Joshi: original Infinigen v1 curved pull handle, from
+#   infinigen/assets/sim_objects/drawer.py nodegroup_handle
+#   (https://github.com/princeton-vl/infinigen_internal/blob/c6345652e65b2ee05f76e2403756531976046d90/src/infinigen/assets/sim_objects/drawer.py#L28-L176)
+# - Alexander Raistrick: port lever handle to infinigen2 (sim articulation
+#   stripped), transpile curved pull, author ball knob and bar (D) pull
 
 from typing import NamedTuple
 
@@ -19,6 +24,8 @@ __all__ = [
     "HandleResult",
     "bar_pull_handle",
     "bar_pull_handle_rand",
+    "curved_pull_handle",
+    "curved_pull_handle_rand",
     "knob_handle",
     "knob_handle_rand",
     "lever_handle",
@@ -291,6 +298,28 @@ def _bar_pull_handle_geometry(
     return pf.nodes.geo.transform(geometry=geo, rotation=(0.0, 0.0, -1.5708))
 
 
+@pf.nodes.node_function
+def _curved_pull_handle_geometry(
+    arc_radius: t.SocketOrVal[float] = 0.05,
+    profile_radius: t.SocketOrVal[float] = 0.01,
+    span_scale: t.SocketOrVal[float] = 2.0,
+    depth_scale: t.SocketOrVal[float] = 1.5,
+) -> pf.ProcNode[pf.MeshObject]:
+    arc = pf.nodes.geo.curve_arc(radius=arc_radius, sweep_angle=3.1416, resolution=16)
+    profile = pf.nodes.geo.curve_circle(radius=profile_radius, resolution=12)
+    tube = curve_to_mesh_with_uv(curve=arc, profile=profile, fill_caps=True).mesh
+    scale = pf.nodes.math.combine_xyz(x=span_scale, y=depth_scale, z=1.0)
+    tube = pf.nodes.geo.transform(
+        geometry=tube, scale=scale, rotation=(0.0, 0.0, -1.5708)
+    )
+    tube = pf.nodes.geo.transform(geometry=tube, rotation=(1.5708, 0.0, 0.0))
+    box = pf.nodes.geo.bound_box(tube)
+    return pf.nodes.geo.transform(
+        geometry=tube,
+        translation=pf.nodes.math.combine_xyz(z=(box.min.z + box.max.z) * -0.5),
+    )
+
+
 def _finish(geo: pf.ProcNode, material: pf.Material) -> HandleResult:
     geo = pf.nodes.geo.set_material(geo, material=material)
     geo = pf.nodes.geo.set_shade_smooth(geometry=geo, shade_smooth=True)
@@ -355,6 +384,28 @@ def knob_handle_rand(rng: pf.RNG, material: pf.Material | None = None) -> Handle
         stem_radius=stem_radius,
         stem_length=pf.random.uniform(rng, 0.01, 0.022),
         head_radius=pf.random.uniform(rng, stem_radius * 1.8, 0.018),
+    )
+    if material is None:
+        material = decorative_material_rand(rng_mat, pf.nodes.shader.coord().object)
+    return _finish(geo, material)
+
+
+def curved_pull_handle(material: pf.Material | None = None) -> HandleResult:
+    if material is None:
+        material = pf.Material(surface=pf.nodes.shader.principled_bsdf())
+    geo = _curved_pull_handle_geometry()
+    return _finish(geo, material)
+
+
+def curved_pull_handle_rand(
+    rng: pf.RNG, material: pf.Material | None = None
+) -> HandleResult:
+    rng, rng_mat = rng.spawn(2)
+    geo = _curved_pull_handle_geometry(
+        arc_radius=pf.random.uniform(rng, 0.035, 0.06),
+        profile_radius=pf.random.uniform(rng, 0.006, 0.012),
+        span_scale=pf.random.uniform(rng, 1.4, 2.4),
+        depth_scale=pf.random.uniform(rng, 1.0, 1.8),
     )
     if material is None:
         material = decorative_material_rand(rng_mat, pf.nodes.shader.coord().object)
