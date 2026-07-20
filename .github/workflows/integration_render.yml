@@ -15,8 +15,8 @@ on:
         type: string
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  # Only supersede PR runs; let push/baseline runs finish so develop_latest is repointed.
+  # Per-PR group (re-push supersedes); per-SHA push group so baseline runs are never cancelled.
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
