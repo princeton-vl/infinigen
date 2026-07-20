@@ -112,7 +112,9 @@ def plastic_rand(
     transmission = m_trans * pf.random.uniform(r_transamt, 0.4, 1.0)
 
     noise_size = 0.0005 * 4000.0 ** (1.0 - m_texture)
-    noise_height = m_texture * pf.random.uniform(r_nheight, 0.1, 1.2)
+    # metric displacement is noise_size * noise_height, so cancel noise_size
+    displacement_height = m_texture * pf.random.uniform(r_nheight, 0.0001, 0.001)
+    noise_height = displacement_height / noise_size
     noise_detail = pf.random.uniform(r_detail, 0.0, 5.0)
     noise_distortion_strength = pf.random.uniform(r_dist, 0.4, 1.0)
     noise_distortion_size = pf.random.uniform(r_distsize, 0.0, 1.0)
@@ -1365,7 +1367,7 @@ def plastic_tough_packaging(
     noise_detail: t.SocketOrVal[float] = 3.0,
     noise_seed: t.SocketOrVal[float] = 0.0,
 ) -> pf.Material:
-    return _plastic(
+    material = _plastic(
         vector=vector,
         surface_color_1=base_color,
         surface_color_2=base_color,
@@ -1386,6 +1388,7 @@ def plastic_tough_packaging(
         noise_height=1.0,
         noise_seed=noise_seed,
     )
+    return pf.Material(surface=material.surface)
 
 
 def plastic_black_rubberized_preset(vector: pf.ProcNode[pf.Vector]) -> pf.Material:
