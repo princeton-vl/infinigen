@@ -114,6 +114,12 @@ def context_meshes(objects: list[pf.MeshObject] | None) -> list[bpy.types.Object
     return [obj.item() for obj in objects]
 
 
+def evaluated_mesh(obj: bpy.types.Object) -> bpy.types.Mesh | None:
+    depsgraph = bpy.context.evaluated_depsgraph_get()
+    data = getattr(obj.evaluated_get(depsgraph), "data", None)
+    return data if isinstance(data, bpy.types.Mesh) else None
+
+
 def _collect_object_materials(obj: pf.MeshObject, mats: dict) -> None:
     for slot in obj.item().material_slots:
         if slot.material is None:

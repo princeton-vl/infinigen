@@ -42,6 +42,12 @@ class InfinigenContext:
     error_mode_unconverged_samples: ErrorMode
     """Adaptive sampling hit the max-samples cap with pixels still above the noise threshold."""
 
+    error_mode_missing_attribute: ErrorMode
+    """A shader samples a named attribute/color absent on the mesh (Cycles reads zeros)."""
+
+    error_mode_hidden_render_object: ErrorMode
+    """An object passed to the render is hidden from camera, so it silently never renders."""
+
 
 def _env_error_mode(name: str, default: ErrorMode) -> ErrorMode:
     mode = os.environ.get(name, default)
@@ -53,6 +59,12 @@ globals = InfinigenContext(
     error_mode_black_frame=_env_error_mode("INFINIGEN_ERROR_MODE_BLACK_FRAME", "warn"),
     error_mode_unconverged_samples=_env_error_mode(
         "INFINIGEN_ERROR_MODE_UNCONVERGED_SAMPLES", "warn"
+    ),
+    error_mode_missing_attribute=_env_error_mode(
+        "INFINIGEN_ERROR_MODE_MISSING_ATTRIBUTE", "warn"
+    ),
+    error_mode_hidden_render_object=_env_error_mode(
+        "INFINIGEN_ERROR_MODE_HIDDEN_RENDER_OBJECT", "error"
     ),
 )
 

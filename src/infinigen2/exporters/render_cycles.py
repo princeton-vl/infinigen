@@ -25,8 +25,12 @@ from infinigen2.exporters.render_error_check import (
     assert_adaptive_sampling_converged,
     assert_displacement_coords_safe,
     assert_frames_not_black,
+    assert_geometry_finite,
+    assert_material_attributes_present,
     assert_material_nodes_valid,
+    assert_render_objects_visible,
     assert_shader_complexity_ok,
+    assert_transforms_nonsingular,
     assert_uv_coords_satisfied,
     configure_sample_count_output,
     detect_cycles_errors,
@@ -458,6 +462,10 @@ def _render_cycles_impl(
     assert_shader_complexity_ok(objects)
     assert_uv_coords_satisfied(objects)
     assert_material_nodes_valid(objects)
+    assert_geometry_finite(objects)
+    assert_transforms_nonsingular(objects)
+    assert_material_attributes_present(objects)
+    assert_render_objects_visible(objects)
 
     check_convergence = _should_check_convergence(fail_for_unconverged_pix_frac)
     if check_convergence:

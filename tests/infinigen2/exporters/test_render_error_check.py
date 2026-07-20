@@ -16,13 +16,25 @@ from infinigen2.exporters.render_error_check import (
     AdaptiveSamplingError,
     DisplacementCoordError,
     FrameCheckError,
+    HiddenRenderObjectError,
+    MissingAttributeError,
+    NonFiniteGeometryError,
+    SingularTransformError,
     assert_adaptive_sampling_converged,
     assert_frames_not_black,
+    assert_geometry_finite,
+    assert_material_attributes_present,
+    assert_render_objects_visible,
+    assert_transforms_nonsingular,
     check_material_uv_coords,
     configure_sample_count_output,
     count_material_nodes,
     detect_cycles_errors,
+    hidden_render_objects,
     material_node_issues,
+    missing_attribute_issues,
+    nonfinite_vertex_counts,
+    singular_transform_objects,
     unsafe_displacement_materials,
 )
 from infinigen2.exporters.render_error_check.adaptive_sampling import (
@@ -462,3 +474,103 @@ def test_adaptive_sampling_unconverged_warn_mode(tmp_path):
             log, folder, max_samples=8, fail_fraction=0.05
         )
     assert max(fractions.values()) > 0.05
+
+
+def _plane():
+    pf.ops.object.clear_scene()
+    return pf.ops.primitives.mesh_plane(size=1)
+
+
+def test_nonfinite_geometry_flagged():
+    mo = _plane()
+    obj = mo.item()
+    co = np.empty(len(obj.data.vertices) * 3)
+    obj.data.vertices.foreach_get("co", co)
+    co[0] = np.nan
+    obj.data.vertices.foreach_set("co", co)
+    obj.data.update()
+    bpy.context.view_layer.update()
+    assert nonfinite_vertex_counts([mo]).get(obj.name, 0) >= 1
+    with pytest.raises(NonFiniteGeometryError):
+        assert_geometry_finite([mo])
+
+
+def test_finite_geometry_ok():
+    mo = _plane()
+    assert nonfinite_vertex_counts([mo]) == {}
+    assert_geometry_finite([mo])
+
+
+def test_singular_transform_flagged():
+    mo = _plane()
+    obj = mo.item()
+    obj.scale = (1, 1, 0)
+    bpy.context.view_layer.update()
+    assert obj.name in singular_transform_objects([mo])
+    with pytest.raises(SingularTransformError):
+        assert_transforms_nonsingular([mo])
+
+
+def test_nonsingular_transform_ok():
+    mo = _plane()
+    assert singular_transform_objects([mo]) == {}
+    assert_transforms_nonsingular([mo])
+
+
+def test_hidden_render_object_flagged():
+    mo = _plane()
+    mo.item().hide_render = True
+    assert hidden_render_objects([mo]) == {mo.item().name: "hide_render"}
+    with context.override_globals(error_mode_hidden_render_object="error"):
+        with pytest.raises(HiddenRenderObjectError):
+            assert_render_objects_visible([mo])
+
+
+def test_visible_camera_off_flagged():
+    mo = _plane()
+    mo.item().visible_camera = False
+    assert hidden_render_objects([mo]) == {mo.item().name: "visible_camera=False"}
+
+
+def test_holdout_object_not_flagged():
+    mo = _plane()
+    mo.item().is_holdout = True
+    assert hidden_render_objects([mo]) == {}
+
+
+def test_visible_object_ok():
+    mo = _plane()
+    assert hidden_render_objects([mo]) == {}
+    assert_render_objects_visible([mo])
+
+
+def _attribute_material(name, attribute_name):
+    mat = _node_material(name)
+    node = mat.node_tree.nodes.new("ShaderNodeAttribute")
+    node.attribute_type = "GEOMETRY"
+    node.attribute_name = attribute_name
+    bsdf = next(
+        n for n in mat.node_tree.nodes if n.bl_idname == "ShaderNodeBsdfPrincipled"
+    )
+    mat.node_tree.links.new(node.outputs["Fac"], bsdf.inputs["Metallic"])
+    return mat
+
+
+def test_missing_attribute_flagged():
+    mo = _plane()
+    obj = mo.item()
+    obj.data.materials.append(_attribute_material("attr_missing", "does_not_exist"))
+    bpy.context.view_layer.update()
+    assert any("does_not_exist" in i for i in missing_attribute_issues(obj))
+    with context.override_globals(error_mode_missing_attribute="error"):
+        with pytest.raises(MissingAttributeError):
+            assert_material_attributes_present([mo])
+
+
+def test_present_attribute_ok():
+    mo = _plane()
+    obj = mo.item()
+    obj.data.attributes.new("myattr", "FLOAT", "POINT")
+    obj.data.materials.append(_attribute_material("attr_present", "myattr"))
+    bpy.context.view_layer.update()
+    assert missing_attribute_issues(obj) == []
