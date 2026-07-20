@@ -358,6 +358,7 @@ def main() -> int:
     mask_limit = int(os.environ.get("MASK_LIMIT", "-1"))
     preset_limit = int(os.environ.get("PRESET_LIMIT", "-1"))
     environment_limit = int(os.environ.get("ENVIRONMENT_LIMIT", "-1"))
+    camera_limit = int(os.environ.get("CAMERA_LIMIT", "-1"))
 
     output_path = args.output_path
     # create the events index up front so the viewer loads even when zero assets render
@@ -368,6 +369,7 @@ def main() -> int:
     masks_all = list_items(["--categories", "Mask"], extra_args)
     presets_all = list_items(["--presets"], extra_args)
     environments_all = list_items(["--categories", "Environment"], extra_args)
+    cameras_all = list_items(["--categories", "Cameras"], extra_args)
 
     gating_report = {"enabled": False}
     if args.changed_only:
@@ -398,12 +400,14 @@ def main() -> int:
         environments = shard_items(
             environments_all, slot_count, slot_idx, environment_limit
         )
+        cameras = shard_items(cameras_all, slot_count, slot_idx, camera_limit)
 
         print(
             f"slot={slot_idx}/{slot_count - 1} gpu={gpu_id} "
             f"materials={count_items(materials)} objects={count_items(objects)} "
             f"scenes={count_items(scenes)} masks={count_items(masks)} "
-            f"presets={count_items(presets)} environments={count_items(environments)}"
+            f"presets={count_items(presets)} environments={count_items(environments)} "
+            f"cameras={count_items(cameras)}"
         )
 
         env = os.environ.copy()
@@ -416,6 +420,7 @@ def main() -> int:
         env["MASKS"] = masks
         env["PRESETS"] = presets
         env["ENVIRONMENTS"] = environments
+        env["CAMERAS"] = cameras
 
         cmd = ["scripts/integration_v2/launch.sh", str(output_path), "1", *extra_args]
         proc = subprocess.Popen(cmd, env=env, text=True)

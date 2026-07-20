@@ -48,6 +48,7 @@ def parse_asset_fields(asset_dir: str) -> tuple[str, str, str]:
         "mask",
         "preset",
         "environment",
+        "camera",
     }:
         return "unknown", name, name
 
@@ -77,17 +78,18 @@ def collect_pngs(asset_output_dir: Path, index_root: Path) -> list[str]:
     if not asset_output_dir.exists():
         return []
 
-    pngs = []
-    for p in sorted(asset_output_dir.rglob("*.png")):
-        rel_asset = p.relative_to(asset_output_dir)
-        if "tmp_" in rel_asset.parts:
+    paths = [p for ext in ("*.png", "*.mp4") for p in asset_output_dir.rglob(ext)]
+
+    images = []
+    for p in sorted(paths):
+        if "tmp_" in p.relative_to(asset_output_dir).parts:
             continue
         try:
             rel = p.resolve().relative_to(index_root.resolve())
         except Exception:
             rel = p.resolve()
-        pngs.append(rel.as_posix())
-    return pngs
+        images.append(rel.as_posix())
+    return images
 
 
 def main() -> int:

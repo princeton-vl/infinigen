@@ -4,7 +4,6 @@
 # Authors: Alexander Raistrick, Zeyu Ma
 
 import logging
-from dataclasses import dataclass
 from typing import Callable
 
 import bpy
@@ -14,64 +13,97 @@ import procfunc as pf
 from infinigen2.util.errors import RejectedScene
 
 __all__ = [
-    "RandomWalkSampler",
+    "random_walk",
+    "random_walk_step_fn",
     "walk_loop",
 ]
 
 logger = logging.getLogger(__name__)
 
+StepFn = Callable[
+    [pf.RNG, np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray, float]
+]
 
-@dataclass
-class RandomWalkSampler:
-    bbox: tuple[np.ndarray, np.ndarray]
-    margin: float = 0.05
-    speed_mps_range: tuple[float, float] = (2.0, 3.0)
-    loc_step_range: tuple[float, float] = (1.0, 4.0)
-    rot_std_deg: tuple[float, float, float] = (15.0, 15.0, 30.0)
-    roll_range_deg: tuple[float, float] = (-25.0, 25.0)
-    pitch_range_deg: tuple[float, float] = (45.0, 135.0)
-    height_range: tuple[float, float] | None = None
-    loc_bias: np.ndarray | None = None
 
-    def __post_init__(self):
-        self._bbox_min = np.asarray(self.bbox[0]) + self.margin
-        self._bbox_max = np.asarray(self.bbox[1]) - self.margin
-        self._roll_range_rad = np.deg2rad(self.roll_range_deg)
-        self._pitch_range_rad = np.deg2rad(self.pitch_range_deg)
-        if self.height_range is not None:
-            self._bbox_min[2] = max(self._bbox_min[2], self.height_range[0])
-            self._bbox_max[2] = min(self._bbox_max[2], self.height_range[1])
+def random_walk_step_fn(
+    bbox: tuple[np.ndarray, np.ndarray],
+    margin: float = 0.05,
+    speed_mps_range: tuple[float, float] = (2.0, 3.0),
+    loc_step_range: tuple[float, float] = (1.0, 4.0),
+    rot_std_deg: tuple[float, float, float] = (15.0, 15.0, 30.0),
+    roll_range_deg: tuple[float, float] = (-25.0, 25.0),
+    pitch_range_deg: tuple[float, float] = (45.0, 135.0),
+    height_range: tuple[float, float] | None = None,
+) -> StepFn:
+    bbox_min = np.asarray(bbox[0]) + margin
+    bbox_max = np.asarray(bbox[1]) - margin
+    roll_range_rad = np.deg2rad(roll_range_deg)
+    pitch_range_rad = np.deg2rad(pitch_range_deg)
+    if height_range is not None:
+        bbox_min[2] = max(bbox_min[2], height_range[0])
+        bbox_max[2] = min(bbox_max[2], height_range[1])
 
-    def __call__(
-        self,
+    def step(
         rng: pf.RNG,
         curr_loc: np.ndarray,
         curr_rot: np.ndarray,
     ) -> tuple[np.ndarray, np.ndarray, float]:
         """Return (next_loc, next_rot, duration_seconds)."""
-        dist = float(rng.uniform(*self.loc_step_range))
+        dist = float(rng.uniform(*loc_step_range))
         direction = rng.normal(0.0, np.ones(3))
-        if self.loc_bias is not None:
-            direction = direction + self.loc_bias
         direction = direction / (np.linalg.norm(direction) + 1e-8)
-        next_loc = np.clip(curr_loc + direction * dist, self._bbox_min, self._bbox_max)
+        next_loc = np.clip(curr_loc + direction * dist, bbox_min, bbox_max)
 
-        rot_jitter = np.deg2rad(rng.normal(0.0, np.asarray(self.rot_std_deg)))
+        rot_jitter = np.deg2rad(rng.normal(0.0, np.asarray(rot_std_deg)))
         next_rot = curr_rot + rot_jitter
-        next_rot[0] = np.clip(next_rot[0], *self._pitch_range_rad)
-        next_rot[1] = np.clip(next_rot[1], *self._roll_range_rad)
+        next_rot[0] = np.clip(next_rot[0], *pitch_range_rad)
+        next_rot[1] = np.clip(next_rot[1], *roll_range_rad)
 
-        speed = float(rng.uniform(*self.speed_mps_range))
+        speed = float(rng.uniform(*speed_mps_range))
         duration = dist / max(speed, 1e-4)
         return next_loc, next_rot, duration
+
+    return step
+
+
+def random_walk(
+    rng: pf.RNG,
+    obj: pf.Object,
+    bbox: tuple[np.ndarray, np.ndarray],
+    frame_start: int,
+    frame_end: int,
+    accept_fn: Callable[[], bool] | None = None,
+    max_retries: int = 20,
+    failure_mode: str = "error",
+    **sampler_kwargs,
+) -> pf.Object | None:
+    """Animate any pre-posed *obj* along a random walk within *bbox*.
+
+    Initial posing is the caller's responsibility; this only drives the walk.
+    Returns *obj* if a complete path was found, else None.
+    """
+    sampler = random_walk_step_fn(bbox=bbox, **sampler_kwargs)
+    accept_fn = accept_fn or (lambda: True)
+    return walk_loop(
+        rng=rng,
+        obj=obj,
+        sampler=sampler,
+        accept_fn=accept_fn,
+        frame_start=frame_start,
+        frame_end=frame_end,
+        max_retries=max_retries,
+        failure_mode=failure_mode,
+    )
 
 
 def _delete_keyframes(obj: bpy.types.Object, frame: int) -> None:
     if obj.animation_data is None or obj.animation_data.action is None:
         return
-    for fc in obj.animation_data.action.fcurves:
-        if fc.data_path:
-            obj.keyframe_delete(data_path=fc.data_path, frame=frame)
+    data_paths = {
+        fc.data_path for fc in obj.animation_data.action.fcurves if fc.data_path
+    }
+    for data_path in data_paths:
+        obj.keyframe_delete(data_path=data_path, frame=frame)
 
 
 def _validate_trajectory(
@@ -90,18 +122,22 @@ def _validate_trajectory(
 def walk_loop(
     rng: pf.RNG,
     obj: pf.Object,
-    sampler: RandomWalkSampler,
+    sampler: StepFn,
     accept_fn: Callable[[], bool],
     frame_start: int,
     frame_end: int,
     max_retries: int = 20,
     failure_mode: str = "error",
-) -> bool:
+) -> pf.Object | None:
     """Animate *obj* along a random walk from *frame_start* to *frame_end*.
 
     The object must already be positioned at a valid initial pose.
-    Returns True if a complete path was found.
+    On exhaustion *failure_mode* selects "error" (raise), "warn" (log and
+    return None) or "return" (return None silently).
+    Returns *obj* if a complete path was found, else None.
     """
+    if failure_mode not in ("error", "warn", "return"):
+        raise ValueError(f"unknown failure_mode {failure_mode!r}")
     fps = bpy.context.scene.render.fps / bpy.context.scene.render.fps_base
     bl_obj = obj.item()
 
@@ -116,12 +152,12 @@ def walk_loop(
         (curr_loc.copy(), curr_rot.copy(), frame_start, 0)
     ]
 
-    def _fail(msg: str) -> bool:
+    def _fail(msg: str) -> None:
         if failure_mode == "error":
             raise RejectedScene(msg)
         if failure_mode == "warn":
             logger.warning(msg)
-        return False
+        return None
 
     while stack[-1][2] < frame_end:
         curr_loc, curr_rot, curr_frame, retries = stack[-1]
@@ -158,4 +194,4 @@ def walk_loop(
             _delete_keyframes(bl_obj, next_frame)
             pf.ops.object.set_transform(obj, location=curr_loc, rotation_euler=curr_rot)
 
-    return True
+    return obj

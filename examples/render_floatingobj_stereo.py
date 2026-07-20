@@ -26,8 +26,13 @@ from infinigen2.exporters.render_cycles import (
     render_cycles_ground_truth,
 )
 from infinigen2.exporters.util.format import ExportType, RenderPass
-from infinigen2.animations.random_walk import RandomWalkSampler, walk_loop
-from infinigen2.cameras import stereo
+from infinigen2.animations.random_walk import random_walk_step_fn, walk_loop
+from infinigen2.cameras import (
+    attach_stereo_right,
+    random_walk_camera,
+    sample_baseline,
+    stereo_accept_pred,
+)
 from infinigen2.scenes import floating_objects
 from infinigen2.scenes.room import room, room_shape
 from infinigen2.util.render_metadata import time_step, write_render_metadata
@@ -91,27 +96,22 @@ def main():
         )
     objects += floating.all_objects
 
-    # Animate a random subset of floating objects with biased random walks
+    # Animate a random subset of floating objects with random walks
     fly_objs = floating.all_objects
     bbox_min, bbox_max = room_bbox
-    bbox_center = (bbox_min + bbox_max) / 2
-    n_frames = max(render_kwargs["frame_end"] - render_kwargs["frame_start"], 1)
     obj_rng = rngs[3]
     obj_rngs = obj_rng.spawn(len(fly_objs))
     for i, obj in enumerate(fly_objs):
         if obj_rngs[i].random() > 0.5:
             continue
         r = obj_rngs[i]
-        target_loc = r.uniform(bbox_min, bbox_max)
-        loc_bias = (target_loc - bbox_center) / n_frames
-        sampler = RandomWalkSampler(
+        sampler = random_walk_step_fn(
             bbox=room_bbox,
             speed_mps_range=(0.3, 1.5),
             loc_step_range=(0.2, 1.0),
             rot_std_deg=(5.0, 5.0, 10.0),
             roll_range_deg=(-180.0, 180.0),
             pitch_range_deg=(0.0, 180.0),
-            loc_bias=loc_bias,
         )
         walk_loop(
             rng=r,
@@ -135,16 +135,13 @@ def main():
     light_walk_rngs = light_rng.spawn(max(len(lights), 1))
     for i, light in enumerate(lights):
         r = light_walk_rngs[i]
-        target_loc = r.uniform(bbox_min, bbox_max)
-        loc_bias = (target_loc - bbox_center) / n_frames
-        sampler = RandomWalkSampler(
+        sampler = random_walk_step_fn(
             bbox=room_bbox,
             speed_mps_range=(0.5, 2.0),
             loc_step_range=(0.3, 1.5),
             rot_std_deg=(0.0, 0.0, 0.0),
             roll_range_deg=(0.0, 0.0),
             pitch_range_deg=(0.0, 0.0),
-            loc_bias=loc_bias,
         )
         walk_loop(
             rng=r,
@@ -162,21 +159,20 @@ def main():
     cam_bbox_margin = 0.5
     cam_bbox = (bbox_min + cam_bbox_margin, bbox_max - cam_bbox_margin)
 
-    cam_target = cam_rngs[0].uniform(*cam_bbox)
-    loc_bias = (cam_target - bbox_center) / n_frames
-
     with time_step(times, "stereo_camera"):
-        cameras = stereo.stereo_random_walk_camera(
-            rng=cam_rngs[1],
-            colliders=floating.colliders,
-            objects=objects,
+        baseline = sample_baseline(cam_rngs[1])
+        camera_left = random_walk_camera(
+            cam_rngs[1],
+            floating.colliders,
+            objects,
             frame_start=render_kwargs["frame_start"],
             frame_end=render_kwargs["frame_end"],
             bbox=cam_bbox,
             rot_std_deg=(7.5, 7.5, 15.0),
-            loc_bias=loc_bias,
             speed_mps_range=(1.5, 2.25),
+            accept_pred=stereo_accept_pred(baseline),
         )
+        cameras = attach_stereo_right(camera_left, baseline)
     camera_left, camera_right = cameras
     render_lights = list(living.lights) + list(lights)
     render_kwargs["objects"] = objects

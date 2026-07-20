@@ -20,7 +20,11 @@
      data-filtered="false">
     <div class="image-label">{{ img.label }}</div>
     {% if img.path %}
+    {% if img.path.endswith('.mp4') %}
+    <video class="trajectory-video" src="/images/{{ img.path }}" muted loop playsinline preload="none"></video>
+    {% else %}
     <img src="/images/{{ img.path }}" loading="lazy" alt="{{ img.label }}">
+    {% endif %}
     {% else %}
     <div class="missing-placeholder">
         {% if img.command_text or img.stderr_text %}
@@ -1174,6 +1178,21 @@
             }
         });
         {% endif %}
+    </script>
+    <script>
+        // Autoplay trajectory clips only while on screen, and pause them off screen
+        // so many tiles don't decode at once. preload="none" defers the fetch until play.
+        const trajObserver = new IntersectionObserver((entries) => {
+            for (const entry of entries) {
+                const video = entry.target;
+                if (entry.isIntersecting) {
+                    video.play().catch(() => {});
+                } else {
+                    video.pause();
+                }
+            }
+        }, { rootMargin: "200px" });
+        document.querySelectorAll("video.trajectory-video").forEach((v) => trajObserver.observe(v));
     </script>
 </body>
 </html>

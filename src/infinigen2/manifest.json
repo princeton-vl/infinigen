@@ -439,47 +439,47 @@
   {
     "category": "Scene",
     "name": "infinigen2.scenes.asset_demo.material_sphere",
-    "num_seeds": 1
+    "num_seeds": 0
   },
   {
     "category": "Scene",
     "name": "infinigen2.scenes.asset_demo.material_torus_uv",
-    "num_seeds": 1
+    "num_seeds": 0
   },
   {
     "category": "Scene",
     "name": "infinigen2.scenes.asset_demo.material_banana",
-    "num_seeds": 1
+    "num_seeds": 0
   },
   {
     "category": "Scene",
     "name": "infinigen2.scenes.asset_demo.material_monkey",
-    "num_seeds": 1
+    "num_seeds": 0
   },
   {
     "category": "Scene",
     "name": "infinigen2.scenes.asset_demo.material_cube",
-    "num_seeds": 1
+    "num_seeds": 0
   },
   {
     "category": "Scene",
     "name": "infinigen2.scenes.asset_demo.material_plane_uv",
-    "num_seeds": 1
+    "num_seeds": 0
   },
   {
     "category": "Scene",
     "name": "infinigen2.scenes.asset_demo.material_plane_orthographic",
-    "num_seeds": 1
+    "num_seeds": 0
   },
   {
     "category": "Scene",
     "name": "infinigen2.scenes.asset_demo.material_plane_horizontal_uv",
-    "num_seeds": 1
+    "num_seeds": 0
   },
   {
     "category": "Scene",
     "name": "infinigen2.scenes.asset_demo.object_demo",
-    "num_seeds": 1
+    "num_seeds": 0
   },
   {
     "category": "Scene",
@@ -661,43 +661,38 @@
   },
   {
     "category": "Cameras",
-    "name": "infinigen2.cameras.stereo_cameras_in_bbox_rand"
+    "name": "infinigen2.cameras.monocular_camera_in_bbox_rand",
+    "num_seeds": 3
   },
   {
     "category": "Cameras",
-    "name": "infinigen2.cameras.monocular_camera_in_bbox_rand"
+    "name": "infinigen2.cameras.monocular_360_camera_rand",
+    "num_seeds": 3
   },
   {
     "category": "Cameras",
-    "name": "infinigen2.cameras.monocular_360_camera_rand"
+    "name": "infinigen2.cameras.linear_pan_camera_rand",
+    "num_seeds": 3
   },
   {
     "category": "Cameras",
-    "name": "infinigen2.cameras.linear_pan_camera_rand"
+    "name": "infinigen2.cameras.orbit_90_camera_rand",
+    "num_seeds": 3
   },
   {
     "category": "Cameras",
-    "name": "infinigen2.cameras.orbit_90_camera_rand"
+    "name": "infinigen2.cameras.rrt_camera",
+    "num_seeds": 3
   },
   {
     "category": "Cameras",
-    "name": "infinigen2.cameras.material_orbit_camera_rand"
+    "name": "infinigen2.cameras.rrt_camera_fast",
+    "num_seeds": 3
   },
   {
     "category": "Cameras",
-    "name": "infinigen2.cameras.rrt_camera"
-  },
-  {
-    "category": "Cameras",
-    "name": "infinigen2.cameras.rrt_camera_fast"
-  },
-  {
-    "category": "Cameras",
-    "name": "infinigen2.cameras.random_walk_camera"
-  },
-  {
-    "category": "Cameras",
-    "name": "infinigen2.cameras.stereo_random_walk_camera"
+    "name": "infinigen2.cameras.random_walk_camera",
+    "num_seeds": 3
   },
   {
     "category": "Material",

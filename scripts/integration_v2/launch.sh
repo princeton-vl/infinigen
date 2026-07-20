@@ -26,6 +26,7 @@ OBJECTS=${OBJECTS-$(uv run python -m infinigen2.list $LIST_ARGS --categories Obj
 MASKS=${MASKS-$(uv run python -m infinigen2.list $LIST_ARGS --categories Mask --missing_values drop --columns shortname $REST_ARGS)}
 PRESETS=${PRESETS-$(uv run python -m infinigen2.list $LIST_ARGS --presets --missing_values drop --columns shortname $REST_ARGS)}
 ENVIRONMENTS=${ENVIRONMENTS-$(uv run python -m infinigen2.list $LIST_ARGS --categories Environment --missing_values drop --columns shortname $REST_ARGS)}
+CAMERAS=${CAMERAS-$(uv run python -m infinigen2.list $LIST_ARGS --categories Cameras --missing_values drop --columns shortname $REST_ARGS)}
 
 # store git info (for display purposes)
 mkdir -p "$OUTPUT_PATH"
@@ -57,8 +58,11 @@ uv run python -c "import json, sys; from infinigen2.list import preset_parents; 
 GEN_ARGS="--loglevel WARNING"
 if [ -n "${RENDER_RUNNER:-}" ]; then
     read -r -a RENDER_RUNNER_ARGS <<< "$RENDER_RUNNER"
+    PY_BIN="${RENDER_RUNNER_ARGS[0]}"
+    CAM_RUNNER_ARGS=("$PY_BIN" scripts/integration_v2/run_and_index.py --index-root "$OUTPUT_PATH" -- "$PY_BIN" scripts/integration_v2/render_trajectory_video.py)
 else
     RENDER_RUNNER_ARGS=(uv run infinigen)
+    CAM_RUNNER_ARGS=(uv run python scripts/integration_v2/render_trajectory_video.py)
 fi
 
 # render_cycles drops the surface-normal pass; the GT exporter renders it as a second unshaded pass.
@@ -186,3 +190,11 @@ done
 "${RENDER_RUNNER_ARGS[@]}" fabric_patterned_rand material_monkey render_cycles \
     $GEN_ARGS --output $OUTPUT_PATH/landing-fabric_patterned_rand-monkey-cycles-0 --seed 0 \
     --passes rgb -r 512 512 -s 128
+
+# CAMERA TRAJECTORIES VISUAL CHECK (48-frame workbench mp4 per camera generator, 3 seeds)
+CAM_SCENE=${CAM_SCENE:-livingroom_rand}
+for i in {0..2}; do
+    echo "$CAMERAS" | xargs $XARGS "${CAM_RUNNER_ARGS[@]}" \
+        --output $OUTPUT_PATH/camera-{}-$CAM_SCENE-workbench-traj$i \
+        --scene $CAM_SCENE --camera {} --seed $i --frames 0 47 -r 640 360 --fps 3
+done

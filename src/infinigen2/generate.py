@@ -544,6 +544,11 @@ def _unpack_by_category(category: str, result, data: dict):
                 data["floor"] = result.floor
             if getattr(result, "dimensions", None) is not None:
                 data["dimensions"] = result.dimensions
+                dims = result.dimensions
+                data["bbox"] = (
+                    np.zeros(3),
+                    np.array([float(dims.x), float(dims.y), float(dims.z)]),
+                )
         case "Environment":
             if result.environment is not None:
                 data["environment"] = result.environment
@@ -551,7 +556,7 @@ def _unpack_by_category(category: str, result, data: dict):
         case "Exporter":
             data["exports"] = data["exports"] + [result]
         case "Cameras":
-            data["cameras"] = result
+            data["cameras"] = result if isinstance(result, list) else [result]
         case _:
             raise ValueError(f"Unknown category: {category}")
 

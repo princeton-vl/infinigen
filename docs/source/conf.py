@@ -300,6 +300,9 @@ _CATEGORY_IMAGE_COUNT = {
     "Environment": 6,
 }
 
+# Categories shown as autoplaying trajectory videos (mp4); seed count from num_seeds.
+_VIDEO_CATEGORIES = frozenset({"Cameras"})
+
 # Image URLs: <base>/<slug>/images/<name>/<seed>.png; empty base = local paths.
 IMAGE_URL_BASE = os.environ.get(
     "INFINIGEN_DOCS_IMAGE_BASE", "https://infinigen.cs.princeton.edu/docs"
@@ -331,14 +334,24 @@ def _manifest_entries() -> tuple[dict[str, int], dict[str, str]]:
     categories = {}
     for e in data:
         category = e.get("category")
-        count = _CATEGORY_IMAGE_COUNT.get(category, 0)
-        if e.get("name") and count:
-            counts[e["name"]] = count
-            categories[e["name"]] = category
+        name = e.get("name")
+        if not name:
+            continue
+        if category in _VIDEO_CATEGORIES:
+            count = e.get("num_seeds") or 0
+        else:
+            count = _CATEGORY_IMAGE_COUNT.get(category, 0)
+        if count:
+            counts[name] = count
+            categories[name] = category
     return counts, categories
 
 
 _IMAGE_COUNTS, _IMAGE_CATEGORIES = _manifest_entries()
+
+
+def _is_video(name: str) -> bool:
+    return _IMAGE_CATEGORIES.get(name) in _VIDEO_CATEGORIES
 
 
 def _manifest_entrypoints() -> frozenset[str]:
@@ -355,7 +368,8 @@ _ENTRYPOINTS = _manifest_entrypoints()
 
 
 def _image_urls(name: str) -> list[str]:
-    rels = [f"images/{name}/{i}.png" for i in range(_IMAGE_COUNTS[name])]
+    ext = "mp4" if _is_video(name) else "png"
+    rels = [f"images/{name}/{i}.{ext}" for i in range(_IMAGE_COUNTS[name])]
     if not IMAGE_URL_BASE:
         return rels
     return [f"{IMAGE_URL_BASE}/{VERSION_SLUG}/assets/{rel}" for rel in rels]
@@ -369,11 +383,18 @@ def _replicate_command(category: str, name: str, seed: int) -> str | None:
 
 def _figure_html(url: str, name: str, seed: int, cmd: str | None) -> list[str]:
     alt = html.escape(f"{name} seed {seed}", quote=True)
+    if _is_video(name):
+        media = (
+            f'     <video class="example-render__img" src="{url}" autoplay loop muted '
+            f'playsinline loading="lazy" aria-label="{alt}"></video>'
+        )
+    else:
+        media = f'     <img class="example-render__img" src="{url}" loading="lazy" alt="{alt}">'
     lines = [
         ".. raw:: html",
         "",
         '   <figure class="example-render">',
-        f'     <img class="example-render__img" src="{url}" loading="lazy" alt="{alt}">',
+        media,
     ]
     if cmd is not None:
         esc = html.escape(cmd, quote=True)
@@ -391,9 +412,10 @@ def _inject_images(app, what, name, obj, options, lines):  # noqa: ARG001
     if name not in _IMAGE_COUNTS:
         return
     category = _IMAGE_CATEGORIES.get(name)
+    is_video = _is_video(name)
     lines += ["", ".. rubric:: Example renders", ""]
     for seed, url in enumerate(_image_urls(name)):
-        cmd = _replicate_command(category, name, seed)
+        cmd = None if is_video else _replicate_command(category, name, seed)
         lines += _figure_html(url, name, seed, cmd)
 
 
