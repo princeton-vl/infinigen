@@ -358,12 +358,17 @@ def paint_color_rand(
 ) -> pf.Color:
     hue = pf.random.uniform(rng, 0.0, 1.0)  # all hues
 
-    # folded ramp: ~half white/off-white (sat<=0.05), rest ramps continuously into color
+    # folded ramp: ~half white/off-white (sat<=0.05), rest ramps up toward fully saturated
     if saturation is None:
         sat_axis = pf.random.uniform(rng, -1.0, 1.0)
-        saturation = 0.7 * max(0.0, sat_axis) ** 1.4 + pf.random.uniform(rng, 0.0, 0.05)
+        saturation = 0.95 * max(0.0, sat_axis) ** 2.0 + pf.random.uniform(
+            rng, 0.0, 0.05
+        )
     if value is None:
         value = pf.random.clip_gaussian(rng, 0.85 - 0.6 * saturation, 0.15, 0.15, 0.95)
+        # occasionally drop toward deep/charcoal tones (extends dark support, not the mean)
+        darken = pf.random.uniform(rng, 0.25, 0.7)
+        value = value * pf.control.choice(rng, [(darken, 0.15), (1.0, 0.85)])
     return pf.color.hsv_color(hue=hue, saturation=saturation, value=value)
 
 

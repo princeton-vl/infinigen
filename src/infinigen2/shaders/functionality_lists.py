@@ -292,6 +292,13 @@ def paint_wall_rand(rng: pf.RNG, vector: pf.ProcNode[pf.Vector]) -> pf.Material:
 def paint_patterned_rand(rng: pf.RNG, vector: pf.ProcNode[pf.Vector]) -> pf.Material:
     r_size, r_tile, r_mask, r_c1, r_c2, r_c3, r_mix, r_paint = rng.spawn(8)
     tile_size = pf.random.uniform(r_size, 0.7, 2.0)
+    # sometimes tighten the pattern up to 5x finer, occasionally another 4x on top
+    pattern_shrink = pf.random.clip_gaussian(r_size, 1.0, 2.0, 1.0, 5.0)
+    extra_shrink = pf.random.uniform(r_size, 1.5, 4.0)
+    pattern_shrink = pattern_shrink * pf.control.choice(
+        r_size, [(extra_shrink, 0.15), (1.0, 0.85)]
+    )
+    tile_size = tile_size / pattern_shrink
     tile_vec = tile_coord_transform_rand(r_tile, vector, scale=1.0 / tile_size)
     tile_mask = tile_mask_rand(r_mask, tile_vec)
     base_color = fabric_patterned.patterned_color_rand(
