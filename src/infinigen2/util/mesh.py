@@ -16,6 +16,7 @@ __all__ = [
     "LoftingResult",
     "WallCutoutResult",
     "corner_box",
+    "crease_by_angle",
     "crease_sharp",
     "extrude_mesh_seamless_uvs",
     "face_selection_boundary_curve",
@@ -789,3 +790,30 @@ def crease_sharp(
         value=mask.astype(dtype=float),
     )
     return store_named_attribute
+
+
+@pf.nodes.node_function
+def crease_by_angle(
+    mesh: pf.ProcNode[pf.MeshObject],
+    threshold_degrees: t.SocketOrVal[float],
+    softness_degrees: t.SocketOrVal[float],
+) -> pf.ProcNode[pf.MeshObject]:
+    # Soft crease_sharp: crease ramps 0..1 over threshold +/- softness_degrees.
+    angle = pf.nodes.geo.input_mesh_edge_angle().unsigned_angle
+    lo = pf.nodes.math.deg_to_rad(threshold_degrees - softness_degrees)
+    hi = pf.nodes.math.deg_to_rad(threshold_degrees + softness_degrees)
+    crease = pf.nodes.math.map_range(
+        value=angle,
+        from_min=lo,
+        from_max=hi,
+        to_min=0.0,
+        to_max=1.0,
+        clamp=True,
+        interpolation_type="SMOOTHSTEP",
+    )
+    return pf.nodes.geo.store_named_attribute(
+        domain="EDGE",
+        geometry=mesh,
+        name="crease_edge",
+        value=crease,
+    )

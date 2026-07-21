@@ -10,6 +10,7 @@ import procfunc as pf
 from procfunc.nodes import types as t
 
 from infinigen2.shaders.base_materials import (
+    brick_concrete,
     carpet,
     ceramic,
     concrete,
@@ -24,6 +25,7 @@ from infinigen2.shaders.base_materials import (
     paint,
     plastic,
     stone_smooth,
+    terrazzo,
     wood_grain,
 )
 from infinigen2.shaders.composites import (
@@ -47,6 +49,7 @@ from infinigen2.shaders.masks.tile_shapes import (
 )
 
 __all__ = [
+    "all_materials_rand",
     "art_color_rand",
     "art_pattern_material_rand",
     "castor_wheel_material_rand",
@@ -352,6 +355,56 @@ def _layer_rand(
 
 
 @pf.tracer.grammar
+def all_materials_rand(rng: pf.RNG, vector: pf.ProcNode[pf.Vector]) -> pf.Material:
+    rng_uv, rng_nonlayerable, rng_layerable, rng_choice, rng_func = rng.spawn(5)
+    vector = uv_maybe_rotate(rng_uv, vector)
+    # granite and the brick/tile composites are bare-only: an overlay overflows the SVM stack
+    nonlayerable = pf.control.choice(
+        rng_nonlayerable,
+        [
+            (granite.granite_rand, 1.0),
+            (bricks.bricks_rand, 2.0),
+            (bricks.bricks_paint_rand, 1.0),
+            (bricks.bricks_pristine_rand, 0.5),
+            (tiles.tile_indoor_wall_rand, 2.0),
+        ],
+    )
+    layerable = pf.control.choice(
+        rng_layerable,
+        [
+            (brick_concrete.brick_concrete_rand, 1.0),
+            (carpet.carpet_rand, 1.0),
+            (ceramic.ceramic_rand, 1.0),
+            (concrete.concrete_rand, 1.0),
+            (fabric.fabric_rand, 1.0),
+            (fabric_patterned.fabric_patterned_rand, 2.0),
+            (glass_colored.glass_colored_rand, 1.0),
+            (granite.granite_smooth_rand, 1.0),
+            (gravel_concrete.gravel_concrete_rand, 2.0),
+            (marble.marble_rand, 2.0),
+            (metal_brushed.metal_brushed_linear_rand, 1.0),
+            (metal_brushed.metal_brushed_radial_rand, 1.0),
+            (metal_hammered.metal_hammered_rand, 1.0),
+            (paint.paint_rand, 2.0),
+            (plastic.plastic_rand, 1.0),
+            (stone_smooth.stone_smooth_rand, 1.0),
+            (terrazzo.terrazzo_rand, 1.0),
+            (wood_grain.wood_grain_rand, 2.0),
+            (wood_planks.wood_planks_rand, 3.0),
+        ],
+    )
+    func = pf.control.choice(
+        rng_choice,
+        [
+            (lambda r, v: nonlayerable(r, v), 1.5),
+            (lambda r, v: layerable(r, v), 3.0),
+            (lambda r, v: _layer_rand(r, v, layerable(r, v)), 1.0),
+        ],
+    )
+    return func(rng_func, vector)
+
+
+@pf.tracer.grammar
 def wall_material_rand(rng: pf.RNG, vector: pf.ProcNode[pf.Vector]) -> pf.Material:
     rng_uv, rng_nonbrick, rng_brick, rng_choice, rng_func, rng_layerable = rng.spawn(6)
     # walls: horizontal 60%, vertical 30% (split +/-), 45-deg snaps 10% (split +/-)
@@ -388,7 +441,7 @@ def wall_material_rand(rng: pf.RNG, vector: pf.ProcNode[pf.Vector]) -> pf.Materi
             (tiles.tile_indoor_wall_rand, 1.5),  # SVM stack overflow -> black
         ],
     )
-    # non_brick minus paint_flaked_rand: its crack mask + an overlay overflows the SVM stack
+    # non_brick minus paint_flaked and raw granite: both overflow the SVM stack with an overlay
     layerable = pf.control.choice(
         rng_layerable,
         [
@@ -397,7 +450,6 @@ def wall_material_rand(rng: pf.RNG, vector: pf.ProcNode[pf.Vector]) -> pf.Materi
             (concrete.concrete_rand, 1.0),
             (stone_smooth.stone_smooth_rand, 0.5),
             (gravel_concrete.gravel_concrete_rand, 0.5),
-            (granite.granite_rand, 0.5),
         ],
     )
     func = pf.control.choice(

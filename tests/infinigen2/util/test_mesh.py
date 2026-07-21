@@ -11,6 +11,13 @@ import pytest
 from infinigen2.util import mesh as mesh_util
 
 
+def _crease_values(geo: pf.ProcNode):
+    obj = pf.nodes.to_mesh_object(geo)
+    me = obj.item().data
+    assert "crease_edge" in me.attributes
+    return [d.value for d in me.attributes["crease_edge"].data]
+
+
 def _creased_edges(mesh_node: pf.ProcNode, threshold_degrees: float):
     geo = mesh_util.crease_sharp(mesh_node, threshold_degrees=threshold_degrees)
     obj = pf.nodes.to_mesh_object(geo)
@@ -63,3 +70,23 @@ def test_crease_sharp_flat_grid_creases_nothing():
     ).mesh
 
     assert not any(c for _, c in _creased_edges(grid, threshold_degrees=1.0))
+
+
+def test_crease_by_angle_soft_ramp_midpoint():
+    bpy.ops.wm.read_homefile(use_empty=True)
+    cube = pf.nodes.geo.mesh_cube(size=(1.0, 1.0, 1.0)).mesh
+
+    # All cube edges fold at exactly the 90deg threshold: soft band -> midpoint 0.5.
+    geo = mesh_util.crease_by_angle(cube, threshold_degrees=90.0, softness_degrees=30.0)
+    assert all(abs(v - 0.5) < 1e-4 for v in _crease_values(geo))
+
+
+def test_crease_by_angle_matches_binary_when_band_narrow():
+    bpy.ops.wm.read_homefile(use_empty=True)
+    cyl = pf.nodes.geo.mesh_cylinder(vertices=16, radius=0.5, depth=1.0).mesh
+
+    # Narrow band around 70deg reproduces crease_sharp: 90deg rims on, seams off.
+    geo = mesh_util.crease_by_angle(cyl, threshold_degrees=70.0, softness_degrees=1.0)
+    vals = _crease_values(geo)
+    assert all(v > 0.99 or v < 0.01 for v in vals)
+    assert sum(1 for v in vals if v > 0.5) == 2 * 16

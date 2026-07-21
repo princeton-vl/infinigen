@@ -664,6 +664,10 @@
     "name": "infinigen2.objects.wall_art.mirror_rand"
   },
   {
+    "category": "Object",
+    "name": "infinigen2.scenes.floating_objects.obj_with_postprocessing"
+  },
+  {
     "category": "Cameras",
     "name": "infinigen2.cameras.monocular_camera_in_bbox_rand",
     "num_seeds": 3

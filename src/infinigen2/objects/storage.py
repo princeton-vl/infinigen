@@ -440,17 +440,18 @@ def cabinet_with_door(
     frame_material: pf.Material | None = None,
 ) -> StorageResult:
     if dimensions is None:
-        dimensions = pf.Vector((0.35, 0.6, 0.8))
+        dimensions = pf.Vector((0.3, 0.5, 1.2))
     if frame_material is None:
         frame_material = pf.Material(surface=pf.nodes.shader.principled_bsdf())
     thickness = 0.019
-    shelf_dimensions = pf.Vector((dimensions.x - thickness, dimensions.y, dimensions.z))
+    depth, width, height = dimensions.x, dimensions.y, dimensions.z
+    shelf_dimensions = pf.Vector((depth - thickness, width, height))
     carcass = shelves(dimensions=shelf_dimensions, frame_material=frame_material).mesh
     door = door_with_handle(
-        dimensions=pf.Vector((thickness, dimensions.y, dimensions.z)),
+        dimensions=pf.Vector((thickness, width, height)),
         material=frame_material,
     ).mesh
-    pf.ops.object.set_transform(door, location=(dimensions.x - thickness, 0.0, 0.0))
+    pf.ops.object.set_transform(door, location=(depth - thickness, 0.0, 0.0))
     pf.ops.object.join(carcass, door)
     return StorageResult(mesh=carcass)
 
@@ -460,10 +461,12 @@ def cabinet_with_door_rand(
 ) -> StorageResult:
     rng, rng_shelves, rng_door, rng_mat, rng_door_mat, rng_handle = rng.spawn(6)
     if dimensions is None:
-        depth = pf.random.uniform(rng, 0.25, 0.45)
-        width = pf.random.uniform(rng, 0.3, 0.9)
-        height = pf.random.uniform(rng, 0.5, 1.1)
+        depth = pf.random.uniform(rng, 0.25, 0.35)
+        # cap width to v1's single-door range so one door stays a realistic panel
+        width = pf.random.uniform(rng, 0.3, 0.55)
+        height = pf.random.uniform(rng, 0.9, 1.8)
         dimensions = pf.Vector((depth, width, height))
+    depth, width, height = dimensions.x, dimensions.y, dimensions.z
 
     frame_material = furniture_material_rand(rng_mat, pf.nodes.shader.coord().uv)
     door_material = pf.control.choice(
@@ -471,7 +474,7 @@ def cabinet_with_door_rand(
     )
 
     thickness = pf.random.uniform(rng, 0.016, 0.022)
-    shelf_dimensions = pf.Vector((dimensions.x - thickness, dimensions.y, dimensions.z))
+    shelf_dimensions = pf.Vector((depth - thickness, width, height))
     carcass = shelves_rand(
         rng_shelves, dimensions=shelf_dimensions, frame_material=frame_material
     ).mesh
@@ -487,10 +490,10 @@ def cabinet_with_door_rand(
     )
     door = door_with_handle_rand(
         rng_door,
-        dimensions=pf.Vector((thickness, dimensions.y, dimensions.z)),
+        dimensions=pf.Vector((thickness, width, height)),
         material=door_material,
         handle=handle_func(rng_handle).mesh,
     ).mesh
-    pf.ops.object.set_transform(door, location=(dimensions.x - thickness, 0.0, 0.0))
+    pf.ops.object.set_transform(door, location=(depth - thickness, 0.0, 0.0))
     pf.ops.object.join(carcass, door)
     return StorageResult(mesh=carcass)

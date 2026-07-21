@@ -26,6 +26,7 @@ __all__ = [
     "bar_pull_handle_rand",
     "curved_pull_handle",
     "curved_pull_handle_rand",
+    "handle_rand",
     "knob_handle",
     "knob_handle_rand",
     "lever_handle",
@@ -432,3 +433,17 @@ def bar_pull_handle_rand(
     if material is None:
         material = decorative_material_rand(rng_mat, pf.nodes.shader.coord().object)
     return _finish(geo, material)
+
+
+def handle_rand(rng: pf.RNG, material: pf.Material | None = None) -> HandleResult:
+    rng_choice, rng_func = rng.spawn(2)
+    handle_func = pf.control.choice(
+        rng_choice,
+        [
+            (lever_handle_rand, 2.0),
+            (bar_pull_handle_rand, 1.5),
+            (curved_pull_handle_rand, 1.5),
+            (knob_handle_rand, 1.0),
+        ],
+    )
+    return handle_func(rng_func, material)

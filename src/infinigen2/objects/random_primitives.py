@@ -9,75 +9,14 @@ from typing import NamedTuple
 import procfunc as pf
 from procfunc.nodes import types as t
 
-from infinigen2.shaders.base_materials import (
-    brick_concrete,
-    carpet,
-    ceramic,
-    concrete,
-    fabric,
-    glass_colored,
-    granite,
-    gravel_concrete,
-    marble,
-    metal_brushed,
-    metal_hammered,
-    paint,
-    plastic,
-    stone_smooth,
-    terrazzo,
-    wood_grain,
-)
-from infinigen2.shaders.composites import (
-    bricks,
-    fabric_patterned,
-    tiles,
-    wood_planks,
-)
 from infinigen2.shaders.dev import bsdf_simple_rand
-from infinigen2.util.mesh import crease_sharp
+from infinigen2.shaders.functionality_lists import all_materials_rand
+from infinigen2.util.mesh import crease_by_angle
 
 __all__ = [
     "PrimitivesResult",
-    "all_materials_rand",
     "primitives_rand",
 ]
-
-
-@pf.tracer.grammar
-def all_materials_rand(
-    rng: pf.RNG,
-    vector: t.SocketOrVal[pf.Vector],
-) -> pf.Material:
-    rng_choice, rng_func = rng.spawn(2)
-    func = pf.control.choice(
-        rng_choice,
-        [
-            (brick_concrete.brick_concrete_rand, 1.0),
-            (bricks.bricks_rand, 1.0),
-            (carpet.carpet_rand, 1.0),
-            (ceramic.ceramic_rand, 1.0),
-            (concrete.concrete_rand, 1.0),
-            (fabric_patterned.fabric_patterned_rand, 1.0),
-            (fabric.fabric_rand, 1.0),
-            (glass_colored.glass_colored_rand, 1.0),
-            (granite.granite_rand, 1.0),
-            (granite.granite_smooth_rand, 1.0),
-            (gravel_concrete.gravel_concrete_rand, 1.0),
-            (marble.marble_rand, 1.0),
-            (metal_brushed.metal_brushed_linear_rand, 1.0),
-            (metal_brushed.metal_brushed_radial_rand, 1.0),
-            (metal_hammered.metal_hammered_rand, 1.0),
-            (paint.paint_rand, 1.0),
-            (plastic.plastic_grayscale_rand, 1.0),
-            (plastic.plastic_rand, 2.0),
-            (stone_smooth.stone_smooth_rand, 1.0),
-            (terrazzo.terrazzo_rand, 1.0),
-            (tiles.tile_indoor_wall_rand, 2.0),
-            (wood_grain.wood_grain_rand, 1.0),
-            (wood_planks.wood_planks_rand, 2.0),
-        ],
-    )
-    return func(rng_func, vector)
 
 
 def _end_fill_type_rand(rng: pf.RNG) -> str:
@@ -393,18 +332,15 @@ def primitives_rand(
     result = effect_func(rng_effect)
     obj = result.mesh
 
-    creased = pf.control.choice(
-        rng_crease,
-        [
-            (
-                lambda obj: pf.nodes.to_mesh_object(
-                    crease_sharp(obj, threshold_degrees=5)
-                ),
-                0.3,
-            ),
-            (lambda obj: obj, 0.7),
-        ],
-    )(obj)
+    crease_threshold = pf.random.clip_gaussian(rng_crease, 40.0, 40.0, 0.0, 180.0)
+    crease_softness = pf.random.clip_gaussian(rng_crease, 0.0, 20.0, 1.0, 60.0)
+    obj = pf.nodes.to_mesh_object(
+        crease_by_angle(
+            obj,
+            threshold_degrees=crease_threshold,
+            softness_degrees=crease_softness,
+        )
+    )
     pf.ops.modifier.subdivide_surface(
         obj, levels=result.subsurf_levels, _skip_apply=True
     )
