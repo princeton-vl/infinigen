@@ -641,12 +641,10 @@ def _window_geometry(
 
     realized = pf.nodes.geo.realize_instances(join)
 
-    # Even out the long frame polys before subsurf, then crease all frame
-    # edges so the later subsurf keeps the frame crisp.
-    subdivided = pf.nodes.geo.subdivide_mesh(mesh=realized, level=3)
+    # crease frame edges so the unapplied curtain-smoothing subsurf keeps them sharp
     creased = pf.nodes.geo.store_named_attribute(
         domain="EDGE",
-        geometry=subdivided,
+        geometry=realized,
         name="crease_edge",
         value=1.0,
     )
@@ -899,7 +897,7 @@ def window_rand(
     pf.ops.object.set_transform(curtain, location=(curtain_offset, 0.0, 0.0))
     pf.ops.object.join(frame_obj, curtain)
 
-    # Smooth the curtains; crease_edge keeps the frame edges sharp.
+    # smooth the curtain; crease_edge keeps the frame edges sharp
     pf.ops.modifier.subdivide_surface(frame_obj, levels=2, _skip_apply=True)
 
     portal_light = pf.ops.primitives.light.area_lamp(
