@@ -87,6 +87,7 @@ jobs:
           uv run python scripts/integration_v2/compose_pr_comment.py \
             --phase planned \
             --commit "$GITHUB_SHA" \
+            --run-id "$GITHUB_RUN_ID" \
             --run-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
             --gating-report "$OUTPUT_DIR/gating_report.json" \
             --out "$RUNNER_TEMP/planned_body.md"
@@ -206,6 +207,7 @@ jobs:
             --baseline "$BASELINE" \
             --target-dir "$TARGET_DIR" \
             --commit "$GITHUB_SHA" \
+            --run-id "$GITHUB_RUN_ID" \
             --run-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
             --gating-report "$OUTPUT_DIR/gating_report.json" \
             --pixel-summary "$OUTPUT_DIR/pixel_diff.md" \

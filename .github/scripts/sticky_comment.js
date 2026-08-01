@@ -1,9 +1,8 @@
-// Upsert this workflow's status comment on a PR, keyed by the same marker as
-// STATUS_MARKER in compose_pr_comment.py. Keep the two in sync.
+// Upsert a PR status comment, keyed by the run-scoped marker in the body.
 const fs = require('fs');
 const path = require('path');
 
-const MARKER = '<!-- integration-render-status -->';
+const MARKER_RE = /<!-- integration-render-status[^>]*-->/;
 
 module.exports = async ({github, context}) => {
   const pr = Number(process.env.PR_NUMBER);
@@ -12,13 +11,15 @@ module.exports = async ({github, context}) => {
   const file = path.join(process.env.RUNNER_TEMP, process.env.BODY_FILE);
   if (!fs.existsSync(file)) return;
   const body = fs.readFileSync(file, 'utf8');
-  if (!body.includes(MARKER)) throw new Error(`body ${file} is missing ${MARKER}`);
+  const found = body.match(MARKER_RE);
+  if (!found) throw new Error(`body ${file} is missing integration-render-status marker`);
+  const marker = found[0];
 
   const comments = await github.paginate(github.rest.issues.listComments, {
     ...context.repo, issue_number: pr, per_page: 100,
   });
   const prev = comments.find(
-    c => c.user.type === 'Bot' && (c.body || '').includes(MARKER));
+    c => c.user.type === 'Bot' && (c.body || '').includes(marker));
 
   if (prev) {
     await github.rest.issues.updateComment({

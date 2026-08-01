@@ -14,8 +14,13 @@ MAX_TRIGGER_ROWS = 40
 MAX_CRASH_ROWS = 40
 MAX_ERROR_CHARS = 160
 
-# Lets the workflow update its own comment. Changing it orphans posted ones.
-STATUS_MARKER = "<!-- integration-render-status -->"
+# Scoped by run id so each run posts+edits its own comment. Prefix matched by sticky_comment.js.
+STATUS_MARKER_PREFIX = "<!-- integration-render-status"
+
+
+def status_marker(run_id: str) -> str:
+    scope = f" run={run_id}" if run_id else ""
+    return f"{STATUS_MARKER_PREFIX}{scope} -->"
 
 
 def parse_args() -> argparse.Namespace:
@@ -26,6 +31,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--baseline", default="")
     parser.add_argument("--target-dir", default="")
     parser.add_argument("--commit", default="")
+    parser.add_argument("--run-id", default="")
     parser.add_argument("--run-url", default="")
     parser.add_argument("--gating-report", type=Path, default=None)
     parser.add_argument("--pixel-summary", type=Path, default=None)
@@ -177,7 +183,7 @@ def provenance(args: argparse.Namespace) -> list[str]:
 
 def planned_body(args: argparse.Namespace) -> list[str]:
     lines = [
-        STATUS_MARKER,
+        status_marker(args.run_id),
         "### Integration render — rendering now",
         "",
     ]
@@ -189,7 +195,7 @@ def planned_body(args: argparse.Namespace) -> list[str]:
 
 def done_body(args: argparse.Namespace) -> list[str]:
     lines = [
-        STATUS_MARKER,
+        status_marker(args.run_id),
         "### Integration render — done",
         "",
         "Integration renders are ready:",
