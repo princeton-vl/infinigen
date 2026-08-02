@@ -206,8 +206,13 @@ def test_gate_passes_on_safe_coords():
     _raise_if_unsafe([mat])  # must not raise
 
 
+@pf.nodes.node_function
+def _uv_map_nodegroup():
+    return pf.nodes.shader.uv_map(uv_map="UVMap")
+
+
 def test_uv_map_nested_in_group_displacement_flagged():
-    mat = _bricks_material(pf.nodes.shader.uv_map(uv_map="UVMap"))
+    mat = _bricks_material(_uv_map_nodegroup())
     groups_with_uv = [
         n
         for n in mat.node_tree.nodes
