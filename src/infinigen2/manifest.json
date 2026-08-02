@@ -311,6 +311,16 @@
   },
   {
     "category": "Material",
+    "name": "infinigen2.shaders.base_materials.leather.leather_rand",
+    "presets": [
+      "leather_animal_preset",
+      "leather_furniture_patina_preset",
+      "leather_furniture_rough_preset",
+      "leather_handheld_preset"
+    ]
+  },
+  {
+    "category": "Material",
     "name": "infinigen2.shaders.base_materials.terrazzo.terrazzo_rand"
   },
   {

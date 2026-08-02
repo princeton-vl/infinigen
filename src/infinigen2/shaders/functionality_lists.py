@@ -19,6 +19,7 @@ from infinigen2.shaders.base_materials import (
     glass_no_refraction,
     granite,
     gravel_concrete,
+    leather,
     marble,
     metal_brushed,
     metal_hammered,
@@ -267,6 +268,7 @@ def furniture_fabric(
             (plain, 1.5),
             (patterned, 2.0),
             (opaque, 1.0),
+            (leather.leather_rand, 3.0),
         ],
     )
     material = material_func(rng_mat, vec)
