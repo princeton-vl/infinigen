@@ -32,7 +32,7 @@ def test_collision_add_and_query():
     cube = pf.ops.primitives.mesh_cube()
     cube.item().location = (10, 1, 1)
     objs.append(cube)
-    col = collision_set(objs, existing=col)
+    col = collision_set(objs, cache=col)
 
     assert n_colliders(col) == 1
     assert not intersection_test(col, origin_probe)
@@ -62,7 +62,7 @@ def test_collision_list_update_changes_queries():
     first = pf.ops.primitives.mesh_cube()
     first.item().location = (0, 0, 0)
     objs.append(first)
-    col = collision_set(objs, existing=col)
+    col = collision_set(objs, cache=col)
     assert n_colliders(col) == 1
 
     second_probe = pf.ops.primitives.mesh_cube()
@@ -72,7 +72,7 @@ def test_collision_list_update_changes_queries():
     second = pf.ops.primitives.mesh_cube()
     second.item().location = (5, 0, 0)
     objs.append(second)
-    col = collision_set(objs, existing=col)
+    col = collision_set(objs, cache=col)
     assert n_colliders(col) == 2
     assert intersection_test(col, second_probe)
 

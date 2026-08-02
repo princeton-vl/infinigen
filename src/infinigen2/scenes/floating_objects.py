@@ -239,7 +239,7 @@ def floating_objects_rand(
             colliders = ccol.collision_set(collider_candidates)
         else:
             colliders = ccol.collision_set(
-                collider_candidates + colliders.objs, existing=colliders
+                collider_candidates + colliders.objs, cache=colliders
             )
 
     logger.info(

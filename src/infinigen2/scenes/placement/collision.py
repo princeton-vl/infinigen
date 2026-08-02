@@ -164,13 +164,13 @@ def n_colliders(col: CollisionSet) -> int:
 
 
 def collision_set(
-    objs: list[pf.Object], existing: CollisionSet | None = None
+    objs: list[pf.Object], cache: CollisionSet | None = None
 ) -> CollisionSet:
     mesh_colliders: dict[int, trimesh.Trimesh] = (
-        {} if existing is None else dict(existing.mesh_colliders)
+        {} if cache is None else dict(cache.mesh_colliders)
     )
     mesh_fcl_colliders: dict[int, Any] = (
-        {} if existing is None else dict(existing.mesh_fcl_colliders)
+        {} if cache is None else dict(cache.mesh_fcl_colliders)
     )
     object_names: dict[int, str] = {}
     object_fcl_objs: dict[int, Any] = {}

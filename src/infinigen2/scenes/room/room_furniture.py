@@ -724,7 +724,7 @@ def dining_table_setup_rand(
         logger.info(f"Kept {len(chair_objs)} dining chairs after obstruction/collision")
 
     colliders = ccol.collision_set(
-        colliders.objs + [r.mesh for r in diningtable_objs], existing=colliders
+        colliders.objs + [r.mesh for r in diningtable_objs], cache=colliders
     )
     rug_objs = _maybe_rug(rng_rug, room_dimensions)
     all_objects = [r.mesh for r in diningtable_objs + chair_objs] + rug_objs
@@ -760,7 +760,7 @@ def sofa_setup_rand(
     sofa_meshes = [r.mesh for r in arrangement.sofas]
     coffee_tables = list(arrangement.coffee_tables)
     solid = sofa_meshes + [r.mesh for r in coffee_tables]
-    colliders = ccol.collision_set(colliders.objs + solid, existing=colliders)
+    colliders = ccol.collision_set(colliders.objs + solid, cache=colliders)
 
     n = min(pf.random.randint(rng_side, 0, 6), len(arrangement.sofas))
     rngs = rng_side.spawn(n)

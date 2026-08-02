@@ -195,7 +195,7 @@ def _furnished_room_rand(
         r.mesh
         for r in sofas + coffee_tables + side_tables + dining_tables + dining_chairs
     ]
-    colliders = ccol.collision_set(colliders.objs + solid, existing=colliders)
+    colliders = ccol.collision_set(colliders.objs + solid, cache=colliders)
 
     floor_lamps, table_lamps, lamp_lights, colliders = sofa_lamps_rand(
         rng_lamp,
@@ -228,7 +228,7 @@ def _furnished_room_rand(
     )
 
     furnished_objects = all_room + all_furniture
-    base_colliders = ccol.collision_set(furnished_objects, existing=colliders)
+    base_colliders = ccol.collision_set(furnished_objects, cache=colliders)
     wall_shelves = storage_surfaces
 
     rng_pool, rng_place = rng_small.spawn(2)
@@ -246,9 +246,7 @@ def _furnished_room_rand(
 
     colliders = base_colliders
     if wall_shelves:
-        colliders = ccol.collision_set(
-            colliders.objs + wall_shelves, existing=colliders
-        )
+        colliders = ccol.collision_set(colliders.objs + wall_shelves, cache=colliders)
     small_objects: list = []
 
     placed, colliders = objects_scattered_on_surface(
@@ -284,7 +282,7 @@ def _furnished_room_rand(
     return LivingroomResult(
         all_objects=all_objects,
         lights=lights,
-        colliders=ccol.collision_set(all_objects, existing=base_colliders),
+        colliders=ccol.collision_set(all_objects, cache=base_colliders),
         floor=shape.floor,
         dimensions=room_dimensions,
     )

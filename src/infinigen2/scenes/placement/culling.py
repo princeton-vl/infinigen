@@ -40,7 +40,7 @@ def keep_non_colliding(
         if ccol.intersection_test(colliders, mesh):
             mesh.item().name = mesh.item().name + "_COLLIDE"
             continue
-        colliders = ccol.collision_set(colliders.objs + [mesh], existing=colliders)
+        colliders = ccol.collision_set(colliders.objs + [mesh], cache=colliders)
         kept.append(item)
     return kept, colliders
 
