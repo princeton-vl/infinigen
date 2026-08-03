@@ -2,6 +2,7 @@
 # This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
 
 import json
+import math
 import sys
 from pathlib import Path
 
@@ -10,6 +11,7 @@ from PIL import Image
 _SCRIPTS = Path(__file__).resolve().parents[2] / "scripts" / "integration_v2"
 sys.path.insert(0, str(_SCRIPTS))
 
+import display  # noqa: E402
 from display import (  # noqa: E402
     build_comparison_data,
     build_section_controls,
@@ -70,6 +72,7 @@ def test_normals_form_a_row_mirroring_every_seed(tmp_path):
     rows = _build(
         [_object_run(tmp_path, "before"), _object_run(tmp_path, "after", seeds=3)]
     )
+    row = next(row for row in rows if row["asset"] == "chair_rand")
     sections = _sections_of(rows, "chair_rand")
 
     assert set(sections) == {"seeds", "normals"}
@@ -85,6 +88,9 @@ def test_normals_form_a_row_mirroring_every_seed(tmp_path):
     ]
     assert sections["normals"]["folded"] is True
     assert sections["seeds"]["folded"] is False
+    assert sections["seeds"]["scroll_group"] == "visuals"
+    assert sections["normals"]["scroll_group"] == "visuals"
+    assert row["available_versions"] == ["before", "after"]
 
 
 def test_normals_section_carries_no_metrics(tmp_path):
@@ -197,3 +203,45 @@ def test_section_controls_include_not_rendered_rows(tmp_path):
     assert len(not_run) == 1
     assert not_run[0]["title"] == "1 not-rendered"
     assert not_run[0]["folded"] is True
+
+
+def _traj_run(root: Path, name: str) -> Path:
+    version = root / name
+    base = f"{name}/camera-linear_pan_camera_rand-livingroom_rand-workbench-traj2"
+    mp4 = f"{base}/image_Camera.mp4"
+    (version / mp4).parent.mkdir(parents=True, exist_ok=True)
+    (version / mp4).write_bytes(b"not a real video")
+    events = version / "render_index" / "events"
+    events.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "generator": "livingroom_rand",
+        "asset_type": "camera",
+        "variant_key": "linear_pan-workbench-traj2",
+        "status": "success",
+        "cmd": ["infinigen", "livingroom_rand"],
+        "images": [mp4],
+        "tris": 10,
+        "cpu_time_sec": 1.0,
+        "gpu_time_sec": 2.0,
+    }
+    (events / "0.json").write_text(json.dumps(payload))
+    return version
+
+
+def test_trajectory_video_does_not_crash_mse(tmp_path):
+    """A camera-trajectory .mp4 must display without PIL trying to load it as an
+    image, and must not poison the row's avg MSE."""
+    rows = _build([_traj_run(tmp_path, "before"), _traj_run(tmp_path, "after")])
+    row = next(r for r in rows if r["asset"] == "livingroom_rand")
+
+    paths = [i["path"] for i in row["objects"][-1]["images"] if i["path"]]
+    assert any(p.endswith(".mp4") for p in paths)
+    avg = row["avg_mse"]
+    assert avg is None or math.isfinite(avg)
+
+
+def test_pairwise_mse_skips_video():
+    img = {"pass_type": "image", "filename": "x/image_Camera.mp4"}
+    png = {"pass_type": "image", "filename": "x/0000.png"}
+    assert display._pairwise_mse(img, png, Path("a"), Path("b")) is None
+    assert display._pairwise_mse(img, img, Path("a"), Path("b")) is None

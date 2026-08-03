@@ -223,6 +223,13 @@ def print_collection_summary(results: list[CollectionResult]):
     print()
 
 
+VIDEO_SUFFIXES = (".mp4", ".webm", ".mov", ".mkv")
+
+
+def _is_video(filename: str) -> bool:
+    return filename.lower().endswith(VIDEO_SUFFIXES)
+
+
 @lru_cache(maxsize=2048)
 def _load_image_array(path_str: str):
     with Image.open(path_str) as image:
@@ -267,6 +274,10 @@ def _pairwise_mse(img_a, img_b, root_a: Path, root_b: Path) -> float:
     file_b = _get_field(img_b, "filename")
     has_a = bool(file_a)
     has_b = bool(file_b)
+
+    # Trajectory videos aren't pixel-comparable; skip (still shown via <video> tag).
+    if _is_video(file_a) or _is_video(file_b):
+        return None
 
     if has_a != has_b:
         return math.inf
@@ -396,10 +407,12 @@ def _compute_pairwise_mse_map(
     default_workers = min(32, os.cpu_count() or 1)
     workers = int(os.environ.get("COMPARE_MSE_WORKERS", default_workers))
     if workers <= 1 or len(variant_keys) < 8:
-        return dict(compute_one(key) for key in variant_keys)
+        pairs = [compute_one(key) for key in variant_keys]
+    else:
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            pairs = list(pool.map(compute_one, variant_keys))
 
-    with ThreadPoolExecutor(max_workers=workers) as pool:
-        return dict(pool.map(compute_one, variant_keys))
+    return {key: mse for key, mse in pairs if mse is not None}
 
 
 def _stat_dict(st) -> dict:
@@ -515,10 +528,20 @@ def render_row(
     else:
         asset_label = asset_name
 
+    available_versions = [
+        obj["version"]
+        for obj in objects
+        if any(
+            image.get("path") or image.get("command_text") or image.get("stderr_text")
+            for image in obj["images"]
+        )
+    ]
+
     return {
         "asset": asset_name,
         "asset_label": asset_label,
         "asset_type": asset_type,
+        "available_versions": available_versions,
         "avg_mse": avg_mse,
         "not_run": not_run,
         "is_new": is_new,
@@ -586,12 +609,12 @@ def _fold_presets(rows: list[dict], parents: dict) -> list[dict]:
     return [row for row in rows if row["asset"] not in folded]
 
 
-# key, title, stats category, folded-by-default. Normals reuse the rgb pass's render, so no metrics.
+# key, title, stats category, folded-by-default, scroll group.
 SECTION_SPECS = [
-    ("seeds", "Random seeds", "distribution", False),
-    ("presets", "Presets", "preset", False),
-    ("normals", "Normals", None, True),
-    ("exports", "Exports", "exports", True),
+    ("seeds", "Random seeds", "distribution", False, "visuals"),
+    ("normals", "Normals", None, True, "visuals"),
+    ("presets", "Presets", "preset", False, "presets"),
+    ("exports", "Exports", "exports", True, "exports"),
 ]
 
 
@@ -614,7 +637,7 @@ def _group_images_by_section(images: list[dict]) -> dict[str, list[dict]]:
 
 
 def _make_section(spec: tuple, images: list[dict], section_metrics: dict) -> dict:
-    key, title, stat_cat, folded = spec
+    key, title, stat_cat, folded, scroll_group = spec
     metrics = section_metrics.get(stat_cat) if stat_cat else None
     return {
         "key": key,
@@ -622,6 +645,7 @@ def _make_section(spec: tuple, images: list[dict], section_metrics: dict) -> dic
         "images": images,
         "metrics": metrics,
         "folded": folded,
+        "scroll_group": scroll_group,
     }
 
 
@@ -648,7 +672,7 @@ def build_section_controls(rows: list[dict]) -> list[dict]:
     present = _present_section_keys(rows)
     controls = [
         {"key": key, "title": title, "folded": folded}
-        for key, title, _cat, folded in SECTION_SPECS
+        for key, title, _cat, folded, _scroll_group in SECTION_SPECS
         if key in present
     ]
 

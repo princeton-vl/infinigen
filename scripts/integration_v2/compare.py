@@ -188,11 +188,6 @@ def index():
 
     mode = request.args.get("mode", "sidebyside")
 
-    all_assets_sets = [set(result.assets.keys()) for result in collection_results]
-    assets_match = len(all_assets_sets) <= 1 or all(
-        s == all_assets_sets[0] for s in all_assets_sets
-    )
-
     return render_template(
         "compare.html",
         rows=rows_data,
@@ -201,7 +196,6 @@ def index():
         version_totals=version_totals,
         section_controls=build_section_controls(rows_data),
         mode=mode,
-        assets_match=assets_match,
         perf_enabled=perf_enabled,
     )
 
