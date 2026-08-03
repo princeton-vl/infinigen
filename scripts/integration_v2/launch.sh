@@ -68,7 +68,7 @@ fi
 # render_cycles drops the surface-normal pass; the GT exporter renders it as a second unshaded pass.
 NORMAL_STEPS="render_cycles_ground_truth visualize_gt"
 
-# integration_test_string = full command tail; few materials set it, rest default to Suzanne.
+# integration_test_string = full command tail; few materials set it, rest default to the cube.
 MATERIAL_CMDS=$(uv run python -m infinigen2.list $LIST_ARGS --categories Material \
     --columns shortname integration_test_string --missing_values drop \
     --separator $'\t' $REST_ARGS)
@@ -98,9 +98,9 @@ MATERIAL_DEFAULTS=$(defaults_in_shard "$MATERIAL_CMDS" "$MATERIALS")
 PRESET_OVERRIDES=$(overrides_in_shard "$PRESET_CMDS" "$PRESETS")
 PRESET_DEFAULTS=$(defaults_in_shard "$PRESET_CMDS" "$PRESETS")
 
-# MATERIALS VISUAL CHECK (Suzanne defaults + own-tail overrides; normals on every seed)
+# MATERIALS VISUAL CHECK (cube defaults + own-tail overrides; normals on every seed)
 for i in {0..5}; do
-    echo "$MATERIAL_DEFAULTS" | xargs $MATERIAL_XARGS "${RENDER_RUNNER_ARGS[@]}" {} material_monkey render_cycles $NORMAL_STEPS \
+    echo "$MATERIAL_DEFAULTS" | xargs $MATERIAL_XARGS "${RENDER_RUNNER_ARGS[@]}" {} material_cube render_cycles $NORMAL_STEPS \
         $GEN_ARGS --output $OUTPUT_PATH/material-{}-cube-cycles-$i --seed $i \
         --passes rgb surface-normal --displacement_mode DISPLACEMENT_AND_BUMP -r 192 192 -s 128
     while IFS=$'\t' read -r sn cmd; do
@@ -112,7 +112,7 @@ for i in {0..5}; do
 done
 
 # MATERIAL PRESETS VISUAL CHECK (fixed-look variants; deterministic, one seed each)
-echo "$PRESET_DEFAULTS" | xargs $MATERIAL_XARGS "${RENDER_RUNNER_ARGS[@]}" {} material_monkey render_cycles \
+echo "$PRESET_DEFAULTS" | xargs $MATERIAL_XARGS "${RENDER_RUNNER_ARGS[@]}" {} material_cube render_cycles \
     $GEN_ARGS --output $OUTPUT_PATH/preset-{}-cube-cycles-0 --seed 0 \
     --passes rgb --displacement_mode DISPLACEMENT_AND_BUMP -r 192 192 -s 128
 while IFS=$'\t' read -r sn cmd; do

@@ -312,7 +312,6 @@
   {
     "category": "Material",
     "name": "infinigen2.shaders.base_materials.leather.leather_rand",
-    "integration_test_string": "leather_rand material_banana render_cycles",
     "presets": [
       "leather_animal_preset",
       "leather_furniture_patina_preset",
@@ -716,7 +715,6 @@
   {
     "category": "Material",
     "name": "infinigen2.shaders.base_materials.plastic.plastic_rand",
-    "integration_test_string": "plastic_rand material_banana render_cycles",
     "presets": [
       "plastic_black_rubberized_preset",
       "plastic_black_translucent_preset",
@@ -727,13 +725,11 @@
   },
   {
     "category": "Material",
-    "name": "infinigen2.shaders.base_materials.plastic.plastic_translucent_rand",
-    "integration_test_string": "plastic_translucent_rand material_banana render_cycles"
+    "name": "infinigen2.shaders.base_materials.plastic.plastic_translucent_rand"
   },
   {
     "category": "Material",
-    "name": "infinigen2.shaders.base_materials.plastic.plastic_grayscale_rand",
-    "integration_test_string": "plastic_grayscale_rand material_banana render_cycles"
+    "name": "infinigen2.shaders.base_materials.plastic.plastic_grayscale_rand"
   },
   {
     "category": "Material",
