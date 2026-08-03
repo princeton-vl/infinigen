@@ -302,6 +302,7 @@ class PrimitivesResult(NamedTuple):
 def primitives_rand(
     rng: pf.RNG,
     target_size: float | None = None,
+    max_subsurf_levels: int | None = None,
 ) -> PrimitivesResult:
     (
         rng_effect_choice,
@@ -341,9 +342,10 @@ def primitives_rand(
             softness_degrees=crease_softness,
         )
     )
-    pf.ops.modifier.subdivide_surface(
-        obj, levels=result.subsurf_levels, _skip_apply=True
-    )
+    subsurf_levels = result.subsurf_levels
+    if max_subsurf_levels is not None:
+        subsurf_levels = min(subsurf_levels, max_subsurf_levels)
+    pf.ops.modifier.subdivide_surface(obj, levels=subsurf_levels, _skip_apply=True)
 
     aspect_x = pf.random.uniform(rng_aspect, 0.6, 1.6)
     aspect_y = pf.random.uniform(rng_aspect, 0.6, 1.6)

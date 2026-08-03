@@ -3,6 +3,9 @@
 
 # Authors: Alexander Raistrick
 
+import re
+
+import bpy
 import numpy as np
 import procfunc as pf
 
@@ -11,7 +14,52 @@ from infinigen2.scenes.placement import collision as ccol
 __all__ = [
     "distribute_in_bbox",
     "duplicates",
+    "propagate_modifiers_to_instances",
 ]
+
+_MODIFIER_SKIP_PROPS = ("rna_type", "type", "name")
+
+
+def _copy_modifier(src: bpy.types.Modifier, dst_obj: bpy.types.Object) -> None:
+    new = dst_obj.modifiers.new(src.name, src.type)
+    for prop in src.bl_rna.properties:
+        if prop.is_readonly or prop.identifier in _MODIFIER_SKIP_PROPS:
+            continue
+        setattr(new, prop.identifier, getattr(src, prop.identifier))
+    if src.type != "NODES":
+        return
+    for key in src.keys():
+        new[key] = src[key]
+
+
+def _datablock_stem(name: str) -> str:
+    return re.sub(r"\.\d+$", "", name)
+
+
+def _templates_by_stem(
+    templates: list[pf.MeshObject],
+) -> dict[str, pf.MeshObject]:
+    by_stem = {}
+    for template in templates:
+        stem = _datablock_stem(template.item().data.name)
+        if stem in by_stem:
+            raise ValueError(f"templates share mesh datablock stem {stem!r}")
+        by_stem[stem] = template
+    return by_stem
+
+
+def propagate_modifiers_to_instances(
+    templates: list[pf.MeshObject], instances: list[pf.MeshObject]
+) -> None:
+    # to_aliases copies each template's evaluated mesh, so aliases keep its datablock stem
+    by_stem = _templates_by_stem(templates)
+    for inst in instances:
+        stem = _datablock_stem(inst.item().data.name)
+        template = by_stem.get(stem)
+        if template is None:
+            raise ValueError(f"alias mesh stem {stem!r} matches no template")
+        for mod in template.item().modifiers:
+            _copy_modifier(mod, inst.item())
 
 
 def _compute_grid_locations(

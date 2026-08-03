@@ -18,7 +18,10 @@ from infinigen2.objects import lamp, storage, wall_art, window
 from infinigen2.objects.ceiling_light import ceiling_light_rand
 from infinigen2.scenes.placement import collision as ccol
 from infinigen2.scenes.placement.culling import keep_non_colliding
-from infinigen2.scenes.placement.distribute import duplicates
+from infinigen2.scenes.placement.distribute import (
+    duplicates,
+    propagate_modifiers_to_instances,
+)
 from infinigen2.scenes.room.room_shape import RoomShapeResult
 from infinigen2.shaders.functionality_lists import (
     ceiling_material_rand,
@@ -1476,6 +1479,7 @@ def ceiling_light_placement_rand(
         rotation_offset=lamp_hang,
     )
     meshes = pf.nodes.to_aliases(instances)
+    propagate_modifiers_to_instances([mesh_template], meshes)
 
     if lamp_template.light is None or not meshes or light_offset is None:
         return meshes, []
@@ -1851,7 +1855,7 @@ def ceiling_feature_rand(
     option = pf.control.choice(
         rng_choice,
         [
-            (ceiling_plain_with_lights, 3.0),
+            (ceiling_plain_with_lights, 4.0),
             (ceiling_skylights, 1.0),
             (ceiling_light_bars, 1.0),
         ],

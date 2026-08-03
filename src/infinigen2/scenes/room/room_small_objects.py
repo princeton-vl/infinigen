@@ -24,6 +24,7 @@ from procfunc.nodes import types as t
 from infinigen2.objects import random_primitives
 from infinigen2.scenes.placement import collision as ccol
 from infinigen2.scenes.placement.culling import keep_non_colliding
+from infinigen2.scenes.placement.distribute import propagate_modifiers_to_instances
 
 __all__ = [
     "objects_scatter_rand",
@@ -228,11 +229,13 @@ def _pick_child(
 def _bake_and_filter(
     geometry: pf.ProcNode,
     parent: pf.MeshObject,
+    templates: list[pf.MeshObject],
     colliders: ccol.CollisionSet,
 ) -> tuple[list[pf.MeshObject], ccol.CollisionSet]:
     """Realize instances into world space (the geonode ran in parent-local space)
     and drop any that collide with already-placed geometry."""
     instances = pf.nodes.to_aliases(geometry)
+    propagate_modifiers_to_instances(templates, instances)
     for alias in instances:
         alias.item().matrix_world = (
             parent.item().matrix_world @ alias.item().matrix_world
@@ -284,7 +287,7 @@ def _scatter_on_target(
             id=pf.nodes.geo.input_index(),
         ),
     )
-    return _bake_and_filter(geometry, parent, colliders)
+    return _bake_and_filter(geometry, parent, list(child), colliders)
 
 
 def _row_on_target(
@@ -322,7 +325,7 @@ def _row_on_target(
             id=pf.nodes.geo.input_index(),
         ),
     )
-    return _bake_and_filter(geometry, parent, colliders)
+    return _bake_and_filter(geometry, parent, list(child), colliders)
 
 
 def _mixed_on_target(
@@ -348,6 +351,7 @@ def small_objects_collection_rand(rng: pf.RNG) -> pf.Collection:
         mesh = random_primitives.primitives_rand(
             rng_mesh,
             target_size=pf.random.clip_gaussian(rng_mesh, 0.13, 0.07, 0.08, 0.3),
+            max_subsurf_levels=1,
         ).mesh
         pf.ops.mesh.transform_apply(mesh)
         bmin, _ = pf.ops.attr.bbox_min_max(mesh, global_coords=False)
