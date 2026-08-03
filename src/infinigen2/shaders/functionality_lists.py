@@ -114,6 +114,7 @@ def table_top_material_rand(rng: pf.RNG, vec) -> pf.Material:
             (ceramic.ceramic_rand, 1.0),
             (granite.granite_smooth_rand, 1.0),
             (glass_colored.glass_colored_rand, 0.5),
+            (plastic.plastic_translucent_rand, 0.25),
         ],
     )
     material = material_func(rng_mat, vec)
@@ -182,6 +183,8 @@ def decorative_material_rand(rng: pf.RNG, vec) -> pf.Material:
             (metal_hammered.metal_hammered_rand, 2.0),
             (plastic.plastic_grayscale_rand, 1.0),
             (plastic.plastic_rand, 1.0),
+            (plastic.plastic_translucent_rand, 1.0),
+            (glass_colored.glass_colored_rand, 1.0),
             (wood_grain.wood_grain_rand, 0.5),
         ],
     )
@@ -389,6 +392,7 @@ def all_materials_rand(rng: pf.RNG, vector: pf.ProcNode[pf.Vector]) -> pf.Materi
             (metal_hammered.metal_hammered_rand, 1.0),
             (paint.paint_rand, 2.0),
             (plastic.plastic_rand, 1.0),
+            (plastic.plastic_translucent_rand, 1.0),
             (stone_smooth.stone_smooth_rand, 1.0),
             (terrazzo.terrazzo_rand, 1.0),
             (wood_grain.wood_grain_rand, 2.0),

@@ -318,8 +318,8 @@ def material_banana(
     pf.ops.object.set_material(obj, material=material)
 
     cam = hardcoded_camera(
-        base_location=obj.item().location,
-        dist_mult=0.06,
+        base_location=obj.item().location + t.Vector((0.02, 0.026, 0.0)),
+        dist_mult=0.042,
     )
     plane = grid_plane()
     if environment is None:
