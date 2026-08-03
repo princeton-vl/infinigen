@@ -325,6 +325,7 @@ def _cleanup_except_returnvals(return_data: dict) -> list[str]:
     valid_objects = list(return_data.get("objects", []))
     valid_objects.extend(return_data.get("cameras", []))
     valid_objects.extend(return_data.get("lights", []))
+    valid_objects.extend(return_data.get("curves", []))
     if "obj" in return_data:
         valid_objects.append(return_data["obj"])
     valid_objects = [o.item() for o in valid_objects]
@@ -517,6 +518,30 @@ def _as_material(result: Any) -> pf.Material:
     return pf.Material(surface=pf.nodes.shader.diffuse_bsdf(color=result))
 
 
+def _unpack_scene(result, data: dict):
+    data["objects"] += result.all_objects
+    data["all_objects"] = result.all_objects
+    data["cameras"] += getattr(result, "cameras", [])
+    data["lights"] += getattr(result, "lights", [])
+    if getattr(result, "environment", None) is not None:
+        data["environment"] = result.environment
+    curves = getattr(result, "curves", None)
+    if curves:
+        data["curves"] = list(curves)
+        data["curve"] = curves[0]
+    if hasattr(result, "colliders"):
+        data["colliders"] = result.colliders
+    if getattr(result, "floor", None) is not None:
+        data["floor"] = result.floor
+    if getattr(result, "dimensions", None) is not None:
+        data["dimensions"] = result.dimensions
+        dims = result.dimensions
+        data["bbox"] = (
+            np.zeros(3),
+            np.array([float(dims.x), float(dims.y), float(dims.z)]),
+        )
+
+
 def _unpack_by_category(category: str, result, data: dict):
     match category:
         case "Material" | "MaterialOverlay":
@@ -532,23 +557,7 @@ def _unpack_by_category(category: str, result, data: dict):
             if hasattr(result, "light") and result.light is not None:
                 data.setdefault("lights", []).append(result.light)
         case "Scene":
-            data["objects"] += result.all_objects
-            data["all_objects"] = result.all_objects
-            data["cameras"] += getattr(result, "cameras", [])
-            data["lights"] += getattr(result, "lights", [])
-            if getattr(result, "environment", None) is not None:
-                data["environment"] = result.environment
-            if hasattr(result, "colliders"):
-                data["colliders"] = result.colliders
-            if getattr(result, "floor", None) is not None:
-                data["floor"] = result.floor
-            if getattr(result, "dimensions", None) is not None:
-                data["dimensions"] = result.dimensions
-                dims = result.dimensions
-                data["bbox"] = (
-                    np.zeros(3),
-                    np.array([float(dims.x), float(dims.y), float(dims.z)]),
-                )
+            _unpack_scene(result, data)
         case "Environment":
             if result.environment is not None:
                 data["environment"] = result.environment

@@ -4,7 +4,6 @@
 # Authors: Alexander Raistrick
 
 import logging
-from typing import NamedTuple
 
 import numpy as np
 import procfunc as pf
@@ -13,13 +12,16 @@ from procfunc import types as t
 from infinigen2.cameras import camera_with_distance_framing_objects
 from infinigen2.lighting import sky_lighting
 from infinigen2.objects.dev import banana
+from infinigen2.scenes.demo_util import (
+    DevSceneResult,
+    demo_cube,
+    grid_plane,
+    hardcoded_camera,
+    scale_reference,
+)
 from infinigen2.shaders.dev import developer_grid
 
 __all__ = [
-    "DevSceneResult",
-    "demo_cube",
-    "grid_plane",
-    "hardcoded_camera",
     "material_banana",
     "material_cube",
     "material_monkey",
@@ -28,8 +30,6 @@ __all__ = [
     "material_plane_uv",
     "material_sphere",
     "material_torus_uv",
-    "object_demo",
-    "scale_reference",
 ]
 
 logger = logging.getLogger(__name__)
@@ -39,118 +39,6 @@ def _demo_sky() -> pf.World:
     return sky_lighting.nishita_sky(
         sun_rotation_deg=260, sun_elevation_deg=30
     ).environment
-
-
-class DevSceneResult(NamedTuple):
-    all_objects: list
-    cameras: list
-    lights: list = ()
-    environment: pf.World | None = None
-
-
-@pf.tracer.generator
-def scale_reference(
-    location: np.ndarray,
-    radius: float = 0.3,
-) -> pf.MeshObject:
-    height = 1.65
-    location = np.array(location) + np.array((0, 0, height / 2 - 0.05))
-    res = pf.ops.primitives.mesh_cylinder(
-        radius=radius,
-        depth=height,
-        location=location,
-    )
-    pf.ops.mesh.subdivide(res, number_cuts=1)
-    pf.ops.modifier.subdivide_surface(res, levels=3, _skip_apply=True)
-    return res
-
-
-@pf.tracer.generator
-def hardcoded_camera(
-    base_location: t.Vector,
-    dist_mult: float = 1,
-    elevation_deg: float = 19,
-    altitude: float = 2.2,
-    yaw_offset_deg: float = 0,
-) -> pf.CameraObject:
-    res = pf.ops.primitives.perspective_camera()
-
-    obj = res.item()
-
-    obj.location = base_location + t.Vector((5, -4, altitude)) * dist_mult
-    obj.keyframe_insert("location", frame=0)
-    obj.location.x += 1
-    obj.keyframe_insert("location", frame=10)
-    obj.rotation_euler = np.deg2rad(
-        np.array([90 - elevation_deg, 0, 52 + yaw_offset_deg])
-    )
-    obj.keyframe_insert("rotation_euler")
-
-    return res
-
-
-def grid_plane() -> pf.MeshObject:
-    plane = pf.ops.primitives.mesh_plane(location=t.Vector((0, 0, 0)), size=8)
-    material = developer_grid(vector=pf.nodes.shader.coord().generated)
-    pf.ops.object.set_material(plane, material=material)
-    return plane
-
-
-def demo_cube(size: float = 1.0) -> pf.MeshObject:
-    obj = pf.ops.primitives.mesh_cube(
-        size=size,
-        location=t.Vector((0, 0, size / 2)),
-        rotation=t.Euler((0, 0, np.pi * 0.15)),
-    )
-    pf.ops.modifier.bevel(obj, width=0.06 * size, segments=2)
-    pf.ops.modifier.subdivide_surface(obj, levels=6, _skip_apply=True)
-    return obj
-
-
-@pf.tracer.grammar
-def object_demo(
-    rng: pf.RNG,
-    obj: pf.MeshObject | None = None,
-    all_objects: list[pf.MeshObject] | None = None,
-    camera: pf.CameraObject | None = None,
-    environment: pf.World | None = None,
-) -> DevSceneResult:
-    if obj is not None:
-        assert all_objects is None, "object_demo takes obj or all_objects, not both"
-        all_objects = [obj]
-    if all_objects is None:
-        logger.warning("No object provided; using a default object.")
-        all_objects = [demo_cube()]
-
-    bounds = [pf.ops.attr.bbox_min_max(o, global_coords=True) for o in all_objects]
-    bbox_min = np.min([lo for lo, _ in bounds], axis=0)
-    bbox_max = np.max([hi for _, hi in bounds], axis=0)
-    for o in all_objects:
-        o.item().location.z -= bbox_min[-1]
-    bbox_max[-1] -= bbox_min[-1]
-    bbox_min[-1] = 0.0
-
-    if camera is None:
-        camera = camera_with_distance_framing_objects(
-            all_objects, t.Vector((1, 1, 0.4)), margin_pct=0.1, use_bbox=True
-        )
-
-    if environment is None:
-        environment = sky_lighting.nishita_sky(
-            sun_rotation_deg=200,
-            sun_elevation_deg=30,
-        ).environment
-    background = grid_plane()
-
-    ref_rad = 0.3
-    pos = (bbox_min[0] - ref_rad - 0.1, 0, 0)
-    scale_ref = scale_reference(location=pos, radius=ref_rad)
-
-    return DevSceneResult(
-        environment=environment,
-        all_objects=[*all_objects, background, scale_ref],
-        cameras=[camera],
-    )
 
 
 @pf.tracer.grammar

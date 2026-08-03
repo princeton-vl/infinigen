@@ -448,56 +448,56 @@
   },
   {
     "category": "Scene",
-    "name": "infinigen2.scenes.asset_demo.material_sphere",
+    "name": "infinigen2.scenes.demo_curve.curve_demo"
+  },
+  {
+    "category": "Scene",
+    "name": "infinigen2.scenes.demo_curve.trim_demo"
+  },
+  {
+    "category": "Scene",
+    "name": "infinigen2.scenes.demo_material.material_banana",
     "num_seeds": 0
   },
   {
     "category": "Scene",
-    "name": "infinigen2.scenes.asset_demo.material_torus_uv",
+    "name": "infinigen2.scenes.demo_material.material_cube",
     "num_seeds": 0
   },
   {
     "category": "Scene",
-    "name": "infinigen2.scenes.asset_demo.material_banana",
+    "name": "infinigen2.scenes.demo_material.material_monkey",
     "num_seeds": 0
   },
   {
     "category": "Scene",
-    "name": "infinigen2.scenes.asset_demo.material_monkey",
+    "name": "infinigen2.scenes.demo_material.material_plane_horizontal_uv",
     "num_seeds": 0
   },
   {
     "category": "Scene",
-    "name": "infinigen2.scenes.asset_demo.material_cube",
+    "name": "infinigen2.scenes.demo_material.material_plane_orthographic",
     "num_seeds": 0
   },
   {
     "category": "Scene",
-    "name": "infinigen2.scenes.asset_demo.material_plane_uv",
+    "name": "infinigen2.scenes.demo_material.material_plane_uv",
     "num_seeds": 0
   },
   {
     "category": "Scene",
-    "name": "infinigen2.scenes.asset_demo.material_plane_orthographic",
+    "name": "infinigen2.scenes.demo_material.material_sphere",
     "num_seeds": 0
   },
   {
     "category": "Scene",
-    "name": "infinigen2.scenes.asset_demo.material_plane_horizontal_uv",
+    "name": "infinigen2.scenes.demo_material.material_torus_uv",
     "num_seeds": 0
   },
   {
     "category": "Scene",
-    "name": "infinigen2.scenes.asset_demo.object_demo",
+    "name": "infinigen2.scenes.demo_object.object_demo",
     "num_seeds": 0
-  },
-  {
-    "category": "Scene",
-    "name": "infinigen2.scenes.curve_demo.curve_demo"
-  },
-  {
-    "category": "Scene",
-    "name": "infinigen2.scenes.curve_demo.trim_demo"
   },
   {
     "category": "Scene",

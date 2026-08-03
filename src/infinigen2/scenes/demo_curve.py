@@ -12,7 +12,8 @@ from infinigen2.curves.skirting_board_profile import (
     skirting_profile_rand,
     trim_profile_rand,
 )
-from infinigen2.scenes.asset_demo import DevSceneResult, object_demo
+from infinigen2.scenes.demo_object import object_demo
+from infinigen2.scenes.demo_util import DevSceneResult
 from infinigen2.shaders.functionality_lists import skirt_material_rand
 from infinigen2.util.curve import curve_to_mesh_with_uv, fillet_mask
 
@@ -63,7 +64,15 @@ def curve_demo(
     fillet_large: float = 0.75,
     fillet_small: float = 0.1,
 ) -> DevSceneResult:
+    """Emit a representative base path curve into the pipeline state, and render it
+    swept with a default profile so it stands alone as a scene. Downstream curve
+    generators receive the path via their `curve` / `base_curve` parameter."""
     rng_profile, rng_mat, rng_scene = rng.spawn(3)
+
+    base_node = _demo_base_curve(
+        size=size, fillet_large=fillet_large, fillet_small=fillet_small
+    )
+    base_curve = pf.nodes.to_curve_object(base_node)
 
     if profile is None:
         logger.warning("No profile provided; using a default skirting profile.")
@@ -71,12 +80,10 @@ def curve_demo(
     if material is None:
         material = skirt_material_rand(rng_mat, pf.nodes.shader.coord().uv)
 
-    base = _demo_base_curve(
-        size=size, fillet_large=fillet_large, fillet_small=fillet_small
-    )
+    base_geo = pf.nodes.geo.object_info(base_curve).geometry
     profile_geo = pf.nodes.geo.object_info(profile).geometry
 
-    swept = curve_to_mesh_with_uv(base, profile_geo, fill_caps=True).mesh
+    swept = curve_to_mesh_with_uv(base_geo, profile_geo, fill_caps=True).mesh
     swept = pf.nodes.geo.flip_faces(swept)
     swept = pf.nodes.to_mesh_object(swept)
 
@@ -86,7 +93,8 @@ def curve_demo(
         displacement=material.displacement,
     )
 
-    return object_demo(rng_scene, all_objects=[swept])
+    scene = object_demo(rng_scene, all_objects=[swept])
+    return scene._replace(curves=[base_curve])
 
 
 @pf.tracer.grammar
