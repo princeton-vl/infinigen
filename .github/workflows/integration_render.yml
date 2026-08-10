@@ -2,7 +2,7 @@ name: Integration Render
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
+    types: [opened, synchronize, reopened, ready_for_review, closed]
   push:
     branches:
       - develop
@@ -15,9 +15,9 @@ on:
         type: string
 
 concurrency:
-  # Per-PR group (re-push supersedes); per-SHA push group so baseline runs are never cancelled.
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  # Per-PR group; develop pushes share one group, main pushes stay per-SHA.
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || (github.event_name == 'push' && github.ref_name == 'develop' && 'push-develop') || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref_name == 'develop') }}
 
 env:
   RENDER_ARCHIVE_ROOT: /home/renderbot/integration_test_archive/renders/integration
@@ -25,7 +25,7 @@ env:
 
 jobs:
   render:
-    if: github.repository == 'princeton-vl/infinigen_internal' && github.event.pull_request.draft == false
+    if: github.repository == 'princeton-vl/infinigen_internal' && github.event.pull_request.draft == false && github.event.action != 'closed'
     runs-on: [self-hosted, renderbot]
 
     steps:
