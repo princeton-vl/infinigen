@@ -6,8 +6,11 @@
 
 {% macro version_header(v) %}
 {% if v.role %}<span class="ba-badge {{ v.role }}">{{ v.role | upper }}</span>{% endif %}
+{% if v.tag %}<a class="vh-tag" href="{{ v.tag_url }}" target="_blank" rel="noopener">{{ v.tag }}</a>
+{% else %}
 {% if v.branch_url %}<a class="vh-branch" href="{{ v.branch_url }}" target="_blank" rel="noopener" title="{{ v.name }}">{{ v.branch }}</a>{% else %}<span class="vh-branch" title="{{ v.name }}">{{ v.branch or v.name }}</span>{% endif %}
 {% if v.commit %} <a class="vh-commit" href="{{ v.commit_url }}" target="_blank" rel="noopener">{{ v.commit }}</a>{% endif %}
+{% endif %}
 {% if v.pr %} <a class="vh-pr" href="{{ v.pr_url }}" target="_blank" rel="noopener">PR #{{ v.pr }}</a>{% endif %}
 {% endmacro %}
 
@@ -20,7 +23,7 @@
     {% if img.path.endswith('.mp4') %}
     <video class="trajectory-video" src="/images/{{ img.path }}" muted loop playsinline preload="none"></video>
     {% else %}
-    <img src="/images/{{ img.path }}" loading="lazy" alt="{{ img.label }}">
+    <img src="/images/{{ img.path }}" loading="lazy" decoding="async" alt="{{ img.label }}">
     {% endif %}
     {% else %}
     <div class="missing-placeholder">
@@ -401,6 +404,11 @@
             background: #2e7d32;
         }
 
+        .vh-tag {
+            font-weight: bold;
+            font-size: 15px;
+        }
+
         .vh-branch {
             font-weight: bold;
         }
@@ -414,12 +422,12 @@
             font-weight: bold;
         }
 
-        .vh-branch, .vh-commit, .vh-pr {
+        .vh-tag, .vh-branch, .vh-commit, .vh-pr {
             color: #1a5fb4;
             text-decoration: none;
         }
 
-        a.vh-branch:hover, a.vh-commit:hover, a.vh-pr:hover {
+        a.vh-tag:hover, a.vh-branch:hover, a.vh-commit:hover, a.vh-pr:hover {
             text-decoration: underline;
         }
 

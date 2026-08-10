@@ -62,7 +62,7 @@ DEFAULT_REPO = "princeton-vl/infinigen_internal"
 
 
 def get_git_info(path: Path) -> dict[str, str | None]:
-    info = {"branch": None, "commit": None, "pr": None, "repo": None}
+    info = {"branch": None, "commit": None, "pr": None, "repo": None, "tag": None}
     # Prefer metadata written by launch.sh
     toml_path = path / "git_info.toml"
     if toml_path.exists():
@@ -95,13 +95,17 @@ def build_version_meta(
         entry = {
             "name": name,
             "role": role,
+            "tag": git["tag"],
             "branch": git["branch"],
             "commit": git["commit"],
             "pr": git["pr"] if role != "before" else None,
+            "tag_url": None,
             "branch_url": None,
             "commit_url": None,
             "pr_url": None,
         }
+        if git["tag"]:
+            entry["tag_url"] = f"https://github.com/{repo}/releases/tag/{git['tag']}"
         if git["branch"]:
             entry["branch_url"] = f"https://github.com/{repo}/tree/{git['branch']}"
         if git["commit"]:

@@ -16,6 +16,8 @@ import subprocess
 import sys
 import traceback
 import types
+import urllib.error
+import urllib.request
 from pathlib import Path
 from typing import TypeVar
 
@@ -27,6 +29,8 @@ from sphinx.ext import apidoc
 from sphinx.ext.autodoc import ModuleDocumenter
 from sphinx.util import logging as sphinx_logging
 from sphinx.util.typing import stringify_annotation
+
+import infinigen2
 
 logger = sphinx_logging.getLogger(__name__)
 
@@ -303,21 +307,20 @@ _CATEGORY_IMAGE_COUNT = {
 # Categories shown as autoplaying trajectory videos (mp4); seed count from num_seeds.
 _VIDEO_CATEGORIES = frozenset({"Cameras"})
 
-# Image URLs: <base>/<slug>/images/<name>/<seed>.png; empty base = local paths.
+# Image URLs: <base>/<slug>/<archive-dir>/<media>; empty base = local paths.
 IMAGE_URL_BASE = os.environ.get(
-    "INFINIGEN_DOCS_IMAGE_BASE", "https://infinigen.cs.princeton.edu/docs"
+    "INFINIGEN_DOCS_IMAGE_BASE", "https://infinigen.cs.princeton.edu/changes"
 )
 
 
+# Renders come from the archive frozen for the version being built.
 def _version_slug() -> str:
-    env = os.environ.get("READTHEDOCS_VERSION") or os.environ.get(
-        "INFINIGEN_DOCS_VERSION"
+    env = (
+        os.environ.get("INFINIGEN_DOCS_IMAGE_VERSION")
+        or os.environ.get("READTHEDOCS_VERSION")
+        or os.environ.get("INFINIGEN_DOCS_VERSION")
     )
-    if env:
-        return env
-    init = (REPO_ROOT / "src" / "infinigen2" / "__init__.py").read_text()
-    match = re.search(r'__version__\s*=\s*"([^"]+)"', init)
-    return f"v{match.group(1)}" if match else "vunknown"
+    return env or f"v{infinigen2.__version__}"
 
 
 VERSION_SLUG = _version_slug()
@@ -339,6 +342,9 @@ def _manifest_entries() -> tuple[dict[str, int], dict[str, str]]:
             continue
         if category in _VIDEO_CATEGORIES:
             count = e.get("num_seeds") or 0
+        elif e.get("num_seeds") == 0:
+            # Deterministic entrypoints (asset_demo base shapes) get no example gallery.
+            count = 0
         else:
             count = _CATEGORY_IMAGE_COUNT.get(category, 0)
         if count:
@@ -367,12 +373,58 @@ def _manifest_entrypoints() -> frozenset[str]:
 _ENTRYPOINTS = _manifest_entrypoints()
 
 
+# category -> (archive dir prefix, obj-engine, media file) matching scripts/integration_v2/launch.sh
+_CATEGORY_ARCHIVE = {
+    "Material": ("material", "cube-cycles", "Camera/0000.png"),
+    "Mask": ("mask", "planeuv-cycles", "Camera/0000.png"),
+    "Object": ("object", "demo-cycles", "Camera/0000.png"),
+    "Scene": ("scene", "demo-cycles", "Camera/0000.png"),
+    "Environment": ("environment", "monkey-cycles", "Camera/0000.png"),
+    "Cameras": ("camera", "livingroom_rand-workbench", "image_Camera.mp4"),
+}
+
+
+def _archive_rel(name: str, seed: int) -> str:
+    category = _IMAGE_CATEGORIES.get(name)
+    prefix, mid, media = _CATEGORY_ARCHIVE[category]
+    variant = f"traj{seed}" if category == "Cameras" else str(seed)
+    shortname = name.rsplit(".", 1)[-1]
+    return f"{prefix}-{shortname}-{mid}-{variant}/{media}"
+
+
+# The publish build adds a WebP beside every PNG; a local archive has only the PNG.
+def _published_url(rel: str) -> str:
+    if rel.endswith(".png"):
+        rel = rel.removesuffix(".png") + ".webp"
+    return f"{IMAGE_URL_BASE}/{VERSION_SLUG}/{rel}"
+
+
+# Strict mode: the archive is already live, so a HEAD probe catches a 404 before shipping it.
+STRICT_ASSET_URLS = os.environ.get("INFINIGEN_DOCS_STRICT_ASSET_URLS") == "1"
+
+_BROKEN_ASSET_URLS: list[str] = []
+
+
+def _check_asset_url(url: str) -> None:
+    if not STRICT_ASSET_URLS:
+        return
+    request = urllib.request.Request(url, method="HEAD")
+    try:
+        urllib.request.urlopen(request, timeout=10)
+    except urllib.error.HTTPError as exc:
+        _BROKEN_ASSET_URLS.append(f"{url} -> HTTP {exc.code}")
+    except urllib.error.URLError as exc:
+        _BROKEN_ASSET_URLS.append(f"{url} -> {exc.reason}")
+
+
 def _image_urls(name: str) -> list[str]:
-    ext = "mp4" if _is_video(name) else "png"
-    rels = [f"images/{name}/{i}.{ext}" for i in range(_IMAGE_COUNTS[name])]
+    rels = [_archive_rel(name, i) for i in range(_IMAGE_COUNTS[name])]
     if not IMAGE_URL_BASE:
         return rels
-    return [f"{IMAGE_URL_BASE}/{VERSION_SLUG}/assets/{rel}" for rel in rels]
+    urls = [_published_url(rel) for rel in rels]
+    for url in urls:
+        _check_asset_url(url)
+    return urls
 
 
 def _replicate_command(category: str, name: str, seed: int) -> str | None:
@@ -419,14 +471,15 @@ def _inject_images(app, what, name, obj, options, lines):  # noqa: ARG001
         lines += _figure_html(url, name, seed, cmd)
 
 
-# Each `*_preset` renders like a material (one deterministic seed), keyed by its
-# full dotted name; scripts/integration_v2/launch.sh produces the image and the
-# ~/projects/infinigen_docs_ops collect step files it under images/<name>/0.png.
+# A *_preset renders one deterministic seed at preset-<shortname>-cube-cycles-0.
 def _preset_image_url(name: str) -> str:
-    rel = f"images/{name}/0.png"
+    shortname = name.rsplit(".", 1)[-1]
+    rel = f"preset-{shortname}-cube-cycles-0/Camera/0000.png"
     if not IMAGE_URL_BASE:
         return rel
-    return f"{IMAGE_URL_BASE}/{VERSION_SLUG}/assets/{rel}"
+    url = _published_url(rel)
+    _check_asset_url(url)
+    return url
 
 
 def _inject_preset_image(app, what, name, obj, options, lines):  # noqa: ARG001
@@ -1161,7 +1214,15 @@ def _skip_imported(app, what, name, obj, skip, options):  # noqa: ARG001
 def _exit_skipping_teardown(app, exception):
     if exception is not None:
         traceback.print_exception(type(exception), exception, exception.__traceback__)
-    code = 1 if (exception is not None or app._warncount > 0) else 0
+    if _BROKEN_ASSET_URLS:
+        listing = "\n".join(f"  - {b}" for b in _BROKEN_ASSET_URLS)
+        print(
+            f"[docs] {len(_BROKEN_ASSET_URLS)} broken asset url(s):\n{listing}",
+            file=sys.stderr,
+        )
+    code = (
+        1 if (exception is not None or app._warncount > 0 or _BROKEN_ASSET_URLS) else 0
+    )
     print(
         f"[docs] build finished: {app._warncount} warning(s), exiting {code}",
         file=sys.stderr,

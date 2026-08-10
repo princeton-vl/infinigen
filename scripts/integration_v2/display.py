@@ -73,7 +73,7 @@ def classify_image(variant_key: str, filename: str) -> dict[str, str]:
 
     if filename.startswith("image_") or filename == "Image" or filename == "image":
         pass_type = "image"
-    elif filename.startswith("surface-normal_"):
+    elif filename.startswith("surface-normal_") or filename == "surface-normal":
         pass_type = "surface-normal"
     elif filename == "error":
         pass_type = "error"
@@ -111,9 +111,25 @@ def _merge_asset(assets: dict[str, AssetData], new_asset: AssetData):
     )
 
 
+_COVERAGE_VALUE_OPTS = {"--rcfile", "--data-file", "--source", "--include", "--omit"}
+
+
+def _strip_coverage(cmd: list[str]) -> list[str]:
+    # CI records argv verbatim; show the rerunnable infinigen2 command, not its wrapper.
+    if "coverage" not in cmd:
+        return cmd
+    rest = cmd[cmd.index("coverage") + 1 :]
+    if not rest or rest[0] != "run":
+        return cmd
+    rest = rest[1:]
+    while rest and rest[0].startswith("-"):
+        rest = rest[2:] if rest[0] in _COVERAGE_VALUE_OPTS else rest[1:]
+    return rest or cmd
+
+
 def _command_text(cmd_field) -> str:
     if isinstance(cmd_field, list):
-        return shlex.join(cmd_field)
+        return shlex.join(_strip_coverage(cmd_field))
     return str(cmd_field or "")
 
 
@@ -282,6 +298,11 @@ def _pairwise_mse(img_a, img_b, root_a: Path, root_b: Path) -> float:
     if has_a != has_b:
         return math.inf
     if not has_a and not has_b:
+        return 0.0
+
+    # Videos aren't pixel-diffable; skip MSE so the diff never opens one as an image.
+    video_exts = (".mp4", ".webm", ".mov")
+    if file_a.lower().endswith(video_exts) or file_b.lower().endswith(video_exts):
         return 0.0
 
     path_a = root_a / file_a
