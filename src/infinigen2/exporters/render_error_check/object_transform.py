@@ -3,9 +3,14 @@
 
 # Authors: Alexander Raistrick
 
+import logging
+
 import procfunc as pf
 
+from infinigen2 import context
 from infinigen2.exporters.render_error_check.util import context_meshes
+
+logger = logging.getLogger(__name__)
 
 SINGULAR_TRANSFORM_EPS = 1e-12
 
@@ -30,7 +35,10 @@ def singular_transform_objects(
 def assert_transforms_nonsingular(objects: list[pf.MeshObject] | None = None):
     bad = singular_transform_objects(objects)
     if bad:
-        raise SingularTransformError(
+        error = SingularTransformError(
             "objects have a singular (zero-scale) world transform, so they collapse "
             f"to a plane/line and render flat or invisible: {bad}"
+        )
+        context.raise_or_warn(
+            context.globals.error_mode_singular_transform, error, logger
         )

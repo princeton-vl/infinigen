@@ -6,7 +6,7 @@
 import copy
 import logging
 import os
-from collections.abc import Iterable, Iterator
+from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import asdict, dataclass, fields
 from typing import Any, Literal
@@ -17,11 +17,12 @@ __all__ = [
     "ERROR_MODES",
     "ErrorMode",
     "InfinigenContext",
+    "check_names",
     "globals",
     "override_globals",
+    "parse_error_modes",
     "raise_or_warn",
-    "set_strict",
-    "strict_names",
+    "set_error_modes",
 ]
 
 ErrorMode = Literal["ignore", "warn", "error"]
@@ -48,24 +49,60 @@ class InfinigenContext:
     error_mode_hidden_render_object: ErrorMode
     """An object passed to the render is hidden from camera, so it silently never renders."""
 
+    error_mode_displacement_coords: ErrorMode
+    """A named-attribute node drives Displacement, which Cycles does not evaluate."""
 
-def _env_error_mode(name: str, default: ErrorMode) -> ErrorMode:
-    mode = os.environ.get(name, default)
-    assert mode in ERROR_MODES, f"{name}={mode!r} must be one of {ERROR_MODES}"
+    error_mode_shader_complexity: ErrorMode
+    """A material exceeds SHADER_NODE_COUNT_FAIL flattened shader nodes."""
+
+    error_mode_uv_coords: ErrorMode
+    """A material samples a UV layer the mesh lacks, or whose UVs are degenerate."""
+
+    error_mode_material_normal_input: ErrorMode
+    """A ShaderNodeNormalMap, or a linked 'Normal'/'Coat Normal' input, encodes bump
+    that the displacement pass discards."""
+
+    error_mode_material_texture_vector: ErrorMode
+    """A ShaderNodeTex* has an unlinked Vector input, so Cycles samples Generated
+    coordinates instead of the intended sample vector."""
+
+    error_mode_material_floating_interface: ErrorMode
+    """A node group contains a floating output/input node instead of routing through
+    the group interface."""
+
+    error_mode_finite_geometry: ErrorMode
+    """A mesh has non-finite (NaN/Inf) vertex coordinates."""
+
+    error_mode_singular_transform: ErrorMode
+    """An object has a singular (zero-scale) world transform, so it renders flat."""
+
+    error_mode_cycles_shader: ErrorMode
+    """Cycles reported a shader/SVM error on stderr during the render."""
+
+
+def _mode(name: str, default: ErrorMode) -> ErrorMode:
+    var = "INFINIGEN_ERROR_MODE_" + name.upper()
+    mode = os.environ.get(var, default)
+    assert mode in ERROR_MODES, f"{var}={mode!r} must be one of {ERROR_MODES}"
     return mode  # type: ignore[return-value]
 
 
 globals = InfinigenContext(
-    error_mode_black_frame=_env_error_mode("INFINIGEN_ERROR_MODE_BLACK_FRAME", "warn"),
-    error_mode_unconverged_samples=_env_error_mode(
-        "INFINIGEN_ERROR_MODE_UNCONVERGED_SAMPLES", "warn"
+    error_mode_black_frame=_mode("black_frame", "warn"),
+    error_mode_unconverged_samples=_mode("unconverged_samples", "warn"),
+    error_mode_missing_attribute=_mode("missing_attribute", "warn"),
+    error_mode_hidden_render_object=_mode("hidden_render_object", "error"),
+    error_mode_displacement_coords=_mode("displacement_coords", "error"),
+    error_mode_shader_complexity=_mode("shader_complexity", "error"),
+    error_mode_uv_coords=_mode("uv_coords", "error"),
+    error_mode_material_normal_input=_mode("material_normal_input", "error"),
+    error_mode_material_texture_vector=_mode("material_texture_vector", "error"),
+    error_mode_material_floating_interface=_mode(
+        "material_floating_interface", "error"
     ),
-    error_mode_missing_attribute=_env_error_mode(
-        "INFINIGEN_ERROR_MODE_MISSING_ATTRIBUTE", "warn"
-    ),
-    error_mode_hidden_render_object=_env_error_mode(
-        "INFINIGEN_ERROR_MODE_HIDDEN_RENDER_OBJECT", "error"
-    ),
+    error_mode_finite_geometry=_mode("finite_geometry", "error"),
+    error_mode_singular_transform=_mode("singular_transform", "error"),
+    error_mode_cycles_shader=_mode("cycles_shader", "error"),
 )
 
 
@@ -75,29 +112,46 @@ def _prefixed_names(context: Any, prefix: str) -> tuple[str, ...]:
     )
 
 
-def strict_names() -> tuple[str, ...]:
-    """Every check accepted by set_strict and --strict, across both the infinigen
-    context (error_mode_<name> fields) and the procfunc context (warn_mode_<name>
-    fields), with the prefix stripped (e.g. "unconverged_samples", "empty_geonodes")."""
+def check_names() -> tuple[str, ...]:
+    """Every check whose severity is settable, across both the infinigen context
+    (error_mode_<name> fields) and the procfunc context (warn_mode_<name> fields),
+    with the prefix stripped (e.g. "unconverged_samples", "empty_geonodes")."""
     ifg = _prefixed_names(InfinigenContext, _ERROR_MODE_PREFIX)
     procfunc = _prefixed_names(pf.context.globals, _PF_WARN_MODE_PREFIX)
     return ifg + procfunc
 
 
-def set_strict(names: Iterable[str]) -> None:
-    """Upgrade the named runtime checks to their fatal severity so a violation raises
-    instead of warning: infinigen checks to "error", procfunc checks to "throw".
-    Upgrade-only; never relaxes a check. Dispatches each name to whichever context
-    owns it (see strict_names)."""
+def set_error_modes(modes: dict[str, ErrorMode]) -> None:
+    """Set the named runtime checks to exactly the given severities, relaxing as well
+    as tightening. Dispatches each name to whichever context owns it (see check_names),
+    mapping "error" to procfunc's "throw"."""
     ifg = _prefixed_names(InfinigenContext, _ERROR_MODE_PREFIX)
     procfunc = _prefixed_names(pf.context.globals, _PF_WARN_MODE_PREFIX)
-    for name in names:
-        if name not in ifg and name not in procfunc:
-            raise ValueError(f"unknown strict check {name!r}; valid: {strict_names()}")
+    for name, mode in modes.items():
         if name in ifg:
-            setattr(globals, _ERROR_MODE_PREFIX + name, "error")
+            setattr(globals, _ERROR_MODE_PREFIX + name, mode)
+        elif name in procfunc:
+            pf_mode = "throw" if mode == "error" else mode
+            setattr(pf.context.globals, _PF_WARN_MODE_PREFIX + name, pf_mode)
         else:
-            setattr(pf.context.globals, _PF_WARN_MODE_PREFIX + name, "throw")
+            raise ValueError(f"unknown check {name!r}; valid: {check_names()}")
+
+
+def parse_error_modes(pairs: list[str]) -> dict[str, ErrorMode]:
+    """Parse CHECK=MODE strings, e.g. "uv_coords=warn", validating both halves."""
+    modes: dict[str, ErrorMode] = {}
+    for pair in pairs:
+        name, sep, mode = pair.partition("=")
+        if not sep:
+            raise ValueError(f"expected CHECK=MODE, got {pair!r}")
+        if name not in check_names():
+            raise ValueError(f"unknown check {name!r}; valid: {check_names()}")
+        if mode not in ERROR_MODES:
+            raise ValueError(
+                f"invalid mode {mode!r} for {name!r}; valid: {ERROR_MODES}"
+            )
+        modes[name] = mode  # type: ignore[assignment]
+    return modes
 
 
 def raise_or_warn(mode: ErrorMode, error: Exception, logger: logging.Logger) -> None:

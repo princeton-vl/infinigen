@@ -3,15 +3,20 @@
 
 # Authors: Alexander Raistrick
 
+import logging
+
 import bpy
 import procfunc as pf
 
+from infinigen2 import context
 from infinigen2.exporters.render_error_check.util import (
     active_material_output,
     backward_reachable,
     context_materials,
 )
 from infinigen2.exporters.util.blender_render import DisplacementMode
+
+logger = logging.getLogger(__name__)
 
 DISPLACEMENT_UNSAFE_NODE_TYPES = {
     "ShaderNodeUVMap": "uv_map",
@@ -59,8 +64,11 @@ def assert_displacement_coords_safe(
         return
     unsafe = unsafe_displacement_materials(context_materials(objects))
     if unsafe:
-        raise DisplacementCoordError(
+        error = DisplacementCoordError(
             "materials drive displacement from named-attribute nodes, which Cycles "
             "does not evaluate in the displacement pass (geometry renders flat); "
             f"use coord()/geometry() instead: {unsafe}"
+        )
+        context.raise_or_warn(
+            context.globals.error_mode_displacement_coords, error, logger
         )

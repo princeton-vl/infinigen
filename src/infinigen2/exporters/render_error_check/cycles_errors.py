@@ -3,11 +3,16 @@
 
 # Authors: Alexander Raistrick
 
+import logging
 import os
 import sys
 import threading
 from collections.abc import Iterator
 from contextlib import contextmanager
+
+from infinigen2 import context
+
+logger = logging.getLogger(__name__)
 
 CYCLES_ERROR_PATTERNS = (
     "SVM stack",
@@ -63,4 +68,5 @@ def detect_cycles_errors(replay: bool = True) -> Iterator[dict]:
         ln for ln in text.splitlines() if any(p in ln for p in CYCLES_ERROR_PATTERNS)
     ]
     if hits:
-        raise CyclesShaderError("\n".join(hits))
+        error = CyclesShaderError("\n".join(hits))
+        context.raise_or_warn(context.globals.error_mode_cycles_shader, error, logger)

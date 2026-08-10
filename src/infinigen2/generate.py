@@ -220,14 +220,13 @@ def get_parser():
     )
 
     parser.add_argument(
-        "--strict",
+        "--error_severity",
         nargs="*",
         default=[],
-        metavar="CHECK",
-        choices=context.strict_names(),
-        help="Runtime checks to upgrade to fatal severity (upgrade-only), across the "
-        "infinigen and procfunc contexts; choices: "
-        + ", ".join(context.strict_names()),
+        metavar="CHECK=MODE",
+        help="Set the severity of runtime checks, across the infinigen and procfunc "
+        "contexts. MODE is one of " + ", ".join(context.ERROR_MODES) + ". CHECK is one "
+        "of: " + ", ".join(context.check_names()),
     )
 
     parser.add_argument(
@@ -742,7 +741,10 @@ def _main():  # noqa: C901
     args.output.mkdir(parents=True, exist_ok=True)
     _configure_log_level(args)
 
-    context.set_strict(args.strict)
+    try:
+        context.set_error_modes(context.parse_error_modes(args.error_severity))
+    except ValueError as e:
+        parser.error(str(e))
 
     seed = args.seed if args.seed is not None else int.from_bytes(os.urandom(8), "big")
     rng = np.random.default_rng(seed)

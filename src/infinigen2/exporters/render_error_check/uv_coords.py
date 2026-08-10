@@ -3,16 +3,20 @@
 
 # Authors: Alexander Raistrick
 
+import logging
 from typing import NamedTuple
 
 import bpy
 import numpy as np
 import procfunc as pf
 
+from infinigen2 import context
 from infinigen2.exporters.render_error_check.util import (
     context_meshes,
     iter_all_nodes,
 )
+
+logger = logging.getLogger(__name__)
 
 ACTIVE_RENDER = "<active-render>"
 
@@ -172,6 +176,7 @@ def assert_uv_coords_satisfied(objects: list[pf.MeshObject] | None = None):
         for issue in check_material_uv_coords(obj, mat_index=mat_index)
     ]
     if issues:
-        raise UVCoordError(
+        error = UVCoordError(
             f"materials sample invalid UV coordinates (renders flat): {issues}"
         )
+        context.raise_or_warn(context.globals.error_mode_uv_coords, error, logger)

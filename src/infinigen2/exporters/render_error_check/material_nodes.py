@@ -3,13 +3,22 @@
 
 # Authors: Alexander Raistrick
 
+import logging
+
 import bpy
 import procfunc as pf
 
+from infinigen2 import context
 from infinigen2.exporters.render_error_check.util import (
     context_materials,
     iter_all_nodes,
 )
+
+logger = logging.getLogger(__name__)
+
+NORMAL_INPUT_CHECK = "material_normal_input"
+TEXTURE_VECTOR_CHECK = "material_texture_vector"
+FLOATING_INTERFACE_CHECK = "material_floating_interface"
 
 
 class MaterialNodeError(ValueError):
@@ -38,13 +47,17 @@ _NORMAL_INPUT_NODE_TYPES = frozenset(
 _NORMAL_INPUT_SOCKETS = ("Normal", "Coat Normal")
 
 
-def _node_issues(node: bpy.types.Node, nested: bool) -> list[str]:
+def _node_issues(node: bpy.types.Node, nested: bool) -> list[tuple[str, str]]:
     name = node.bl_idname
     if name == "ShaderNodeNormalMap":
-        return [f"{name}: use the displacement output instead of normals"]
+        msg = f"{name}: use the displacement output instead of normals"
+        return [(NORMAL_INPUT_CHECK, msg)]
     if name in _NORMAL_INPUT_NODE_TYPES:
         return [
-            f"{name}: {sock!r} input set; use displacement instead"
+            (
+                NORMAL_INPUT_CHECK,
+                f"{name}: {sock!r} input set; use displacement instead",
+            )
             for sock in _NORMAL_INPUT_SOCKETS
             if node.inputs.get(sock) is not None and node.inputs[sock].is_linked
         ]
@@ -56,26 +69,35 @@ def _node_issues(node: bpy.types.Node, nested: bool) -> list[str]:
             f"{name}: Vector input unlinked, so Cycles samples Generated coords "
             "instead of the intended sample vector; pass an explicit vector"
         )
-        return [msg]
+        return [(TEXTURE_VECTOR_CHECK, msg)]
     if nested and name.startswith("ShaderNodeOutput"):
-        return [f"{name}: floating output node; route through the interface"]
+        msg = f"{name}: floating output node; route through the interface"
+        return [(FLOATING_INTERFACE_CHECK, msg)]
     if name.startswith(("FunctionNodeInput", "GeometryNodeInput")):
-        return [f"{name}: floating input node; route through the interface"]
+        msg = f"{name}: floating input node; route through the interface"
+        return [(FLOATING_INTERFACE_CHECK, msg)]
     return []
 
 
-def material_node_issues(material: bpy.types.Material) -> list[str]:
+def material_node_issues(material: bpy.types.Material) -> dict[str, list[str]]:
     if not material.use_nodes or material.node_tree is None:
-        return []
-    issues = []
+        return {}
+    issues: dict[str, list[str]] = {}
     for node, nested in iter_all_nodes(material.node_tree):
-        issues += [f"{material.name}: {i}" for i in _node_issues(node, nested)]
+        for check, msg in _node_issues(node, nested):
+            issues.setdefault(check, []).append(f"{material.name}: {msg}")
     return issues
 
 
 def assert_material_nodes_valid(objects: list[pf.MeshObject] | None = None):
-    issues = [
-        issue for m in context_materials(objects) for issue in material_node_issues(m)
-    ]
-    if issues:
-        raise MaterialNodeError(f"materials contain invalid shader nodes: {issues}")
+    grouped: dict[str, list[str]] = {}
+    for material in context_materials(objects):
+        for check, msgs in material_node_issues(material).items():
+            grouped.setdefault(check, []).extend(msgs)
+
+    for check, msgs in grouped.items():
+        error = MaterialNodeError(
+            f"materials contain invalid shader nodes [{check}]: {msgs}"
+        )
+        mode = getattr(context.globals, "error_mode_" + check)
+        context.raise_or_warn(mode, error, logger)

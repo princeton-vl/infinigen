@@ -3,13 +3,18 @@
 
 # Authors: Alexander Raistrick
 
+import logging
+
 import numpy as np
 import procfunc as pf
 
+from infinigen2 import context
 from infinigen2.exporters.render_error_check.util import (
     context_meshes,
     evaluated_mesh,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class NonFiniteGeometryError(ValueError):
@@ -37,7 +42,8 @@ def nonfinite_vertex_counts(
 def assert_geometry_finite(objects: list[pf.MeshObject] | None = None):
     bad = nonfinite_vertex_counts(objects)
     if bad:
-        raise NonFiniteGeometryError(
+        error = NonFiniteGeometryError(
             "meshes have non-finite (NaN/Inf) vertex coordinates, which Cycles "
             f"silently drops from the BVH or renders as corruption: {bad}"
         )
+        context.raise_or_warn(context.globals.error_mode_finite_geometry, error, logger)
