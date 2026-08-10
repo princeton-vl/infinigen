@@ -12,6 +12,8 @@ import bpy
 import numpy as np
 import procfunc as pf
 
+from infinigen2.exporters.util.format import ExportType
+
 __all__ = [
     "get_camera_intrinsics",
     "save_imu",
@@ -302,6 +304,11 @@ def _get_imu_tum_data(obj: bpy.types.Object, start: int, end: int) -> tuple[str,
         else:
             raise Exception("Unsupported action fcurve: {}".format(curve.data_path))
 
+    # keyframe curves differentiate per Blender frame, not per second; rescale to real units
+    fps = bpy.context.scene.render.fps / bpy.context.scene.render.fps_base
+    ax, ay, az = ax * fps**2, ay * fps**2, az * fps**2
+    rvx, rvy, rvz = rvx * fps, rvy * fps, rvz * fps
+
     _validate_bezier_accurate(obj, [x, y, z, rx, ry, rz], start, end, eps=1e-4)
 
     # check data accuracy
@@ -448,8 +455,6 @@ def save_imu(
     frame_start: int,
     frame_end: int,
 ) -> dict:
-    from infinigen2.exporters.util.format import ExportType
-
     output_folder = Path(output_folder)
     cam_obj = camera.item() if hasattr(camera, "item") else camera
     scene_objs = [o.item() if hasattr(o, "item") else o for o in objects]
