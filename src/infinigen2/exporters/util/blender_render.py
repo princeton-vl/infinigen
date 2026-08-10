@@ -257,12 +257,10 @@ def configure_compositor_viewlayer_output(
         )
 
     if exr_file_slots:
+        exr_format = dict(file_format="OPEN_EXR", color_mode="RGB", color_depth="32")
         outputs["image_exr"] = pf.nodes.compositor.output_file(
             base_path=str(frames_folder),
-            format=dict(
-                file_format="OPEN_EXR",
-                color_mode="RGB",
-            ),
+            format=exr_format,
             slot_paths={k: v[1] for k, v in exr_file_slots.items()},
             **{k: v[0] for k, v in exr_file_slots.items()},
         )
