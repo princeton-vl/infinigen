@@ -178,7 +178,7 @@ def collect_images_structured(
                 )
             )
 
-        if status == "no_outputs":
+        if status in ("no_outputs", "failed"):
             no_output_events += 1
             stderr_text = ""
             stderr_path = event.get("stderr_path", "")
@@ -246,10 +246,11 @@ def _is_video(filename: str) -> bool:
     return filename.lower().endswith(VIDEO_SUFFIXES)
 
 
-@lru_cache(maxsize=2048)
+# uint8, not float32: this is a long-lived server and the float cache grew past 4GB
+@lru_cache(maxsize=512)
 def _load_image_array(path_str: str):
     with Image.open(path_str) as image:
-        return np.asarray(image.convert("RGB"), dtype=np.float32)
+        return np.asarray(image.convert("RGB"), dtype=np.uint8)
 
 
 def _get_field(image_info, key: str, default=""):
@@ -314,7 +315,8 @@ def _pairwise_mse(img_a, img_b, root_a: Path, root_b: Path) -> float:
     arr_b = _load_image_array(str(path_b.resolve()))
     if arr_a.shape != arr_b.shape:
         return math.inf
-    return float(np.mean((arr_a - arr_b) ** 2))
+    diff = arr_a.astype(np.float32) - arr_b.astype(np.float32)
+    return float(np.mean(diff**2))
 
 
 def _format_mse_value(mse: float) -> str:
@@ -743,14 +745,18 @@ def _row_sort_key(row: dict) -> tuple:
 
 
 def build_version_totals(rows: list[dict], version_names: list[str]) -> dict[str, dict]:
-    """Page-level Tris/CPU/GPU totals per version (summed over every render),
-    with the AFTER version flagged worse/better vs BEFORE."""
+    """Page-level Tris/Build/Export totals per version, with the AFTER version
+    flagged worse/better vs BEFORE. Only assets that ran on every version count:
+    a gated PR renders a subset, and summing that against a full baseline would
+    always read as a large spurious improvement."""
     if not version_names:
         return {}
     before_ver = version_names[0]
     after_ver = version_names[-1]
     per_version: dict[str, list[dict]] = {v: [] for v in version_names}
     for row in rows:
+        if row["not_run"] or row["is_new"]:
+            continue
         for obj in row["objects"]:
             per_version.setdefault(obj["version"], []).extend(obj.get("stats", []))
     before_total = _sum_stats(per_version.get(before_ver, []))

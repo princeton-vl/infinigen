@@ -49,6 +49,7 @@ def parse_asset_fields(asset_dir: str) -> tuple[str, str, str]:
         "preset",
         "environment",
         "camera",
+        "landing",
     }:
         return "unknown", name, name
 
@@ -126,7 +127,13 @@ def main() -> int:
 
     pngs = collect_pngs(asset_output_dir, index_root) if asset_output_dir else []
 
-    status = "success" if pngs else "no_outputs"
+    # keep the viewer's verdict aligned with CI's, which keys on returncode
+    if proc.returncode != 0:
+        status = "failed"
+    elif not pngs:
+        status = "no_outputs"
+    else:
+        status = "success"
 
     stderr_path = ""
     if proc.stderr:

@@ -1,6 +1,6 @@
 {% macro metrics_inline(m) -%}
 {%- if m and (m.tris or m.cpu or m.gpu) -%}
-<span class="metrics">{% if m.tris %}Tris <span class="m-{{ m.tris_cls }}">{{ m.tris }}</span>{% endif %}{% if m.cpu %} · CPU <span class="m-{{ m.cpu_cls }}">{{ m.cpu }}</span>{% endif %}{% if m.gpu %} · GPU <span class="m-{{ m.gpu_cls }}">{{ m.gpu }}</span>{% endif %}</span>
+<span class="metrics">{% if m.tris %}Tris <span class="m-{{ m.tris_cls }}">{{ m.tris }}</span>{% endif %}{% if m.cpu %} · Build <span class="m-{{ m.cpu_cls }}">{{ m.cpu }}</span>{% endif %}{% if m.gpu %} · Export <span class="m-{{ m.gpu_cls }}">{{ m.gpu }}</span>{% endif %}</span>
 {%- endif -%}
 {%- endmacro %}
 

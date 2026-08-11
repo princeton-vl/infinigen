@@ -17,6 +17,9 @@ MAX_ERROR_CHARS = 160
 # Scoped by run id so each run posts+edits its own comment. Prefix matched by sticky_comment.js.
 STATUS_MARKER_PREFIX = "<!-- integration-render-status"
 
+# Present only until results replace the body. sticky_comment.js deletes other runs' leftovers.
+PENDING_MARKER = "<!-- integration-render-pending -->"
+
 
 def status_marker(run_id: str) -> str:
     scope = f" run={run_id}" if run_id else ""
@@ -131,11 +134,12 @@ def crash_rows(index_root: Path | None) -> list[tuple[str, str]]:
             payload = json.loads(event_path.read_text())
         except Exception:
             continue
-        if payload.get("returncode", 0) == 0:
+        crashed = payload.get("returncode", 0) != 0
+        if not crashed and payload.get("images"):
             continue
         asset = payload.get("asset_dir") or event_path.stem
         error = last_error_line(index_root, payload.get("stderr_path", ""))
-        rows.append((asset, error))
+        rows.append((asset, error or "exited 0 but wrote no images"))
     return sorted(rows)
 
 
@@ -184,6 +188,7 @@ def provenance(args: argparse.Namespace) -> list[str]:
 def planned_body(args: argparse.Namespace) -> list[str]:
     lines = [
         status_marker(args.run_id),
+        PENDING_MARKER,
         "### Integration render — rendering now",
         "",
     ]

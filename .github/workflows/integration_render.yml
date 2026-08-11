@@ -7,12 +7,18 @@ on:
     branches:
       - develop
       - main
+      - integration-staging
   workflow_dispatch:
     inputs:
       pr_number:
         description: "PR number to tag outputs and comment on"
         required: false
         type: string
+      validation:
+        description: "Use the isolated staging archive"
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
   # Per-PR group; develop pushes share one group, main pushes stay per-SHA.
@@ -50,25 +56,14 @@ jobs:
           RUN_LABEL="nopr"
           [ -n "$PR_NUMBER" ] && RUN_LABEL="pr${PR_NUMBER}"
 
-          REL_PATH="$(date -u +'%Y-%m-%dT%H-%M-%SZ')_${GITHUB_SHA:0:7}"
-
-          # Baseline to diff against in the viewer: the PR's target branch
-          # (<base>_latest), falling back to develop_latest when that branch has
-          # no baseline yet. base_ref is empty for push / dispatch, so those keep
-          # develop_latest.
-          BASELINE="develop_latest"
-          BASE_REF="${{ github.base_ref }}"
-          if [ -n "$BASE_REF" ] && [ -e "$RENDER_ARCHIVE_ROOT/${BASE_REF}_latest" ]; then
-            BASELINE="${BASE_REF}_latest"
-          fi
-
-          {
-            echo "REL_PATH=$REL_PATH"
-            echo "OUTPUT_DIR=$RUNNER_TEMP/integration-renders-${RUN_LABEL}-${REL_PATH}"
-            echo "TARGET_DIR=$RENDER_ARCHIVE_ROOT/$REL_PATH"
-            echo "BASELINE=$BASELINE"
-            echo "BASELINE_COVERAGE=$RENDER_ARCHIVE_ROOT/$BASELINE/asset_coverage.json"
-          } >> "$GITHUB_ENV"
+          RUN_PATH="$(date -u +'%Y-%m-%dT%H-%M-%SZ')_${GITHUB_SHA:0:7}"
+          echo "OUTPUT_DIR=$RUNNER_TEMP/integration-renders-${RUN_LABEL}-${RUN_PATH}" >> "$GITHUB_ENV"
+          uv run python scripts/integration_v2/run_paths.py \
+            --archive-root "$RENDER_ARCHIVE_ROOT" \
+            --run-path "$RUN_PATH" \
+            --base-ref "${{ github.base_ref }}" \
+            --ref-name "${{ github.ref_name }}" \
+            --validation "${{ inputs.validation }}" >> "$GITHUB_ENV"
 
       # Gating runs before any GPU work, so say what the render covers up front.
       - name: Announce planned renders
@@ -136,6 +131,13 @@ jobs:
             --out-json "$OUTPUT_DIR/asset_coverage.json" \
             --out-xml coverage.xml || true
 
+      - name: Validate render artifacts
+        if: always()
+        run: |
+          uv run python scripts/integration_v2/validate_run.py \
+            "$OUTPUT_DIR" \
+            --coverage "$OUTPUT_DIR/asset_coverage.json"
+
       - name: Upload coverage artifact
         if: always()
         continue-on-error: true
@@ -145,6 +147,7 @@ jobs:
           path: |
             coverage.xml
             ${{ env.OUTPUT_DIR }}/asset_coverage.json
+            ${{ env.OUTPUT_DIR }}/gating_report.json
           if-no-files-found: ignore
           retention-days: 7
 
@@ -172,21 +175,24 @@ jobs:
         if: ${{ !cancelled() }}
         run: |
           set -e
-          # Skip (don't fail) when the render produced no output — e.g. it
-          # crashed before writing anything. This also guards against an empty
-          # OUTPUT_DIR turning `rsync -a "$OUTPUT_DIR"/ ...` into `rsync -a / ...`,
-          # which would copy the whole filesystem until the disk fills.
-          if [ ! -d "$OUTPUT_DIR" ] || [ -z "$(ls -A "$OUTPUT_DIR" 2>/dev/null)" ]; then
-            echo "No render output at '$OUTPUT_DIR' — nothing to archive."
+          # count real events; gating_report.json lands before any GPU work
+          EVENTS=0
+          if [ -d "$OUTPUT_DIR/render_index/events" ]; then
+            EVENTS=$(find "$OUTPUT_DIR/render_index/events" -name '*.json' | wc -l)
+          fi
+          if [ "$EVENTS" -eq 0 ]; then
+            echo "No renders recorded under '$OUTPUT_DIR' — nothing to archive."
             exit 0
           fi
 
           mkdir -p "$TARGET_DIR"
           rsync -a --exclude coverage_data "$OUTPUT_DIR"/ "$TARGET_DIR"/
 
-          # Push to a tracked branch repoints <branch>_latest so later PRs diff against fresh renders.
-          if [ "${{ github.event_name }}" = "push" ]; then
-            ln -sfn "$TARGET_DIR" "$RENDER_ARCHIVE_ROOT/${{ github.ref_name }}_latest"
+          # only a clean push repoints the baseline every later PR diffs against
+          if [ "${{ github.event_name }}" = "push" ] && [ "${{ steps.render.outcome }}" = "success" ]; then
+            ln -sfn "$TARGET_DIR" "$ARCHIVE_ROOT/${{ github.ref_name }}_latest"
+          elif [ "${{ github.event_name }}" = "push" ]; then
+            echo "Render did not succeed — keeping the previous ${{ github.ref_name }}_latest."
           fi
 
       - name: Print viewer link

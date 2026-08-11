@@ -319,7 +319,8 @@ def main():
     log = logging.getLogger("werkzeug")
     log.setLevel(logging.ERROR)
 
-    app.run(host="0.0.0.0", port=args.port, debug=True)
+    # the deployed viewer is reachable publicly; the werkzeug debugger must stay off
+    app.run(host="0.0.0.0", port=args.port, debug=bool(os.environ.get("COMPARE_DEBUG")))
 
 
 if __name__ == "__main__":

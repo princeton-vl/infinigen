@@ -13,6 +13,7 @@ viewer shows the trajectory as a single looping clip instead of dozens of stills
 """
 
 import argparse
+import os
 import shutil
 import subprocess
 import sys
@@ -39,9 +40,22 @@ def infinigen_bin() -> str:
     return str(candidate) if candidate.exists() else "infinigen2"
 
 
-def render_frames(args: argparse.Namespace) -> int:
-    cmd = [
-        infinigen_bin(),
+def render_command(args: argparse.Namespace) -> list[str]:
+    if os.environ.get("INFINIGEN_COVERAGE"):
+        cmd = [
+            sys.executable,
+            "-m",
+            "coverage",
+            "run",
+            "--parallel-mode",
+            "--rcfile=pyproject.toml",
+            "-m",
+            "infinigen2",
+        ]
+    else:
+        cmd = [infinigen_bin()]
+    return [
+        *cmd,
         args.scene,
         args.camera,
         "render_workbench",
@@ -60,6 +74,10 @@ def render_frames(args: argparse.Namespace) -> int:
         "--loglevel",
         "WARNING",
     ]
+
+
+def render_frames(args: argparse.Namespace) -> int:
+    cmd = render_command(args)
     print(f"[trajectory_video] {' '.join(cmd)}", flush=True)
     return subprocess.run(cmd).returncode
 

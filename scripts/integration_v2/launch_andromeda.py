@@ -65,6 +65,21 @@ FRAMEWORK_PATTERNS = (
 )
 
 MANIFEST_PATH = "src/infinigen2/manifest.json"
+PACKAGE_ROOT = "src/infinigen2/"
+
+CATEGORIES = {
+    "materials": (["--categories", "Material"], "MATERIAL_LIMIT", "MATERIALS"),
+    "objects": (["--categories", "Object"], "OBJECT_LIMIT", "OBJECTS"),
+    "scenes": (["--categories", "Scene"], "SCENE_LIMIT", "SCENES"),
+    "masks": (["--categories", "Mask"], "MASK_LIMIT", "MASKS"),
+    "presets": (["--presets"], "PRESET_LIMIT", "PRESETS"),
+    "environments": (
+        ["--categories", "Environment"],
+        "ENVIRONMENT_LIMIT",
+        "ENVIRONMENTS",
+    ),
+    "cameras": (["--categories", "Cameras"], "CAMERA_LIMIT", "CAMERAS"),
+}
 
 
 def changed_files(base_ref: str) -> set[str] | None:
@@ -128,72 +143,74 @@ def framework_triggers(changed: set[str]) -> list[str]:
     return sorted(f for f in changed for p in FRAMEWORK_PATTERNS if f.startswith(p))
 
 
+# coverage records only .py, so a changed data file is invisible to the gate
+def opaque_source_triggers(changed: set[str]) -> list[str]:
+    return sorted(
+        f
+        for f in changed
+        if f.startswith(PACKAGE_ROOT) and not f.endswith(".py") and f != MANIFEST_PATH
+    )
+
+
 def gate_by_diff(
-    args: argparse.Namespace,
-    materials: list[str],
-    objects: list[str],
-    scenes: list[str],
-    masks: list[str],
-) -> tuple[tuple[list[str], list[str], list[str], list[str]], dict]:
+    args: argparse.Namespace, items_by_category: dict[str, list[str]]
+) -> tuple[dict[str, list[str]], dict]:
     base_ref = args.base_ref or "HEAD~1"
     changed = changed_files(base_ref)
-    lists = [materials, objects, scenes, masks]
+
+    def render_all(reason: str, **extra) -> tuple[dict[str, list[str]], dict]:
+        print(f"changed-only: {reason}, rendering all assets", file=sys.stderr)
+        report = {"enabled": True, "mode": "full", "reason": reason, **extra}
+        return items_by_category, report
 
     # a deleted or unfetched base branch must not stop the whole render
     if changed is None:
-        report = {
-            "enabled": True,
-            "mode": "full",
-            "reason": f"base ref {base_ref} could not be resolved",
-        }
-        print(
-            f"changed-only: base ref {base_ref} unresolvable, rendering all assets",
-            file=sys.stderr,
-        )
-        return (materials, objects, scenes, masks), report
+        return render_all(f"base ref {base_ref} could not be resolved")
 
     baseline = load_baseline(args.baseline)
-    report = {"enabled": True, "mode": "full", "changed_files": sorted(changed)}
+    changed_list = sorted(changed)
 
     if not baseline:
-        report["reason"] = "no baseline coverage available"
-        print("changed-only: no baseline, rendering all assets", file=sys.stderr)
-        return (materials, objects, scenes, masks), report
+        return render_all("no baseline coverage available", changed_files=changed_list)
 
     framework_hits = framework_triggers(changed)
     if framework_hits:
-        report["reason"] = "framework file changed"
-        report["framework_triggers"] = framework_hits
-        print(
-            "changed-only: framework file changed, rendering all assets",
-            file=sys.stderr,
+        return render_all(
+            "framework file changed",
+            changed_files=changed_list,
+            framework_triggers=framework_hits,
         )
-        return (materials, objects, scenes, masks), report
+
+    opaque_hits = opaque_source_triggers(changed)
+    if opaque_hits:
+        return render_all(
+            "non-python source file changed",
+            changed_files=changed_list,
+            framework_triggers=opaque_hits,
+        )
 
     forced = set()
+    report = {"enabled": True, "mode": "gated", "changed_files": changed_list}
     if MANIFEST_PATH in changed:
         manifest_forced = manifest_changed_shortnames(base_ref)
         if manifest_forced is None:
-            report["reason"] = "manifest diff unreadable"
-            print("changed-only: manifest diff unreadable", file=sys.stderr)
-            return (materials, objects, scenes, masks), report
+            return render_all("manifest diff unreadable", changed_files=changed_list)
         forced = manifest_forced
         changed = changed - {MANIFEST_PATH}
         report["manifest_changed"] = sorted(forced)
 
-    report["mode"] = "gated"
     report["categories"] = {}
-    names = ["materials", "objects", "scenes", "masks"]
-    results = [select_changed(items, baseline, changed, forced) for items in lists]
-    for name, items, (keep, triggers, skipped) in zip(names, lists, results):
+    kept_by_category = {}
+    for name, items in items_by_category.items():
+        keep, triggers, skipped = select_changed(items, baseline, changed, forced)
         report["categories"][name] = {
             "total": len(items),
             "kept": triggers,
             "skipped": skipped,
         }
+        kept_by_category[name] = keep
         print(f"changed-only: {name} {len(keep)}/{len(items)}", file=sys.stderr)
-    kept = [keep for keep, _, _ in results]
-    return (kept[0], kept[1], kept[2], kept[3]), report
+    return kept_by_category, report
 
 
 def run_capture(cmd: list[str]) -> str:
@@ -302,20 +319,33 @@ def count_items(text: str) -> int:
     return len([line for line in text.splitlines() if line.strip()])
 
 
-def failed_render_names(output_path: Path) -> list[str]:
+def render_events(output_path: Path) -> list[dict]:
     events_dir = output_path / "render_index" / "events"
     if not events_dir.is_dir():
         return []
 
-    failed: list[str] = []
-    for event_path in events_dir.glob("*.json"):
+    events = []
+    for event_path in sorted(events_dir.glob("*.json")):
         try:
             payload = json.loads(event_path.read_text())
         except Exception:
             continue
+        payload.setdefault("asset_dir", event_path.stem)
+        events.append(payload)
+    return events
+
+
+# a render that exits 0 having written no image is a silent failure, not a pass
+def failed_render_names(output_path: Path) -> tuple[list[str], list[str]]:
+    crashed = []
+    empty = []
+    for payload in render_events(output_path):
+        name = payload.get("asset_dir") or "unknown"
         if payload.get("returncode", 0) != 0:
-            failed.append(payload.get("asset_dir") or event_path.stem)
-    return failed
+            crashed.append(name)
+        elif not payload.get("images"):
+            empty.append(name)
+    return crashed, empty
 
 
 def render_runner(output_path: Path) -> str:
@@ -352,31 +382,22 @@ def main() -> int:
     #   -1: no limit
     #    0: disable category
     #   >0: use first N entries
-    material_limit = int(os.environ.get("MATERIAL_LIMIT", "-1"))
-    object_limit = int(os.environ.get("OBJECT_LIMIT", "-1"))
-    scene_limit = int(os.environ.get("SCENE_LIMIT", "-1"))
-    mask_limit = int(os.environ.get("MASK_LIMIT", "-1"))
-    preset_limit = int(os.environ.get("PRESET_LIMIT", "-1"))
-    environment_limit = int(os.environ.get("ENVIRONMENT_LIMIT", "-1"))
-    camera_limit = int(os.environ.get("CAMERA_LIMIT", "-1"))
+    limits = {
+        name: int(os.environ.get(limit_env, "-1"))
+        for name, (_, limit_env, _) in CATEGORIES.items()
+    }
 
     output_path = args.output_path
     # create the events index up front so the viewer loads even when zero assets render
     (output_path / "render_index" / "events").mkdir(parents=True, exist_ok=True)
-    materials_all = list_items(["--categories", "Material"], extra_args)
-    objects_all = list_items(["--categories", "Object"], extra_args)
-    scenes_all = list_items(["--categories", "Scene"], extra_args)
-    masks_all = list_items(["--categories", "Mask"], extra_args)
-    presets_all = list_items(["--presets"], extra_args)
-    environments_all = list_items(["--categories", "Environment"], extra_args)
-    cameras_all = list_items(["--categories", "Cameras"], extra_args)
+    items_all = {
+        name: list_items(selector, extra_args)
+        for name, (selector, _, _) in CATEGORIES.items()
+    }
 
     gating_report = {"enabled": False}
     if args.changed_only:
-        gated, gating_report = gate_by_diff(
-            args, materials_all, objects_all, scenes_all, masks_all
-        )
-        materials_all, objects_all, scenes_all, masks_all = gated
+        items_all, gating_report = gate_by_diff(args, items_all)
     (output_path / "gating_report.json").write_text(json.dumps(gating_report, indent=2))
 
     if args.dry_run:
@@ -392,35 +413,19 @@ def main() -> int:
     runner = render_runner(output_path)
 
     for slot_idx, gpu_id in enumerate(slot_gpus):
-        materials = shard_items(materials_all, slot_count, slot_idx, material_limit)
-        objects = shard_items(objects_all, slot_count, slot_idx, object_limit)
-        scenes = shard_items(scenes_all, slot_count, slot_idx, scene_limit)
-        masks = shard_items(masks_all, slot_count, slot_idx, mask_limit)
-        presets = shard_items(presets_all, slot_count, slot_idx, preset_limit)
-        environments = shard_items(
-            environments_all, slot_count, slot_idx, environment_limit
-        )
-        cameras = shard_items(cameras_all, slot_count, slot_idx, camera_limit)
-
-        print(
-            f"slot={slot_idx}/{slot_count - 1} gpu={gpu_id} "
-            f"materials={count_items(materials)} objects={count_items(objects)} "
-            f"scenes={count_items(scenes)} masks={count_items(masks)} "
-            f"presets={count_items(presets)} environments={count_items(environments)} "
-            f"cameras={count_items(cameras)}"
-        )
+        shards = {
+            name: shard_items(items, slot_count, slot_idx, limits[name])
+            for name, items in items_all.items()
+        }
+        counts = " ".join(f"{n}={count_items(s)}" for n, s in shards.items())
+        print(f"slot={slot_idx}/{slot_count - 1} gpu={gpu_id} {counts}")
 
         env = os.environ.copy()
         env["CUDA_VISIBLE_DEVICES"] = gpu_id
         env["GPU"] = gpu_id
         env["RENDER_RUNNER"] = runner
-        env["MATERIALS"] = materials
-        env["OBJECTS"] = objects
-        env["SCENES"] = scenes
-        env["MASKS"] = masks
-        env["PRESETS"] = presets
-        env["ENVIRONMENTS"] = environments
-        env["CAMERAS"] = cameras
+        for name, shard in shards.items():
+            env[CATEGORIES[name][2]] = shard
 
         cmd = ["scripts/integration_v2/launch.sh", str(output_path), "1", *extra_args]
         proc = subprocess.Popen(cmd, env=env, text=True)
@@ -439,9 +444,11 @@ def main() -> int:
                 file=sys.stderr,
             )
 
-    failed = failed_render_names(output_path)
-    if failed:
-        raise ValueError(f"{len(failed)} render(s) exited non-zero: {failed}")
+    crashed, empty = failed_render_names(output_path)
+    if crashed:
+        raise ValueError(f"{len(crashed)} render(s) exited non-zero: {crashed}")
+    if empty:
+        raise ValueError(f"{len(empty)} render(s) wrote no images: {empty}")
 
     if failed_slots:
         return 1

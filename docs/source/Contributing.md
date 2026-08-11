@@ -83,6 +83,23 @@ Generate samples from all materials: `bash scripts/integration_v2/launch.sh outp
 
 View Material samples: `uv run scripts/integration_v2/compare.py --scan-dir outputs`
 
+### Integration-render staging lane
+
+Test changes to integration-render infrastructure on the `integration-staging`
+branch before merging them. A push to that branch writes a baseline only under
+`integration/staging/`; it cannot replace `develop_latest` or `main_latest`.
+Open a disposable PR targeting `integration-staging` to exercise the same
+changed-only gate, archive, coverage reduction, and viewer flow that a normal
+PR uses.
+
+For an ad-hoc canary, dispatch **Integration Render** with `validation=true`.
+This also uses the staging archive and skips retention pruning. Verify the
+uploaded `coverage-integration` artifact contains `asset_coverage.json`, and
+that `gating_report.json` has the expected mode and selected generators. Use a
+small fixture change for each gate path: generator source (selected asset),
+workflow/integration script (full render), and unrelated documentation (zero
+selected assets).
+
 ### Testing
 
 Run linting

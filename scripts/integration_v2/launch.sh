@@ -180,16 +180,17 @@ for i in {0..5}; do
         --passes rgb -r 512 512 -s 128
 done
 
-# DOCS LANDING DEMOS (bricks on torus + patterned fabric on monkey; scratched
-# metal on cube already renders above via the main materials loop). Published by
-# the ~/projects/infinigen_docs_ops pipeline under <www-root>/<slug>/assets/images/landing/.
-"${RENDER_RUNNER_ARGS[@]}" bricks_rand material_torus_uv render_cycles \
-    $GEN_ARGS --output $OUTPUT_PATH/landing-bricks_rand-torus-cycles-0 --seed 0 \
-    --passes rgb -r 512 512 -s 128
+if grep -Fxq bricks_rand <<< "$MATERIALS"; then
+    "${RENDER_RUNNER_ARGS[@]}" bricks_rand material_torus_uv render_cycles \
+        $GEN_ARGS --output $OUTPUT_PATH/landing-bricks_rand-torus-cycles-0 --seed 0 \
+        --passes rgb -r 512 512 -s 128
+fi
 
-"${RENDER_RUNNER_ARGS[@]}" fabric_patterned_rand material_monkey render_cycles \
-    $GEN_ARGS --output $OUTPUT_PATH/landing-fabric_patterned_rand-monkey-cycles-0 --seed 0 \
-    --passes rgb -r 512 512 -s 128
+if grep -Fxq fabric_patterned_rand <<< "$MATERIALS"; then
+    "${RENDER_RUNNER_ARGS[@]}" fabric_patterned_rand material_monkey render_cycles \
+        $GEN_ARGS --output $OUTPUT_PATH/landing-fabric_patterned_rand-monkey-cycles-0 --seed 0 \
+        --passes rgb -r 512 512 -s 128
+fi
 
 # CAMERA TRAJECTORIES VISUAL CHECK (48-frame workbench mp4 per camera generator, 3 seeds)
 CAM_SCENE=${CAM_SCENE:-livingroom_rand}

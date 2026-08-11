@@ -6,19 +6,21 @@
 Two subcommands share a common walk over `render_index/events/*.json`, report
 envelope, and markdown summary:
 
-- `pixel`: pairs images by relative path, computes mean squared error in [0,1],
-  and flags any pair with MSE > EPS. Missing images (one side has it, the other
-  doesn't) are reported but do not fail — crashes are handled by the render
-  job's own exit code.
+- `pixel`: pairs still images by relative path, computes mean squared error in
+  [0,1], and flags any pair with MSE > EPS. Missing images (one side has it, the
+  other doesn't) are reported but do not fail — crashes are handled by the
+  render job's own exit code.
 - `perf`: groups render events by generator, takes the median of each gated
   metric across an asset's seeds/variants on each side, and flags a regression
   when the PR's median grows past the baseline's median by more than the
   threshold. The median absorbs a single noisy sample (CI-runner contention,
   GC, cold caches) that would otherwise let one outlier seed stand in for the
-  whole asset.
+  whole asset. Only `tris` is gated by default; the timings are wall-clock under
+  GPU contention and are reported but not gated.
 
 Both write a JSON report plus a markdown summary and exit 2 if anything failed,
-0 otherwise.
+0 otherwise. The workflow runs both with continue-on-error, so a non-zero exit
+surfaces in the PR comment but does not fail the job.
 """
 
 import argparse
@@ -47,8 +49,13 @@ def _fail_table(fails: list[dict], header: list[str], row_fn) -> list[str]:
     return lines
 
 
+def _has_events(root: Path) -> bool:
+    return any(True for _ in (root / "render_index" / "events").glob("*.json"))
+
+
 def _diff_main(args, compute, write_markdown, skip_msg, skip_summary, done_line) -> int:
-    if not args.baseline.exists():
+    # an existing but eventless baseline would otherwise report 0/0 and read as green
+    if not args.baseline.exists() or not _has_events(args.baseline):
         print(skip_msg, file=sys.stderr)
         args.report.write_text(json.dumps({"skipped": True}))
         args.summary.write_text(skip_summary)
@@ -63,46 +70,53 @@ def _diff_main(args, compute, write_markdown, skip_msg, skip_summary, done_line)
 
 EPS = 1e-3
 
+INFORMATIONAL = "_Informational only — this does not fail the job._"
+
+# The render index also lists videos, which the viewer plays but PIL cannot open.
+STILL_SUFFIXES = (".png",)
+
 
 def _load(path: Path) -> np.ndarray:
     return np.asarray(Image.open(path).convert("RGB"), dtype=np.float32) / 255.0
 
 
-def _mse(pr_root: Path, base_root: Path, rel: str) -> float | None:
+# shape_mismatch keeps json valid; float("inf") would serialize as bare `Infinity`
+def _mse(pr_root: Path, base_root: Path, rel: str) -> tuple[float | None, str]:
     pr_path = pr_root / rel
     base_path = base_root / rel
     if not pr_path.exists() or not base_path.exists():
-        return None
+        return None, "missing_baseline"
     a = _load(pr_path)
     b = _load(base_path)
     if a.shape != b.shape:
-        return float("inf")
-    return float(np.mean((a - b) ** 2))
-
-
-def _pixel_status(mse: float | None) -> str:
-    if mse is None:
-        return "missing_baseline"
-    return "fail" if mse > EPS else "ok"
+        return None, "shape_mismatch"
+    mse = float(np.mean((a - b) ** 2))
+    return mse, ("fail" if mse > EPS else "ok")
 
 
 def _pixel_result(event: dict, pr_root: Path, base_root: Path, rel: str) -> dict:
-    mse = _mse(pr_root, base_root, rel)
+    mse, status = _mse(pr_root, base_root, rel)
     return {
         "asset": event.get("generator", "unknown"),
         "variant": event.get("variant_key", "unknown"),
         "image": rel,
         "mse": mse,
-        "status": _pixel_status(mse),
+        "status": status,
     }
+
+
+def _still_images(event: dict) -> list[str]:
+    return [
+        rel for rel in event.get("images", []) if rel.lower().endswith(STILL_SUFFIXES)
+    ]
 
 
 def compare_pixel(pr_root: Path, base_root: Path) -> dict:
     results = []
     for event in _events(pr_root):
-        for rel in event.get("images", []):
+        for rel in _still_images(event):
             results.append(_pixel_result(event, pr_root, base_root, rel))
-    fails = [r for r in results if r["status"] == "fail"]
+    fails = [r for r in results if r["status"] in ("fail", "shape_mismatch")]
     missing = [r for r in results if r["status"] == "missing_baseline"]
     return {
         "eps": EPS,
@@ -113,22 +127,32 @@ def compare_pixel(pr_root: Path, base_root: Path) -> dict:
     }
 
 
+def _fmt_mse(result: dict) -> str:
+    if result["mse"] is None:
+        return "shape changed"
+    return f"{result['mse']:.4g}"
+
+
 def write_pixel_markdown(report: dict, out: Path):
     lines = [
         f"# Pixel diff vs baseline (MSE, eps={report['eps']:.0e})",
+        "",
+        INFORMATIONAL,
         "",
         f"- compared: {report['total']}",
         f"- exceed eps: **{report['fail_count']}**",
         f"- missing baseline: {report['missing_count']}",
         "",
     ]
-    fails = [r for r in report["results"] if r["status"] == "fail"]
+    fails = [r for r in report["results"] if r["status"] in ("fail", "shape_mismatch")]
     if fails:
-        fails = sorted(fails, key=lambda r: -r["mse"])
+        fails = sorted(
+            fails, key=lambda r: -(r["mse"] if r["mse"] is not None else 1e9)
+        )
         lines += _fail_table(
             fails,
             ["| asset | variant | image | MSE |", "|---|---|---|---|"],
-            lambda r: f"| {r['asset']} | {r['variant']} | {r['image']} | {r['mse']:.4g} |",
+            lambda r: f"| {r['asset']} | {r['variant']} | {r['image']} | {_fmt_mse(r)} |",
         )
     out.write_text("\n".join(lines) + "\n")
 
@@ -144,7 +168,10 @@ def _pixel_main(args) -> int:
     )
 
 
-GATED_METRICS = ("tris", "cpu_time_sec", "gpu_time_sec")
+METRICS = ("tris", "cpu_time_sec", "gpu_time_sec")
+
+# times are contended wall-clock, far too noisy to gate; only tris is deterministic
+GATED_METRICS = ("tris",)
 THRESHOLD = 0.05
 
 
@@ -156,13 +183,13 @@ def get_metrics() -> tuple[str, ...]:
     raw = os.environ.get("PERF_GATE_METRICS", "")
     if not raw.strip():
         return GATED_METRICS
-    chosen = tuple(m.strip() for m in raw.split(",") if m.strip() in GATED_METRICS)
+    chosen = tuple(m.strip() for m in raw.split(",") if m.strip() in METRICS)
     return chosen or GATED_METRICS
 
 
 def _record_event(samples: dict[str, dict[str, list[float]]], event: dict) -> None:
     bucket = samples.setdefault(event.get("generator", "unknown"), {})
-    for metric in GATED_METRICS:
+    for metric in METRICS:
         value = event.get(metric)
         if value is None:
             continue
@@ -284,7 +311,8 @@ def annotate_rows(
         row["perf_summary"] = summary.get(row["asset"], "")
 
 
-_LABELS = {"tris": "Tris", "cpu_time_sec": "CPU", "gpu_time_sec": "GPU"}
+# not CPU/GPU: gpu_time_sec is exporter wall-clock, cpu_time_sec is the rest of the process
+_LABELS = {"tris": "Tris", "cpu_time_sec": "Build", "gpu_time_sec": "Export"}
 
 
 def _fmt_duration(seconds: float) -> str:
@@ -303,6 +331,8 @@ def write_perf_markdown(report: dict, out: Path):
     metric_names = ", ".join(_LABELS.get(m, m) for m in report["metrics"])
     lines = [
         f"# Perf diff vs baseline ({metric_names}, threshold={report['threshold']:.0%})",
+        "",
+        INFORMATIONAL,
         "",
         f"- compared: {report['total']}",
         f"- regressed: **{report['fail_count']}**",
