@@ -15,7 +15,7 @@ import pytest
 
 from infinigen2.exporters import render_cycles, render_eevee
 from infinigen2.exporters.util.format import ExportType, RenderPass
-from infinigen2.exporters.visualize_gt import visualize_flow
+from infinigen2.exporters.visualize_gt_passes import visualize_flow
 from infinigen2.util.camera_projection import get_3x4_RT_matrix_from_blender
 
 

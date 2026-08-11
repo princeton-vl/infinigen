@@ -35,6 +35,7 @@ class ExportType(enum.Enum):
     MESH = "mesh"
 
     OBJECTS_FILE = "objects"
+    OBJECT_DATA = "object-data"
 
     OPTICAL_FLOW = "optical-flow"
     DEPTH_CHANGE = "depth-change"
@@ -91,11 +92,17 @@ class Compression(enum.Enum):
     VIDEO = "video"
 
 
-NON_FRAME_TYPES = {ExportType.CAMERA, ExportType.MESH, ExportType.CAM_IMU_TUM_TRAJ}
+NON_FRAME_TYPES = {
+    ExportType.CAMERA,
+    ExportType.MESH,
+    ExportType.CAM_IMU_TUM_TRAJ,
+    ExportType.OBJECT_DATA,
+}
 NON_CAMERA_TYPES = {
     ExportType.SURFACE_NORMAL_WORLD,
     ExportType.MESH,
     ExportType.CAM_IMU_TUM_TRAJ,
+    ExportType.OBJECT_DATA,
 }
 
 
@@ -204,5 +211,8 @@ SCENE_PASS_DEFAULTS: dict[ExportType, RenderPass] = {
     ),
     ExportType.CAMERA: RenderPass(
         ExportType.CAMERA, Path("%c/camera_%f.npz"), np.dtype(np.float32)
+    ),
+    ExportType.OBJECT_DATA: RenderPass(
+        ExportType.OBJECT_DATA, Path("object-data.npz"), np.dtype(np.float32)
     ),
 }

@@ -19,7 +19,7 @@ import cvdpack.pack_frames as cvd_pack_frames
 import numpy as np
 
 from infinigen2.exporters.util.format import ExportType
-from infinigen2.exporters.visualize_gt import visualize_any_frametype
+from infinigen2.exporters.visualize_gt_passes import visualize_any_frametype
 
 logger = logging.getLogger(__name__)
 

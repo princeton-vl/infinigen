@@ -21,6 +21,7 @@ from infinigen2.exporters.util.blender_render import (
     configure_material_index_table,
     configure_object_index_table,
     isolate_render_objects,
+    object_index_table_names,
     override_shading_for_gt,
     postprocess_renderpass_paths,
 )
@@ -166,7 +167,7 @@ def render_eevee(
     camera_folder.mkdir(exist_ok=True, parents=True)
 
     if ExportType.OBJECT_INDEX in pass_types:
-        table = configure_object_index_table()
+        table = object_index_table_names(configure_object_index_table())
         object_index_path = camera_folder / "object-index-table.json"
         with object_index_path.open("w") as f:
             json.dump(table, f, indent=4)

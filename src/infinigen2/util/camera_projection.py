@@ -159,6 +159,19 @@ def project_points(
     return projected
 
 
+def project_points_from_parameters(
+    points_N3: np.ndarray, K: np.ndarray, camera_to_world: np.ndarray
+) -> np.ndarray:
+    """Project world points using K and an OpenCV-convention camera pose."""
+    world_to_camera = np.linalg.inv(camera_to_world)
+    points_hom_N4 = np.concatenate([points_N3, np.ones((len(points_N3), 1))], -1)
+    camera_points = points_hom_N4 @ world_to_camera.T
+    projected = camera_points[:, :3] @ K.T
+    projected[:, :2] /= projected[:, [-1]]
+    projected[:, 2] = camera_points[:, 2]
+    return projected
+
+
 def is_projection_within_image(
     projected: np.ndarray,
     resolution: tuple[int, int] | None = None,

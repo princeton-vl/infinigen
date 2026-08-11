@@ -518,7 +518,8 @@ def _as_material(result: Any) -> pf.Material:
 
 
 def _unpack_scene(result, data: dict):
-    data["objects"] += result.all_objects
+    # all_objects is the full scene set so far, not just this step's additions.
+    data["objects"] = result.all_objects
     data["all_objects"] = result.all_objects
     data["cameras"] += getattr(result, "cameras", [])
     data["lights"] += getattr(result, "lights", [])

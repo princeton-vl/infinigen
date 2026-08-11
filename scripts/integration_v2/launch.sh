@@ -150,6 +150,10 @@ for i in {0..5}; do
         --passes rgb surface-normal -r 384 384 -s 128
 done
 
+# save_object_data must follow the GT render, which stamps each object's segmentation index.
+SCENE_STEPS="render_cycles_ground_truth save_object_data visualize_gt"
+SCENE_PASSES="rgb surface-normal camera semantic-segmentation"
+
 # \x1f-separated: cmd can be an empty middle field, and tab-IFS read collapses those
 SCENE_CMDS=${SCENE_CMDS-$(uv run python -m infinigen2.list $LIST_ARGS --categories Scene \
     --columns shortname integration_test_string num_seeds --missing_values keep \
@@ -166,10 +170,10 @@ while IFS=$'\x1f' read -r sn cmd num_seeds; do
     num_seeds=${num_seeds%.*}
     num_seeds=${num_seeds:-9}
     for ((i = 0; i < num_seeds; i++)); do
-        echo "+ scene $sn -> $cmd $NORMAL_STEPS (seed $i)"
-        "${RENDER_RUNNER_ARGS[@]}" $cmd $NORMAL_STEPS \
+        echo "+ scene $sn -> $cmd $SCENE_STEPS (seed $i)"
+        "${RENDER_RUNNER_ARGS[@]}" $cmd $SCENE_STEPS \
             $GEN_ARGS --output $OUTPUT_PATH/scene-$sn-demo-cycles-$i --seed $i \
-            --passes rgb surface-normal -r 384 384 -s 256
+            --passes $SCENE_PASSES -r 384 384 -s 256
     done
 done <<< "$SCENE_CMDS"
 

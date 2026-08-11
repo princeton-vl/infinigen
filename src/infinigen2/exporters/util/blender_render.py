@@ -29,6 +29,7 @@ __all__ = [
     "configure_object_index_table",
     "isolate_render_objects",
     "load_single_channel",
+    "object_index_table_names",
     "override_shading_for_gt",
     "postprocess_renderpass_frame",
     "postprocess_renderpass_paths",
@@ -37,6 +38,8 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 BLENDER_FRAME_NUMBER_PLACEHOLDER = "####"
+
+OBJECT_INDEX_NONE = "none"
 
 
 class DisplacementMode(enum.Enum):
@@ -274,12 +277,20 @@ def configure_compositor_viewlayer_output(
     return result_paths
 
 
-def configure_object_index_table():
-    obj_order = ["none"]
-    for i, obj in enumerate(bpy.data.objects):
-        obj.pass_index = i + 1
-        obj_order.append(obj.name)
-    return obj_order
+def configure_object_index_table() -> list[bpy.types.Object | None]:
+    """Stamp each object with its segmentation index and return the index -> object table.
+
+    Row 0 is None, the background label written wherever no object is visible. Any
+    exporter writing per-object rows must index them by this table so its rows line up
+    with the object-index segmentation pass."""
+    objects = list(bpy.data.objects)
+    for i, obj in enumerate(objects, start=1):
+        obj.pass_index = i
+    return [None, *objects]
+
+
+def object_index_table_names(table: list[bpy.types.Object | None]) -> list[str]:
+    return [OBJECT_INDEX_NONE if obj is None else obj.name for obj in table]
 
 
 def configure_material_index_table():

@@ -32,6 +32,10 @@
     "name": "infinigen2.exporters.imu.save_imu"
   },
   {
+    "category": "Exporter",
+    "name": "infinigen2.exporters.object_data.save_object_data"
+  },
+  {
     "category": "Material",
     "name": "infinigen2.shaders.composites.bricks.bricks_rand",
     "integration_test_string": "bricks_rand material_plane_uv render_cycles",
