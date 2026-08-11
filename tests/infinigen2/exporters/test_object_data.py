@@ -148,6 +148,20 @@ def test_clashing_object_index_is_rejected(tmp_path: Path):
         save_object_data(cubes, tmp_path, 0, 0)
 
 
+def test_stale_object_index_is_rejected(tmp_path: Path):
+    cubes = _cubes(3)
+    bpy.data.objects.remove(cubes[0].item(), do_unlink=True)
+    with pytest.raises(ValueError, match="no longer points back"):
+        save_object_data(cubes[1:], tmp_path, 0, 0)
+
+
+def test_export_without_stamping_is_rejected(tmp_path: Path):
+    pf.ops.object.clear_scene()
+    cubes = [pf.ops.primitives.mesh_cube() for _ in range(3)]
+    with pytest.raises(ValueError, match="pass_index 0"):
+        save_object_data(cubes, tmp_path, 0, 0)
+
+
 def test_pose_and_bbox_reconstruct_the_world_box(tmp_path: Path):
     pf.ops.object.clear_scene()
     cube = pf.ops.primitives.mesh_cube(scale=(2, 2, 2))

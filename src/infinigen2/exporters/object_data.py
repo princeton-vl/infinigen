@@ -10,6 +10,7 @@ import bpy
 import numpy as np
 from mathutils import Euler, Matrix, Quaternion, Vector
 
+from infinigen2.exporters.util.blender_render import object_index_table_names
 from infinigen2.exporters.util.format import SCENE_PASS_DEFAULTS, ExportType
 
 __all__ = [
@@ -47,7 +48,10 @@ def _allocate_buffers(n_objects: int, n_frames: int) -> dict[str, np.ndarray]:
 
 def _object_index(objs: list[bpy.types.Object]) -> np.ndarray:
     """Each object's already-assigned segmentation index, which maps rows of the npz
-    onto the object-index table. Row order itself is arbitrary."""
+    onto the object-index table. Row order itself is arbitrary.
+
+    Rejects indices that are unset, shared, or no longer pointing back at their own
+    object, so a row can always be joined to the object-index pass."""
     index = np.array([o.pass_index for o in objs], dtype=np.int32)
 
     unassigned = [o.name for o, i in zip(objs, index, strict=True) if i == 0]
@@ -64,6 +68,20 @@ def _object_index(objs: list[bpy.types.Object]) -> np.ndarray:
         raise ValueError(
             f"pass_index must be unique per object, but {clashing.tolist()} are "
             f"shared; rows could not be mapped back to the object-index table."
+        )
+
+    table = object_index_table_names([None, *bpy.data.objects])
+    stale = [
+        f"{o.name!r} claims index {i}"
+        for o, i in zip(objs, index, strict=True)
+        if i >= len(table) or table[i] != o.name
+    ]
+    if stale:
+        raise ValueError(
+            f"{len(stale)} objects have a pass_index that no longer points back at "
+            f"themselves in the current {len(table)}-entry object-index table, so "
+            f"their rows would join to the wrong segmentation value: {stale[:5]}. "
+            f"Re-run configure_object_index_table() after creating or deleting objects."
         )
     return index
 
