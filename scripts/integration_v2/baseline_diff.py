@@ -15,8 +15,8 @@ envelope, and markdown summary:
   when the PR's median grows past the baseline's median by more than the
   threshold. The median absorbs a single noisy sample (CI-runner contention,
   GC, cold caches) that would otherwise let one outlier seed stand in for the
-  whole asset. Only `tris` is gated by default; the timings are wall-clock under
-  GPU contention and are reported but not gated.
+  whole asset. Base and subdivided triangle counts are gated by default; the
+  timings are wall-clock under GPU contention and are reported but not gated.
 
 Both write a JSON report plus a markdown summary and exit 2 if anything failed,
 0 otherwise. The workflow runs both with continue-on-error, so a non-zero exit
@@ -168,10 +168,9 @@ def _pixel_main(args) -> int:
     )
 
 
-METRICS = ("tris", "cpu_time_sec", "gpu_time_sec")
-
-# times are contended wall-clock, far too noisy to gate; only tris is deterministic
-GATED_METRICS = ("tris",)
+# times are contended wall-clock, far too noisy to gate; triangle counts are deterministic
+METRICS = ("base_tris", "subdiv_tris", "cpu_time_sec", "gpu_time_sec")
+GATED_METRICS = ("base_tris", "subdiv_tris")
 THRESHOLD = 0.05
 
 
@@ -187,10 +186,17 @@ def get_metrics() -> tuple[str, ...]:
     return chosen or GATED_METRICS
 
 
+def _metric_value(event: dict, metric: str) -> float | None:
+    # Events predating the base/subdiv split only carry the evaluated (subdivided) count.
+    if metric == "subdiv_tris" and "subdiv_tris" not in event:
+        return event.get("tris")
+    return event.get(metric)
+
+
 def _record_event(samples: dict[str, dict[str, list[float]]], event: dict) -> None:
     bucket = samples.setdefault(event.get("generator", "unknown"), {})
     for metric in METRICS:
-        value = event.get(metric)
+        value = _metric_value(event, metric)
         if value is None:
             continue
         bucket.setdefault(metric, []).append(value)
@@ -281,8 +287,13 @@ def asset_verdicts(report: dict) -> dict[str, str]:
 
 
 def _summary(report: dict) -> dict[str, str]:
-    """asset key -> compact "tris +20%, gpu +8%" of its regression, if any."""
-    labels = {"tris": "tris", "cpu_time_sec": "cpu", "gpu_time_sec": "gpu"}
+    """asset key -> compact "subdiv +20%, gpu +8%" of its regression, if any."""
+    labels = {
+        "base_tris": "base",
+        "subdiv_tris": "subdiv",
+        "cpu_time_sec": "cpu",
+        "gpu_time_sec": "gpu",
+    }
     out = {}
     for r in report["results"]:
         if not r["regressions"]:
@@ -311,8 +322,12 @@ def annotate_rows(
         row["perf_summary"] = summary.get(row["asset"], "")
 
 
-# not CPU/GPU: gpu_time_sec is exporter wall-clock, cpu_time_sec is the rest of the process
-_LABELS = {"tris": "Tris", "cpu_time_sec": "Build", "gpu_time_sec": "Export"}
+_LABELS = {
+    "base_tris": "Base-Tris",
+    "subdiv_tris": "Subdiv-Tris",
+    "cpu_time_sec": "Build",
+    "gpu_time_sec": "Export",
+}
 
 
 def _fmt_duration(seconds: float) -> str:

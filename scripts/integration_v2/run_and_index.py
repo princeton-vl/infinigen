@@ -62,8 +62,8 @@ def parse_asset_fields(asset_dir: str) -> tuple[str, str, str]:
 
 
 def read_render_stats(asset_output_dir: Path | None) -> dict:
-    """Read the render metrics (tris, render_time_sec) generate.py wrote into this
-    asset's metadata.json."""
+    """Read the render metrics (base_tris, subdiv_tris, render_time_sec) generate.py
+    wrote into this asset's metadata.json."""
     if asset_output_dir is None:
         return {}
     path = asset_output_dir / "metadata.json"
@@ -143,7 +143,9 @@ def main() -> int:
 
     duration_sec = round(ended - started, 3)
     render_stats = read_render_stats(asset_output_dir)
-    tris = render_stats.get("tris")
+    base_tris = render_stats.get("base_tris")
+    # Runs predating the base/subdiv split only recorded the evaluated (subdivided) count.
+    subdiv_tris = render_stats.get("subdiv_tris", render_stats.get("tris"))
     gpu_time_sec = render_stats.get("render_time_sec")
     # CPU (scene-build) time is the wall-clock left after the GPU render.
     cpu_time_sec = None
@@ -164,7 +166,8 @@ def main() -> int:
         "variant_key": variant_key,
         "images": pngs,
         "stderr_path": stderr_path,
-        "tris": tris,
+        "base_tris": base_tris,
+        "subdiv_tris": subdiv_tris,
         "cpu_time_sec": cpu_time_sec,
         "gpu_time_sec": gpu_time_sec,
     }

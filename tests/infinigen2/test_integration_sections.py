@@ -32,7 +32,8 @@ def _event(root: Path, name: str, idx: int, gen: str, atype: str, variant: str, 
         "status": "success",
         "cmd": ["infinigen", gen],
         "images": images,
-        "tris": 10,
+        "base_tris": 4,
+        "subdiv_tris": 10,
         "cpu_time_sec": 1.0,
         "gpu_time_sec": 2.0,
     }
@@ -100,7 +101,8 @@ def test_normals_section_carries_no_metrics(tmp_path):
     sections = _sections_of(rows, "chair_rand")
 
     assert sections["normals"]["metrics"] is None
-    assert sections["seeds"]["metrics"]["tris"] == "10"
+    assert sections["seeds"]["metrics"]["base_tris"] == "4"
+    assert sections["seeds"]["metrics"]["subdiv_tris"] == "10"
 
 
 def _material_run(root: Path, name: str) -> Path:

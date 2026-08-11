@@ -14,7 +14,7 @@ import shlex
 from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache
 from pathlib import Path
-from typing import NamedTuple
+from typing import Callable, NamedTuple
 
 import numpy as np
 from PIL import Image
@@ -35,7 +35,8 @@ class ImageInfo(NamedTuple):
 
 class RenderStat(NamedTuple):
     variant_key: str
-    tris: int | None
+    base_tris: int | None
+    subdiv_tris: int | None
     cpu_time_sec: float | None
     gpu_time_sec: float | None
 
@@ -217,7 +218,9 @@ def collect_images_structured(
 
         stat = RenderStat(
             variant_key=variant_key,
-            tris=event.get("tris"),
+            base_tris=event.get("base_tris"),
+            # Events predating the base/subdiv split only carry the evaluated count.
+            subdiv_tris=event.get("subdiv_tris", event.get("tris")),
             cpu_time_sec=event.get("cpu_time_sec"),
             gpu_time_sec=event.get("gpu_time_sec"),
         )
@@ -359,26 +362,29 @@ def _fmt_time(s: float | None) -> str | None:
     return f"{s:.1f}s"
 
 
-def _aggregate_stats(stats: list[dict]) -> dict:
-    tris = [s["tris"] for s in stats if s.get("tris") is not None]
-    cpu = [s["cpu_time_sec"] for s in stats if s.get("cpu_time_sec") is not None]
-    gpu = [s["gpu_time_sec"] for s in stats if s.get("gpu_time_sec") is not None]
+def _values(stats: list[dict], field: str) -> list:
+    return [s[field] for s in stats if s.get(field) is not None]
+
+
+def _reduce_stats(stats: list[dict], tris_reduce: Callable) -> dict:
+    base = _values(stats, "base_tris")
+    subdiv = _values(stats, "subdiv_tris")
+    cpu = _values(stats, "cpu_time_sec")
+    gpu = _values(stats, "gpu_time_sec")
     return {
-        "tris": max(tris) if tris else None,
+        "base_tris": tris_reduce(base) if base else None,
+        "subdiv_tris": tris_reduce(subdiv) if subdiv else None,
         "cpu": sum(cpu) if cpu else None,
         "gpu": sum(gpu) if gpu else None,
     }
+
+
+def _aggregate_stats(stats: list[dict]) -> dict:
+    return _reduce_stats(stats, max)
 
 
 def _sum_stats(stats: list[dict]) -> dict:
-    tris = [s["tris"] for s in stats if s.get("tris") is not None]
-    cpu = [s["cpu_time_sec"] for s in stats if s.get("cpu_time_sec") is not None]
-    gpu = [s["gpu_time_sec"] for s in stats if s.get("gpu_time_sec") is not None]
-    return {
-        "tris": sum(tris) if tris else None,
-        "cpu": sum(cpu) if cpu else None,
-        "gpu": sum(gpu) if gpu else None,
-    }
+    return _reduce_stats(stats, sum)
 
 
 def _category_aggregates(stats: list[dict]) -> dict[str, dict]:
@@ -401,7 +407,12 @@ def _delta_class(before: float | None, after: float | None) -> str:
 
 def _format_metrics(agg: dict, before: dict | None) -> dict:
     out = {}
-    for key, formatter in (("tris", _fmt_tris), ("cpu", _fmt_time), ("gpu", _fmt_time)):
+    for key, formatter in (
+        ("base_tris", _fmt_tris),
+        ("subdiv_tris", _fmt_tris),
+        ("cpu", _fmt_time),
+        ("gpu", _fmt_time),
+    ):
         out[key] = formatter(agg[key])
         base = before[key] if before is not None else None
         out[f"{key}_cls"] = _delta_class(base, agg[key])
@@ -453,7 +464,8 @@ def _compute_pairwise_mse_map(
 def _stat_dict(st) -> dict:
     return {
         "variant_key": st.variant_key,
-        "tris": st.tris,
+        "base_tris": st.base_tris,
+        "subdiv_tris": st.subdiv_tris,
         "cpu_time_sec": st.cpu_time_sec,
         "gpu_time_sec": st.gpu_time_sec,
         "category": classify_image(st.variant_key, "")["category"],
@@ -757,10 +769,10 @@ def _row_sort_key(row: dict) -> tuple:
 
 
 def build_version_totals(rows: list[dict], version_names: list[str]) -> dict[str, dict]:
-    """Page-level Tris/Build/Export totals per version, with the AFTER version
-    flagged worse/better vs BEFORE. Only assets that ran on every version count:
-    a gated PR renders a subset, and summing that against a full baseline would
-    always read as a large spurious improvement."""
+    """Page-level Base/Subdiv tris and Build/Export totals per version, with the
+    AFTER version flagged worse/better vs BEFORE. Only assets that ran on every
+    version count: a gated PR renders a subset, and summing that against a full
+    baseline would always read as a large spurious improvement."""
     if not version_names:
         return {}
     before_ver = version_names[0]

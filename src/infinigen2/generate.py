@@ -61,6 +61,7 @@ from infinigen2.util.hardware_info import get_hardware_info
 from infinigen2.util.scene_cleanup import delete_object
 from infinigen2.util.codestats import compute_stats
 from infinigen2 import graph_json
+from infinigen2.util.render_metadata import triangle_counts
 
 logger = logging.getLogger(__name__)
 
@@ -570,24 +571,6 @@ def _unpack_by_category(category: str, result, data: dict):
             raise ValueError(f"Unknown category: {category}")
 
 
-def _evaluated_tris(objects: list) -> int:
-    """Total evaluated triangle count across the object list, for render metrics."""
-    deps = bpy.context.evaluated_depsgraph_get()
-    total = 0
-    for obj in objects:
-        item = obj.item()
-        if item.type != "MESH":
-            continue
-        evaluated = item.evaluated_get(deps)
-        mesh = evaluated.to_mesh()
-        try:
-            mesh.calc_loop_triangles()
-            total += len(mesh.loop_triangles)
-        finally:
-            evaluated.to_mesh_clear()
-    return total
-
-
 def execute_generators(
     output_folder: Path,
     generators: list[tuple[str, str, Callable]],
@@ -672,13 +655,14 @@ def execute_generators(
         logger.info(f"{name}: {elapsed:.3f}s")
 
     try:
-        tris = _evaluated_tris(data["objects"])
+        base_tris, subdiv_tris = triangle_counts(data["objects"])
     except Exception as e:
         logger.warning(f"Could not count triangles for render metrics: {e}")
-        tris = 0
+        base_tris, subdiv_tris = 0, 0
 
     data["generator_times"] = generator_times
-    data["tris"] = tris
+    data["base_tris"] = base_tris
+    data["subdiv_tris"] = subdiv_tris
     data["render_time_sec"] = round(render_time_sec, 3)
     return {k: v for k, v in data.items() if k not in pipeline_parameters}
 
@@ -852,7 +836,8 @@ def _main():  # noqa: C901
         "seed": hex(seed),
         "hardware": get_hardware_info(),
         "generator_times": generator_times,
-        "tris": results.get("tris"),
+        "base_tris": results.get("base_tris"),
+        "subdiv_tris": results.get("subdiv_tris"),
         "render_time_sec": results.get("render_time_sec"),
         "exports": {k.value: [str(p) for p in v] for k, v in exports.items()},
     }
