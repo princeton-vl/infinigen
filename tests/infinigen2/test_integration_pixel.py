@@ -51,7 +51,7 @@ def test_pixel_diff_flags_changed_still(tmp_path):
     assert report["fail_count"] == 1
 
 
-def test_camera_render_uses_coverage_when_enabled(tmp_path, monkeypatch):
+def test_camera_render_uses_cli_script_under_coverage(tmp_path, monkeypatch):
     args = render_trajectory_video.argparse.Namespace(
         output=tmp_path,
         scene="livingroom_rand",
@@ -70,13 +70,12 @@ def test_camera_render_uses_coverage_when_enabled(tmp_path, monkeypatch):
     monkeypatch.setattr(render_trajectory_video.subprocess, "run", fake_run)
 
     assert render_trajectory_video.render_frames(args) == 0
-    assert captured["cmd"][:8] == [
+    assert captured["cmd"][:6] == [
         sys.executable,
         "-m",
         "coverage",
         "run",
         "--parallel-mode",
         "--rcfile=pyproject.toml",
-        "-m",
-        "infinigen2",
     ]
+    assert Path(captured["cmd"][6]).name == "infinigen2"

@@ -49,8 +49,7 @@ def render_command(args: argparse.Namespace) -> list[str]:
             "run",
             "--parallel-mode",
             "--rcfile=pyproject.toml",
-            "-m",
-            "infinigen2",
+            infinigen_bin(),
         ]
     else:
         cmd = [infinigen_bin()]
