@@ -61,7 +61,7 @@ from infinigen2.util.hardware_info import get_hardware_info
 from infinigen2.util.scene_cleanup import delete_object
 from infinigen2.util.codestats import compute_stats
 from infinigen2 import graph_json
-from infinigen2.util.render_metadata import triangle_counts
+from infinigen2.util.polycount import estimated_eval_tricount
 
 logger = logging.getLogger(__name__)
 
@@ -655,7 +655,15 @@ def execute_generators(
         logger.info(f"{name}: {elapsed:.3f}s")
 
     try:
-        base_tris, subdiv_tris = triangle_counts(data["objects"])
+        objects = data["objects"]
+        base_tris = 0
+        for obj in objects:
+            item = obj.item()
+            if item.type != "MESH":
+                continue
+            mesh = item.data
+            base_tris += len(mesh.loops) - 2 * len(mesh.polygons)
+        subdiv_tris = sum(estimated_eval_tricount(obj) for obj in objects)
     except Exception as e:
         logger.warning(f"Could not count triangles for render metrics: {e}")
         base_tris, subdiv_tris = 0, 0
