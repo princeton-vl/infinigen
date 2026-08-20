@@ -174,50 +174,6 @@ def test_default_cycles_normals_land_in_normals_row(tmp_path):
     assert [i["label"] for i in sections["seeds"]["images"]] == ["cycles / 0 / image"]
 
 
-def _scene_run(root: Path, name: str, seeds: int = 3) -> Path:
-    version = root / name
-    base = f"{name}/scene-livingroom_rand-demo-cycles"
-    for seed in range(seeds):
-        images = [
-            f"{base}-{seed}/Camera/0000.png",
-            f"{base}-{seed}/Camera/surface-normal_0000.png",
-            f"{base}-{seed}/Camera/object_0000.png",
-            f"{base}-{seed}/bbox3d/0000_bbox3d.png",
-        ]
-        _event(
-            version,
-            name,
-            seed,
-            "livingroom_rand",
-            "scene",
-            f"demo-cycles-{seed}",
-            images,
-        )
-    return version
-
-
-def test_scene_boxes_and_segmentation_land_under_exports(tmp_path):
-    """Every scene seed exports a 3D box overlay and an object-index mask; both are
-    ground truth rather than the look under test, so they fold away under Exports."""
-    rows = _build([_scene_run(tmp_path, "before"), _scene_run(tmp_path, "after")])
-    sections = _sections_of(rows, "livingroom_rand")
-
-    assert set(sections) == {"seeds", "normals", "exports"}
-    assert [i["label"] for i in sections["exports"]["images"]] == [
-        "cycles / 0 / bbox3d",
-        "cycles / 0 / object-index",
-        "cycles / 1 / bbox3d",
-        "cycles / 1 / object-index",
-        "cycles / 2 / bbox3d",
-        "cycles / 2 / object-index",
-    ]
-    assert [i["label"] for i in sections["seeds"]["images"]] == [
-        "cycles / 0 / image",
-        "cycles / 1 / image",
-        "cycles / 2 / image",
-    ]
-
-
 def test_section_controls_cover_present_sections_only(tmp_path):
     rows = _build([_material_run(tmp_path, "before"), _material_run(tmp_path, "after")])
     controls = build_section_controls(rows)

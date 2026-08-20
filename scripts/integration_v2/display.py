@@ -57,20 +57,6 @@ class CollectionResult(NamedTuple):
     no_output_events: int
 
 
-def _pass_type(filename: str) -> str:
-    if filename.startswith("image_") or filename == "Image" or filename == "image":
-        return "image"
-    if filename.startswith("surface-normal_") or filename == "surface-normal":
-        return "surface-normal"
-    if filename.endswith("_bbox3d"):
-        return "bbox3d"
-    if filename.startswith("object_"):
-        return "object-index"
-    if filename == "error":
-        return "error"
-    return "other"
-
-
 def classify_image(variant_key: str, filename: str) -> dict[str, str]:
     variant_match = re.match(r"(\w+)-(\w+)-(.*)", variant_key)
     if variant_match:
@@ -80,18 +66,20 @@ def classify_image(variant_key: str, filename: str) -> dict[str, str]:
         renderer = "unknown"
         variant_type = variant_key
 
-    pass_type = _pass_type(filename)
-
     # DISPLACEMENT_AND_BUMP under cycles is the default look, so it stays a distribution render.
-    export_variant = renderer == "eevee" or variant_type in {
-        "BUMP",
-        "DISPLACEMENT",
-        "REALIZE_MESH",
-    }
-    if export_variant or pass_type in {"bbox3d", "object-index"}:
+    if renderer == "eevee" or variant_type in {"BUMP", "DISPLACEMENT", "REALIZE_MESH"}:
         category = "exports"
     else:
         category = "distribution"
+
+    if filename.startswith("image_") or filename == "Image" or filename == "image":
+        pass_type = "image"
+    elif filename.startswith("surface-normal_") or filename == "surface-normal":
+        pass_type = "surface-normal"
+    elif filename == "error":
+        pass_type = "error"
+    else:
+        pass_type = "other"
 
     return {
         "renderer": renderer,
