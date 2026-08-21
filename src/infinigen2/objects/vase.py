@@ -448,6 +448,7 @@ def vase_rand(rng: pf.RNG) -> VaseResult:
     geo = pf.nodes.geo.set_material(geo, mat_result)
 
     obj = pf.nodes.to_mesh_object(geo)
+    obj.item().name = vase_rand.__name__
 
     thickness = pf.random.uniform(rng, 0.005, 0.01)
     pf.ops.modifier.solidify(obj, thickness=thickness)

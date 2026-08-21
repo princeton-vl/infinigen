@@ -35,7 +35,9 @@ if __name__ == "__main__":
     print(replicate_command("Mask", "infinigen2.shaders.masks.cracks.cracks_rand", 3))
     print(
         replicate_command(
-            "Object", "infinigen2.objects.random_primitives.primitives_rand", 0
+            "Object",
+            "infinigen2.objects.random_primitives.primitive_with_effect_rand",
+            0,
         )
     )
     print(

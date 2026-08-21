@@ -14,53 +14,77 @@ from infinigen2.shaders.functionality_lists import all_materials_rand
 from infinigen2.util.mesh import crease_by_angle
 
 __all__ = [
+    "EffectResult",
     "PrimitivesResult",
-    "primitives_rand",
+    "circle_rand",
+    "cone_rand",
+    "cube_rand",
+    "cylinder_rand",
+    "effect_bevel",
+    "effect_decimate",
+    "effect_fractal_jitter",
+    "effect_noise_warp",
+    "effect_none",
+    "effect_screw_ring",
+    "effect_screw_spiral",
+    "effect_solidify",
+    "effect_taper",
+    "effect_twist",
+    "effect_wireframe",
+    "end_fill_type_rand",
+    "grid_rand",
+    "icosphere_rand",
+    "monkey_rand",
+    "plane_rand",
+    "primitive_rand",
+    "primitive_with_effect_rand",
+    "torus_rand",
+    "uv_sphere_rand",
 ]
 
 
-def _end_fill_type_rand(rng: pf.RNG) -> str:
+def end_fill_type_rand(rng: pf.RNG) -> str:
     return pf.control.choice(rng, [("NGON", 3.0), ("NOTHING", 1.0)])
 
 
-def _cone_rand(rng: pf.RNG) -> pf.MeshObject:
+def cone_rand(rng: pf.RNG) -> pf.MeshObject:
     return pf.ops.primitives.mesh_cone(
         vertices=pf.random.randint(rng, 3, 33),
         radius2=pf.random.uniform(rng, 0.0, 0.9),
         depth=pf.random.uniform(rng, 0.5, 1.0),
-        end_fill_type=_end_fill_type_rand(rng),
+        end_fill_type=end_fill_type_rand(rng),
     )
 
 
-def _cylinder_rand(rng: pf.RNG) -> pf.MeshObject:
+def cylinder_rand(rng: pf.RNG) -> pf.MeshObject:
     return pf.ops.primitives.mesh_cylinder(
         vertices=pf.random.randint(rng, 3, 33),
         depth=pf.random.uniform(rng, 0.2, 4.0),
-        end_fill_type=_end_fill_type_rand(rng),
+        end_fill_type=end_fill_type_rand(rng),
     )
 
 
-def _circle_rand(rng: pf.RNG) -> pf.MeshObject:
+def circle_rand(rng: pf.RNG) -> pf.MeshObject:
     return pf.ops.primitives.mesh_circle(
         vertices=pf.random.randint(rng, 3, 33),
         fill_type=pf.control.choice(rng, [("NGON", 1.0), ("TRIFAN", 1.0)]),
     )
 
 
-def _grid_rand(rng: pf.RNG) -> pf.MeshObject:
+def grid_rand(rng: pf.RNG) -> pf.MeshObject:
     return pf.ops.primitives.mesh_grid(
         x_subdivisions=pf.random.randint(rng, 2, 12),
         y_subdivisions=pf.random.randint(rng, 2, 12),
     )
 
 
-def _icosphere_rand(rng: pf.RNG) -> pf.MeshObject:
+def icosphere_rand(rng: pf.RNG) -> pf.MeshObject:
     return pf.ops.primitives.mesh_icosphere(
         subdivisions=pf.random.randint(rng, 1, 4),
     )
 
 
-def _torus_rand(rng: pf.RNG) -> pf.MeshObject:
+def torus_rand(rng: pf.RNG) -> pf.MeshObject:
     return pf.ops.primitives.mesh_torus(
         major_radius=pf.random.uniform(rng, 0.5, 1.5),
         minor_radius=pf.random.uniform(rng, 0.05, 0.45),
@@ -69,19 +93,19 @@ def _torus_rand(rng: pf.RNG) -> pf.MeshObject:
     )
 
 
-def _cube_rand(rng: pf.RNG) -> pf.MeshObject:
+def cube_rand(rng: pf.RNG) -> pf.MeshObject:
     return pf.ops.primitives.mesh_cube()
 
 
-def _monkey_rand(rng: pf.RNG) -> pf.MeshObject:
+def monkey_rand(rng: pf.RNG) -> pf.MeshObject:
     return pf.ops.primitives.mesh_monkey()
 
 
-def _plane_rand(rng: pf.RNG) -> pf.MeshObject:
+def plane_rand(rng: pf.RNG) -> pf.MeshObject:
     return pf.ops.primitives.mesh_plane()
 
 
-def _uv_sphere_rand(rng: pf.RNG) -> pf.MeshObject:
+def uv_sphere_rand(rng: pf.RNG) -> pf.MeshObject:
     sphere = pf.nodes.geo.mesh_uv_sphere(
         segments=pf.random.randint(rng, 3, 33),
         rings=pf.random.randint(rng, 3, 17),
@@ -152,125 +176,112 @@ def _noise_warp(
     return pf.nodes.geo.set_position(geometry=mesh, offset=offset)
 
 
-def _base_primitive(rng: pf.RNG) -> pf.MeshObject:
+def primitive_rand(rng: pf.RNG) -> pf.MeshObject:
     rng_choice, rng_func = rng.spawn(2)
     func = pf.control.choice(
         rng_choice,
         [
-            (_circle_rand, 0.2),
-            (_cone_rand, 1.5),
-            (_cube_rand, 3.0),
-            (_cylinder_rand, 2.0),
-            (_grid_rand, 0.2),
-            # (_icosphere_rand, 1.0),
-            (_monkey_rand, 0.2),
-            (_plane_rand, 0.2),
-            (_torus_rand, 1.0),
-            (_uv_sphere_rand, 1.0),
+            (circle_rand, 0.2),
+            (cone_rand, 1.5),
+            (cube_rand, 3.0),
+            (cylinder_rand, 2.0),
+            (grid_rand, 0.2),
+            # (icosphere_rand, 1.0),
+            (monkey_rand, 0.2),
+            (plane_rand, 0.2),
+            (torus_rand, 1.0),
+            (uv_sphere_rand, 1.0),
         ],
     )
     obj = func(rng_func)
-    obj.item().name = func.__name__.removeprefix("_")
+    obj.item().name = func.__name__
     return obj
 
 
-class _EffectResult(NamedTuple):
+class EffectResult(NamedTuple):
     mesh: pf.MeshObject
     # render-time subdivision budget; effects producing dense meshes use fewer levels
     subsurf_levels: int
 
 
-# Effects create their own primitive so each choice branch only mutates
-# objects it created itself.
+def effect_none(rng: pf.RNG, obj: pf.MeshObject) -> EffectResult:
+    return EffectResult(mesh=obj, subsurf_levels=5)
 
 
-def _effect_none(rng: pf.RNG) -> _EffectResult:
-    return _EffectResult(mesh=_base_primitive(rng), subsurf_levels=5)
-
-
-def _effect_bevel(rng: pf.RNG) -> _EffectResult:
-    obj = _base_primitive(rng)
+def effect_bevel(rng: pf.RNG, obj: pf.MeshObject) -> EffectResult:
     pf.ops.modifier.bevel(
         obj,
         width=pf.random.uniform(rng, 0.005, 0.03),
         segments=pf.random.randint(rng, 1, 5),
     )
-    return _EffectResult(mesh=obj, subsurf_levels=4)
+    return EffectResult(mesh=obj, subsurf_levels=4)
 
 
-def _effect_wireframe(rng: pf.RNG) -> _EffectResult:
-    rng_base, rng_choice = rng.spawn(2)
-    obj = _base_primitive(rng_base)
+def effect_wireframe(rng: pf.RNG, obj: pf.MeshObject) -> EffectResult:
+    rng_thickness, rng_choice = rng.spawn(2)
     pf.ops.modifier.wireframe(
         obj,
-        thickness=pf.random.uniform(rng, 0.02, 0.1),
+        thickness=pf.random.uniform(rng_thickness, 0.02, 0.1),
         use_replace=pf.control.choice(rng_choice, [(True, 1.0), (False, 1.0)]),
     )
-    return _EffectResult(mesh=obj, subsurf_levels=3)
+    return EffectResult(mesh=obj, subsurf_levels=3)
 
 
-def _effect_solidify(rng: pf.RNG) -> _EffectResult:
-    obj = _base_primitive(rng)
+def effect_solidify(rng: pf.RNG, obj: pf.MeshObject) -> EffectResult:
     pf.ops.modifier.solidify(
         obj,
         thickness=pf.random.uniform(rng, 0.03, 0.1),
         offset=pf.random.uniform(rng, -1.0, 1.0),
     )
-    return _EffectResult(mesh=obj, subsurf_levels=4)
+    return EffectResult(mesh=obj, subsurf_levels=4)
 
 
-def _effect_screw_ring(rng: pf.RNG) -> _EffectResult:
-    obj = _base_primitive(rng)
+def effect_screw_ring(rng: pf.RNG, obj: pf.MeshObject) -> EffectResult:
     pf.ops.modifier.screw(
         obj,
         angle=pf.random.uniform(rng, math.pi / 2, 2 * math.pi),
     )
-    return _EffectResult(mesh=obj, subsurf_levels=3)
+    return EffectResult(mesh=obj, subsurf_levels=3)
 
 
-def _effect_screw_spiral(rng: pf.RNG) -> _EffectResult:
-    obj = _base_primitive(rng)
+def effect_screw_spiral(rng: pf.RNG, obj: pf.MeshObject) -> EffectResult:
     pf.ops.modifier.screw(
         obj,
         angle=pf.random.uniform(rng, 0.2 * math.pi, 2 * math.pi),
         iterations=pf.random.randint(rng, 2, 5),
         screw_offset=pf.random.uniform(rng, 0.3, 1.2),
     )
-    return _EffectResult(mesh=obj, subsurf_levels=2)
+    return EffectResult(mesh=obj, subsurf_levels=2)
 
 
-def _effect_decimate(rng: pf.RNG) -> _EffectResult:
-    obj = _base_primitive(rng)
+def effect_decimate(rng: pf.RNG, obj: pf.MeshObject) -> EffectResult:
     pf.ops.mesh.subdivide(obj, number_cuts=4)
     pf.ops.modifier.decimate_collapse(
         obj,
         ratio=pf.random.uniform(rng, 0.02, 0.2),
     )
-    return _EffectResult(mesh=obj, subsurf_levels=4)
+    return EffectResult(mesh=obj, subsurf_levels=4)
 
 
-def _effect_fractal_jitter(rng: pf.RNG) -> _EffectResult:
-    obj = _base_primitive(rng)
+def effect_fractal_jitter(rng: pf.RNG, obj: pf.MeshObject) -> EffectResult:
     pf.ops.mesh.subdivide(
         obj,
         number_cuts=pf.random.randint(rng, 2, 5),
         fractal=pf.random.uniform(rng, 0.3, 1.5),
         seed=pf.random.randint(rng, 0, 100000),
     )
-    return _EffectResult(mesh=obj, subsurf_levels=2)
+    return EffectResult(mesh=obj, subsurf_levels=2)
 
 
-def _effect_twist(rng: pf.RNG) -> _EffectResult:
-    rng_base, rng_choice = rng.spawn(2)
-    obj = _base_primitive(rng_base)
+def effect_twist(rng: pf.RNG, obj: pf.MeshObject) -> EffectResult:
+    rng_rate, rng_choice = rng.spawn(2)
     pf.ops.mesh.subdivide(obj, number_cuts=4)
     sign = pf.control.choice(rng_choice, [(1.0, 1.0), (-1.0, 1.0)])
-    warped = _twist_warp(obj, rate=sign * pf.random.uniform(rng, 0.4, 1.5))
-    return _EffectResult(mesh=pf.nodes.to_mesh_object(warped), subsurf_levels=3)
+    warped = _twist_warp(obj, rate=sign * pf.random.uniform(rng_rate, 0.4, 1.5))
+    return EffectResult(mesh=pf.nodes.to_mesh_object(warped), subsurf_levels=3)
 
 
-def _effect_taper(rng: pf.RNG) -> _EffectResult:
-    obj = _base_primitive(rng)
+def effect_taper(rng: pf.RNG, obj: pf.MeshObject) -> EffectResult:
     pf.ops.mesh.subdivide(obj, number_cuts=4)
     warped = _taper_warp(
         obj,
@@ -279,11 +290,10 @@ def _effect_taper(rng: pf.RNG) -> _EffectResult:
         scale_bottom=pf.random.uniform(rng, 0.2, 1.5),
         scale_top=pf.random.uniform(rng, 0.2, 1.5),
     )
-    return _EffectResult(mesh=pf.nodes.to_mesh_object(warped), subsurf_levels=3)
+    return EffectResult(mesh=pf.nodes.to_mesh_object(warped), subsurf_levels=3)
 
 
-def _effect_noise_warp(rng: pf.RNG) -> _EffectResult:
-    obj = _base_primitive(rng)
+def effect_noise_warp(rng: pf.RNG, obj: pf.MeshObject) -> EffectResult:
     pf.ops.mesh.subdivide(obj, number_cuts=4)
     warped = _noise_warp(
         obj,
@@ -291,7 +301,7 @@ def _effect_noise_warp(rng: pf.RNG) -> _EffectResult:
         strength=pf.random.uniform(rng, 0.2, 0.8),
         phase=pf.random.uniform(rng, 0.0, 100.0),
     )
-    return _EffectResult(mesh=pf.nodes.to_mesh_object(warped), subsurf_levels=2)
+    return EffectResult(mesh=pf.nodes.to_mesh_object(warped), subsurf_levels=2)
 
 
 class PrimitivesResult(NamedTuple):
@@ -299,12 +309,13 @@ class PrimitivesResult(NamedTuple):
 
 
 @pf.tracer.grammar
-def primitives_rand(
+def primitive_with_effect_rand(
     rng: pf.RNG,
     target_size: float | None = None,
     max_subsurf_levels: int | None = None,
 ) -> PrimitivesResult:
     (
+        rng_base,
         rng_effect_choice,
         rng_effect,
         rng_crease,
@@ -313,24 +324,28 @@ def primitives_rand(
         rng_scale,
         rng_mat_choice,
         rng_mat,
-    ) = rng.spawn(8)
+    ) = rng.spawn(9)
+
     effect_func = pf.control.choice(
         rng_effect_choice,
         [
-            (_effect_none, 2.0),
-            (_effect_bevel, 1.0),
-            (_effect_wireframe, 1.0),
-            (_effect_solidify, 0.7),
-            (_effect_screw_ring, 0.5),
-            (_effect_screw_spiral, 0.5),
-            (_effect_decimate, 0.7),
-            (_effect_fractal_jitter, 0.7),
-            (_effect_twist, 1.0),
-            (_effect_taper, 1.0),
-            (_effect_noise_warp, 1.0),
+            (effect_none, 2.0),
+            (effect_bevel, 1.0),
+            (effect_wireframe, 1.0),
+            (effect_solidify, 0.7),
+            (effect_screw_ring, 0.5),
+            (effect_screw_spiral, 0.5),
+            (effect_decimate, 0.7),
+            (effect_fractal_jitter, 0.7),
+            (effect_twist, 1.0),
+            (effect_taper, 1.0),
+            (effect_noise_warp, 1.0),
         ],
     )
-    result = effect_func(rng_effect)
+    primitive = primitive_rand(rng_base)
+    # blender dedupes the sampler's name with .00N; drop it before composing
+    primitive_name = primitive.item().name.split(".")[0]
+    result = effect_func(rng_effect, primitive)
     obj = result.mesh
 
     crease_threshold = pf.random.clip_gaussian(rng_crease, 40.0, 40.0, 0.0, 180.0)
@@ -342,6 +357,8 @@ def primitives_rand(
             softness_degrees=crease_softness,
         )
     )
+    obj.item().name = f"{primitive_name}_{effect_func.__name__}"
+
     subsurf_levels = result.subsurf_levels
     if max_subsurf_levels is not None:
         subsurf_levels = min(subsurf_levels, max_subsurf_levels)

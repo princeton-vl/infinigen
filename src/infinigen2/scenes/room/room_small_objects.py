@@ -16,6 +16,7 @@ subsets of it onto each target's real surface.
 import functools
 import logging
 import math
+import re
 from typing import Callable, NamedTuple
 
 import procfunc as pf
@@ -33,6 +34,11 @@ __all__ = [
 ]
 
 logger = logging.getLogger(__name__)
+
+
+def _smallobj_label(data_name: str) -> str:
+    # strips the pool index and any blender copy suffix, leaving primitive_effect
+    return re.sub(r"_\d+(\.\d+)?$", "", data_name)
 
 
 def _scatter_region(
@@ -240,7 +246,7 @@ def _bake_and_filter(
         alias.item().matrix_world = (
             parent.item().matrix_world @ alias.item().matrix_world
         )
-        alias.item().name = alias.item().data.name
+        alias.item().name = _smallobj_label(alias.item().data.name)
     kept, colliders = keep_non_colliding(instances, colliders, key=lambda o: o)
     logger.debug(
         "small objects on %s (z=%.2f): placed %d, kept %d, dropped %d by collision",
@@ -348,7 +354,7 @@ def small_objects_collection_rand(rng: pf.RNG) -> pf.Collection:
     n_pool = int(pf.random.randint(rng, 8, 17))
     meshes = []
     for i, rng_mesh in enumerate(rng.spawn(n_pool)):
-        mesh = random_primitives.primitives_rand(
+        mesh = random_primitives.primitive_with_effect_rand(
             rng_mesh,
             target_size=pf.random.clip_gaussian(rng_mesh, 0.13, 0.07, 0.08, 0.3),
             max_subsurf_levels=1,
@@ -357,9 +363,9 @@ def small_objects_collection_rand(rng: pf.RNG) -> pf.Collection:
         bmin, _ = pf.ops.attr.bbox_min_max(mesh, global_coords=False)
         pf.ops.object.set_transform(mesh, location=(0, 0, -bmin[2]))
         pf.ops.mesh.transform_apply(mesh)
-        # collection_info(separate_children) indexes by natural-name sort; give stable
-        # draw-order names (warp realization reuses "mesh_single_vertex", which would tie).
-        mesh.item().name = mesh.item().data.name = f"smallobj_{i:03d}"
+        # index keeps the stem unique, which propagate_modifiers_to_instances requires
+        label = mesh.item().name.split(".")[0]
+        mesh.item().data.name = f"{label}_{i:03d}"
         meshes.append(mesh)
     return pf.Collection(meshes)
 

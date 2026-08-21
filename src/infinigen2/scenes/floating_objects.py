@@ -128,7 +128,7 @@ def floating_object_asset_rand(rng: pf.RNG) -> pf.MeshObject:
     asset_func = pf.control.choice(
         rng,
         [
-            (random_primitives.primitives_rand, 1.0),
+            (random_primitives.primitive_with_effect_rand, 1.0),
             (object_rand, 1.5),
         ],
     )
