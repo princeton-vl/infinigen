@@ -32,6 +32,8 @@ TRAJ="traj${TRAJ_IDX}"
 SHARD="${SCENE}/${TRAJ}"
 
 JOBNAME="${SLURM_JOB_NAME:-if2dataset}_${SLURM_ARRAY_JOB_ID}"
+# _traj marks the {scene}/{traj}/{cam} pack layout apart from older {scene}/{cam} runs
+RUN_NAME="${JOBNAME}_traj"
 START_TIME=$(date -Iseconds)
 
 LOG_BASE="outputs/renderjobs"
@@ -60,14 +62,15 @@ on_term() {
 trap on_term TERM
 
 SCRATCH_MIN_KB=$((10 * 1024 * 1024))
-SCRATCH_CLEANUP_AGE_MINS=180
+# must exceed --time, or this deletes the tree of a task still running on the same node
+SCRATCH_CLEANUP_AGE_MINS=240
 
 MAIN_CANDIDATES=(
     "/n/fs/pvl-renders/${USER}/renders"
     "/scratch/gpfs/JIADENG/${USER}/renders"
     "outputs/renders"
 )
-TASK_TAG="${SLURM_ARRAY_JOB_ID}/_raw"
+TASK_TAG="${RUN_NAME}/_raw"
 OPTIM_CANDIDATES=(
     "/scratch/${USER}/${TASK_TAG}"
     "/tmp/${USER}/${TASK_TAG}"
@@ -94,10 +97,10 @@ can_use_optim_candidate() {
     return 0
 }
 
-SCRATCH_DIR="${PROJ_BASE}/${SLURM_ARRAY_JOB_ID}/_raw"
+RAW_BASE="${PROJ_BASE}/${RUN_NAME}/_raw"
 for local_candidate in "${OPTIM_CANDIDATES[@]}"; do
     if can_use_optim_candidate "${local_candidate}"; then
-        SCRATCH_DIR="${local_candidate}"
+        RAW_BASE="${local_candidate}"
         if [ "${SLURM_RESTART_COUNT:-0}" -eq 0 ]; then
             find "${local_candidate}" -mindepth 1 -maxdepth 1 -mmin +"${SCRATCH_CLEANUP_AGE_MINS}" -exec rm -rf {} + 2>/dev/null
         fi
@@ -105,7 +108,11 @@ for local_candidate in "${OPTIM_CANDIDATES[@]}"; do
     fi
 done
 
-FINALDIR="${PROJ_BASE}/${SLURM_ARRAY_JOB_ID}"
+# a task owns its raw tree outright, so the two cameras of a shard never share files
+SCRATCH_DIR="${RAW_BASE}/task${SLURM_ARRAY_TASK_ID}"
+# tmp sits beside the tree, not in it, or cvdpack enumerates it as a {cam}
+TMPDIR_PACK="${RAW_BASE}/tmp_task${SLURM_ARRAY_TASK_ID}"
+FINALDIR="${PROJ_BASE}/${RUN_NAME}"
 OUTDIR="${SCRATCH_DIR}/${SHARD}"
 mkdir -p "${OUTDIR}" "${FINALDIR}"
 echo "SHARD: ${SHARD} SCRATCH_DIR: ${SCRATCH_DIR} RETRY COUNT: ${SLURM_RESTART_COUNT:-0}"
@@ -117,14 +124,19 @@ if ! uv run --no-sync python examples/flying_indoor/render.py \
     emit_state "crashed"
     exit 1
 fi
-[ -f "${OUTDIR}/metadata.json" ] || { echo "ERROR: no ${OUTDIR}/metadata.json"; emit_state "crashed"; exit 1; }
+# only the left shard writes metadata, straight to the scene root
+[ "${CAMERA_IDX}" -ne 0 ] || [ -f "${OUTDIR}/metadata.json" ] || { echo "ERROR: no ${OUTDIR}/metadata.json"; emit_state "crashed"; exit 1; }
+
+# the left shard solely writes the scene-scoped packed files; the right packs only its own passes
+PACK_SUBSET=("scene=${SCENE}" "traj=${TRAJ}")
+[ "${CAMERA_IDX}" -eq 0 ] || PACK_SUBSET+=("gt_type=rgb,camera,depth")
 
 ALLOW_LOSSY_RGB_ENCODE=1 uv run --no-sync cvdpack pack \
     --input "${SCRATCH_DIR}" \
     --output "${FINALDIR}" \
     --config "${CONFIG}" \
-    --subset "scene=${SCENE}" "traj=${TRAJ}" \
-    --tmp_folder "${OUTDIR}/tmp" \
+    --subset "${PACK_SUBSET[@]}" \
+    --tmp_folder "${TMPDIR_PACK}" \
     --n_workers 2 --parallel_mode multiprocess --cpus_per_worker 2
 
 # scratch is kept on failure so the render can be repacked instead of re-rendered
@@ -135,8 +147,8 @@ if [ "${PACK_STATUS}" -ne 0 ]; then
     exit 1
 fi
 
-rm -rf "${OUTDIR}"
-echo "packed ${SHARD} -> ${FINALDIR}/${SHARD}"
+rm -rf "${SCRATCH_DIR}" "${TMPDIR_PACK}"
+echo "packed ${SHARD} camera ${CAMERA_IDX} -> ${FINALDIR}/${SHARD}"
 
 trap - TERM
 emit_state "completed"

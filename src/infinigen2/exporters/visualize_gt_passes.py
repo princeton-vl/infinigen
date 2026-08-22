@@ -123,7 +123,8 @@ def visualize_flow(
 
 
 def visualize_normals(input_path: Path, output_path: Path) -> None:
-    normals = load_data(input_path)[..., [2, 0, 1]] * np.array([-1.0, 1.0, 1.0])
+    # preview only: stored normals are CV camera space, display wants +y up, +z backward
+    normals = load_data(input_path) * np.array([1.0, -1.0, -1.0])
     assert normals.max() < 1 + 1e-4
     assert normals.min() > -1 - 1e-4
     norm = np.linalg.norm(normals, axis=2)

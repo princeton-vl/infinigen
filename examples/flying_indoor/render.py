@@ -355,16 +355,18 @@ def main():
 
     n_frames = frame_end - frame_start + 1
     build_keys = {"room", "floating_objects", "stereo_camera"}
-    write_render_metadata(
-        output=output,
-        seed=seed,
-        times=times,
-        exports=all_exports,
-        build_keys=build_keys,
-        render_keys=render_keys,
-        n_frames=n_frames,
-        trajectory_seed=traj_seed,
-    )
+    # only the left shard writes the scene-root metadata, so shards never clobber it
+    if args.camera_idx == 0:
+        write_render_metadata(
+            output=output,
+            seed=seed,
+            times=times,
+            exports=all_exports,
+            build_keys=build_keys,
+            render_keys=render_keys,
+            n_frames=n_frames,
+            trajectory_seed=traj_seed,
+        )
 
     for paths in all_exports.values():
         for p in paths:

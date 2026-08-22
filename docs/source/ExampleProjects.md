@@ -36,7 +36,7 @@ Passes written per clip:
 - **right** — rgb + `camera.npz`.
 - **left gt** — `depth`/`surface-normal`/`object`/`optical-flow` `.npy`.
 - **right gt** — `depth` `.npy`.
-- `metadata.json` (seed, hardware, per-pass runtimes, exports).
+- `metadata.json` (seed, per-pass runtimes, exports), written by the left-camera shard.
 
 We rendered a [downloadable flying-indoor dataset](DatasetDownloads) with this example at Infinigen 2.0.0a2, if you would rather use scenes than render them.
 

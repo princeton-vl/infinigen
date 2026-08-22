@@ -36,6 +36,10 @@
     "name": "infinigen2.exporters.object_data.save_object_data"
   },
   {
+    "category": "Exporter",
+    "name": "infinigen2.exporters.rigidbody_point_tracks.save_point_tracks"
+  },
+  {
     "category": "Material",
     "name": "infinigen2.shaders.composites.bricks.bricks_rand",
     "integration_test_string": "bricks_rand material_plane_uv render_cycles",

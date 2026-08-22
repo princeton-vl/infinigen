@@ -65,6 +65,10 @@
             "original_path_template": "{scene}/{traj}/{cam}/material-index-table.json",
             "packed_path_template": "{scene}/{traj}/material-index-table-{cam}.json"
         },
+        "object-index-table": {
+            "original_path_template": "{scene}/{traj}/{cam}/object-index-table.json",
+            "packed_path_template": "{scene}/{traj}/object-index-table-{cam}.json"
+        },
         "camera": {
             "original_path_template": "{scene}/{traj}/{cam}/camera.npz",
             "packed_path_template": "{scene}/{traj}/camera-{cam}.npz"

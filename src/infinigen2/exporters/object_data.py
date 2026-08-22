@@ -11,7 +11,7 @@ import numpy as np
 from mathutils import Euler, Matrix, Quaternion, Vector
 
 from infinigen2.exporters.util.blender_render import object_index_table_names
-from infinigen2.exporters.util.format import SCENE_PASS_DEFAULTS, ExportType
+from infinigen2.exporters.util.format import ExportType
 
 __all__ = [
     "collect_object_data",
@@ -19,8 +19,6 @@ __all__ = [
 ]
 
 logger = logging.getLogger(__name__)
-
-OBJECT_DATA_PATH = SCENE_PASS_DEFAULTS[ExportType.OBJECT_DATA].path
 
 STR_DTYPE = "S63"
 
@@ -180,11 +178,9 @@ def save_object_data(
     output_folder: Path,
     frame_start: int,
     frame_end: int,
-    path: Path = OBJECT_DATA_PATH,
+    path: Path = Path("object-data.npz"),
 ) -> dict[ExportType, list[Path]]:
-    """Write per-object 3D ground truth over the frame range as object-data.npz."""
     data = collect_object_data(objects, frame_start, frame_end)
-
     result_path = Path(output_folder) / path
     result_path.parent.mkdir(exist_ok=True, parents=True)
     np.savez(result_path, **data)

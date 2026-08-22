@@ -12,7 +12,7 @@ import procfunc as pf
 import pytest
 from mathutils import Vector
 
-from infinigen2.exporters.object_data import collect_object_data, save_object_data
+from infinigen2.exporters.object_data import collect_object_data
 from infinigen2.exporters.util.blender_render import configure_object_index_table
 from infinigen2.exporters.util.format import (
     NON_CAMERA_TYPES,
@@ -38,10 +38,10 @@ def _cubes(n: int) -> list[pf.MeshObject]:
 
 
 def _load(objects, tmp_path: Path, frame_start: int = 0, frame_end: int = 0):
-    exports = save_object_data(objects, tmp_path, frame_start, frame_end)
-    paths = exports[ExportType.OBJECT_DATA]
-    assert len(paths) == 1
-    return np.load(paths[0], allow_pickle=False)
+    data = collect_object_data(objects, frame_start, frame_end)
+    path = tmp_path / "object-data.npz"
+    np.savez(path, **data)
+    return np.load(path, allow_pickle=False)
 
 
 def _world_corners(obj: bpy.types.Object) -> np.ndarray:
@@ -138,28 +138,28 @@ def test_unassigned_object_index_is_rejected(tmp_path: Path):
     pf.ops.object.clear_scene()
     cube = pf.ops.primitives.mesh_cube()
     with pytest.raises(ValueError, match="pass_index 0"):
-        save_object_data([cube], tmp_path, 0, 0)
+        collect_object_data([cube], 0, 0)
 
 
 def test_clashing_object_index_is_rejected(tmp_path: Path):
     cubes = _cubes(2)
     cubes[1].item().pass_index = cubes[0].item().pass_index
     with pytest.raises(ValueError, match="unique"):
-        save_object_data(cubes, tmp_path, 0, 0)
+        collect_object_data(cubes, 0, 0)
 
 
 def test_stale_object_index_is_rejected(tmp_path: Path):
     cubes = _cubes(3)
     bpy.data.objects.remove(cubes[0].item(), do_unlink=True)
     with pytest.raises(ValueError, match="no longer points back"):
-        save_object_data(cubes[1:], tmp_path, 0, 0)
+        collect_object_data(cubes[1:], 0, 0)
 
 
 def test_export_without_stamping_is_rejected(tmp_path: Path):
     pf.ops.object.clear_scene()
     cubes = [pf.ops.primitives.mesh_cube() for _ in range(3)]
     with pytest.raises(ValueError, match="pass_index 0"):
-        save_object_data(cubes, tmp_path, 0, 0)
+        collect_object_data(cubes, 0, 0)
 
 
 def test_pose_and_bbox_reconstruct_the_world_box(tmp_path: Path):
@@ -227,7 +227,7 @@ def test_frame_is_restored_after_export(tmp_path: Path):
     assert bpy.context.scene.frame_current == 7
 
 
-def test_save_object_data_with_no_objects(tmp_path: Path):
+def test_collect_object_data_with_no_objects(tmp_path: Path):
     pf.ops.object.clear_scene()
     data = _load([], tmp_path, frame_start=0, frame_end=1)
     assert data["location_meters"].shape == (0, 3, 2)

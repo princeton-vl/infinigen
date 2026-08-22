@@ -13,7 +13,7 @@ import procfunc as pf
 import pytest
 
 from infinigen2.exporters import render_cycles, render_eevee
-from infinigen2.exporters.object_data import save_object_data
+from infinigen2.exporters.object_data import collect_object_data
 from infinigen2.exporters.util.format import ExportType, RenderPass
 from infinigen2.exporters.visualize_gt_boxes import (
     assert_object_data_matches_table,
@@ -205,8 +205,9 @@ def test_object_data_rows_match_the_rendered_object_index(tmp_path):
         resolution=(256, 128),
     )
     # reversed, so a row's object_index rather than its position has to carry the join
-    exports = save_object_data(list(reversed(objects)), tmp_path, 1, 1)
-    object_data = exports[ExportType.OBJECT_DATA][0]
+    data = collect_object_data(list(reversed(objects)), 1, 1)
+    object_data = tmp_path / "object-data.npz"
+    np.savez(object_data, **data)
 
     table = tmp_path / camera.item().name / "object-index-table.json"
     assert_object_data_matches_table(object_data, table)

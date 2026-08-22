@@ -35,7 +35,7 @@ dependencies = [
     # used by trimesh, we could specify "trimesh[easy]" but this brings more packages
     "python-fcl>=0.7.0.11",
     "rtree>=1.4", # trimesh spatial index
-    "cvdpack>=0.5.2", # v2 ground-truth tool
+    "cvdpack>=0.6.0", # v2 ground-truth tool
 ]
 
 [project.optional-dependencies]

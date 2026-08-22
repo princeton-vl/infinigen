@@ -317,21 +317,22 @@ def _placed_rug(
     room_dimensions: pf.Vector,
     wall_clearance: float = 0.3,
 ) -> list[pf.MeshObject]:
-    # size within the space left after clearance so the rug always fits
-    avail_x = room_dimensions.x - 2 * wall_clearance
-    avail_y = room_dimensions.y - 2 * wall_clearance
+    # a room too tight for the clearance shrinks the rug rather than inverting its range
+    avail_x = max(0.5, room_dimensions.x - 2 * wall_clearance)
+    avail_y = max(0.5, room_dimensions.y - 2 * wall_clearance)
     length = pf.random.uniform(rng, min(1.0, avail_x), avail_x)
     width = pf.random.uniform(rng, min(1.0, avail_y), avail_y)
     thickness = pf.random.uniform(rng, 0.01, 0.02)
     rug_result = rug.rug_rand(rng, dimensions=pf.Vector((length, width, thickness)))
     rug_result.mesh.item().name = rug.rug_rand.__name__
+    # centred slack, so a rug filling the whole span gives an exactly zero-width range
+    slack_x = (avail_x - length) / 2
+    slack_y = (avail_y - width) / 2
     cx = pf.random.uniform(
-        rng,
-        wall_clearance + length / 2,
-        room_dimensions.x - wall_clearance - length / 2,
+        rng, room_dimensions.x / 2 - slack_x, room_dimensions.x / 2 + slack_x
     )
     cy = pf.random.uniform(
-        rng, wall_clearance + width / 2, room_dimensions.y - wall_clearance - width / 2
+        rng, room_dimensions.y / 2 - slack_y, room_dimensions.y / 2 + slack_y
     )
     pf.ops.object.set_transform(rug_result.mesh, location=(cx, cy, 0.001))
     return [rug_result.mesh]

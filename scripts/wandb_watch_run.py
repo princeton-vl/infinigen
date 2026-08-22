@@ -356,6 +356,7 @@ def info_for_event(event: str) -> tuple[dict, dict, dict]:
     for k, v in count_warnings(err_lines).items():
         accumulate[k] = accumulate.get(k, 0) + v
 
+    # only left shards write metadata, so right-shard tasks report without it
     metadata_path = Path(path) / "metadata.json"
     metadata = None
     if metadata_path.exists():
