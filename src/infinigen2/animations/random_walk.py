@@ -83,7 +83,6 @@ def random_walk(
     Returns *obj* if a complete path was found, else None.
     """
     sampler = random_walk_step_fn(bbox=bbox, **sampler_kwargs)
-    accept_fn = accept_fn or (lambda: True)
     return walk_loop(
         rng=rng,
         obj=obj,
@@ -123,15 +122,16 @@ def walk_loop(
     rng: pf.RNG,
     obj: pf.Object,
     sampler: StepFn,
-    accept_fn: Callable[[], bool],
     frame_start: int,
     frame_end: int,
+    accept_fn: Callable[[], bool] | None = None,
     max_retries: int = 20,
     failure_mode: str = "error",
 ) -> pf.Object | None:
     """Animate *obj* along a random walk from *frame_start* to *frame_end*.
 
     The object must already be positioned at a valid initial pose.
+    A None *accept_fn* accepts every proposed trajectory.
     On exhaustion *failure_mode* selects "error" (raise), "warn" (log and
     return None) or "return" (return None silently).
     Returns *obj* if a complete path was found, else None.
@@ -182,7 +182,9 @@ def walk_loop(
         bl_obj.keyframe_insert("location", frame=next_frame)
         bl_obj.keyframe_insert("rotation_euler", frame=next_frame)
 
-        if _validate_trajectory(bl_obj, accept_fn, curr_frame + 1, next_frame):
+        if accept_fn is None or _validate_trajectory(
+            bl_obj, accept_fn, curr_frame + 1, next_frame
+        ):
             stack.append((next_loc, next_rot, next_frame, 0))
             logger.debug(
                 "Keyframed frame %d/%d (stack depth %d)",

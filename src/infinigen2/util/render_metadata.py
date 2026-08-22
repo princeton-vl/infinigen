@@ -24,6 +24,7 @@ def write_render_metadata(
     build_keys: set[str],
     render_keys: set[str],
     n_frames: int,
+    trajectory_seed: int | None = None,
 ) -> dict:
     output = Path(output)
     blend_build_sec = sum(v for k, v in times.items() if k in build_keys)
@@ -31,6 +32,9 @@ def write_render_metadata(
 
     metadata = {
         "seed": hex(seed),
+        "trajectory_seed": hex(
+            trajectory_seed if trajectory_seed is not None else seed
+        ),
         "hardware": get_hardware_info(),
         "generator_times": times,
         "stats": {

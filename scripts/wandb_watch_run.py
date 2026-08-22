@@ -309,8 +309,38 @@ def get_jobstats(jobid: str) -> dict[str, float] | None:
     return metrics or None
 
 
+TERMINAL_STATUSES = (
+    "preempted",
+    "time_limit",
+    "node_fail",
+    "cancelled",
+    "killed",
+    "pack_failed",
+)
+
+
+def enrich_completed(
+    metadata: dict | None,
+    path: str,
+    stats: dict[str, float],
+    accumulate: dict[str, float],
+) -> None:
+    accumulate["jobs/completed"] = 1
+    if metadata is None:
+        return
+    for gen, t in metadata.get("generator_times", {}).items():
+        stats[f"gentime/{gen}"] = t
+    disk_used = get_disk_used(Path(path))
+    if disk_used is not None:
+        stats["disk_used"] = disk_used
+    imgs = metadata.get("exports", {}).get("ExportType.IMAGE", [])
+    accumulate["frames_completed"] = len(imgs)
+
+
 def info_for_event(event: str) -> tuple[dict, dict, dict]:
-    start_str, end_str, _node, _gpu, path, errfile, *_ = event.split()
+    fields = event.split()
+    start_str, end_str, _node, _gpu, path, errfile = fields[:6]
+    status = fields[7] if len(fields) > 7 else None
 
     start = datetime.strptime(start_str, "%Y-%m-%dT%H:%M:%S%z")
     end = datetime.strptime(end_str, "%Y-%m-%dT%H:%M:%S%z")
@@ -347,8 +377,18 @@ def info_for_event(event: str) -> tuple[dict, dict, dict]:
         if js is not None:
             per_event.update(js)
 
-    if error_type == "preempted":
+    # Trust the status the job wrote; errfile guessing misreads unreachable outputs
+    if status == "preempted" or error_type == "preempted":
         accumulate["jobs/preempted"] = 1
+        return stats, accumulate, per_event
+
+    if status == "completed":
+        enrich_completed(metadata, path, stats, accumulate)
+        return stats, accumulate, per_event
+
+    if status in TERMINAL_STATUSES:
+        accumulate["jobs/crashed"] = 1
+        accumulate[f"crashreason/{status}"] = 1
         return stats, accumulate, per_event
 
     if error_type is not None or metadata is None:
@@ -362,17 +402,13 @@ def info_for_event(event: str) -> tuple[dict, dict, dict]:
         accumulate[f"crashreason/{reason}"] = 1
         return stats, accumulate, per_event
 
-    for gen, t in metadata.get("generator_times", {}).items():
-        stats[f"gentime/{gen}"] = t
+    # only a status-less legacy line may reach the success path unrecognized
+    if status is not None:
+        accumulate["jobs/crashed"] = 1
+        accumulate[f"crashreason/unknown_{status}"] = 1
+        return stats, accumulate, per_event
 
-    disk_used = get_disk_used(Path(path))
-    if disk_used is not None:
-        stats["disk_used"] = disk_used
-
-    imgs = metadata.get("exports", {}).get("ExportType.IMAGE", [])
-    accumulate["frames_completed"] = len(imgs)
-    accumulate["jobs/completed"] = 1
-
+    enrich_completed(metadata, path, stats, accumulate)
     return stats, accumulate, per_event
 
 
@@ -406,10 +442,21 @@ def main():
     parser.add_argument("--poll", type=int, default=5)
     parser.add_argument("--wandb_project", type=str, default="infinigen2")
     parser.add_argument(
+        "--name",
+        type=str,
+        default=None,
+        help="wandb run name; defaults to jobnamestr. Set it per subset when running several watchers",
+    )
+    parser.add_argument(
         "--wandb_run_id",
         type=str,
         default=None,
         help="Resume an existing wandb run by id so new metrics append to the same chart",
+    )
+    parser.add_argument(
+        "--skip_history",
+        action="store_true",
+        help="Ignore state.log lines that already exist at startup; only log events appended after launch",
     )
     parser.add_argument(
         "--alert_crash_rate",
@@ -422,12 +469,16 @@ def main():
 
     wandb.init(
         project=args.wandb_project,
-        name=args.jobnamestr.replace("*", ""),
+        name=args.name or args.jobnamestr.replace("*", ""),
         id=args.wandb_run_id,
         resume="allow" if args.wandb_run_id else None,
     )
 
     file_seen_lines: dict[Path, int] = {}
+    if args.skip_history:
+        for f in args.logdir.glob(f"*{args.jobnamestr}*_state.log"):
+            file_seen_lines[f] = len(f.read_text().splitlines())
+
     recent_outcomes: deque = deque(maxlen=args.alert_window)
     accumulated: dict[str, float] = {
         "jobs/completed": 0,

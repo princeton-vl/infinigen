@@ -150,7 +150,7 @@ def _sample_object_transform(
     scale = pf.Vector(tuple(axes))
 
     target_size = pf.random.clip_gaussian(
-        rng, 0.75 * size_scale, 0.3 * size_scale, 0.3, 1.6 * size_scale
+        rng, 0.75 * size_scale, 0.3 * size_scale, 0.3, 2.4 * size_scale
     )
     current_max = max(obj.item().dimensions)
     if current_max > 0:
@@ -188,6 +188,14 @@ def recenter_origin_to_bounds(obj: pf.MeshObject) -> None:
     item.location += item.matrix_world.to_3x3() @ local_center
 
 
+def _extend_collision_set(
+    candidates: list[pf.MeshObject], colliders: ccol.CollisionSet | None
+) -> ccol.CollisionSet:
+    if colliders is None:
+        return ccol.collision_set(candidates)
+    return ccol.collision_set(candidates + colliders.objs, cache=colliders)
+
+
 @pf.tracer.grammar
 def floating_objects_rand(
     rng: pf.RNG,
@@ -201,25 +209,26 @@ def floating_objects_rand(
     """
     Args:
         colliders: Existing collision set to extend. Defaults to an empty set.
-        bbox: Bounding box for placement. Defaults to a [-10, 10]^3 cube.
+        bbox: Bounding box for placement. Defaults to a [0, 5]^3 cube, so this is a
+            usable standalone Scene generator with no room walls around it.
         floating_objects: If provided, place these objects instead of sampling new ones.
         volume_density: Roughly what percent of the box's volume should we fill when sampling.
         check_collisions: If False, do not add the placed objects to the returned collision set.
-        size_scale: Multiplier on the sampled object size (mean/spread/max), e.g. 2.0 for larger props.
+        size_scale: Multiplier on the sampled object size (mean/spread/max), e.g. 2.0 for larger props. The object count is divided by size_scale**3 so the filled volume stays near volume_density.
     """
 
     n_existing = ccol.n_colliders(colliders) if colliders is not None else 0
     logger.info(f"{floating_objects_rand.__name__} got {n_existing} colliders")
 
     if bbox is None:
-        bbox = (np.full(3, -10.0), np.full(3, 10.0))
+        bbox = (np.zeros(3), np.full(3, 5.0))
     all_min, all_max = bbox
 
     if floating_objects is None:
         dims = all_max - all_min
         volume = np.prod(dims)
-        # relies on overall scale mean being 1, and even then quite noisy
-        n_objects = int(np.ceil(volume * volume_density))
+        # object volume grows ~size_scale**3; calibrated at size_scale=1, still noisy
+        n_objects = int(np.ceil(volume * volume_density / size_scale**3))
         sample_rngs = rng.spawn(n_objects)
         floating_objects = [
             floating_object_asset_rand(sample_rngs[i]) for i in range(n_objects)
@@ -235,12 +244,7 @@ def floating_objects_rand(
 
     if check_collisions:
         collider_candidates = [o for o in result if isinstance(o, pf.MeshObject)]
-        if colliders is None:
-            colliders = ccol.collision_set(collider_candidates)
-        else:
-            colliders = ccol.collision_set(
-                collider_candidates + colliders.objs, cache=colliders
-            )
+        colliders = _extend_collision_set(collider_candidates, colliders)
 
     logger.info(
         f"Collision set has {ccol.n_colliders(colliders)} colliders for {len(result)} objects"

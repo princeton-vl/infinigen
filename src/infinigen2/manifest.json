@@ -515,6 +515,11 @@
   },
   {
     "category": "Scene",
+    "name": "infinigen2.scenes.floating_objects.floating_objects_rand",
+    "integration_test_string": "floating_objects_rand object_demo render_cycles"
+  },
+  {
+    "category": "Scene",
     "name": "infinigen2.scenes.room.room.livingroom_rand"
   },
   {

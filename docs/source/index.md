@@ -10,6 +10,7 @@ Command Line Interface <cli>
 api/infinigen2
 procfunc <https://procfunc.readthedocs.io>
 Example Projects <ExampleProjects>
+Dataset Downloads <DatasetDownloads>
 ```
 
 ```{toctree}
