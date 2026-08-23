@@ -10,6 +10,7 @@ d7bf1f6ccbf011b5b8590cec6b281ec55a9f29f9 pre-msg-rewrite develop2 (force-overwri
 7148e0bad3da2eddce21bda378bef73270f9a7a7 Claude co-author trailer on old main lineage (dropped; rebase onto current develop2)
 c0e2a0c1496cd753ca48d7b66609252d79fe3e7c stale integration-render gate (superseded by squashed 29facb4e4 on develop; rebase to drop)
 6601e9b7a4f31bccbf6c79db1c634f7be5288641 stale gate coverage-flush follow-up (superseded on develop; rebase to drop)
+63dee4d441fcbb8db9af12739a43a62a443e13c1 unapproved Blender add-on bindings pushed directly to develop (removed by history rewrite; rebase to drop)
 EOF
 )
 
