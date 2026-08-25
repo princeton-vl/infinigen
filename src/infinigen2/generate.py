@@ -857,23 +857,9 @@ def _main():  # noqa: C901
             print(f)
 
 
-def _flush_coverage() -> None:
-    # skip_teardown_on_exit os._exit()s past coverage.py's atexit save; flush it here
-    try:
-        import coverage
-    except ImportError:
-        return
-    cov = coverage.Coverage.current()
-    if cov is not None:
-        cov.save()
-
-
 def main():
     with skip_teardown_on_exit():
-        try:
-            _main()
-        finally:
-            _flush_coverage()
+        _main()
 
 
 if __name__ == "__main__":

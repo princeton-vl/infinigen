@@ -216,6 +216,9 @@ def main():
         "cameras can be sharded across tasks. Both cameras of a seed write into the "
         "same output dir, so per-camera shards pack together into one scene.",
     )
+    parser.add_argument("--frames", type=int, nargs=2, default=(0, 23))
+    parser.add_argument("--resolution", type=int, nargs=2, default=(1280, 720))
+    parser.add_argument("--samples", type=int, default=512)
     parser.add_argument("--save_blend", type=Path, default=None)
     parser.add_argument(
         "--max_render_tris",
@@ -231,9 +234,9 @@ def main():
     output = args.output
     output.mkdir(parents=True, exist_ok=True)
 
-    frame_start, frame_end = 0, 23
+    frame_start, frame_end = args.frames
     frames = (frame_start, frame_end)
-    resolution = (1280, 720)
+    resolution = tuple(args.resolution)
 
     objects, render_lights, cameras, times = build_scene(
         seed, traj_seed, frame_start, frame_end, resolution
@@ -256,8 +259,8 @@ def main():
         frame_start=frame_start,
         frame_end=frame_end,
         resolution=resolution,
-        min_samples=32,
-        max_samples=512,
+        min_samples=min(32, args.samples),
+        max_samples=args.samples,
         film_exposure=2.0,
         objects=objects,
         lights=render_lights,

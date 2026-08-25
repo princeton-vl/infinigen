@@ -60,10 +60,42 @@ if [ -n "${RENDER_RUNNER:-}" ]; then
     read -r -a RENDER_RUNNER_ARGS <<< "$RENDER_RUNNER"
     PY_BIN="${RENDER_RUNNER_ARGS[0]}"
     CAM_RUNNER_ARGS=("$PY_BIN" scripts/integration_v2/run_and_index.py --index-root "$OUTPUT_PATH" -- "$PY_BIN" scripts/integration_v2/render_trajectory_video.py)
+    EXAMPLE_RUNNER_ARGS=("$PY_BIN" scripts/integration_v2/run_and_index.py --index-root "$OUTPUT_PATH" -- "$PY_BIN")
 else
     RENDER_RUNNER_ARGS=(uv run infinigen)
     CAM_RUNNER_ARGS=(uv run python scripts/integration_v2/render_trajectory_video.py)
+    EXAMPLE_RUNNER_ARGS=(uv run python)
 fi
+
+# nothing else puts the plain example scripts under the tracer, so coverage stays empty
+if [ -n "${INFINIGEN_COVERAGE:-}" ]; then
+    EXAMPLE_RUNNER_ARGS+=(-m coverage run --parallel-mode --rcfile=pyproject.toml)
+fi
+
+if [ "${INTEGRATION_SLOT_INDEX:-0}" = 0 ]; then
+    # name/script/args, listed explicitly so a renamed or added example fails loudly
+    EXAMPLE_SCRIPTS=(
+        "clay_pan_video examples/render_clay_pan_video.py"
+        "flying_indoor examples/flying_indoor/render.py --camera_idx 0"
+    )
+
+    LISTED_EXAMPLES=$(printf '%s\n' "${EXAMPLE_SCRIPTS[@]}" | cut -d' ' -f2 | sort)
+    if [ "$LISTED_EXAMPLES" != "$(find examples -name 'render*.py' | sort)" ]; then
+        echo "EXAMPLES SMOKE CHECK: EXAMPLE_SCRIPTS in launch.sh does not match examples/, update it" >&2
+        exit 1
+    fi
+
+    for entry in "${EXAMPLE_SCRIPTS[@]}"; do
+        # shellcheck disable=SC2086
+        set -- $entry
+        example_name=$1
+        shift
+        "${EXAMPLE_RUNNER_ARGS[@]}" "$@" \
+            --output $OUTPUT_PATH/example-$example_name-scene-cycles-0 --seed 0 \
+            --frames 0 3 --resolution 640 360 --samples 32
+    done
+fi
+
 
 # render_cycles drops the surface-normal pass; the GT exporter renders it as a second unshaded pass.
 NORMAL_STEPS="render_cycles_ground_truth visualize_gt"

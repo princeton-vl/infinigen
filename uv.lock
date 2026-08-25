@@ -1296,16 +1296,16 @@ wheels = [
 
 [[package]]
 name = "procfunc"
-version = "0.35.0"
+version = "0.35.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "bpy" },
     { name = "numpy" },
     { name = "pandas" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/03/9d/c0d502890a9a9132338646a923a627e7370f9db879fa863b15f09325246c/procfunc-0.35.0.tar.gz", hash = "sha256:ea37806d84e77046ce8a169c65abaf08e0dd6e229eee07dd3dcb3e526ae3fc97", size = 303074, upload-time = "2026-08-02T13:06:49.211Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/7d/ee/b680ddc47829f496491cd94c2c9fd695e8481769abfe9450bd9ddddd2911/procfunc-0.35.1.tar.gz", hash = "sha256:71d0f779c07ab72156d8b3aa8a9316ec37da61ed84cc718b393961fa6d493fa3", size = 304331, upload-time = "2026-08-25T03:06:01.231Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8b/85/9d8dad5bc3e7bd195d097660b07d4a3a53d4ae52c19fc23ca1e9a49fff40/procfunc-0.35.0-py3-none-any.whl", hash = "sha256:b65aa5534c1b117821eea87503f232993b291191f184357db9ae35872dc8bed2", size = 319245, upload-time = "2026-08-02T13:06:48.143Z" },
+    { url = "https://files.pythonhosted.org/packages/17/74/943e84fff18067eab7cdb578f93b07c9935ee0a50045a6d6c5cad28b1108/procfunc-0.35.1-py3-none-any.whl", hash = "sha256:98fb670b7113c6d3053f45482fa9a30efe8157ae39dcafb3a39d5d159bec14dd", size = 319776, upload-time = "2026-08-25T03:06:00.024Z" },
 ]
 
 [[package]]

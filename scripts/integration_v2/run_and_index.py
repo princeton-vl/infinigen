@@ -50,6 +50,7 @@ def parse_asset_fields(asset_dir: str) -> tuple[str, str, str]:
         "environment",
         "camera",
         "landing",
+        "example",
     }:
         return "unknown", name, name
 

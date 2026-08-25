@@ -423,6 +423,7 @@ def main() -> int:
         env = os.environ.copy()
         env["CUDA_VISIBLE_DEVICES"] = gpu_id
         env["GPU"] = gpu_id
+        env["INTEGRATION_SLOT_INDEX"] = str(slot_idx)
         env["RENDER_RUNNER"] = runner
         for name, shard in shards.items():
             env[CATEGORIES[name][2]] = shard
