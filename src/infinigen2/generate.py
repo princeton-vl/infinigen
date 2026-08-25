@@ -147,6 +147,8 @@ def get_parser():
         type=ExportType,
         nargs="+",
         default=[ExportType.IMAGE],
+        choices=list(ExportType),
+        metavar="{" + ",".join(e.value for e in ExportType) + "}",
     )
     parser.add_argument(
         "--save_blend",

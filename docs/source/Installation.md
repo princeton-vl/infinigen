@@ -68,7 +68,7 @@ git clone https://github.com/princeton-vl/infinigen.git
 cd infinigen
 git submodule update --init
 
-uv venv
+uv venv --python 3.11
 uv pip install -e ".[dev,terrain,vis]"
 uv run pre-commit install
 ```

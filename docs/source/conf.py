@@ -6,6 +6,7 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
+import ast
 import html
 import importlib
 import inspect
@@ -1003,15 +1004,65 @@ _V1_APIDOC_EXCLUDE_RELPATHS = [
 ]
 
 
+def _public_child_modules(init_py: Path) -> set[str]:
+    tree = ast.parse(init_py.read_text())
+    public = None
+    for node in tree.body:
+        if not isinstance(node, ast.Assign) or len(node.targets) != 1:
+            continue
+        target = node.targets[0]
+        if isinstance(target, ast.Name) and target.id == "__all__":
+            public = set(ast.literal_eval(node.value))
+            break
+    if public is None:
+        return set()
+
+    exported = set()
+    for node in tree.body:
+        if not isinstance(node, ast.ImportFrom):
+            continue
+        if node.level != 1 or node.module is not None:
+            continue
+        exported.update(
+            alias.name for alias in node.names if (alias.asname or alias.name) in public
+        )
+    return exported
+
+
+def _public_apidoc_excludes(package_dir: Path) -> list[str]:
+    excludes = []
+    for init_py in package_dir.rglob("__init__.py"):
+        exported = _public_child_modules(init_py)
+        if not exported:
+            continue
+        for child in init_py.parent.iterdir():
+            is_module = child.suffix == ".py" and child.stem != "__init__"
+            is_package = child.is_dir() and (child / "__init__.py").exists()
+            if not (is_module or is_package):
+                continue
+            name = child.stem if is_module else child.name
+            if name not in exported:
+                excludes.append(str(child))
+    return sorted(excludes)
+
+
 def _run_apidoc(_app):
     here = os.path.dirname(__file__)
     src = os.path.join(here, "..", "..", "src")
     api_dir = Path(here) / "api"
+    infinigen2_dir = Path(src) / "infinigen2"
     _v1_apidoc_excludes = [
         os.path.join(src, *parts) for parts in _V1_APIDOC_EXCLUDE_RELPATHS
     ]
     apidoc.main(
-        ["--force", "--no-toc", "-o", str(api_dir), os.path.join(src, "infinigen2")]
+        [
+            "--force",
+            "--no-toc",
+            "-o",
+            str(api_dir),
+            str(infinigen2_dir),
+            *_public_apidoc_excludes(infinigen2_dir),
+        ]
     )
     _strip_api_suffixes(api_dir)
     subpkgs = _real_subpackages(api_dir)
