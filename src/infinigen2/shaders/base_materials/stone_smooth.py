@@ -308,7 +308,7 @@ def _stone_red_sandstone_rand(
     )
     base_color = pf.color.hsv_to_rgba(base_color_hsv)
 
-    h_perturb = (pf.random.beta(rng, 0.4, 0.9) - 0.3) * 0.16
+    h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.3) * 0.16
     s_perturb = pf.random.uniform(rng, -0.175, 0.175)
     v_perturb = pf.random.uniform(rng, -0.112, 0.168)
     texture_color_1_hsv = np.array([h_perturb, s_perturb, v_perturb]) + base_color_hsv
@@ -326,7 +326,7 @@ def _stone_red_sandstone_rand(
         smoothness=smoothness_layer1,
     )
 
-    h_perturb = (pf.random.beta(rng, 0.5, 0.5) - 0.5) * 0.20
+    h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.5) * 0.20
     s_perturb = pf.random.uniform(rng, -0.172, 0.258)
     v_perturb = pf.random.uniform(rng, -0.135, 0.135)
     texture_color_2_hsv = np.array([h_perturb, s_perturb, v_perturb]) + base_color_hsv
@@ -345,7 +345,7 @@ def _stone_red_sandstone_rand(
         smoothness=1.0,
         mask=mask_layer2,
     )
-    h_perturb = (pf.random.beta(rng, 0.6, 0.6) - 0.5) * 0.12
+    h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.5) * 0.12
     s_perturb = pf.random.uniform(rng, -0.175, 0.175)
     v_perturb = pf.random.uniform(rng, -0.168, 0.112)
     texture_color_3_hsv = np.array([h_perturb, s_perturb, v_perturb]) + base_color_hsv
@@ -413,7 +413,6 @@ def _stone_red_sandstone_rand(
     displacement = pf.nodes.shader.displacement(
         height=displacement_layer_result_2.height,
         midlevel=0.0,
-        normal=(0.0, 0.0, 0.0),
     )
     return pf.Material(
         surface=surface,
@@ -624,7 +623,7 @@ def _stone_sandstone_rand(  # noqa: C901
         base_color_hsv = np.array(base_color.hsv)
 
     if texture_color_layer1 is None:
-        h_perturb = (pf.random.beta(rng, 0.4, 0.9) - 0.3) * 0.16
+        h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.3) * 0.16
         s_perturb = pf.random.uniform(rng, -0.20, 0.20)
         v_perturb = pf.random.uniform(rng, -0.12, 0.18)
         texture_color_layer1_hsv = (
@@ -650,7 +649,7 @@ def _stone_sandstone_rand(  # noqa: C901
     )
 
     if texture_color_layer2 is None:
-        h_perturb = (pf.random.beta(rng, 0.5, 0.5) - 0.5) * 0.20
+        h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.5) * 0.20
         s_perturb = pf.random.uniform(rng, -0.20, 0.30)
         v_perturb = pf.random.uniform(rng, -0.15, 0.15)
         texture_color_layer2_hsv = (
@@ -680,7 +679,7 @@ def _stone_sandstone_rand(  # noqa: C901
     )
 
     if texture_color_layer3 is None:
-        h_perturb = (pf.random.beta(rng, 0.6, 0.6) - 0.5) * 0.12
+        h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.5) * 0.12
         s_perturb = pf.random.uniform(rng, -0.225, 0.225)
         v_perturb = pf.random.uniform(rng, -0.15, 0.15)
         texture_color_layer3_hsv = (
@@ -818,7 +817,6 @@ def _stone_sandstone_rand(  # noqa: C901
     displacement = pf.nodes.shader.displacement(
         height=displacement_layer_result_2.height,
         midlevel=0.0,
-        normal=(0.0, 0.0, 0.0),
     )
 
     return pf.Material(
@@ -878,7 +876,7 @@ def _stone_limestone_rand(  # noqa: C901
         base_color_hsv = np.array(base_color.hsv)
 
     if texture_color_layer1 is None:
-        h_perturb = (pf.random.beta(rng, 0.4, 0.8) - 0.35) * 0.12
+        h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.35) * 0.12
         s_perturb = pf.random.uniform(rng, -0.125, 0.125)
         v_perturb = pf.random.uniform(rng, -0.112, 0.168)
         texture_color_layer1_hsv = (
@@ -906,7 +904,7 @@ def _stone_limestone_rand(  # noqa: C901
     )
 
     if texture_color_layer2 is None:
-        h_perturb = (pf.random.beta(rng, 0.6, 0.5) - 0.5) * 0.14
+        h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.5) * 0.14
         s_perturb = pf.random.uniform(rng, -0.112, 0.168)
         v_perturb = pf.random.uniform(rng, -0.15, 0.15)
         texture_color_layer2_hsv = (
@@ -938,7 +936,7 @@ def _stone_limestone_rand(  # noqa: C901
     )
 
     if texture_color_layer3 is None:
-        h_perturb = (pf.random.beta(rng, 0.5, 0.4) - 0.5) * 0.12
+        h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.5) * 0.12
         s_perturb = pf.random.uniform(rng, -0.11, 0.11)
         v_perturb = pf.random.uniform(rng, -0.176, 0.144)
         texture_color_layer3_hsv = (
@@ -966,7 +964,7 @@ def _stone_limestone_rand(  # noqa: C901
     )
 
     if texture_color_layer4 is None:
-        h_perturb = (pf.random.beta(rng, 0.4, 0.5) - 0.45) * 0.11
+        h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.45) * 0.11
         s_perturb = pf.random.uniform(rng, -0.12, 0.12)
         v_perturb = pf.random.uniform(rng, -0.104, 0.156)
         texture_color_layer4_hsv = (
@@ -1087,7 +1085,6 @@ def _stone_limestone_rand(  # noqa: C901
     displacement = pf.nodes.shader.displacement(
         height=displacement_layer_result_2.height,
         midlevel=0.0,
-        normal=(0.0, 0.0, 0.0),
     )
 
     return pf.Material(
@@ -1135,7 +1132,7 @@ def _stone_basalt_rand(  # noqa: C901
         base_color_hsv = np.array(base_color.hsv)
 
     if texture_color_layer1 is None:
-        h_perturb = (pf.random.beta(rng, 0.4, 0.7) - 0.4) * 0.06
+        h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.4) * 0.06
         s_perturb = pf.random.uniform(rng, -0.04, 0.04)
         v_perturb = pf.random.uniform(rng, -0.016, 0.016)
         texture_color_layer1_hsv = (
@@ -1161,7 +1158,7 @@ def _stone_basalt_rand(  # noqa: C901
     )
 
     if texture_color_layer2 is None:
-        h_perturb = (pf.random.beta(rng, 0.6, 0.6) - 0.5) * 0.06
+        h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.5) * 0.06
         s_perturb = pf.random.uniform(rng, -0.054, 0.066)
         v_perturb = pf.random.uniform(rng, -0.0175, 0.0175)
         texture_color_layer2_hsv = (
@@ -1191,7 +1188,7 @@ def _stone_basalt_rand(  # noqa: C901
     )
 
     if texture_color_layer3 is None:
-        h_perturb = (pf.random.beta(rng, 0.5, 0.5) - 0.5) * 0.06
+        h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.5) * 0.06
         s_perturb = pf.random.uniform(rng, -0.06, 0.06)
         v_perturb = pf.random.uniform(rng, -0.0175, 0.0175)
         texture_color_layer3_hsv = (
@@ -1284,7 +1281,6 @@ def _stone_basalt_rand(  # noqa: C901
     displacement = pf.nodes.shader.displacement(
         height=displacement_layer_result_1.height,
         midlevel=0.0,
-        normal=(0.0, 0.0, 0.0),
     )
 
     return pf.Material(
@@ -1352,7 +1348,7 @@ def _stone_volcanic_rand(  # noqa: C901
         base_color_hsv = np.array(base_color.hsv)
 
     if texture_color_layer1 is None:
-        h_perturb = (pf.random.beta(rng, 0.3, 0.8) - 0.35) * 0.08
+        h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.35) * 0.08
         s_perturb = pf.random.uniform(rng, -0.14, 0.14)
         v_perturb = pf.random.uniform(rng, -0.0175, 0.0175)
         texture_color_layer1_hsv = (
@@ -1378,7 +1374,7 @@ def _stone_volcanic_rand(  # noqa: C901
     )
 
     if texture_color_layer2 is None:
-        h_perturb = (pf.random.beta(rng, 0.5, 0.6) - 0.45) * 0.08
+        h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.45) * 0.08
         s_perturb = pf.random.uniform(rng, -0.088, 0.132)
         v_perturb = pf.random.uniform(rng, -0.016, 0.016)
         texture_color_layer2_hsv = (
@@ -1410,7 +1406,7 @@ def _stone_volcanic_rand(  # noqa: C901
     )
 
     if texture_color_layer3 is None:
-        h_perturb = (pf.random.beta(rng, 0.5, 0.7) - 0.5) * 0.06
+        h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.5) * 0.06
         s_perturb = pf.random.uniform(rng, -0.12, 0.12)
         v_perturb = pf.random.uniform(rng, -0.0121, 0.0099)
         texture_color_layer3_hsv = (
@@ -1591,7 +1587,6 @@ def _stone_volcanic_rand(  # noqa: C901
     displacement = pf.nodes.shader.displacement(
         height=displacement_layer_result_3.height,
         midlevel=0.0,
-        normal=(0.0, 0.0, 0.0),
     )
 
     return pf.Material(
@@ -1640,7 +1635,7 @@ def _stone_tuff_rand(  # noqa: C901
         base_color_hsv = np.array(base_color.hsv)
 
     if texture_color_layer1 is None:
-        h_perturb = (pf.random.beta(rng, 0.5, 0.6) - 0.45) * 0.16
+        h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.45) * 0.16
         s_perturb = pf.random.uniform(rng, -0.13, 0.13)
         v_perturb = pf.random.uniform(rng, -0.14, 0.14)
         texture_color_layer1_hsv = (
@@ -1666,7 +1661,7 @@ def _stone_tuff_rand(  # noqa: C901
     )
 
     if texture_color_layer2 is None:
-        h_perturb = (pf.random.beta(rng, 0.4, 0.4) - 0.3) * 0.32
+        h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.3) * 0.32
         s_perturb = pf.random.uniform(rng, -0.18, 0.22)
         v_perturb = pf.random.uniform(rng, -0.13, 0.13)
         texture_color_layer2_hsv = (
@@ -1693,7 +1688,7 @@ def _stone_tuff_rand(  # noqa: C901
     )
 
     if texture_color_layer3 is None:
-        h_perturb = (pf.random.beta(rng, 0.7, 0.5) - 0.55) * 0.16
+        h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.55) * 0.16
         s_perturb = pf.random.uniform(rng, -0.11, 0.09)
         v_perturb = pf.random.uniform(rng, -0.176, 0.144)
         texture_color_layer3_hsv = (
@@ -1802,7 +1797,6 @@ def _stone_tuff_rand(  # noqa: C901
     displacement = pf.nodes.shader.displacement(
         height=displacement_layer_result_2.height,
         midlevel=0.0,
-        normal=(0.0, 0.0, 0.0),
     )
 
     return pf.Material(
@@ -1852,7 +1846,7 @@ def _stone_grey_rand(  # noqa: C901
         )
 
     if texture_color_layer1 is None:
-        h_perturb = (pf.random.beta(rng, 0.5, 0.6) - 0.45) * 0.08
+        h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.45) * 0.08
         s_perturb = pf.random.uniform(rng, -0.04, 0.04)
         v_perturb = pf.random.uniform(rng, -0.088, 0.132)
         texture_color_layer1_hsv = (
@@ -1878,7 +1872,7 @@ def _stone_grey_rand(  # noqa: C901
     )
 
     if texture_color_layer2 is None:
-        h_perturb = (pf.random.beta(rng, 0.6, 0.6) - 0.5) * 0.10
+        h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.5) * 0.10
         s_perturb = pf.random.uniform(rng, -0.054, 0.066)
         v_perturb = pf.random.uniform(rng, -0.07, 0.07)
         texture_color_layer2_hsv = (
@@ -1906,7 +1900,7 @@ def _stone_grey_rand(  # noqa: C901
     )
 
     if texture_color_layer3 is None:
-        h_perturb = (pf.random.beta(rng, 0.5, 0.5) - 0.5) * 0.10
+        h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.5) * 0.10
         s_perturb = pf.random.uniform(rng, -0.04, 0.04)
         v_perturb = pf.random.uniform(rng, -0.09, 0.09)
         texture_color_layer3_hsv = (
@@ -1995,7 +1989,6 @@ def _stone_grey_rand(  # noqa: C901
     displacement = pf.nodes.shader.displacement(
         height=displacement_layer_result_1.height,
         midlevel=0.0,
-        normal=(0.0, 0.0, 0.0),
     )
 
     return pf.Material(
@@ -2004,7 +1997,8 @@ def _stone_grey_rand(  # noqa: C901
     )
 
 
-def stone_smooth_rand(  # noqa: C901
+"""
+def stone_smooth_styles_rand(  # noqa: C901
     rng: pf.RNG,
     vector: t.SocketOrVal[pf.Vector],
     base_color: t.SocketOrVal[pf.Color | None] = None,
@@ -2047,16 +2041,16 @@ def stone_smooth_rand(  # noqa: C901
     if base_color is None:
         h_base = pf.random.clip_gaussian(rng, 0.15, 0.1, 0.05, 0.25)
         s_base = pf.random.uniform(rng, 0.2, 0.80)
-        v_base = pf.random.log_uniform(rng, 0.01, 0.5)
+        v_base = pf.random.uniform(rng, 0.01, 0.5)
         base_color_hsv = np.array([h_base, s_base, v_base])
         base_color = pf.color.hsv_to_rgba(base_color_hsv)
     else:
         base_color_hsv = np.array(base_color.hsv)
 
     if texture_color_layer1 is None:
-        h_perturb = (pf.random.beta(rng, 0.8, 0.9) - 0.5) * 0.05
+        h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.5) * 0.05
         s_perturb = pf.random.uniform(rng, -0.175, 0.175)
-        v_mult = pf.random.log_uniform(rng, 0.5, 2.0)
+        v_mult = pf.random.uniform(rng, 0.5, 2.0)
         texture_color_layer1_hsv = np.array(
             [h_base + h_perturb, s_base + s_perturb, v_base * v_mult]
         )
@@ -2082,9 +2076,9 @@ def stone_smooth_rand(  # noqa: C901
     )
 
     if texture_color_layer2 is None:
-        h_perturb = (pf.random.beta(rng, 0.3, 0.4) - 0.5) * 0.40
+        h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.5) * 0.40
         s_perturb = pf.random.uniform(rng, -0.40, 0.40)
-        v_mult = pf.random.log_uniform(rng, 0.15, 4.0)
+        v_mult = pf.random.uniform(rng, 0.15, 4.0)
         texture_color_layer2_hsv = np.array(
             [h_base + h_perturb, s_base + s_perturb, v_base * v_mult]
         )
@@ -2114,9 +2108,9 @@ def stone_smooth_rand(  # noqa: C901
     )
 
     if texture_color_layer3 is None:
-        h_perturb = (pf.random.beta(rng, 0.3, 0.4) - 0.5) * 0.40
+        h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.5) * 0.40
         s_perturb = pf.random.uniform(rng, -0.35, 0.35)
-        v_mult = pf.random.log_uniform(rng, 0.2, 3.0)
+        v_mult = pf.random.uniform(rng, 0.2, 3.0)
         texture_color_layer3_hsv = np.array(
             [h_base + h_perturb, s_base + s_perturb, v_base * v_mult]
         )
@@ -2142,9 +2136,9 @@ def stone_smooth_rand(  # noqa: C901
     )
 
     if texture_color_layer4 is None:
-        h_perturb = (pf.random.beta(rng, 0.3, 0.4) - 0.5) * 0.55
+        h_perturb = (pf.random.uniform(rng, 0.0, 1.0) - 0.5) * 0.55
         s_perturb = pf.random.uniform(rng, -0.275, 0.275)
-        v_mult = pf.random.log_uniform(rng, 0.2, 5.0)
+        v_mult = pf.random.uniform(rng, 0.2, 5.0)
         texture_color_layer4_hsv = np.array(
             [h_base + h_perturb, s_base + s_perturb, v_base * v_mult]
         )
@@ -2263,13 +2257,13 @@ def stone_smooth_rand(  # noqa: C901
     displacement = pf.nodes.shader.displacement(
         height=displacement_layer_result_2.height,
         midlevel=0.0,
-        normal=(0.0, 0.0, 0.0),
     )
 
     return pf.Material(
         surface=surface,
         displacement=displacement,
     )
+"""
 
 
 def stone_grey_preset(vector: t.SocketOrVal[pf.Vector]):
@@ -2520,6 +2514,151 @@ def stone_red_sandstone_preset(vector: t.SocketOrVal[pf.Vector]):
         spread=0.632,
         smoothness=0.94,
     )
+    displacement = pf.nodes.shader.displacement(
+        height=displacement_layer_result_2.height,
+        midlevel=0.0,
+        normal=(0.0, 0.0, 0.0),
+    )
+    return pf.Material(surface=surface, displacement=displacement)
+
+
+def stone_smooth_rand(
+    rng: pf.RNG,
+    vector: t.SocketOrVal[pf.Vector],
+) -> pf.Material:
+    r_warm, r_hue, r_val, r_strata, r_relief, r_por = rng.spawn(6)
+    r_tex1, r_tex2, r_tex3, r_rough, r_d1, r_d2, r_d3 = rng.spawn(7)
+
+    warmth = pf.random.uniform(r_warm, 0.0, 1.0)
+    value_axis = pf.random.uniform(r_val, 0.0, 1.0)
+    strata = pf.random.uniform(r_strata, 0.0, 1.0)
+    relief = pf.random.uniform(r_relief, 0.0, 1.0)
+    porosity = pf.random.uniform(r_por, 0.0, 1.0)
+
+    h_base = 0.02 + warmth * 0.07 + pf.random.uniform(r_hue, -0.01, 0.02)
+    s_base = warmth * pf.random.uniform(r_hue, 0.55, 1.0)
+    v_base = 0.008 * (90.0**value_axis) * pf.random.log_uniform(r_val, 0.8, 1.25)
+    base_hsv = np.clip(
+        np.array([h_base, s_base, v_base]), [0.0, 0.0, 0.003], [1.0, 0.99, 0.9]
+    )
+    base_color = pf.color.hsv_to_rgba(base_hsv)
+
+    tex1_hsv = base_hsv + np.array(
+        [
+            pf.random.uniform(r_tex1, -0.02, 0.02),
+            pf.random.uniform(r_tex1, -0.12, 0.12),
+            pf.random.uniform(r_tex1, -0.05, 0.1),
+        ]
+    )
+    color_layer_result = sandstone_color_layer(
+        vector=vector,
+        base_color=base_color,
+        noise_type=2.0,
+        texture_color=pf.color.hsv_to_rgba(np.clip(tex1_hsv, 0.0, 1.0)),
+        mix_mode=1.0,
+        size=pf.random.uniform(r_tex1, 0.5, 2.0),
+        stretch=1.0,
+        detail=8.0,
+        spread=pf.random.uniform(r_tex1, 0.4, 1.0),
+        smoothness=pf.random.uniform(r_tex1, 0.3, 0.9),
+    )
+
+    strata_stretch = 1.0 + strata * pf.random.uniform(r_strata, 4.0, 16.0)
+    strata_w = strata * pf.random.uniform(r_strata, 3.0, 10.0)
+    strata_mask = strata * pf.random.uniform(r_strata, 0.4, 0.9)
+    tex2_hsv = base_hsv + np.array(
+        [
+            pf.random.uniform(r_tex2, -0.03, 0.03),
+            pf.random.uniform(r_tex2, -0.2, 0.25),
+            pf.random.uniform(r_tex2, -0.15, 0.15),
+        ]
+    )
+    color_layer_result_1 = sandstone_color_layer(
+        vector=color_layer_result.vector,
+        base_color=color_layer_result.color,
+        noise_type=2.0,
+        texture_color=pf.color.hsv_to_rgba(np.clip(tex2_hsv, 0.0, 1.0)),
+        mix_mode=1.0,
+        size=pf.random.uniform(r_tex2, 0.5, 2.0),
+        stretch=strata_stretch,
+        rotation=(0.0, 1.5708, 0.0),
+        w=strata_w,
+        detail=8.0,
+        spread=pf.random.uniform(r_tex2, 0.4, 1.0),
+        smoothness=1.0,
+        mask=strata_mask,
+    )
+
+    speck_mask = porosity * pf.random.uniform(r_tex3, 0.3, 0.7)
+    tex3_v = v_base * pf.random.log_uniform(r_tex3, 0.2, 0.6)
+    tex3_hsv = np.array([h_base, s_base * 0.7, tex3_v])
+    color_layer_result_2 = sandstone_color_layer(
+        vector=color_layer_result_1.vector,
+        base_color=color_layer_result_1.color,
+        texture_color=pf.color.hsv_to_rgba(np.clip(tex3_hsv, 0.0, 1.0)),
+        mix_mode=2.0,
+        size=pf.random.uniform(r_tex3, 0.02, 0.06),
+        stretch=1.0,
+        detail=4.0,
+        spread=pf.random.uniform(r_tex3, 0.15, 0.5),
+        smoothness=1.0,
+        mask=speck_mask,
+    )
+
+    roughness = pf.random.uniform(r_rough, 0.7, 0.98)
+    specular_ior_level = pf.random.uniform(r_rough, 0.02, 0.08)
+    surface = pf.nodes.shader.principled_bsdf(
+        base_color=color_layer_result_2.color,
+        roughness=roughness,
+        subsurface_anisotropy=0.0,
+        specular_ior_level=specular_ior_level,
+    )
+
+    height_d1 = 0.05 + relief * pf.random.uniform(r_d1, 0.15, 0.7)
+    displacement_layer_result = sandstone_displacement_layer(
+        vector=vector,
+        noise_type=2.0,
+        height=height_d1,
+        mix_mode=1.0,
+        size=pf.random.uniform(r_d1, 0.06, 0.3),
+        stretch=pf.random.uniform(r_d1, 0.8, 2.0),
+        detail=6.0,
+        spread=pf.random.uniform(r_d1, 0.3, 1.2),
+        smoothness=pf.random.uniform(r_d1, 0.2, 0.9),
+        distortion_strength=pf.random.uniform(r_d1, 0.3, 1.6),
+    )
+
+    height_d2 = strata * pf.random.uniform(r_d2, 0.15, 0.5)
+    displacement_layer_result_1 = sandstone_displacement_layer(
+        vector=displacement_layer_result.vector,
+        base_height=displacement_layer_result.height,
+        noise_type=2.0,
+        height=height_d2,
+        mix_mode=1.0,
+        size=pf.random.uniform(r_d2, 0.01, 0.05),
+        stretch=1.0 + strata * pf.random.uniform(r_d2, 10.0, 60.0),
+        rotation=(0.0, 1.5708, 0.0),
+        detail=6.0,
+        spread=pf.random.uniform(r_d2, 0.4, 1.0),
+        smoothness=pf.random.uniform(r_d2, 0.4, 0.9),
+        distortion_strength=pf.random.uniform(r_d2, 0.8, 2.5),
+    )
+
+    height_d3 = porosity * pf.random.uniform(r_d3, 0.2, 0.6)
+    displacement_layer_result_2 = sandstone_displacement_layer(
+        vector=displacement_layer_result_1.vector,
+        base_height=displacement_layer_result_1.height,
+        noise_type=2.0,
+        height=height_d3,
+        mix_mode=1.0,
+        size=pf.random.uniform(r_d3, 0.005, 0.02),
+        stretch=1.0,
+        detail=6.0,
+        spread=pf.random.uniform(r_d3, 0.15, 0.4),
+        smoothness=pf.random.uniform(r_d3, 0.2, 0.6),
+        distortion_strength=pf.random.uniform(r_d3, 0.3, 1.0),
+    )
+
     displacement = pf.nodes.shader.displacement(
         height=displacement_layer_result_2.height,
         midlevel=0.0,

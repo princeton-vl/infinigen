@@ -33,13 +33,21 @@
     <h2>Controls</h2>
     <ul>
         <li>Size slider (100–600px) and mode toggle in the top bar.</li>
-        <li><strong>⚙ Filters</strong>: category (distribution/displacement), pass (rgb/surface-normal), renderer (cycles/eevee), align placeholders on/off.</li>
+        <li><strong>Sections</strong>: one button per section type folds/unfolds it across every asset at once. Click any section or asset header to fold just that one, or drag across headers to fold a run of them.</li>
+        <li><strong>⚙ Filters</strong>: asset types (materials/objects/scenes), renderer (cycles/eevee), align placeholders on/off. Normals and exports are handled by section folding, not filters.</li>
         <li><strong>Materials</strong>: select/deselect, include per-version, union vs intersection.</li>
         <li>Selections persist when switching views.</li>
     </ul>
 
     <h2>Layout</h2>
-    <p>Images are grouped into Random seeds (seed 0–3) and Displacement tests (BUMP/DISPLACEMENT/DISPLACEMENT_AND_BUMP). Missing renders show a dark “Missing” placeholder when alignment is on.</p>
+    <p>Each asset's images are grouped into foldable sections:</p>
+    <ul>
+        <li><strong>Random seeds</strong>: the per-seed rgb renders.</li>
+        <li><strong>Presets</strong>: fixed-look variants, shown beneath their parent <code>_rand</code>.</li>
+        <li><strong>Normals</strong>: the default-setting (Cycles, DISPLACEMENT_AND_BUMP) surface normals, one per seed, so they line up as a row under Random seeds. Folded by default.</li>
+        <li><strong>Exports</strong>: non-default render settings — BUMP and REALIZE_MESH displacement, plus the Eevee variant. Each keeps its own normals alongside its rgb rather than joining the Normals row. Materials only for now; other asset types get export tests later. Folded by default.</li>
+    </ul>
+    <p>Missing renders show a dark “Missing” placeholder when alignment is on. Assets not rendered on the PR side are folded to the bottom.</p>
 
     <div class="back-link" style="margin-top: 24px;"><a href="/">&larr; Back to comparison</a></div>
 </body>

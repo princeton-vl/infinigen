@@ -16,17 +16,21 @@ from infinigen2.shaders.composites import fabric_patterned
 from infinigen2.shaders.functionality_lists import (
     furniture_material_rand,
 )
+from infinigen2.util import mesh as mesh_util
 from infinigen2.util.curve import curve_to_mesh_with_uv
 
 __all__ = [
     "LampResult",
+    "LampshadeShape",
     "desk_lamp_rand",
+    "hanging_lampshade_shape_rand",
     "point_light_indoor",
     "point_light_indoor_rand",
     "lamp",
     "lamp_rand",
     "lampshade_color_rand",
     "lampshade_fabric_rand",
+    "lampshade_shape_rand",
 ]
 
 # head-local z of the bulb-rack inner ring (where the bulb socket sits)
@@ -73,12 +77,13 @@ def _bulb_rack(
     outer_radius: t.SocketOrVal[float],
     inner_height: t.SocketOrVal[float],
     outer_height: t.SocketOrVal[float],
+    outer_resolution: t.SocketOrVal[int] = 24,
     amount: t.SocketOrVal[int] = 3,
 ) -> pf.ProcNode:
     curve_circle_radius = pf.nodes.math.multiply_add(
         a=thickness, b=0.5, addend=inner_radius
     )
-    curve_circle = pf.nodes.geo.curve_circle(resolution=100, radius=curve_circle_radius)
+    curve_circle = pf.nodes.geo.curve_circle(resolution=24, radius=curve_circle_radius)
 
     transform_translation = pf.nodes.math.combine_xyz(z=inner_height)
     transform = pf.nodes.geo.transform(
@@ -101,7 +106,9 @@ def _bulb_rack(
     realize_instances = pf.nodes.geo.realize_instances(duplicate_elements.geometry)
 
     curve_endpoint_selection = pf.nodes.geo.curve_endpoint_selection(0)
-    curve_circle_1 = pf.nodes.geo.curve_circle(resolution=100, radius=outer_radius)
+    curve_circle_1 = pf.nodes.geo.curve_circle(
+        resolution=outer_resolution, radius=outer_radius
+    )
 
     transform_1_translation = pf.nodes.math.combine_xyz(z=outer_height)
     transform_1 = pf.nodes.geo.transform(
@@ -145,11 +152,9 @@ def _bulb_rack(
 
     join = pf.nodes.geo.join_geometry([transform, set_position_1, transform_1])
 
-    curve_circle_2 = pf.nodes.geo.curve_circle(resolution=100, radius=thickness)
-    curve_to = pf.nodes.geo.curve_to_mesh(
-        curve=join, profile_curve=curve_circle_2, fill_caps=True
-    )
-    return curve_to
+    curve_circle_2 = pf.nodes.geo.curve_circle(resolution=6, radius=thickness)
+    curve_to = curve_to_mesh_with_uv(curve=join, profile=curve_circle_2, fill_caps=True)
+    return curve_to.mesh
 
 
 @pf.nodes.node_function
@@ -157,6 +162,8 @@ def _lamp_head(
     shade_height: t.SocketOrVal[float],
     top_radius: t.SocketOrVal[float],
     bot_radius: t.SocketOrVal[float],
+    mid_radius: t.SocketOrVal[float],
+    profile_resolution: t.SocketOrVal[int],
     reverse_bulb: t.SocketOrVal[bool],
     rack_thickness: t.SocketOrVal[float],
     rack_height: t.SocketOrVal[float],
@@ -174,20 +181,31 @@ def _lamp_head(
     curve_b = bulb_rack_outer_height_b * -1.0
     curve_line_end = pf.nodes.math.combine_xyz(z=curve_a * curve_b)
     curve_line = pf.nodes.geo.curve_line(start=curve_line_start, end=curve_line_end)
+    curve_line = pf.nodes.geo.resample_curve_count(curve=curve_line, count=16)
 
     spline_parameter = pf.nodes.geo.spline_parameter()
 
-    curve_to_curve_radius = pf.nodes.math.map_range(
-        value=spline_parameter.factor,
-        to_max=bot_radius,
-        to_min=top_radius,
+    radius_profile = pf.nodes.geo.curve_bezier(
+        start=pf.nodes.math.combine_xyz(x=top_radius),
+        middle=pf.nodes.math.combine_xyz(x=mid_radius, y=0.5),
+        end=pf.nodes.math.combine_xyz(x=bot_radius, y=1.0),
+        resolution=32,
+    )
+    sampled_radius = pf.nodes.geo.sample_curve(
+        curves=radius_profile,
+        factor=spline_parameter.factor,
+        value=0.0,
     )
 
+    # meter-scale UVs: real radius lives on the profile, rail radius is a ~1 multiplier
+    profile_radius = (top_radius + bot_radius) * 0.5
     set_curve_radius = pf.nodes.geo.set_curve_radius(
-        curve=curve_line, radius=curve_to_curve_radius
+        curve=curve_line, radius=sampled_radius.position.x / profile_radius
     )
 
-    curve_circle = pf.nodes.geo.curve_circle(100)
+    curve_circle = pf.nodes.geo.curve_circle(
+        resolution=profile_resolution, radius=profile_radius
+    )
     shade_with_uv = curve_to_mesh_with_uv(curve=set_curve_radius, profile=curve_circle)
     curve_to = shade_with_uv.mesh
 
@@ -216,6 +234,7 @@ def _lamp_head(
         outer_radius=top_radius,
         inner_height=BULB_HUB_HEIGHT,
         outer_height=bulb_rack_outer_height,
+        outer_resolution=profile_resolution,
     )
 
     set_material_1 = pf.nodes.geo.set_material(
@@ -247,11 +266,11 @@ def _lamp_geometry(
     shade_height: t.SocketOrVal[float],
     head_top_radius: t.SocketOrVal[float],
     head_bot_radius: t.SocketOrVal[float],
+    head_mid_radius: t.SocketOrVal[float],
+    profile_resolution: t.SocketOrVal[int],
     reverse_lamp: t.SocketOrVal[bool],
     rack_thickness: t.SocketOrVal[float],
-    curve_point1: t.SocketOrVal[pf.Vector],
-    curve_point2: t.SocketOrVal[pf.Vector],
-    curve_point3: t.SocketOrVal[pf.Vector],
+    height: t.SocketOrVal[float],
     black_material: t.SocketOrVal[pf.Material],
     lampshade_material: t.SocketOrVal[pf.Material],
     metal_material: t.SocketOrVal[pf.Material],
@@ -265,6 +284,8 @@ def _lamp_geometry(
         shade_height=shade_height,
         top_radius=head_top_radius,
         bot_radius=head_bot_radius,
+        mid_radius=head_mid_radius,
+        profile_resolution=profile_resolution,
         reverse_bulb=reverse_lamp,
         rack_thickness=rack_thickness,
         rack_height=lamp_head_rack_height,
@@ -273,51 +294,28 @@ def _lamp_geometry(
         metal_material=metal_material,
     )
 
-    sample_curve_curves_start = pf.nodes.math.combine_xyz(z=base_height)
-
-    curve_bezier_segment = pf.nodes.geo.curve_bezier_segment(
-        resolution=100,
-        start=sample_curve_curves_start,
-        start_handle=curve_point1,
-        end_handle=curve_point2,
-        end=curve_point3,
-    )
-
-    sample_curve = pf.nodes.geo.sample_curve(
-        curves=curve_bezier_segment,
-        factor=1.0,
-        value=0.0,
-    )
-
-    transform_rotation = pf.nodes.func.align_euler_to_vector(
-        vector=sample_curve.tangent,
-        axis="Z",
-        rotation=(0, 0, 0),
-        factor=1.0,
-    )
+    head_translation = pf.nodes.math.combine_xyz(z=height)
     transform = pf.nodes.geo.transform(
         geometry=lamp_head_result,
-        translation=sample_curve.position,
-        rotation=transform_rotation.astype(dtype=pf.Euler),
+        translation=head_translation,
+        rotation=(0, 0, 0),
         scale=(1, 1, 1),
     )
 
-    curve_line = pf.nodes.geo.curve_line(end=sample_curve_curves_start, start=(0, 0, 0))
+    curve_line = pf.nodes.geo.curve_line(end=head_translation, start=(0, 0, 0))
 
-    join_1 = pf.nodes.geo.join_geometry([curve_line, curve_bezier_segment])
-
-    curve_circle = pf.nodes.geo.curve_circle(resolution=100, radius=stand_radius)
-    curve_to = pf.nodes.geo.curve_to_mesh(
-        curve=join_1, profile_curve=curve_circle, fill_caps=True
-    )
+    curve_circle = pf.nodes.geo.curve_circle(resolution=8, radius=stand_radius)
+    curve_to = curve_to_mesh_with_uv(
+        curve=curve_line, profile=curve_circle, fill_caps=True
+    ).mesh
     curve_line_1_end = pf.nodes.math.combine_xyz(z=base_height)
     curve_line_1 = pf.nodes.geo.curve_line(end=curve_line_1_end, start=(0, 0, 0))
-    curve_circle_1 = pf.nodes.geo.curve_circle(resolution=100, radius=base_radius)
-    curve_to_1 = pf.nodes.geo.curve_to_mesh(
+    curve_circle_1 = pf.nodes.geo.curve_circle(resolution=16, radius=base_radius)
+    curve_to_1 = curve_to_mesh_with_uv(
         curve=curve_line_1,
-        profile_curve=curve_circle_1,
+        profile=curve_circle_1,
         fill_caps=True,
-    )
+    ).mesh
 
     join_2 = pf.nodes.geo.join_geometry([curve_to, curve_to_1])
 
@@ -329,22 +327,43 @@ def _lamp_geometry(
 
     bound_box = pf.nodes.geo.bound_box(join)
 
-    curve_line_2 = pf.nodes.geo.curve_line(end=(0.0, 0.0, 0.1), start=(0, 0, 0))
-
-    transform_1 = pf.nodes.geo.transform(
-        geometry=curve_line_2,
-        translation=sample_curve.position,
-        rotation=transform_rotation.astype(dtype=pf.Euler),
-        scale=(1, 1, 1),
-    )
-
-    sample_curve_1 = pf.nodes.geo.sample_curve(
-        curves=transform_1, factor=1.0, value=0.0
-    )
+    light_position = pf.nodes.math.combine_xyz(z=height + 0.1)
     return _LampGeometryResult(
         geometry=join,
         bounding_box=bound_box.bounding_box,
-        light_position=sample_curve_1.position,
+        light_position=light_position,
+    )
+
+
+class LampshadeShape(NamedTuple):
+    top_radius: float
+    bot_radius: float
+    mid_radius: float
+    profile_resolution: int
+
+
+def lampshade_shape_rand(rng: pf.RNG) -> LampshadeShape:
+    top_radius = pf.random.clip_gaussian(rng, 0.1, 0.06, 0.0, 0.3)
+    slant_fac = pf.random.clip_gaussian(rng, 0.15, 0.35, 0.0, 1.0)
+    bot_radius = top_radius + slant_fac * (0.4 - top_radius)
+    concavity_fac = pf.random.clip_gaussian(rng, 0.5, 0.45, 0.0, 1.45)
+    mid_radius = top_radius + (bot_radius - top_radius) * concavity_fac
+    profile_resolution = pf.control.choice(rng, [(16, 4.0), (4, 1.0)])
+    return LampshadeShape(
+        top_radius=top_radius,
+        bot_radius=bot_radius,
+        mid_radius=mid_radius,
+        profile_resolution=profile_resolution,
+    )
+
+
+def hanging_lampshade_shape_rand(rng: pf.RNG) -> LampshadeShape:
+    shape = lampshade_shape_rand(rng)
+    return LampshadeShape(
+        top_radius=shape.bot_radius,
+        bot_radius=shape.top_radius,
+        mid_radius=shape.mid_radius,
+        profile_resolution=shape.profile_resolution,
     )
 
 
@@ -359,8 +378,9 @@ def lampshade_fabric_rand(
     rng: pf.RNG,
     vector: pf.ProcNode[pf.Vector],
 ) -> pf.Material:
-    rngs = rng.spawn(2)
-    translucency = pf.random.uniform(rngs[0], 0.0, 0.9)
+    rngs = rng.spawn(3)
+    translucency = pf.random.clip_gaussian(rngs[0], 0.15, 0.15, 0.0, 0.9)
+    pattern_scale = pf.random.uniform(rngs[2], 20.0, 250.0)
 
     lamp_fabric_fullcolor = partial(
         fabric.fabric_translucent_rand,
@@ -370,6 +390,7 @@ def lampshade_fabric_rand(
     lamp_fabric_patterned = partial(
         fabric_patterned.fabric_patterned_translucent_rand,
         translucency=translucency,
+        scale=pattern_scale,
     )
     lamp_fabric_lampcolor = partial(
         fabric.fabric_translucent_rand,
@@ -382,15 +403,16 @@ def lampshade_fabric_rand(
         color2=lampshade_color_rand(rng),
         color3=lampshade_color_rand(rng),
         translucency=translucency,
+        scale=pattern_scale,
     )
 
     option = pf.control.choice(
         rngs[1],
         [
-            (lamp_fabric_lampcolor, 2.0),
-            (lamp_fabric_patterned_lampcolor, 2.0),
+            (lamp_fabric_lampcolor, 1.0),
+            (lamp_fabric_patterned_lampcolor, 1.0),
             (lamp_fabric_fullcolor, 1.0),
-            (lamp_fabric_patterned, 0.5),
+            (lamp_fabric_patterned, 1.0),
         ],
     )
 
@@ -404,6 +426,8 @@ def lamp(
     shade_height: float = 0.24,
     head_top_radius: float = 0.16,
     head_bot_radius: float = 0.185,
+    head_mid_radius: float | None = None,
+    profile_resolution: int = 16,
     height: float = 0.45,
     rack_thickness: float = 0.002,
     reverse_lamp: bool = True,
@@ -419,12 +443,8 @@ def lamp(
         lampshade_material = pf.Material(surface=pf.nodes.shader.principled_bsdf())
     if metal_material is None:
         metal_material = pf.Material(surface=pf.nodes.shader.principled_bsdf())
-
-    z1 = (base_height + height) * 0.5
-    z2 = (z1 + height) * 0.5
-    curve_point1 = pf.Vector((0, 0, z1))
-    curve_point2 = pf.Vector((0, 0, z2))
-    curve_point3 = pf.Vector((0, 0, height))
+    if head_mid_radius is None:
+        head_mid_radius = head_top_radius
 
     result = _lamp_geometry(
         stand_radius=stand_radius,
@@ -433,17 +453,19 @@ def lamp(
         shade_height=shade_height,
         head_top_radius=head_top_radius,
         head_bot_radius=head_bot_radius,
+        head_mid_radius=head_mid_radius,
+        profile_resolution=profile_resolution,
         reverse_lamp=reverse_lamp,
         rack_thickness=rack_thickness,
-        curve_point1=curve_point1,
-        curve_point2=curve_point2,
-        curve_point3=curve_point3,
+        height=height,
         black_material=black_material,
         lampshade_material=lampshade_material,
         metal_material=metal_material,
     )
 
-    mesh = pf.nodes.to_mesh_object(result.geometry)
+    geo = mesh_util.crease_sharp(result.geometry, threshold_degrees=70.0)
+    mesh = pf.nodes.to_mesh_object(geo)
+    pf.ops.modifier.subdivide_surface(mesh, levels=2, _skip_apply=True)
 
     bulb_radius = 0.02
     point_light = point_light_indoor(
@@ -462,6 +484,8 @@ def lamp_rand(
     energy: float | None = None,
     head_top_radius: float | None = None,
     head_bot_radius: float | None = None,
+    head_mid_radius: float | None = None,
+    profile_resolution: int | None = None,
 ) -> LampResult:
     stand_radius = pf.random.uniform(rng, 0.005, 0.015)
     base_radius = pf.random.uniform(rng, 0.05, 0.15)
@@ -470,20 +494,18 @@ def lamp_rand(
     rack_thickness = pf.random.uniform(rng, 0.001, 0.003)
     reverse_lamp = True
 
+    shape = lampshade_shape_rand(rng)
     if head_top_radius is None:
-        head_top_radius = pf.random.uniform(rng, 0.07, 0.25)
+        head_top_radius = shape.top_radius
     if head_bot_radius is None:
-        head_bot_radius = head_top_radius + pf.random.uniform(rng, 0.0, 0.05)
+        head_bot_radius = shape.bot_radius
+    if head_mid_radius is None:
+        head_mid_radius = shape.mid_radius
+    if profile_resolution is None:
+        profile_resolution = shape.profile_resolution
 
     if height is None:
         height = pf.random.uniform(rng, 0.3, 0.6)
-
-    z1 = pf.random.uniform(rng, base_height, height)
-    z2 = pf.random.uniform(rng, z1, height)
-    z3 = height
-    curve_point1 = pf.Vector((0, 0, z1))
-    curve_point2 = pf.Vector((0, 0, z2))
-    curve_point3 = pf.Vector((0, 0, z3))
 
     vec = pf.nodes.shader.coord().uv
 
@@ -497,17 +519,19 @@ def lamp_rand(
         shade_height=shade_height,
         head_top_radius=head_top_radius,
         head_bot_radius=head_bot_radius,
+        head_mid_radius=head_mid_radius,
+        profile_resolution=profile_resolution,
         reverse_lamp=reverse_lamp,
         rack_thickness=rack_thickness,
-        curve_point1=curve_point1,
-        curve_point2=curve_point2,
-        curve_point3=curve_point3,
+        height=height,
         black_material=stem_mat,
         lampshade_material=lampshade_mat,
         metal_material=stem_mat,
     )
 
-    lamp = pf.nodes.to_mesh_object(result.geometry)
+    geo = mesh_util.crease_sharp(result.geometry, threshold_degrees=70.0)
+    lamp = pf.nodes.to_mesh_object(geo)
+    pf.ops.modifier.subdivide_surface(lamp, levels=2, _skip_apply=True)
 
     if energy is None:
         energy = pf.random.clip_gaussian(rng, 7, 4, 5, 18)
@@ -517,7 +541,9 @@ def lamp_rand(
     )
     # Sit the bulb just above the stem top (the head mounts at z=height) so its
     # radius clears the post mesh by 5% instead of intersecting it.
-    point_light.item().location.z = height + 1.05 * bulb_radius
+    pf.ops.object.set_transform(
+        point_light, location=(0.0, 0.0, height + 1.05 * bulb_radius)
+    )
     point_light.item().parent = lamp.item()
 
     return LampResult(mesh=lamp, light=point_light)

@@ -13,7 +13,7 @@ from pandas import read_json as _read_json
 
 from .util.import_utils import module_path
 
-__version__ = "2.0.0a1"
+__version__ = "2.0.0a2"
 
 GENERATORS_MANIFEST_PATH = Path(__file__).parent / "manifest.json"
 GENERATORS_MANIFEST = _read_json(GENERATORS_MANIFEST_PATH)

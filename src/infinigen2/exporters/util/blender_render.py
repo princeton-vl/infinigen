@@ -27,7 +27,9 @@ __all__ = [
     "configure_compositor_viewlayer_output",
     "configure_material_index_table",
     "configure_object_index_table",
+    "isolate_render_objects",
     "load_single_channel",
+    "object_index_table_names",
     "override_shading_for_gt",
     "postprocess_renderpass_frame",
     "postprocess_renderpass_paths",
@@ -36,6 +38,8 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 BLENDER_FRAME_NUMBER_PLACEHOLDER = "####"
+
+OBJECT_INDEX_NONE = "none"
 
 
 class DisplacementMode(enum.Enum):
@@ -256,12 +260,10 @@ def configure_compositor_viewlayer_output(
         )
 
     if exr_file_slots:
+        exr_format = dict(file_format="OPEN_EXR", color_mode="RGB", color_depth="32")
         outputs["image_exr"] = pf.nodes.compositor.output_file(
             base_path=str(frames_folder),
-            format=dict(
-                file_format="OPEN_EXR",
-                color_mode="RGB",
-            ),
+            format=exr_format,
             slot_paths={k: v[1] for k, v in exr_file_slots.items()},
             **{k: v[0] for k, v in exr_file_slots.items()},
         )
@@ -275,12 +277,20 @@ def configure_compositor_viewlayer_output(
     return result_paths
 
 
-def configure_object_index_table():
-    obj_order = ["none"]
-    for i, obj in enumerate(bpy.data.objects):
-        obj.pass_index = i + 1
-        obj_order.append(obj.name)
-    return obj_order
+def configure_object_index_table() -> list[bpy.types.Object | None]:
+    """Stamp each object with its segmentation index and return the index -> object table.
+
+    Row 0 is None, the background label written wherever no object is visible. Any
+    exporter writing per-object rows must index them by this table so its rows line up
+    with the object-index segmentation pass."""
+    objects = list(bpy.data.objects)
+    for i, obj in enumerate(objects, start=1):
+        obj.pass_index = i
+    return [None, *objects]
+
+
+def object_index_table_names(table: list[bpy.types.Object | None]) -> list[str]:
+    return [OBJECT_INDEX_NONE if obj is None else obj.name for obj in table]
 
 
 def configure_material_index_table():
@@ -483,6 +493,25 @@ def disconnect_output_links(targets, socket_names):
 def relink_output_links(removed):
     for nt, from_socket, to_socket in removed:
         nt.links.new(from_socket, to_socket)
+
+
+@contextmanager
+def isolate_render_objects(
+    objects: list[pf.MeshObject], lights: list[pf.LightObject] | None = None
+):
+    keep = {obj.item() for obj in objects}
+    keep |= {light.item() for light in lights or []}
+    saved = {}
+    for obj in bpy.context.scene.objects:
+        if obj.type == "CAMERA":
+            continue
+        saved[obj] = obj.hide_render
+        obj.hide_render = obj not in keep
+    try:
+        yield
+    finally:
+        for obj, state in saved.items():
+            obj.hide_render = state
 
 
 @contextmanager

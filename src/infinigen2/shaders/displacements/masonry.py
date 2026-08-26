@@ -198,7 +198,6 @@ def masonry_displacement_rand(
     displacement = pf.nodes.shader.displacement(
         height=layer_2_result.height,
         midlevel=0.0,
-        normal=(0.0, 0.0, 0.0),
     )
     return DisplacementLayerResult(
         displacement=displacement,

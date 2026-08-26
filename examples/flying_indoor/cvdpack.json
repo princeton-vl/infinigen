@@ -1,0 +1,85 @@
+{
+    "metadata": {},
+    "data_types": {
+        "rgb": {
+            "original_path_template": "{scene}/{traj}/{cam}/{frame:04d}.png",
+            "packed_path_template": "{scene}/{traj}/rgb-{cam}.mkv"
+        },
+        "diffuse-color": {
+            "original_path_template": "{scene}/{traj}/{cam}/diffuse-color_{frame:04d}.png",
+            "packed_path_template": "{scene}/{traj}/diffuse-color-{cam}.mkv"
+        },
+        "environment": {
+            "original_path_template": "{scene}/{traj}/{cam}/environment_{frame:04d}.png",
+            "packed_path_template": "{scene}/{traj}/environment-{cam}.mkv"
+        },
+        "depth": {
+            "original_path_template": "{scene}/{traj}/{cam}/depth_{frame:04d}.npy",
+            "packed_path_template": "{scene}/{traj}/depth-{cam}.mkv",
+            "packing": {
+                "method": "f32_as_log_int16",
+                "min_orig_val": 0.05,
+                "max_orig_val": 5633.0
+            }
+        },
+        "optical-flow": {
+            "original_path_template": "{scene}/{traj}/{cam}/optical-flow_{frame:04d}.npy",
+            "packed_path_template": "{scene}/{traj}/optical-flow-{cam}.mkv",
+            "packing": {
+                "method": "linear",
+                "min_orig_val": -500.0,
+                "max_orig_val": 500.0,
+                "from_dtype": "float32",
+                "to_dtype": "uint16",
+                "out_of_bounds_method": "nan_warn"
+            }
+        },
+        "surface-normal": {
+            "original_path_template": "{scene}/{traj}/{cam}/surface-normal_{frame:04d}.npy",
+            "packed_path_template": "{scene}/{traj}/surface-normal-{cam}.mkv",
+            "packing": {"method": "3f32_unit_sphere_as_2int16"}
+        },
+        "semantic-segmentation": {
+            "original_path_template": "{scene}/{traj}/{cam}/object_{frame:04d}.npy",
+            "packed_path_template": "{scene}/{traj}/semantic-segmentation-{cam}.mkv",
+            "packing": {
+                "method": "checkbounds",
+                "from_dtype": "uint32",
+                "to_dtype": "uint16",
+                "min_orig_val": 0,
+                "max_orig_val": 65535
+            }
+        },
+        "material-segmentation": {
+            "original_path_template": "{scene}/{traj}/{cam}/material-index_{frame:04d}.npy",
+            "packed_path_template": "{scene}/{traj}/material-segmentation-{cam}.mkv",
+            "packing": {
+                "method": "checkbounds",
+                "from_dtype": "uint32",
+                "to_dtype": "uint16",
+                "min_orig_val": 0,
+                "max_orig_val": 65535
+            }
+        },
+        "material-index-table": {
+            "original_path_template": "{scene}/{traj}/{cam}/material-index-table.json",
+            "packed_path_template": "{scene}/{traj}/material-index-table-{cam}.json"
+        },
+        "object-index-table": {
+            "original_path_template": "{scene}/{traj}/{cam}/object-index-table.json",
+            "packed_path_template": "{scene}/{traj}/object-index-table-{cam}.json"
+        },
+        "camera": {
+            "original_path_template": "{scene}/{traj}/{cam}/camera.npz",
+            "packed_path_template": "{scene}/{traj}/camera-{cam}.npz"
+        },
+        "object-data": {
+            "original_path_template": "{scene}/{traj}/object-data.npz",
+            "packed_path_template": "{scene}/{traj}/object-data.npz"
+        },
+        "metadata": {
+            "original_path_template": "{scene}/{traj}/metadata.json",
+            "packed_path_template": "{scene}/{traj}/metadata.json"
+        }
+    }
+}

@@ -50,7 +50,7 @@ def _bake_displacement_to_vcols(obj, vcol_name="Displacement"):
         "view": scn.view_settings.view_transform,
     }
     scn.render.engine = "CYCLES"
-    configure_cycles_devices()
+    configure_cycles_devices("BEST_AVAILABLE")
     scn.cycles.samples = 1
     scn.view_settings.view_transform = "Standard"
 
@@ -176,10 +176,40 @@ def convert_shader_displacement(obj, scale_val=1.0, apply_geo_modifier=False):
     )
 
 
+def _subsurf_settings(mod: bpy.types.Modifier) -> tuple:
+    skip = ("rna_type", "type", "name", "is_active", "show_expanded")
+    return tuple(
+        (p.identifier, repr(getattr(mod, p.identifier)))
+        for p in mod.bl_rna.properties
+        if not p.is_readonly and p.identifier not in skip
+    )
+
+
+def _apply_subsurf(obj: bpy.types.Object, subdivided: dict) -> None:
+    # aliases share one datablock, which modifier_apply refuses; subdivide it once, reuse
+    mods = [mod for mod in obj.modifiers if mod.type == "SUBSURF"]
+    if not mods:
+        return
+    key = (obj.data.as_pointer(), tuple(_subsurf_settings(mod) for mod in mods))
+    shared = subdivided.get(key)
+    if shared is not None:
+        for mod in mods:
+            obj.modifiers.remove(mod)
+        obj.data = shared
+        return
+    bpy.context.view_layer.objects.active = obj
+    obj.select_set(True)
+    for mod in mods:
+        bpy.ops.object.modifier_apply(modifier=mod.name, single_user=True)
+    obj.select_set(False)
+    subdivided[key] = obj.data
+
+
 def realize_scene():
     """
     Realizes entire scene, potentially expensive ; could be modified to on realize only in view.
     """
+    subdivided = {}
     for obj in bpy.data.objects:
         if obj.type != "MESH" or not obj.data:
             continue
@@ -196,12 +226,7 @@ def realize_scene():
                 has_displacement = True
                 break
 
-        bpy.context.view_layer.objects.active = obj
-        obj.select_set(True)
-        for mod in list(obj.modifiers):
-            if mod.type == "SUBSURF":
-                bpy.ops.object.modifier_apply(modifier=mod.name)
-        obj.select_set(False)
+        _apply_subsurf(obj, subdivided)
 
         if has_displacement:
             convert_shader_displacement(obj)

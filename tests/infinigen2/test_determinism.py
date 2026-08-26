@@ -32,6 +32,9 @@ _GENERATORS_DIR = Path(_generators_pkg.__file__).parent
 # for profiling; they are not generator/asset sources so are exempt from the scan.
 _EXCLUDE = {"generate.py"}
 
+# A line carrying this marker in a comment is exempted from the scan.
+_IGNORE_MARKER = "validate-ignore: test_determinism"
+
 # (regex, human reason). Scoped to the generator tree only — drivers (generate.py)
 # legitimately use os.urandom for the top-level seed and time for profiling.
 _BANNED = [
@@ -62,18 +65,27 @@ _BANNED = [
 ]
 
 
+def _scan_line(compiled, path, lineno, line):
+    if _IGNORE_MARKER in line:
+        return None
+    code = line.split("#", 1)[0]
+    for rx, msg in compiled:
+        if not rx.search(code):
+            continue
+        rel = path.relative_to(_GENERATORS_DIR.parent.parent)
+        return f"{rel}:{lineno}: {line.strip()}  -> {msg}"
+    return None
+
+
 def test_no_nondeterministic_sources():
     compiled = [(re.compile(p), msg) for p, msg in _BANNED]
     violations = []
     for path in sorted(_GENERATORS_DIR.rglob("*.py")):
         if path.name in _EXCLUDE:
             continue
-        for lineno, line in enumerate(path.read_text().splitlines(), start=1):
-            code = line.split("#", 1)[0]
-            for rx, msg in compiled:
-                if rx.search(code):
-                    rel = path.relative_to(_GENERATORS_DIR.parent.parent)
-                    violations.append(f"{rel}:{lineno}: {line.strip()}  -> {msg}")
+        lines = enumerate(path.read_text().splitlines(), start=1)
+        found = (_scan_line(compiled, path, n, line) for n, line in lines)
+        violations.extend(f for f in found if f)
     assert not violations, "Nondeterministic sources in generators:\n" + "\n".join(
         violations
     )

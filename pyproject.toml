@@ -20,23 +20,22 @@ classifiers = [
 
 requires-python = "==3.11.*"
 dependencies = [
-    # NOTE: many less-than dependencies could likely be loosened
-    #   we attempted to restrict to only versions that are known to be working
+    # Floors are covered by the compatibility workflow; caps represent known breaks.
     "bpy==4.2.0",
-    "procfunc>=0.34,<0.35",
-    "imageio<2.32.0", # e.g. 2.31.1
-    "matplotlib",
-    "numpy<2",
-    "opencv-python<4.9.0", # e.g. 4.8.0.74
-    "pandas",
-    "scipy", # trimesh collision path
-    "trimesh<3.23.0",
-    "OpenEXR",
+    "procfunc>=0.35,<0.36",
+    "imageio>=2.31",
+    "matplotlib>=3.6",
+    "numpy>=1.25,<2",
+    "opencv-python>=4.7",
+    "pandas>=1.5",
+    "scipy>=1.10", # trimesh collision path
+    "trimesh>=3.22",
+    "OpenEXR>=3.2.3",
     "pillow>=11.3.0",
     # used by trimesh, we could specify "trimesh[easy]" but this brings more packages
-    "python-fcl",
-    "rtree", # trimesh spatial index
-    "cvdpack>=0.5.2", # v2 ground-truth tool
+    "python-fcl>=0.7.0.11",
+    "rtree>=1.4", # trimesh spatial index
+    "cvdpack>=0.6.0", # v2 ground-truth tool
 ]
 
 [project.optional-dependencies]
@@ -52,12 +51,17 @@ vis = [
     "numba", # for ground truth visuals
     "pyglet<2" # for trimesh_scene.show()
 ]
+test = [
+    "pytest>=7.2,<10",
+    "pytest-xdist>=2.5,<4",
+    "pytest-timeout>=2.0,<3",
+]
 dev = [
     "pre-commit",
-    "pytest",
+    "pytest>=7.2,<10",
     "pytest-cov",
-    "pytest-xdist",
-    "pytest-timeout",
+    "pytest-xdist>=2.5,<4",
+    "pytest-timeout>=2.0,<3",
     "ruff==0.14.5", # NOTE! must also update checks.yml and pre-commit-config.yaml
     "ty",
     "tabulate",
@@ -132,6 +136,19 @@ filterwarnings = [
     "ignore:Please import `label` from the `scipy.ndimage` namespace; the `scipy.ndimage.measurements` namespace is deprecated and will be removed in SciPy 2.0.0:DeprecationWarning"
 
 ]
+
+[tool.coverage.run]
+# parallel + relative_files so per-render subprocess data combines across checkouts
+parallel = true
+relative_files = true
+source = ["infinigen2"]
+
+[tool.coverage.paths]
+source = ["src/", "*/site-packages/"]
+
+[tool.coverage.report]
+show_missing = false
+skip_empty = true
 
 [tool.cibuildwheel]
 test-extras = ["dev"]

@@ -90,11 +90,10 @@ def bricks_red_concave_preset(
         displacement_additional_height=brick_cutter_result.height,
     )
 
-    surface_color_1 = brick_cutter_result.random.astype(dtype=pf.Vector)
     surface_color = pf.nodes.color.mix_rgb(
         factor=1.0,
         a=pf.Color((0.577, 0.206, 0.132)),
-        b=surface_color_1.x.astype(dtype=pf.Color),
+        b=brick_cutter_result.random.x.astype(dtype=pf.Color),
         blend_type="SOFT_LIGHT",
     )
 
@@ -179,11 +178,10 @@ def bricks_red_preset(
         displacement_additional_height=brick_cutter_result.height,
     )
 
-    surface_color_1 = brick_cutter_result.random.astype(dtype=pf.Vector)
     surface_color = pf.nodes.color.mix_rgb(
         factor=1.0,
         a=pf.Color((0.577, 0.206, 0.132)),
-        b=surface_color_1.x.astype(dtype=pf.Color),
+        b=brick_cutter_result.random.x.astype(dtype=pf.Color),
         blend_type="SOFT_LIGHT",
     )
 
@@ -269,11 +267,10 @@ def bricks_grey_rounded_preset(
 
     surface_color_factor = pf.nodes.math.constant(0.286)
     surface_color_2 = pf.nodes.math.constant(pf.Color((0.5, 0.5, 0.5)))
-    surface_color_1 = brick_cutter_result.random.astype(dtype=pf.Vector)
     surface_color = pf.nodes.color.mix_rgb(
         factor=surface_color_factor,
         a=surface_color_2,
-        b=surface_color_1.x.astype(dtype=pf.Color),
+        b=brick_cutter_result.random.x.astype(dtype=pf.Color),
         blend_type="SOFT_LIGHT",
     )
 
@@ -362,11 +359,10 @@ def bricks_grey_preset(
     )
 
     surface_color_factor = pf.nodes.math.constant(0.286)
-    surface_color_1 = brick_cutter_result.random.astype(dtype=pf.Vector)
     surface_color = pf.nodes.color.mix_rgb(
         factor=surface_color_factor,
         a=pf.Color((0.391, 0.391, 0.391)),
-        b=surface_color_1.x.astype(dtype=pf.Color),
+        b=brick_cutter_result.random.x.astype(dtype=pf.Color),
         blend_type="SOFT_LIGHT",
     )
 
@@ -434,7 +430,6 @@ def bricks_cobble_preset(
 
     surface_1 = pf.nodes.shader.diffuse_bsdf(
         color=pf.Color((0.042, 0.024, 0.02)),
-        normal=(0.0, 0.0, 0.0),
     )
 
     granite_result = granite.granite_cobble_gray_preset(vector=vector)
@@ -448,7 +443,6 @@ def bricks_cobble_preset(
     displacement_1 = pf.nodes.shader.displacement(
         height=brick_cutter_result.height,
         midlevel=0.0,
-        normal=(0.0, 0.0, 0.0),
     )
     displacement = granite_result.displacement + displacement_1
     return pf.Material(
@@ -479,7 +473,6 @@ def brick_masonry_sharp_preset(
 
     surface_1 = pf.nodes.shader.diffuse_bsdf(
         color=pf.Color((0.061, 0.06, 0.054)),
-        normal=(0.0, 0.0, 0.0),
     )
 
     granite_result = granite.granite_masonry_gray_preset(
@@ -520,7 +513,6 @@ def brick_masonry_sharp_preset(
     displacement = pf.nodes.shader.displacement(
         height=layer_2_result.height,
         midlevel=0.0,
-        normal=(0.0, 0.0, 0.0),
     )
     return pf.Material(
         surface=surface,
@@ -549,7 +541,6 @@ def brick_masonry_granite_preset(
 
     surface_1 = pf.nodes.shader.diffuse_bsdf(
         color=pf.Color((0.141, 0.079, 0.061)),
-        normal=(0.0, 0.0, 0.0),
     )
 
     granite_result = granite.granite_masonry_gray_preset(
@@ -584,7 +575,6 @@ def brick_masonry_granite_preset(
     displacement = pf.nodes.shader.displacement(
         height=layer_2_result.height,
         midlevel=0.0,
-        normal=(0.0, 0.0, 0.0),
     )
     return pf.Material(
         surface=surface,
@@ -614,7 +604,6 @@ def brick_masonry_brown_preset(
 
     surface_1 = pf.nodes.shader.diffuse_bsdf(
         color=pf.Color((0.061, 0.06, 0.054)),
-        normal=(0.0, 0.0, 0.0),
     )
 
     brick_concrete_result = brick_concrete.brick_concrete(
@@ -660,7 +649,6 @@ def brick_masonry_brown_preset(
     displacement = pf.nodes.shader.displacement(
         height=layer_2_result.height,
         midlevel=0.0,
-        normal=(0.0, 0.0, 0.0),
     )
     return pf.Material(
         surface=surface,
@@ -916,11 +904,10 @@ def bricks_paint_strokes_preset(
         displacement_additional_height=brick_cutter_result.height,
     )
 
-    displacement_color_1 = brick_cutter_result.random.astype(dtype=pf.Vector)
     displacement_color = pf.nodes.color.mix_rgb(
         factor=1.0,
         a=pf.Color((0.391, 0.391, 0.391)),
-        b=displacement_color_1.x.astype(dtype=pf.Color),
+        b=brick_cutter_result.random.x.astype(dtype=pf.Color),
         blend_type="SOFT_LIGHT",
     )
 
@@ -1021,11 +1008,10 @@ def bricks_paint_spots_preset(
         displacement_additional_height=brick_cutter_result.height,
     )
 
-    displacement_color_1 = brick_cutter_result.random.astype(dtype=pf.Vector)
     displacement_color = pf.nodes.color.mix_rgb(
         factor=1.0,
         a=pf.Color((0.577, 0.206, 0.132)),
-        b=displacement_color_1.x.astype(dtype=pf.Color),
+        b=brick_cutter_result.random.x.astype(dtype=pf.Color),
         blend_type="SOFT_LIGHT",
     )
 
@@ -1105,11 +1091,10 @@ def bricks_paint_worn_preset(
         displacement_additional_height=brick_cutter_result.height,
     )
 
-    surface_color_1 = brick_cutter_result.random.astype(dtype=pf.Vector)
     surface_color = pf.nodes.color.mix_rgb(
         factor=1.0,
         a=pf.Color((0.041, 0.041, 0.041)),
-        b=surface_color_1.x.astype(dtype=pf.Color),
+        b=brick_cutter_result.random.x.astype(dtype=pf.Color),
         blend_type="SOFT_LIGHT",
     )
 
@@ -1222,7 +1207,6 @@ def bricks_paint_bumpy_preset(
     displacement_1 = pf.nodes.shader.displacement(
         height=brick_cutter_result.height,
         midlevel=0.0,
-        normal=(0.0, 0.0, 0.0),
     )
     displacement = paint_result.displacement + displacement_1
     return pf.Material(
@@ -1308,8 +1292,10 @@ def brick_shader_composite_rand(
     Chooses a brick material, and when possible chooses a per-brick color scheme, e.g random, checkered, striped, etc
     """
 
+    rng_with, rng_no, rng_pattern, rng_withcall, rng_nocall, rng_final = rng.spawn(6)
+
     with_color = pf.control.choice(
-        rng,
+        rng_with,
         [
             # TODO: more materials with the `base_color` argument
             (brick_concrete.brick_concrete_rand, 2.0),
@@ -1317,7 +1303,7 @@ def brick_shader_composite_rand(
     )
 
     no_color = pf.control.choice(
-        rng,
+        rng_no,
         [
             # TODO: more materials with no `base_color` argument
             (granite.granite_rand, 1.0),
@@ -1326,11 +1312,13 @@ def brick_shader_composite_rand(
         ],
     )
 
-    color_pattern = brick_color_pattern_rand(rng, vector, brick_id, brick_random)
-    mat_with_pattern = with_color(rng, vector, base_color=color_pattern)
-    mat_no_pattern = no_color(rng, vector)
+    color_pattern = brick_color_pattern_rand(
+        rng_pattern, vector, brick_id, brick_random
+    )
+    mat_with_pattern = with_color(rng_withcall, vector, base_color=color_pattern)
+    mat_no_pattern = no_color(rng_nocall, vector)
     return pf.control.choice(
-        rng,
+        rng_final,
         [
             (mat_with_pattern, 2.0),
             (mat_no_pattern, 1.0),
@@ -1376,7 +1364,6 @@ def bricks_rand(
     cutter_displacement = pf.nodes.shader.displacement(
         height=brick_cutter.height,
         midlevel=0.0,
-        normal=(0.0, 0.0, 0.0),
     )
     displacement = displacement + cutter_displacement
     return pf.Material(
@@ -1395,10 +1382,10 @@ def bricks_pristine_rand(
     rng: pf.RNG,
     vector: pf.ProcNode[pf.Vector],
 ) -> pf.Material:
-    r1, r2, r3, r4 = rng.spawn(4)
+    r_shader, r_dims, r_cutter, r_shadercall, r_bricks, r_grout = rng.spawn(6)
 
     shader = pf.control.choice(
-        r1,
+        r_shader,
         [
             (brick_concrete_pristine, 0.5),
             (concrete.concrete_rand, 0.5),
@@ -1407,19 +1394,22 @@ def bricks_pristine_rand(
         ],
     )
 
-    dimensions = brick_dimensions_rand(r1)
+    dimensions = brick_dimensions_rand(r_dims)
     dimensions = pf.nodes.math.vector_multiply(dimensions, (1, 2, 1))
 
     cutter = brick_cutter_rand(
-        r2, vector, irregularity=0, warp_strength=pf.random.uniform(rng, 0.05, 0.3)
+        r_cutter,
+        vector,
+        irregularity=0,
+        warp_strength=pf.random.uniform(rng, 0.05, 0.3),
     )
 
     return bricks_rand(
-        r3,
+        r_bricks,
         vector,
         brick_cutter=cutter,
-        brick_shader=shader(r2, cutter.vector),
-        grout_shader=brick_concrete.brick_concrete_grout_rand(r4, vector),
+        brick_shader=shader(r_shadercall, cutter.vector),
+        grout_shader=brick_concrete.brick_concrete_grout_rand(r_grout, vector),
     )
 
 
@@ -1568,7 +1558,6 @@ def bricks_paint_rand(
     cutter_displacement = pf.nodes.shader.displacement(
         height=brick_cutter.height,
         midlevel=0.0,
-        normal=(0.0, 0.0, 0.0),
     )
     bricks_displacement = bricks.displacement + cutter_displacement
     bricks_and_paint_displacement = bricks_displacement + paint_material.displacement

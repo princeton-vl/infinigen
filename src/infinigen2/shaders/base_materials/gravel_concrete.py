@@ -465,7 +465,6 @@ def gravel_concrete_sharp_polished_preset(
         height=small_gravel_result_2.height,
         midlevel=0.0,
         scale=0.025,
-        normal=(0.0, 0.0, 0.0),
     )
     return pf.Material(
         surface=principled,
@@ -617,7 +616,6 @@ def gravel_concrete_bumps_preset(
         height=small_gravel_result_1.height,
         midlevel=0.0,
         scale=0.025,
-        normal=(0.0, 0.0, 0.0),
     )
     return pf.Material(
         surface=principled,
@@ -743,7 +741,6 @@ def gravel_concrete_red_preset(
         height=small_gravel_result_1.height,
         midlevel=0.0,
         scale=0.025,
-        normal=(0.0, 0.0, 0.0),
     )
     return pf.Material(
         surface=principled,
@@ -915,7 +912,6 @@ def random_gravel_concrete_rand(
         height=sg_result.height,
         midlevel=0.0,
         scale=0.025,
-        normal=(0.0, 0.0, 0.0),
     )
     return pf.Material(
         surface=principled,

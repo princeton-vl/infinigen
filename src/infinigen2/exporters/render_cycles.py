@@ -19,11 +19,20 @@ from pathlib import Path
 import bpy
 import procfunc as pf
 
+from infinigen2 import context
 from infinigen2.exporters.camera_pose import save_camera_poses
 from infinigen2.exporters.render_error_check import (
+    assert_adaptive_sampling_converged,
     assert_displacement_coords_safe,
+    assert_frames_not_black,
+    assert_geometry_finite,
+    assert_material_attributes_present,
+    assert_material_nodes_valid,
+    assert_render_objects_visible,
     assert_shader_complexity_ok,
+    assert_transforms_nonsingular,
     assert_uv_coords_satisfied,
+    configure_sample_count_output,
     detect_cycles_errors,
 )
 from infinigen2.exporters.util.blender_render import (
@@ -31,6 +40,8 @@ from infinigen2.exporters.util.blender_render import (
     configure_compositor_viewlayer_output,
     configure_material_index_table,
     configure_object_index_table,
+    isolate_render_objects,
+    object_index_table_names,
     override_shading_for_gt,
     postprocess_renderpass_paths,
 )
@@ -269,11 +280,23 @@ def _configure_denoising(
     return True
 
 
+def _should_check_convergence(fail_for_unconverged_pix_frac: float | None) -> bool:
+    if fail_for_unconverged_pix_frac is None:
+        return False
+    if not bpy.context.scene.cycles.use_adaptive_sampling:
+        raise ValueError(
+            "fail_for_unconverged_pix_frac is set but adaptive sampling is off; the "
+            "convergence check is only meaningful with adaptive sampling enabled"
+        )
+    return context.globals.error_mode_unconverged_samples != "ignore"
+
+
 def _render_cycles_impl(
     objects: list[pf.MeshObject],
     camera: pf.CameraObject,
     output_folder: Path,
     render_passes: list[RenderPass],
+    lights: list[pf.LightObject] | None = None,
     frame_start: int = 1,
     frame_end: int = 1,
     resolution: tuple[int, int] = (1280, 720),
@@ -300,6 +323,8 @@ def _render_cycles_impl(
     transmission_bounces: int = 2,
     render_output_subdir: str | None = None,
     denoise_mode: DenoiseMode = DenoiseMode.BEST,
+    fail_for_black_frame_thresh: float | None = 0.02,
+    fail_for_unconverged_pix_frac: float | None = None,
 ) -> dict[ExportType, list[Path]]:
     render_passes = [ensure_path_placeholders(rp) for rp in render_passes]
 
@@ -402,7 +427,7 @@ def _render_cycles_impl(
         bpy.context.scene.render.image_settings.color_mode = "RGB"
 
     if ExportType.OBJECT_INDEX in pass_types:
-        table = configure_object_index_table()
+        table = object_index_table_names(configure_object_index_table())
         object_index_path = camera_folder / "object-index-table.json"
         with object_index_path.open("w") as f:
             json.dump(table, f, indent=4)
@@ -437,8 +462,22 @@ def _render_cycles_impl(
     assert_displacement_coords_safe(objects, displacement_mode)
     assert_shader_complexity_ok(objects)
     assert_uv_coords_satisfied(objects)
+    assert_material_nodes_valid(objects)
+    assert_geometry_finite(objects)
+    assert_transforms_nonsingular(objects)
+    assert_material_attributes_present(objects)
+    assert_render_objects_visible(objects)
+
+    check_convergence = _should_check_convergence(fail_for_unconverged_pix_frac)
+    if check_convergence:
+        assert min_samples < max_samples, f"need {min_samples=} < {max_samples=}"
+        configure_sample_count_output(view_layer, camera_folder)
+
     replay = logger.getEffectiveLevel() <= logging.INFO
-    with detect_cycles_errors(replay=replay):
+    with (
+        isolate_render_objects(objects, lights),
+        detect_cycles_errors(replay=replay) as render_log,
+    ):
         bpy.ops.render.render(animation=True)
 
     if render_output_subdir is not None and render_filepath_folder.exists():
@@ -458,6 +497,19 @@ def _render_cycles_impl(
         )
         result[pass_config.type] = paths
 
+    rgb_types = (ExportType.IMAGE_DENOISED, ExportType.IMAGE)
+    rgb_paths = [p for t in rgb_types for p in result.get(t, [])]
+    assert_frames_not_black(rgb_paths, fail_for_black_frame_thresh)
+
+    # Checked post-save so a failing scene still leaves a viewable render before raising.
+    if check_convergence:
+        assert_adaptive_sampling_converged(
+            render_log["text"],
+            camera_folder,
+            max_samples=max_samples,
+            fail_fraction=fail_for_unconverged_pix_frac,
+        )
+
     return result
 
 
@@ -467,6 +519,7 @@ def render_cycles(
     camera: pf.CameraObject,
     output_folder: Path,
     render_passes: list[RenderPass],
+    lights: list[pf.LightObject] | None = None,
     frame_start: int = 1,
     frame_end: int = 1,
     resolution: tuple[int, int] = (1280, 720),
@@ -492,6 +545,8 @@ def render_cycles(
     sample_clamp_direct: float = 10.0,
     transmission_bounces: int = 2,
     denoise_mode: DenoiseMode = DenoiseMode.BEST,
+    fail_for_black_frame_thresh: float | None = 0.02,
+    fail_for_unconverged_pix_frac: float | None = None,
 ) -> dict[ExportType, list[Path]]:
     unsupported = [
         rp for rp in render_passes if rp.type not in RENDER_CYCLES_PASS_TYPES
@@ -505,6 +560,7 @@ def render_cycles(
         ]
     return _render_cycles_impl(
         objects=objects,
+        lights=lights,
         camera=camera,
         output_folder=output_folder,
         render_passes=render_passes,
@@ -533,6 +589,8 @@ def render_cycles(
         sample_clamp_direct=sample_clamp_direct,
         transmission_bounces=transmission_bounces,
         denoise_mode=denoise_mode,
+        fail_for_black_frame_thresh=fail_for_black_frame_thresh,
+        fail_for_unconverged_pix_frac=fail_for_unconverged_pix_frac,
     )
 
 
@@ -542,6 +600,7 @@ def render_cycles_ground_truth(
     camera: pf.CameraObject,
     output_folder: Path,
     render_passes: list[RenderPass],
+    lights: list[pf.LightObject] | None = None,
     frame_start: int = 1,
     frame_end: int = 1,
     resolution: tuple[int, int] = (1280, 720),
@@ -581,6 +640,7 @@ def render_cycles_ground_truth(
     with override_shading_for_gt(objects):
         return _render_cycles_impl(
             objects=objects,
+            lights=lights,
             camera=camera,
             output_folder=output_folder,
             render_passes=render_passes,
@@ -610,4 +670,7 @@ def render_cycles_ground_truth(
             sample_clamp_direct=sample_clamp_direct,
             transmission_bounces=transmission_bounces,
             denoise_mode=denoise_mode,
+            # GT passes carry no RGB frame and are data, not light transport
+            fail_for_black_frame_thresh=None,
+            fail_for_unconverged_pix_frac=None,
         )

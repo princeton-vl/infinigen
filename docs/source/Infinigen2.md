@@ -12,13 +12,14 @@ For instructions on using Infinigen 1.0, please see the [Infinigen 1.0 Getting S
 
 Install `uv` if you don't already have it: `curl -LsSf https://astral.sh/uv/install.sh | sh`
 
-Then install Infinigen 2.0 from PyPI. It ships inside the `infinigen` package, and since 2.0 is currently an alpha you pin the pre-release:
+Then create a virtual environment and install Infinigen 2.0 from PyPI via the `infinigen` package. This requires `==2.0.0a2` or `--prerelease=allow` as Infinigen is currently in alpha. 
 ```bash
-uv pip install "infinigen==2.0.0a1"
+uv venv --python 3.11
+uv pip install "infinigen==2.0.0a2"
 ```
 or, inside a project:
 ```bash
-uv add "infinigen==2.0.0a1"
+uv add "infinigen==2.0.0a2"
 ```
 Within a project, we recommend fixing a specific version of the alpha, as some interfaces may change gradually until we reach the 2.0 full release.
 
@@ -32,15 +33,15 @@ You can use `uv run infinigen <generator1> <generator2> ...` to execute a list o
 
 <div class="example-grid">
 <figure class="example-card">
-<img src="https://infinigen.cs.princeton.edu/docs/v2.0.0a1/assets/images/landing/bricks_torus.png" alt="bricks material on a torus">
+<img src="https://infinigen.cs.princeton.edu/changes/v2.0.0a2/landing-bricks_rand-torus-cycles-0/Camera/0000.webp" alt="bricks material on a torus">
 <pre><code>uv run infinigen bricks_rand material_torus_uv render_cycles --seed 0</code></pre>
 </figure>
 <figure class="example-card">
-<img src="https://infinigen.cs.princeton.edu/docs/v2.0.0a1/assets/images/infinigen2.shaders.composites.scratches_overlay.scratched_metal_rand/0.png" alt="scratched metal material on a cube">
+<img src="https://infinigen.cs.princeton.edu/changes/v2.0.0a2/material-scratched_metal_rand-cube-cycles-0/Camera/0000.webp" alt="scratched metal material on a cube">
 <pre><code>uv run infinigen scratched_metal_rand material_cube render_cycles --seed 0</code></pre>
 </figure>
 <figure class="example-card">
-<img src="https://infinigen.cs.princeton.edu/docs/v2.0.0a1/assets/images/landing/fabric_patterned_monkey.png" alt="patterned fabric material on a monkey">
+<img src="https://infinigen.cs.princeton.edu/changes/v2.0.0a2/landing-fabric_patterned_rand-monkey-cycles-0/Camera/0000.webp" alt="patterned fabric material on a monkey">
 <pre><code>uv run infinigen fabric_patterned_rand material_monkey render_cycles --seed 0</code></pre>
 </figure>
 </div>
@@ -49,11 +50,11 @@ You can use `uv run infinigen <generator1> <generator2> ...` to execute a list o
 
 <div class="example-grid">
 <figure class="example-card">
-<img src="https://infinigen.cs.princeton.edu/docs/v2.0.0a1/assets/images/infinigen2.objects.sofa.sofa_rand/0.png" alt="a procedurally generated sofa">
+<img src="https://infinigen.cs.princeton.edu/changes/v2.0.0a2/object-sofa_rand-demo-cycles-0/Camera/0000.webp" alt="a procedurally generated sofa">
 <pre><code>uv run infinigen sofa_rand object_demo render_cycles --seed 0</code></pre>
 </figure>
 <figure class="example-card">
-<img src="https://infinigen.cs.princeton.edu/docs/v2.0.0a1/assets/images/infinigen2.objects.lamp.lamp_rand/0.png" alt="a procedurally generated lamp">
+<img src="https://infinigen.cs.princeton.edu/changes/v2.0.0a2/object-lamp_rand-demo-cycles-0/Camera/0000.webp" alt="a procedurally generated lamp">
 <pre><code>uv run infinigen lamp_rand object_demo render_cycles --seed 0</code></pre>
 </figure>
 </div>
@@ -62,15 +63,15 @@ You can use `uv run infinigen <generator1> <generator2> ...` to execute a list o
 
 <div class="example-grid">
 <figure class="example-card">
-<img src="https://infinigen.cs.princeton.edu/docs/v2.0.0a1/assets/images/infinigen2.scenes.room.room.livingroom_rand/0.png" alt="livingroom seed 0">
+<img src="https://infinigen.cs.princeton.edu/changes/v2.0.0a2/scene-livingroom_rand-demo-cycles-0/Camera/0000.webp" alt="livingroom seed 0">
 <pre><code>uv run infinigen livingroom_rand render_cycles --seed 0</code></pre>
 </figure>
 <figure class="example-card">
-<img src="https://infinigen.cs.princeton.edu/docs/v2.0.0a1/assets/images/infinigen2.scenes.room.room.livingroom_rand/1.png" alt="livingroom seed 1">
+<img src="https://infinigen.cs.princeton.edu/changes/v2.0.0a2/scene-livingroom_rand-demo-cycles-1/Camera/0000.webp" alt="livingroom seed 1">
 <pre><code>uv run infinigen livingroom_rand render_cycles --seed 1</code></pre>
 </figure>
 <figure class="example-card">
-<img src="https://infinigen.cs.princeton.edu/docs/v2.0.0a1/assets/images/infinigen2.scenes.room.room.livingroom_rand/2.png" alt="livingroom seed 2">
+<img src="https://infinigen.cs.princeton.edu/changes/v2.0.0a2/scene-livingroom_rand-demo-cycles-2/Camera/0000.webp" alt="livingroom seed 2">
 <pre><code>uv run infinigen livingroom_rand render_cycles --seed 2</code></pre>
 </figure>
 </div>

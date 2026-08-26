@@ -1836,7 +1836,7 @@ def _tile_shape_rand(
     params = _resolve_tile_params(
         rngs[2], subtiles_number, aspect_ratio, border, flatness
     )
-    scale = pf.random.log_uniform(rngs[0], 4.0, 10.0) / params["subtiles_number"]
+    scale = pf.random.uniform(rngs[0], 4.0, 10.0) / params["subtiles_number"]
     vector = tile_coord_transform_rand(rngs[1], vector=vector, scale=scale)
     return shape(vector=vector, **params)
 
@@ -1999,7 +1999,7 @@ def tile_coord_transform_rand(
     if rotation_deg is None:
         rotation_deg = pf.random.randint(rngs[0], 0, 8 + 1) * 45.0
     if scale is None:
-        scale = pf.random.log_uniform(rngs[1], 15, 25)
+        scale = pf.random.uniform(rngs[1], 15, 25)
     if flip is None:
         flip = pf.random.randint(rngs[2], 0, 2) * 2 - 1
 

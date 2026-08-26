@@ -21,7 +21,7 @@ from infinigen2.exporters.render_error_check import (
     assert_shader_complexity_ok,
     assert_uv_coords_satisfied,
 )
-from infinigen2.util.codestats import compute_stats
+from infinigen2.util.codestats.setup import build_model_from_compute_graph
 
 T = TypeVar("T")
 
@@ -33,9 +33,12 @@ def _assert_render_valid(objects: list[pf.MeshObject]):
 
 
 def _manifest_params(df, defaults: dict):
-    sub = df[["name", *defaults.keys()]].copy()
+    sub = df[["name"]].copy()
     for col, val in defaults.items():
-        sub[col] = sub[col].fillna(val).astype(type(val))
+        if col in df.columns:
+            sub[col] = df[col].fillna(val).astype(type(val))
+        else:
+            sub[col] = val
     for row in sub.itertuples(index=False):
         yield pytest.param(*row, id=row[0])
 
@@ -57,8 +60,8 @@ def validate_trace_generator(
         ast.parse(_code)
     except SyntaxError as e:
         raise ValueError(f"Generated code has syntax error: {e}") from e
-    stats = compute_stats(graph)
-    assert stats["continuous_params"] >= min_parameters
+    model = build_model_from_compute_graph(graph)
+    assert model["n_continuous_params"] >= min_parameters
 
 
 _MATERIAL_FUNCS = pf.util.manifest.filter_manifest(

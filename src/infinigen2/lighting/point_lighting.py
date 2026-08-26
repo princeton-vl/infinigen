@@ -8,7 +8,7 @@ from typing import NamedTuple
 import numpy as np
 import procfunc as pf
 
-from infinigen2.scenes import placement_utils
+from infinigen2.scenes.placement.distribute import distribute_in_bbox
 
 __all__ = [
     "ColoredLightsResult",
@@ -76,6 +76,6 @@ def floating_colored_lights_rand(
         light.item().name = f"colored_light.{i:02d}"
         lights.append(light)
 
-    placement_utils.distribute_in_bbox(rng, lights, bbox)
+    distribute_in_bbox(rng, lights, bbox)
 
     return ColoredLightsResult(environment=_dark_environment(), lights=lights)

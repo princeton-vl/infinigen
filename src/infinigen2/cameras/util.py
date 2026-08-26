@@ -10,13 +10,14 @@ import bpy
 import numpy as np
 import procfunc as pf
 
-import infinigen2.scenes.collision_collection as ccol
-from infinigen2.scenes.placement_utils import repeat_attempts
+import infinigen2.scenes.placement.collision as ccol
+from infinigen2.scenes.placement.retry import repeat_attempts
 from infinigen2.util.errors import RejectedScene
 
 __all__ = [
     "attach_stereo_right",
     "camera_collision_check",
+    "camera_transform_collision_check",
     "pose_and_filter",
     "total_bbox",
 ]
@@ -48,14 +49,31 @@ def camera_collision_check(
 ) -> bool:
     """Return True if camera pose is acceptable (no collision)."""
     bpy.context.view_layer.update()
-    cam_obj = camera.item()
+    return camera_transform_collision_check(
+        np.array(camera.item().matrix_world),
+        colliders,
+        probe_offset=probe_offset,
+        probe_size=probe_size,
+        forward_clearance=forward_clearance,
+    )
+
+
+def camera_transform_collision_check(
+    transform: np.ndarray,
+    colliders: ccol.CollisionSet,
+    probe_offset: float = 0.0,
+    probe_size: float = 0.75,
+    forward_clearance: float = 0.0,
+) -> bool:
+    """Return True if a camera collision box at *transform* is acceptable."""
+    transform = np.array(transform, dtype=np.float64, copy=True)
     offsets = [probe_offset]
     if forward_clearance > 0:
         offsets.append(-forward_clearance)
     for off in offsets:
-        probe_center = cam_obj.matrix_world @ pf.Vector((0, 0, off))
-        probe_transform = np.array(cam_obj.matrix_world)
-        probe_transform[:3, 3] = np.array(probe_center)
+        probe_transform = transform.copy()
+        probe_center = transform @ np.array((0, 0, off, 1))
+        probe_transform[:3, 3] = probe_center[:3]
         if ccol.box_intersection_test(colliders, probe_transform, size=probe_size):
             logger.debug("Camera is too close to an object, rejecting")
             return False

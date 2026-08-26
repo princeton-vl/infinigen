@@ -51,14 +51,14 @@ def _ceiling_light_geometry(
 
     curve_line_end = pf.nodes.math.combine_xyz(z=transform_translation_z)
     curve_line = pf.nodes.geo.curve_line(start=(0.0, 0.0, -0.001), end=curve_line_end)
-    curve_circle = pf.nodes.geo.curve_circle(radius=inner_radius)
+    curve_circle = pf.nodes.geo.curve_circle(resolution=16, radius=inner_radius)
     curve_to = pf.nodes.geo.curve_to_mesh(
         curve=curve_line,
         profile_curve=curve_circle,
         fill_caps=True,
     )
 
-    icosphere = pf.nodes.geo.mesh_icosphere(radius=inner_radius, subdivisions=5)
+    icosphere = pf.nodes.geo.mesh_icosphere(radius=inner_radius, subdivisions=3)
 
     store_named_attribute = pf.nodes.geo.store_named_attribute(
         geometry=icosphere.mesh,
@@ -91,11 +91,12 @@ def _ceiling_light_geometry(
         geometry=join_1, material=bulb_material, selection=True
     )
 
-    circle = pf.nodes.geo.mesh_circle(radius=radius, fill_type="NGON")
+    circle = pf.nodes.geo.mesh_circle(vertices=16, radius=radius, fill_type="NGON")
 
     curve_line_1_end = pf.nodes.math.combine_xyz(z=height * -1.0)
     curve_line_1 = pf.nodes.geo.curve_line(end=curve_line_1_end, start=(0, 0, 0))
-    curve_circle_1 = pf.nodes.geo.curve_circle(resolution=512, radius=radius)
+    curve_line_1 = pf.nodes.geo.resample_curve_count(curve=curve_line_1, count=4)
+    curve_circle_1 = pf.nodes.geo.curve_circle(resolution=16, radius=radius)
     curve_to_1 = pf.nodes.geo.curve_to_mesh(
         curve=curve_line_1, profile_curve=curve_circle_1
     )
@@ -173,6 +174,7 @@ def ceiling_light(
 
     obj = pf.nodes.to_mesh_object(geo.geometry)
     pf.ops.uv.cylinder_project(obj)
+    pf.ops.modifier.subdivide_surface(obj, levels=2, _skip_apply=True)
 
     light = None
     if turned_on:
@@ -220,6 +222,7 @@ def ceiling_light_rand(
 
     obj = pf.nodes.to_mesh_object(geo.geometry)
     pf.ops.uv.cylinder_project(obj)
+    pf.ops.modifier.subdivide_surface(obj, levels=2, _skip_apply=True)
 
     light = None
     if turned_on:
@@ -234,6 +237,6 @@ def ceiling_light_rand(
             temperature=temperature,
             shadow_soft_size=shadow_soft_size if shadow_soft_size is not None else 0.0,
         )
-        light.item().location.z = -0.03
+        pf.ops.object.set_transform(light, location=(0.0, 0.0, -0.03))
 
     return CeilingLightResult(mesh=obj, light=light)

@@ -6,8 +6,8 @@
 import numpy as np
 import procfunc as pf
 
-import infinigen2.scenes.collision_collection as ccol
-from infinigen2.scenes.placement_utils import repeat_attempts
+import infinigen2.scenes.placement.collision as ccol
+from infinigen2.scenes.placement.retry import repeat_attempts
 from infinigen2.util.errors import RejectedScene
 
 from .util import (
@@ -19,7 +19,6 @@ from .util import (
 
 __all__ = [
     "linear_pan_camera_rand",
-    "material_orbit_camera_rand",
     "monocular_360_camera_rand",
     "monocular_camera_in_bbox_rand",
     "orbit_90_camera_rand",
@@ -31,6 +30,7 @@ def monocular_camera_in_bbox_rand(
     rng: pf.RNG,
     objects: list[pf.MeshObject],
     colliders: ccol.CollisionSet,
+    bbox: tuple[np.ndarray, np.ndarray] | None = None,
     frame_start: int = 1,
     frame_end: int = 1,
     margin: float = 0.05,
@@ -40,10 +40,12 @@ def monocular_camera_in_bbox_rand(
 ) -> list[pf.CameraObject]:
     camera = pf.ops.primitives.perspective_camera(focal_length_mm=focal_length_mm)
     camera.item().name = "Camera"
+    if bbox is None:
+        bbox = total_bbox(objects)
     _place_camera_in_bbox(
         rng,
         camera,
-        total_bbox(objects),
+        bbox,
         colliders,
         frame_start,
         frame_end,
@@ -110,7 +112,7 @@ def linear_pan_camera_rand(
     rng: pf.RNG,
     objects: list[pf.MeshObject],
     colliders: ccol.CollisionSet,
-    dimensions: pf.Vector | None = None,
+    bbox: tuple[np.ndarray, np.ndarray] | None = None,
     frame_start: int = 0,
     frame_end: int = 72,
     focal_length_mm: float = 15,
@@ -122,13 +124,11 @@ def linear_pan_camera_rand(
     """Dolly travelling in a straight line between two points drawn uniformly in
     the room interior, at up to `speed` metres/frame, holding a random fixed yaw
     and slight downward pitch so the scene slides across the view."""
-    if dimensions is not None:
-        lo = pf.Vector((0.0, 0.0, 0.0))
-        hi = pf.Vector((float(dimensions.x), float(dimensions.y), float(dimensions.z)))
-    else:
-        bb_lo, bb_hi = total_bbox(objects)
-        lo = pf.Vector(tuple(float(v) for v in bb_lo))
-        hi = pf.Vector(tuple(float(v) for v in bb_hi))
+    if bbox is None:
+        bbox = total_bbox(objects)
+    bb_lo, bb_hi = bbox
+    lo = pf.Vector(tuple(float(v) for v in bb_lo))
+    hi = pf.Vector(tuple(float(v) for v in bb_hi))
 
     room = hi - lo
     center = (lo + hi) * 0.5
@@ -176,6 +176,7 @@ def linear_pan_camera_rand(
 def monocular_360_camera_rand(
     objects: list[pf.MeshObject],
     camera: pf.CameraObject | None = None,
+    bbox: tuple[np.ndarray, np.ndarray] | None = None,
     center: tuple[float, float] | None = None,
     radius: float | None = None,
     height: float | None = None,
@@ -187,7 +188,9 @@ def monocular_360_camera_rand(
     if camera is None:
         camera = pf.ops.primitives.perspective_camera(focal_length_mm=focal_length_mm)
 
-    all_min, all_max = total_bbox(objects)
+    if bbox is None:
+        bbox = total_bbox(objects)
+    all_min, all_max = bbox
     dims = all_max - all_min
     if center is None:
         center = (all_min[0] + all_max[0]) / 2, (all_min[1] + all_max[1]) / 2
@@ -214,7 +217,7 @@ def monocular_360_camera_rand(
 @pf.tracer.grammar
 def orbit_90_camera_rand(
     objects: list[pf.MeshObject],
-    dimensions: pf.Vector | None = None,
+    bbox: tuple[np.ndarray, np.ndarray] | None = None,
     frame_start: int = 0,
     frame_end: int = 72,
     focal_length_mm: float = 15,
@@ -224,15 +227,16 @@ def orbit_90_camera_rand(
     range, for spinout clips. Pair with exporter_frames to render shards (the
     orbit is deterministic, so every shard follows the identical path).
 
-    When `dimensions` is given, the orbit is computed from the room interior so
+    When `bbox` is given, the orbit is computed from that interior box so
     exterior meshes (extruded wall slabs, skylight shafts) can't inflate the
     radius and push the camera through the walls; otherwise it falls back to the
     object bbox."""
     center = radius = None
-    if dimensions is not None:
-        center = (dimensions.x / 2, dimensions.y / 2)
-        radius = 0.4 * min(dimensions.x, dimensions.y)
-        height = min(1.5, 0.8 * dimensions.z)
+    if bbox is not None:
+        lo, hi = bbox
+        center = ((lo[0] + hi[0]) / 2, (lo[1] + hi[1]) / 2)
+        radius = 0.4 * min(hi[0] - lo[0], hi[1] - lo[1])
+        height = min(1.5, 0.8 * (hi[2] - lo[2]))
     return monocular_360_camera_rand(
         objects=objects,
         center=center,
@@ -243,33 +247,3 @@ def orbit_90_camera_rand(
         focal_length_mm=focal_length_mm,
         total_angle_rad=np.pi / 2,
     )
-
-
-@pf.tracer.grammar
-def material_orbit_camera_rand(
-    radius: float = 4.48,
-    height: float = 2.29,
-    target_z: float = 0.75,
-    frame_start: int = 0,
-    frame_end: int = 72,
-    lens_mm: float = 50,
-    total_angle_rad: float = 2 * np.pi,
-) -> list[pf.CameraObject]:
-    """Full 360-degree orbit at fixed radius/height around the world Z axis while
-    aiming at (0, 0, target_z), for material-preview turntables. Matches the
-    material_sphere default camera (radius/height/lens). Geometry is fixed (not
-    derived from the scene bbox) so the path is identical across materials/seeds
-    and exporter-frame shards stitch seamlessly. lens_mm is deliberately not named
-    focal_length_mm so the --focal_length_mm pipeline arg can't override it."""
-    camera = pf.ops.primitives.perspective_camera(focal_length_mm=lens_mm)
-    camera.item().name = "Camera"
-
-    pitch = np.pi / 2 - np.arctan2(height - target_z, radius)
-    n_frames = max(frame_end - frame_start + 1, 1)
-    angles = np.linspace(0, total_angle_rad, n_frames, endpoint=False)
-    for t, a in enumerate(angles):
-        camera.item().location = (radius * np.sin(a), -radius * np.cos(a), height)
-        camera.item().rotation_euler = (pitch, 0, a)
-        camera.item().keyframe_insert("location", frame=frame_start + t)
-        camera.item().keyframe_insert("rotation_euler", frame=frame_start + t)
-    return [camera]

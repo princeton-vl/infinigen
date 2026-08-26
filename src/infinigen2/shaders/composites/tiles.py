@@ -252,7 +252,7 @@ def tile_rand(
     if vector is None:
         vector = pf.nodes.shader.coord().uv
     if scale is None:
-        scale = pf.random.log_uniform(rngs[5], 15, 25)
+        scale = pf.random.uniform(rngs[5], 15, 25)
     if tile_mask is None:
         tile_mask = tile_mask_rand(
             rngs[0],
@@ -420,7 +420,7 @@ def tile_outdoor_wall_rand(
     if vector is None:
         vector = pf.nodes.shader.coord().uv
     if scale is None:
-        scale = pf.random.log_uniform(rngs[5], 5, 10)
+        scale = pf.random.uniform(rngs[5], 5, 10)
     if tile_mask is None:
         tile_mask = tile_mask_rand(
             rngs[0],
@@ -468,7 +468,7 @@ def tile_outdoor_ground_rand(
     if vector is None:
         vector = pf.nodes.shader.coord().uv
     if scale is None:
-        scale = pf.random.log_uniform(rngs[5], 5, 10)
+        scale = pf.random.uniform(rngs[5], 5, 10)
     if tile_mask is None:
         tile_mask = tile_mask_rand(
             rngs[0],

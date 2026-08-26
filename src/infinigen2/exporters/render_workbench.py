@@ -14,7 +14,10 @@ import procfunc as pf
 from procfunc.util.log import Suppress
 
 from infinigen2.exporters.camera_pose import save_camera_poses
-from infinigen2.exporters.util.blender_render import DisplacementMode
+from infinigen2.exporters.util.blender_render import (
+    DisplacementMode,
+    isolate_render_objects,
+)
 from infinigen2.exporters.util.format import (
     ExportType,
     RenderPass,
@@ -43,6 +46,7 @@ def render_workbench(
     camera: pf.CameraObject,
     output_folder: Path,
     render_passes: list[RenderPass],
+    lights: list[pf.LightObject] | None = None,
     frame_start: int = 1,
     frame_end: int = 1,
     resolution: tuple[int, int] = (1280, 720),
@@ -94,6 +98,10 @@ def render_workbench(
         shading.studio_light = matcap_light
     bpy.context.scene.display.render_aa = "16" if samples >= 16 else "8"
 
+    # FLAT SHADING - mirror render_cycles so geometry facets read in workbench
+    bpy.ops.object.select_all(action="SELECT")
+    bpy.ops.object.shade_flat()
+
     if displacement_mode not in [
         DisplacementMode.NONE,
         DisplacementMode.REALIZE_MESH,
@@ -142,7 +150,7 @@ def render_workbench(
         return result
 
     context = Suppress() if logger.getEffectiveLevel() > logging.INFO else nullcontext()
-    with context:
+    with isolate_render_objects(objects, lights), context:
         bpy.ops.render.render(animation=True)
 
     # Blender writes files like <prefix>0001.png — collect them

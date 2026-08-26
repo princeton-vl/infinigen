@@ -13,7 +13,12 @@ import procfunc as pf
 import pytest
 
 from infinigen2.exporters import render_cycles, render_eevee
+from infinigen2.exporters.object_data import collect_object_data
 from infinigen2.exporters.util.format import ExportType, RenderPass
+from infinigen2.exporters.visualize_gt_boxes import (
+    assert_object_data_matches_table,
+    object_names,
+)
 
 
 def _configure_two_cubes_scene():
@@ -179,3 +184,44 @@ def test_object_and_material_indices(tmp_path, method, save_blend=False):
     if save_blend:
         blend_path = tmp_path / f"{inspect.currentframe().f_code.co_name}.blend"  # type: ignore
         pf.ops.file.save_blend(blend_path)
+
+
+@pytest.mark.slow
+@pytest.mark.render_gpu
+def test_object_data_rows_match_the_rendered_object_index(tmp_path):
+    objects, camera, left_cube, right_cube, _, _ = _configure_two_cubes_scene()
+
+    results = render_eevee.render_eevee(
+        objects=objects,
+        camera=camera,
+        output_folder=tmp_path,
+        render_passes=[
+            RenderPass(
+                ExportType.OBJECT_INDEX, Path("object_%f.npy"), np.dtype(np.uint32)
+            )
+        ],
+        frame_start=1,
+        frame_end=1,
+        resolution=(256, 128),
+    )
+    # reversed, so a row's object_index rather than its position has to carry the join
+    data = collect_object_data(list(reversed(objects)), 1, 1)
+    object_data = tmp_path / "object-data.npz"
+    np.savez(object_data, **data)
+
+    table = tmp_path / camera.item().name / "object-index-table.json"
+    assert_object_data_matches_table(object_data, table)
+
+    obj_mask = np.load(results[ExportType.OBJECT_INDEX][0])
+    data = np.load(object_data, allow_pickle=False)
+    rows = {int(i): r for r, i in enumerate(data["object_index"])}
+    w = obj_mask.shape[1]
+    halves = [(obj_mask[:, : w // 2], left_cube), (obj_mask[:, w // 2 :], right_cube)]
+    for region, cube in halves:
+        label = _majority_label(region)
+        assert label != 0
+        row = rows[label]
+        assert object_names(data)[row] == cube.item().name
+        assert data["location_meters"][row, :, 0] == pytest.approx(
+            list(cube.item().location), abs=1e-4
+        )

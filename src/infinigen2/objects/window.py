@@ -10,6 +10,7 @@ from typing import NamedTuple
 
 import numpy as np
 import procfunc as pf
+from mathutils import Euler
 from procfunc.nodes import types as t
 
 from infinigen2.shaders.functionality_lists import (
@@ -18,6 +19,11 @@ from infinigen2.shaders.functionality_lists import (
     glass_material_rand,
 )
 from infinigen2.util.curve import curve_to_mesh_with_uv
+
+# window/curtain parts are built flat in the XY plane (X=width, Y=height,
+# Z=depth); this Euler reorients them into the shared wall placement frame
+# (X=depth out of wall, Y=width, Z=height up), matching door_body
+_WALL_REORIENT = (math.pi / 2, 0.0, math.pi / 2)
 
 __all__ = [
     "CurtainResult",
@@ -160,9 +166,9 @@ def _curtain_geometry(
     join_1 = pf.nodes.geo.join_geometry([curve_line_3, curve_line_4, curve_line_2])
 
     curve_circle_1 = pf.nodes.geo.curve_circle(radius=radius)
-    curve_to_2 = pf.nodes.geo.curve_to_mesh(
-        curve=join_1, profile_curve=curve_circle_1, fill_caps=True
-    )
+    curve_to_2 = curve_to_mesh_with_uv(
+        curve=join_1, profile=curve_circle_1, fill_caps=True
+    ).mesh
 
     icosphere_1 = pf.nodes.geo.mesh_icosphere(radius=icosphere_radius, subdivisions=4)
 
@@ -192,7 +198,7 @@ def _curtain_geometry(
         geometry=join_3, shade_smooth=False
     )
 
-    return set_shade_smooth
+    return pf.nodes.geo.transform(geometry=set_shade_smooth, rotation=_WALL_REORIENT)
 
 
 def window_dimensions_rand(
@@ -635,15 +641,17 @@ def _window_geometry(
 
     realized = pf.nodes.geo.realize_instances(join)
 
-    # Even out the long frame polys before subsurf, then crease all frame
-    # edges so the later subsurf keeps the frame crisp.
-    subdivided = pf.nodes.geo.subdivide_mesh(mesh=realized, level=3)
+    # crease frame edges so the unapplied curtain-smoothing subsurf keeps them sharp
     creased = pf.nodes.geo.store_named_attribute(
         domain="EDGE",
-        geometry=subdivided,
+        geometry=realized,
         name="crease_edge",
         value=1.0,
     )
+
+    # built in the XY plane (X=width, Y=height, Z=depth); reorient into the
+    # shared wall frame (X=depth out of wall, Y=width, Z=height up)
+    creased = pf.nodes.geo.transform(geometry=creased, rotation=_WALL_REORIENT)
 
     bound_box = pf.nodes.geo.bound_box(creased)
 
@@ -668,9 +676,17 @@ def _glass_pane(
         end=pf.nodes.math.combine_xyz(x=width * 0.5),
     )
     mesh = curve_to_mesh_with_uv(curve=curve, profile=profile)
-    return pf.nodes.geo.set_material(
-        geometry=mesh.mesh, selection=True, material=material
+    # uncreased, the frame's boundary_smooth=ALL subsurf rounds the pane inwards
+    creased = pf.nodes.geo.store_named_attribute(
+        domain="EDGE",
+        geometry=mesh.mesh,
+        name="crease_edge",
+        value=1.0,
     )
+    glass = pf.nodes.geo.set_material(
+        geometry=creased, selection=True, material=material
+    )
+    return pf.nodes.geo.transform(geometry=glass, rotation=_WALL_REORIENT)
 
 
 def window(
@@ -824,11 +840,14 @@ def window_rand(
         glass_material = glass_material_rand(rng_glass, vec, glass_height=dimensions.z)
 
     if curtain is None:
+        rng_curtain_choice, rng_curtain_build = rng_curtain.spawn(2)
         curtain_fn = pf.control.choice(
-            rng_curtain,
+            rng_curtain_choice,
             [
                 (
-                    lambda: (curtain_rand(rng_curtain, dimensions=dimensions).mesh),
+                    lambda: (
+                        curtain_rand(rng_curtain_build, dimensions=dimensions).mesh
+                    ),
                     1.0,
                 ),
                 (lambda: pf.ops.primitives.mesh_single_vertex(), 2.0),  # none
@@ -873,11 +892,12 @@ def window_rand(
         )
         pf.ops.object.join(frame_obj, pane_obj)
 
+    # curtain hangs on the interior side, offset out along +X (depth)
     curtain_offset = frame_thickness * 0.5 + 0.07
-    pf.ops.object.set_transform(curtain, location=(0.0, 0.0, curtain_offset))
+    pf.ops.object.set_transform(curtain, location=(curtain_offset, 0.0, 0.0))
     pf.ops.object.join(frame_obj, curtain)
 
-    # Smooth the curtains; crease_edge keeps the frame edges sharp.
+    # smooth the curtain; crease_edge keeps the frame edges sharp
     pf.ops.modifier.subdivide_surface(frame_obj, levels=2, _skip_apply=True)
 
     portal_light = pf.ops.primitives.light.area_lamp(
@@ -887,6 +907,12 @@ def window_rand(
         energy=0.0,
         portal=True,
     )
-    portal_light.item().rotation_euler = (np.pi, 0, 0)
+    # reorient the portal the same way as the window geometry so it stays in
+    # the window plane facing along the wall normal (+X)
+    reorient = Euler(_WALL_REORIENT).to_matrix()
+    flip = Euler((np.pi, 0.0, 0.0)).to_matrix()
+    pf.ops.object.set_transform(
+        portal_light, rotation_euler=tuple((reorient @ flip).to_euler())
+    )
 
     return WindowResult(mesh=frame_obj, light=portal_light)

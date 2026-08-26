@@ -51,15 +51,6 @@ jobs:
           uvx ruff==0.14.5 format --check .
           uvx ruff==0.14.5 check --output-format=github --select=E9,F63,F7,F82 .
           uvx ruff==0.14.5 check --output-format=github .
-      
-      # - name: Install with dev dependencies
-      #   run: |
-      #     uv venv
-      #     uv pip install ".[dev]"
-
-      # - name: Unit Tests (pytest)
-      #   run: |
-      #     uv run pytest tests/infinigen2 -k 'not skip_for_ci and not render_gpu'
 
   docs:
     runs-on: ${{ fromJSON(vars.CI_RUNNER || '"ubuntu-latest"') }}
@@ -84,3 +75,34 @@ jobs:
 
       - name: Build docs (warnings as errors)
         run: uv run --no-sync python -m sphinx -b html docs/source docs/build
+
+  unit_tests:
+    runs-on: ${{ fromJSON(vars.CI_RUNNER || '"ubuntu-latest"') }}
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+          fetch-depth: 0
+
+      - name: Set up SSH for procfunc
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.PROCFUNC_DEPLOY_KEY }}
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.8.3"
+
+      - name: Install with dev dependencies
+        run: |
+          uv venv
+          uv pip install -e ".[dev]"
+
+      - name: Unit Tests (pytest)
+        run: |
+          uv run pytest tests/infinigen2 -k 'not skip_for_ci and not render_gpu' \
+            -n 4 --durations=20

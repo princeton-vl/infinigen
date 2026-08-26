@@ -1,0 +1,1070 @@
+{% macro metrics_inline(m) -%}
+{%- if m and (m.base_tris or m.subdiv_tris or m.cpu or m.gpu) -%}
+<span class="metrics">{% if m.base_tris %}<span title="base mesh cage, before Subdivision Surface">Base</span> <span class="m-{{ m.base_tris_cls }}">{{ m.base_tris }}</span>{% endif %}{% if m.subdiv_tris %}{% if m.base_tris %} · {% endif %}<span title="after Subdivision Surface at render levels">Subdiv</span> <span class="m-{{ m.subdiv_tris_cls }}">{{ m.subdiv_tris }}</span>{% endif %}{% if m.cpu %} · Build <span class="m-{{ m.cpu_cls }}">{{ m.cpu }}</span>{% endif %}{% if m.gpu %} · Export <span class="m-{{ m.gpu_cls }}">{{ m.gpu }}</span>{% endif %}</span>
+{%- endif -%}
+{%- endmacro %}
+
+{% macro version_header(v) %}
+{% if v.role %}<span class="ba-badge {{ v.role }}">{{ v.role | upper }}</span>{% endif %}
+{% if v.tag %}<a class="vh-tag" href="{{ v.tag_url }}" target="_blank" rel="noopener">{{ v.tag }}</a>
+{% else %}
+{% if v.branch_url %}<a class="vh-branch" href="{{ v.branch_url }}" target="_blank" rel="noopener" title="{{ v.name }}">{{ v.branch }}</a>{% else %}<span class="vh-branch" title="{{ v.name }}">{{ v.branch or v.name }}</span>{% endif %}
+{% if v.commit %} <a class="vh-commit" href="{{ v.commit_url }}" target="_blank" rel="noopener">{{ v.commit }}</a>{% endif %}
+{% endif %}
+{% if v.pr %} <a class="vh-pr" href="{{ v.pr_url }}" target="_blank" rel="noopener">PR #{{ v.pr }}</a>{% endif %}
+{% endmacro %}
+
+{% macro image_tile(img) -%}
+<div class="image-wrapper"
+     data-renderer="{{ img.renderer }}"
+     data-missing="{{ 'true' if not img.path else 'false' }}">
+    <div class="image-label">{{ img.label }}</div>
+    {% if img.path %}
+    {% if img.path.endswith('.mp4') %}
+    <video class="trajectory-video" src="/images/{{ img.path }}" muted loop playsinline preload="none"></video>
+    {% else %}
+    <img src="/images/{{ img.path }}" loading="lazy" decoding="async" alt="{{ img.label }}">
+    {% endif %}
+    {% else %}
+    <div class="missing-placeholder">
+        {% if img.command_text or img.stderr_text %}
+        Error (no image)
+        {% else %}
+        Not generated in this run
+        {% endif %}
+    </div>
+    {% endif %}
+    {% if img.command_text %}
+    <details class="error-details">
+        <summary>Show command</summary>
+        <pre>{{ img.command_text }}</pre>
+    </details>
+    {% endif %}
+    {% if img.stderr_text %}
+    <details class="error-details">
+        <summary>Show stderr</summary>
+        <pre>{{ img.stderr_text }}</pre>
+    </details>
+    {% endif %}
+</div>
+{%- endmacro %}
+
+{% macro sections(obj) -%}
+{% if obj.sections %}
+{% for section in obj.sections %}
+<details class="image-section" data-section="{{ section.key }}"{% if not section.folded %} open{% endif %}>
+    <summary class="section-title">{{ section.title }}{{ metrics_inline(section.metrics) }}</summary>
+    <div class="images-container{% if section.key == 'presets' %} preset-strip{% endif %}"
+         data-scroll-group="{{ section.scroll_group }}">
+        {% for img in section.images %}
+        {{ image_tile(img) }}
+        {% endfor %}
+    </div>
+</details>
+{% endfor %}
+{% else %}
+<div class="empty-cell">No images</div>
+{% endif %}
+{%- endmacro %}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asset Comparison</title>
+    <style>
+        :root {
+            --img-width: 300px;
+            --gap: 4px;
+            --border-color: #333;
+            --sticky-top: 30px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: monospace;
+            margin: 0;
+            padding: 8px;
+            font-size: 11px;
+        }
+
+        #controls {
+            position: sticky;
+            top: 0;
+            background: white;
+            padding: 4px 8px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 4px;
+            z-index: 100;
+        }
+
+        .controls-row {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .mode-indicator {
+            font-weight: bold;
+            padding: 4px 8px;
+            background: #f0f0f0;
+            border: 1px solid #999;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .mode-indicator:hover {
+            background: #e0e0e0;
+        }
+
+        .mode-indicator:active {
+            background: #d0d0d0;
+        }
+
+        .filter-toggle {
+            cursor: pointer;
+            color: #0066cc;
+            text-decoration: underline;
+            font-size: 10px;
+        }
+
+        .fold-bar {
+            gap: 6px;
+            margin-bottom: 0;
+        }
+
+        .fold-bar-label {
+            font-size: 10px;
+            color: #666;
+        }
+
+        .fold-btn {
+            font-family: monospace;
+            font-size: 10px;
+            padding: 2px 8px;
+            cursor: pointer;
+            background: #fff;
+            border: 1px solid #999;
+            border-radius: 3px;
+        }
+
+        .fold-btn:hover {
+            background: #e0e0e0;
+        }
+
+        .fold-btn[data-folded="1"] {
+            background: #f0f0f0;
+            color: #777;
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+            color: #666;
+            margin-left: 4px;
+            font-size: 10px;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 220px;
+            background-color: #333;
+            color: #fff;
+            text-align: left;
+            border-radius: 3px;
+            padding: 6px;
+            position: absolute;
+            z-index: 1000;
+            top: 125%;
+            left: 50%;
+            margin-left: -110px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            font-size: 10px;
+            line-height: 1.3;
+        }
+
+        .tooltip .tooltiptext::after {
+            content: "";
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: transparent transparent #333 transparent;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        #filters {
+            display: none;
+            padding: 8px;
+            background: #f9f9f9;
+            border-top: 1px solid #ddd;
+            margin-top: 4px;
+        }
+
+        #filters.expanded {
+            display: block;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 4px;
+        }
+
+        .filter-group label {
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .filter-section {
+            margin-bottom: 8px;
+        }
+
+        .filter-section-title {
+            font-weight: bold;
+            font-size: 10px;
+            margin-bottom: 4px;
+        }
+
+        .asset-filter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 4px 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 4px;
+            background: white;
+            border: 1px solid #ddd;
+        }
+
+        .asset-filter-grid label {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 10px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .asset-filter-grid label span {
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        [hidden] {
+            display: none !important;
+        }
+
+        .asset-filter-controls {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 4px;
+            font-size: 9px;
+        }
+
+        .asset-filter-controls button {
+            padding: 2px 6px;
+            font-size: 9px;
+            cursor: pointer;
+            background: white;
+            border: 1px solid #999;
+        }
+
+        .missing-placeholder {
+            width: var(--img-width);
+            min-height: var(--img-width);
+            background: #222;
+            color: #999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #444;
+            font-size: 10px;
+        }
+
+        .comparison-row[data-not-run="true"] .asset-name {
+            background: #eee;
+            color: #888;
+        }
+
+        .section-title,
+        .asset-name {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .image-section > summary,
+        .comparison-row > summary {
+            list-style: none;
+        }
+
+        .image-section > summary::-webkit-details-marker,
+        .comparison-row > summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .image-section > summary::before,
+        .comparison-row > summary::before {
+            display: inline-block;
+            width: 12px;
+            margin-right: 2px;
+            color: #888;
+            content: "▸";
+        }
+
+        .image-section[open] > summary::before,
+        .comparison-row[open] > summary::before {
+            content: "▾";
+        }
+
+        .skip-badge {
+            display: inline-block;
+            margin-left: 6px;
+            padding: 0 4px;
+            background: #b0803a;
+            color: #fff;
+            border-radius: 3px;
+            font-size: 9px;
+            vertical-align: middle;
+        }
+
+        .new-badge {
+            display: inline-block;
+            margin-left: 6px;
+            padding: 0 4px;
+            background: #2e7d32;
+            color: #fff;
+            border-radius: 3px;
+            font-size: 9px;
+            vertical-align: middle;
+        }
+
+        .metrics {
+            font-weight: normal;
+            color: #999;
+            font-size: 9px;
+            margin-left: 6px;
+            white-space: nowrap;
+        }
+
+        .m-worse {
+            color: #c0392b;
+            font-weight: bold;
+        }
+
+        .m-better {
+            color: #2e7d32;
+            font-weight: bold;
+        }
+
+        .perf-note {
+            font-size: 10px;
+            color: #c0392b;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .comparison-row[data-perf="changed"] .asset-name {
+            background: #fff0e6;
+        }
+
+        .ba-badge {
+            display: inline-block;
+            padding: 1px 8px;
+            margin-right: 6px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+            color: #fff;
+            vertical-align: middle;
+        }
+
+        .ba-badge.before {
+            background: #888;
+        }
+
+        .ba-badge.after {
+            background: #2e7d32;
+        }
+
+        .vh-tag {
+            font-weight: bold;
+            font-size: 15px;
+        }
+
+        .vh-branch {
+            font-weight: bold;
+        }
+
+        .vh-commit {
+            font-family: monospace;
+            font-size: 11px;
+        }
+
+        .vh-pr {
+            font-weight: bold;
+        }
+
+        .vh-tag, .vh-branch, .vh-commit, .vh-pr {
+            color: #1a5fb4;
+            text-decoration: none;
+        }
+
+        a.vh-tag:hover, a.vh-branch:hover, a.vh-commit:hover, a.vh-pr:hover {
+            text-decoration: underline;
+        }
+
+        .comparison-container {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .asset-name {
+            font-weight: bold;
+            font-size: 12px;
+            margin-bottom: 4px;
+            padding: 2px 4px;
+            background: #f0f0f0;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .object-metrics,
+        .mode-help {
+            color: #666;
+            font-size: 10px;
+        }
+
+        .object-metrics {
+            font-weight: bold;
+            padding: 2px 4px;
+            margin-bottom: 4px;
+            background: #f0f0f0;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .images-container {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: var(--gap);
+            align-items: flex-start;
+            overflow-x: auto;
+            overflow-y: hidden;
+            overscroll-behavior-x: contain;
+            padding-bottom: 4px;
+        }
+
+        .image-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 0 0 auto;
+        }
+
+        .image-label {
+            font-size: 9px;
+            color: #666;
+            margin-bottom: 2px;
+            text-align: center;
+            word-break: break-word;
+            max-width: var(--img-width);
+        }
+
+        .error-details {
+            width: var(--img-width);
+            margin-top: 4px;
+            font-size: 10px;
+        }
+
+        .error-details pre {
+            max-height: 180px;
+            overflow: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+            border: 1px solid #ddd;
+            padding: 6px;
+            background: #fafafa;
+        }
+
+        img {
+            width: var(--img-width);
+            height: auto;
+            display: block;
+            border: 1px solid #ddd;
+        }
+
+        .empty-cell {
+            color: #999;
+            font-style: italic;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .image-section {
+            margin-bottom: 8px;
+        }
+
+        .section-title {
+            font-size: 10px;
+            font-weight: bold;
+            padding: 2px 4px;
+            background: #e8e8e8;
+            border-left: 3px solid #666;
+            margin-bottom: 4px;
+        }
+
+        .preset-strip {
+            flex-wrap: nowrap;
+        }
+
+        .header-row {
+            display: grid;
+            grid-template-columns: repeat({{ version_names|length }}, 1fr);
+            gap: var(--gap);
+            position: sticky;
+            top: var(--sticky-top);
+            background: white;
+            z-index: 50;
+            padding: 4px 0;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 2px;
+        }
+
+        .version-header {
+            font-weight: bold;
+            padding: 4px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .comparison-row {
+            margin-bottom: 8px;
+            border: 1px solid var(--border-color);
+            padding: 4px;
+        }
+
+        .version-layers {
+            display: grid;
+            grid-template-columns: repeat({{ version_names|length }}, 1fr);
+            gap: var(--gap);
+        }
+
+        .version-layer {
+            padding: 4px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 8px;
+            min-height: 50px;
+            min-width: 0;
+        }
+
+        body[data-mode="toggle"] .header-row {
+            display: block;
+            padding: 8px;
+            border: 2px solid var(--border-color);
+            text-align: center;
+        }
+
+        body[data-mode="toggle"] .version-header {
+            display: none;
+            border: 0;
+            font-size: 14px;
+        }
+
+        body[data-mode="toggle"] .version-header.active,
+        body[data-mode="sidebyside"] .version-header {
+            display: block;
+        }
+
+        body[data-mode="toggle"] .version-layers {
+            display: block;
+        }
+
+        body[data-mode="toggle"] .version-layer {
+            display: none;
+            border: 0;
+            padding: 4px;
+        }
+
+        body[data-mode="toggle"] .version-layer.active {
+            display: block;
+        }
+    </style>
+</head>
+<body data-mode="{{ mode }}" data-active-version="{{ version_names[0] if version_names else '' }}">
+    <div id="controls">
+        <div class="controls-row">
+            <label>
+                Image size:
+                <input type="range" min="100" max="600" value="300">
+                <span id="size-display">300px</span>
+            </label>
+            <button class="mode-indicator" data-action="toggle-mode" title="Click to switch mode">
+                Mode: <span id="mode-name">{{ mode }}</span>
+            </button>
+            <span id="mode-help" class="mode-help">
+                Press 't' for toggle mode
+            </span>
+            <span class="filter-toggle" data-action="toggle-filters">⚙ Filters</span>
+            <a href="/help" style="color: #0066cc; text-decoration: none; font-size: 10px;">Help</a>
+            <a href="/select-versions" style="color: #0066cc; text-decoration: none; font-size: 10px;">Select versions</a>
+        </div>
+
+        {% if section_controls %}
+        <div class="controls-row fold-bar">
+            <span class="fold-bar-label">Sections:</span>
+            {% for c in section_controls %}
+            <button class="fold-btn" data-action="fold-section" data-section="{{ c.key }}" data-title="{{ c.title }}"
+                    data-folded="{{ '1' if c.folded else '0' }}"
+                    title="Fold/unfold {{ c.title }} everywhere">{{ '▸' if c.folded else '▾' }} {{ c.title }}</button>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div id="filters">
+            <div class="filter-section">
+                <div class="filter-section-title">View Options:</div>
+                <div class="filter-group">
+                    <label>
+                        <input type="checkbox" id="align-checkbox" checked>
+                        Align images
+                        <span class="tooltip">?
+                            <span class="tooltiptext">When checked, shows "Missing" placeholders for images that exist in one version but not another. When unchecked, images are sorted by name without placeholders.</span>
+                        </span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="filter-section">
+                <div class="filter-section-title">Asset Types:</div>
+                <div class="filter-group">
+                    <label><input type="checkbox" class="filter-checkbox" data-filter-type="asset_type" data-filter-value="material" checked> Materials</label>
+                    <label><input type="checkbox" class="filter-checkbox" data-filter-type="asset_type" data-filter-value="object" checked> Objects</label>
+                    <label><input type="checkbox" class="filter-checkbox" data-filter-type="asset_type" data-filter-value="scene" checked> Scenes</label>
+                </div>
+            </div>
+
+            <div class="filter-section">
+                <div class="filter-section-title">Renderers:</div>
+                <div class="filter-group">
+                    <label><input type="checkbox" class="filter-checkbox" data-filter-type="renderer" data-filter-value="cycles" checked> Cycles</label>
+                    <label><input type="checkbox" class="filter-checkbox" data-filter-type="renderer" data-filter-value="eevee" checked> Eevee</label>
+                </div>
+            </div>
+
+            <div class="filter-section">
+                <div class="filter-section-title">Assets:</div>
+                <div class="asset-filter-controls">
+                    <button data-action="select-all-assets">Select All</button>
+                    <button data-action="deselect-all-assets">Deselect All</button>
+                </div>
+                <div class="asset-filter-controls" style="margin-bottom: 8px;">
+                    <span style="font-size: 10px; margin-right: 8px;">Include assets from:
+                        <span class="tooltip">?
+                            <span class="tooltiptext">Select which versions to include assets from. Union shows assets in any selected version. Intersection shows only assets in all selected versions.</span>
+                        </span>
+                    </span>
+                    {% for version in version_names %}
+                    <label>
+                        <input type="checkbox" class="version-include-checkbox" data-version="{{ version }}" checked>
+                        {{ version }}
+                    </label>
+                    {% endfor %}
+                </div>
+                <div class="asset-filter-controls" style="margin-bottom: 4px;">
+                    <label style="margin-right: 8px;">
+                        <input type="radio" name="asset-join-mode" value="union" checked>
+                        Union
+                        <span class="tooltip">?
+                            <span class="tooltiptext">Show assets present in any of the selected versions.</span>
+                        </span>
+                    </label>
+                    <label>
+                        <input type="radio" name="asset-join-mode" value="intersection">
+                        Intersection
+                        <span class="tooltip">?
+                            <span class="tooltiptext">Show only assets present in all selected versions.</span>
+                        </span>
+                    </label>
+                </div>
+                <div class="asset-filter-grid" id="asset-filter-grid">
+                    {% for row in rows %}
+                    <label class="asset-checkbox-wrapper"
+                           data-asset="{{ row.asset }}"
+                           data-asset-type="{{ row.asset_type }}"
+                           data-versions="{{ row.available_versions|join(',') }}">
+                        <input type="checkbox" class="asset-filter-checkbox"
+                               data-asset="{{ row.asset }}"
+                               checked>
+                        <span>{{ row.asset }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="comparison-container">
+        <div class="header-row">
+            {% for version in version_meta %}<span class="version-header {% if loop.index0 == 0 %}active{% endif %}" data-version="{{ version.name }}">{{ version_header(version) }}{{ metrics_inline(version_totals.get(version.name)) }}</span>{% endfor %}
+        </div>
+
+        {% for row in rows %}
+        <details class="comparison-row" data-asset-type="{{ row.asset_type }}" data-asset="{{ row.asset }}" data-not-run="{{ 'true' if row.not_run else 'false' }}" data-perf="{{ 'changed' if row.perf_regressed else 'unchanged' }}"{% if not row.not_run %} open{% endif %}>
+            <summary class="asset-name">{{ row.asset_label }}{% if row.is_new %} <span class="new-badge" title="new asset — not present in {{ row.missing_versions | join(', ') }}">NEW</span>{% endif %}{% if row.not_run %} <span class="skip-badge" title="not rendered in {{ row.missing_versions | join(', ') }}">SKIPPED</span>{% endif %}</summary>
+            {% if perf_enabled and row.perf_regressed %}
+            <div class="perf-note">⚠ perf: {{ row.perf_summary }}</div>
+            {% endif %}
+
+            <div class="version-layers">
+            {% for obj in row.objects %}
+            <div class="version-layer {% if loop.index0 == 0 %}active{% endif %}" data-version="{{ obj.version }}">
+                <div class="object-metrics">Render metrics{{ metrics_inline(obj.metrics) }}</div>
+                {{ sections(obj) }}
+            </div>
+            {% endfor %}
+            </div>
+        </details>
+        {% endfor %}
+    </div>
+
+    <script>
+        const root = document.documentElement;
+        const body = document.body;
+        const controls = document.getElementById('controls');
+        const slider = controls.querySelector('input[type="range"]');
+        const sizeDisplay = document.getElementById('size-display');
+        const modeName = document.getElementById('mode-name');
+        const modeHelp = document.getElementById('mode-help');
+        const versionNames = {{ version_names|tojson }};
+        const params = new URLSearchParams(window.location.search);
+        const scrollPositions = new WeakMap();
+
+        function readSet(key) {
+            const value = params.get(key);
+            return value === null ? null : new Set(value ? value.split(',') : []);
+        }
+
+        function selected(selector, attribute) {
+            return new Set(Array.from(document.querySelectorAll(selector + ':checked'))
+                .map(input => input.dataset[attribute]));
+        }
+
+        function setParam(key, values, defaults) {
+            const sameAsDefaults = defaults && values.size === defaults.size
+                && Array.from(values).every(value => defaults.has(value));
+            if (sameAsDefaults) {
+                params.delete(key);
+            } else {
+                params.set(key, Array.from(values).join(','));
+            }
+        }
+
+        function writeUrl() {
+            const allAssets = new Set(Array.from(document.querySelectorAll('.asset-filter-checkbox'))
+                .map(input => input.dataset.asset));
+            const allVersions = new Set(versionNames);
+            const allAssetTypes = new Set(Array.from(document.querySelectorAll('.filter-checkbox[data-filter-type="asset_type"]'))
+                .map(input => input.dataset.filterValue));
+            const allRenderers = new Set(Array.from(document.querySelectorAll('.filter-checkbox[data-filter-type="renderer"]'))
+                .map(input => input.dataset.filterValue));
+            setParam('assets', selected('.asset-filter-checkbox', 'asset'), allAssets);
+            setParam('versions', selected('.version-include-checkbox', 'version'), allVersions);
+            setParam('asset_type', selected('.filter-checkbox[data-filter-type="asset_type"]', 'filterValue'), allAssetTypes);
+            setParam('renderer', selected('.filter-checkbox[data-filter-type="renderer"]', 'filterValue'), allRenderers);
+
+            params.set('mode', body.dataset.mode);
+            params.set('size', slider.value);
+            if (document.getElementById('align-checkbox').checked) {
+                params.delete('align');
+            } else {
+                params.set('align', '0');
+            }
+            const joinMode = document.querySelector('input[name="asset-join-mode"]:checked')?.value;
+            if (!joinMode || joinMode === 'union') {
+                params.delete('join_mode');
+            } else {
+                params.set('join_mode', joinMode);
+            }
+            history.replaceState(null, '', window.location.pathname + '?' + params.toString());
+        }
+
+        function setMode(mode) {
+            const toggle = mode === 'toggle';
+            body.dataset.mode = toggle ? 'toggle' : 'sidebyside';
+            modeName.textContent = body.dataset.mode;
+            modeHelp.textContent = toggle
+                ? "Press 's' for side-by-side | 't' to cycle versions"
+                : "Press 't' for toggle mode";
+        }
+
+        function setVersion(index) {
+            if (!versionNames.length) return;
+            const version = versionNames[index % versionNames.length];
+            body.dataset.activeVersion = version;
+            document.querySelectorAll('.version-header, .version-layer').forEach(element => {
+                element.classList.toggle('active', element.dataset.version === version);
+            });
+            restoreScroll();
+        }
+
+        function toggleMode() {
+            setMode(body.dataset.mode === 'toggle' ? 'sidebyside' : 'toggle');
+            writeUrl();
+        }
+
+        function toggleFilters() {
+            document.getElementById('filters').classList.toggle('expanded');
+        }
+
+        function setFoldButton(button, folded) {
+            button.dataset.folded = folded ? '1' : '0';
+            button.textContent = (folded ? '▸ ' : '▾ ') + button.dataset.title;
+        }
+
+        function setSectionOpen(key, open) {
+            document.querySelectorAll('.image-section[data-section="' + key + '"]')
+                .forEach(section => { section.open = open; });
+            const button = document.querySelector('.fold-btn[data-section="' + key + '"]');
+            if (button) setFoldButton(button, !open);
+        }
+
+        function setRowsOpen(open) {
+            document.querySelectorAll('.comparison-row[data-not-run="true"]')
+                .forEach(row => { row.open = open; });
+            const button = document.querySelector('.fold-btn[data-section="not-run"]');
+            if (button) setFoldButton(button, !open);
+        }
+
+        function syncFoldPeers(section) {
+            const row = section.closest('.comparison-row');
+            const peers = row
+                ? row.querySelectorAll('.image-section[data-section="' + section.dataset.section + '"]')
+                : [section];
+            peers.forEach(peer => { peer.open = section.open; });
+            const button = document.querySelector('.fold-btn[data-section="' + section.dataset.section + '"]');
+            if (button) setFoldButton(button, !section.open);
+        }
+
+        function applyFilters() {
+            const renderers = selected('.filter-checkbox[data-filter-type="renderer"]', 'filterValue');
+            const align = document.getElementById('align-checkbox').checked;
+
+            document.querySelectorAll('.image-wrapper').forEach(wrapper => {
+                const rendererVisible = renderers.size === 0
+                    || renderers.has(wrapper.dataset.renderer)
+                    || wrapper.dataset.renderer === 'unknown';
+                const missing = wrapper.dataset.missing === 'true';
+                wrapper.hidden = !rendererVisible || (!align && missing);
+            });
+
+            document.querySelectorAll('.image-section').forEach(section => {
+                section.hidden = !Array.from(section.querySelectorAll('.image-wrapper'))
+                    .some(wrapper => !wrapper.hidden);
+            });
+        }
+
+        function applyAssetFilters() {
+            const assets = selected('.asset-filter-checkbox', 'asset');
+            const types = selected('.filter-checkbox[data-filter-type="asset_type"]', 'filterValue');
+
+            document.querySelectorAll('.comparison-row').forEach(row => {
+                const assetVisible = assets.size > 0 && assets.has(row.dataset.asset);
+                const typeVisible = types.size === 0 || types.has(row.dataset.assetType);
+                row.hidden = !(assetVisible && typeVisible);
+            });
+        }
+
+        function updateAssetList() {
+            const included = selected('.version-include-checkbox', 'version');
+            const joinMode = document.querySelector('input[name="asset-join-mode"]:checked')?.value || 'union';
+
+            document.querySelectorAll('.asset-checkbox-wrapper').forEach(wrapper => {
+                const versions = new Set(wrapper.dataset.versions.split(',').filter(Boolean));
+                const visible = joinMode === 'intersection'
+                    ? included.size > 0 && Array.from(included).every(version => versions.has(version))
+                    : Array.from(included).some(version => versions.has(version));
+                wrapper.hidden = !visible;
+                if (!visible) wrapper.querySelector('.asset-filter-checkbox').checked = false;
+            });
+            applyAssetFilters();
+        }
+
+        function selectAllAssets(checked) {
+            document.querySelectorAll('.asset-checkbox-wrapper:not([hidden]) .asset-filter-checkbox')
+                .forEach(input => { input.checked = checked; });
+            applyAssetFilters();
+            writeUrl();
+        }
+
+        function scrollGroup(source) {
+            return source.closest('.comparison-row')
+                ?.querySelectorAll('.images-container[data-scroll-group="' + source.dataset.scrollGroup + '"]') || [];
+        }
+
+        function syncScroll(source) {
+            const row = source.closest('.comparison-row');
+            if (!row) return;
+            let groups = scrollPositions.get(row);
+            if (!groups) {
+                groups = new Map();
+                scrollPositions.set(row, groups);
+            }
+            groups.set(source.dataset.scrollGroup, source.scrollLeft);
+            scrollGroup(source).forEach(other => {
+                if (other !== source && other.scrollLeft !== source.scrollLeft) {
+                    other.scrollLeft = source.scrollLeft;
+                }
+            });
+        }
+
+        function restoreScroll() {
+            document.querySelectorAll('.comparison-row').forEach(row => {
+                const groups = scrollPositions.get(row);
+                if (!groups) return;
+                row.querySelectorAll('.images-container').forEach(container => {
+                    const left = groups.get(container.dataset.scrollGroup);
+                    if (left !== undefined) container.scrollLeft = left;
+                });
+            });
+        }
+
+        function trackControlsHeight() {
+            const cap = window.innerHeight * 0.5;
+            const top = Math.min(controls.offsetHeight, cap);
+            root.style.setProperty('--sticky-top', top + 'px');
+        }
+
+        function restoreChecks(key, selector, attribute) {
+            const values = readSet(key);
+            if (!values) return;
+            document.querySelectorAll(selector)
+                .forEach(input => { input.checked = values.has(input.dataset[attribute]); });
+        }
+
+        function restoreControlState() {
+            const sizeParam = params.get('size');
+            const size = Number(sizeParam);
+            if (sizeParam !== null && Number.isFinite(size)) {
+                slider.value = Math.min(600, Math.max(100, size));
+            }
+
+            restoreChecks('assets', '.asset-filter-checkbox', 'asset');
+            restoreChecks('versions', '.version-include-checkbox', 'version');
+            restoreChecks('asset_type', '.filter-checkbox[data-filter-type="asset_type"]', 'filterValue');
+            restoreChecks('renderer', '.filter-checkbox[data-filter-type="renderer"]', 'filterValue');
+
+            const joinMode = params.get('join_mode');
+            if (joinMode) {
+                const input = document.querySelector('input[name="asset-join-mode"][value="' + joinMode + '"]');
+                if (input) input.checked = true;
+            }
+
+            document.getElementById('align-checkbox').checked = params.get('align') !== '0';
+        }
+
+        controls.addEventListener('input', event => {
+            if (event.target === slider) {
+                root.style.setProperty('--img-width', slider.value + 'px');
+                sizeDisplay.textContent = slider.value + 'px';
+                writeUrl();
+            }
+        });
+
+        controls.addEventListener('change', event => {
+            const target = event.target;
+            if (target.id === 'align-checkbox') {
+                applyFilters();
+            } else if (target.matches('.version-include-checkbox, input[name="asset-join-mode"]')) {
+                updateAssetList();
+            } else if (target.matches('.asset-filter-checkbox')) {
+                applyAssetFilters();
+            } else if (target.matches('.filter-checkbox[data-filter-type="asset_type"]')) {
+                applyAssetFilters();
+            } else if (target.matches('.filter-checkbox[data-filter-type="renderer"]')) {
+                applyFilters();
+            } else {
+                return;
+            }
+            writeUrl();
+        });
+
+        controls.addEventListener('click', event => {
+            const action = event.target.closest('[data-action]')?.dataset.action;
+            if (action === 'toggle-mode') toggleMode();
+            if (action === 'toggle-filters') toggleFilters();
+            if (action === 'select-all-assets') selectAllAssets(true);
+            if (action === 'deselect-all-assets') selectAllAssets(false);
+            if (action === 'fold-section') {
+                if (event.target.dataset.section === 'not-run') {
+                    const row = document.querySelector('.comparison-row[data-not-run="true"]');
+                    setRowsOpen(!(row?.open));
+                } else {
+                    const section = document.querySelector('.image-section[data-section="' + event.target.dataset.section + '"]');
+                    setSectionOpen(event.target.dataset.section, !(section?.open));
+                }
+            }
+        });
+
+        document.addEventListener('toggle', event => {
+            if (event.target.matches('.image-section')) syncFoldPeers(event.target);
+        }, true);
+
+        document.addEventListener('scroll', event => {
+            if (event.target?.matches?.('.images-container')) syncScroll(event.target);
+        }, true);
+
+        document.addEventListener('keydown', event => {
+            if (event.target.matches?.('input, textarea, select')) return;
+            if (event.key === 't' || event.key === 'T') {
+                event.preventDefault();
+                if (body.dataset.mode === 'toggle') {
+                    setVersion((versionNames.indexOf(body.dataset.activeVersion) + 1) % versionNames.length);
+                } else {
+                    toggleMode();
+                }
+            } else if ((event.key === 's' || event.key === 'S') && body.dataset.mode === 'toggle') {
+                event.preventDefault();
+                toggleMode();
+            }
+        });
+
+        restoreControlState();
+        setMode(params.get('mode') === 'toggle' ? 'toggle' : 'sidebyside');
+        setVersion(0);
+        root.style.setProperty('--img-width', slider.value + 'px');
+        sizeDisplay.textContent = slider.value + 'px';
+        updateAssetList();
+        applyFilters();
+        trackControlsHeight();
+        window.addEventListener('resize', trackControlsHeight);
+        if (window.ResizeObserver) new ResizeObserver(trackControlsHeight).observe(controls);
+
+        const trajectoryObserver = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) entry.target.play().catch(() => {});
+                else entry.target.pause();
+            });
+        }, {rootMargin: '200px'});
+        document.querySelectorAll('video.trajectory-video')
+            .forEach(video => trajectoryObserver.observe(video));
+    </script>
+
+    </body>
+    </html>

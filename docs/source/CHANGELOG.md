@@ -1,5 +1,81 @@
 # CHANGELOG
 
+v2.0.0a2
+
+**Breaking changes and renames**
+
+- Rename the `collision_set` `existing=` parameter to `cache=`
+- Remove `stereo_cameras_in_bbox_rand`, `stereo_random_walk_camera` and `material_orbit_camera_rand`; compose stereo from `attach_stereo_right`, `sample_baseline` and `stereo_accept_pred`
+- Split `scenes.placement_utils` into a `scenes.placement` package of `retry`, `snap`, `distribute`, `culling` and `collision`
+- Rename `objects.cabinet` and `objects.slot_cabinet` to `objects.storage`, `scenes.asset_demo` to `scenes.demo_material` and `scenes.demo_object`, `primitives_rand` to `primitive_with_effect_rand`, and `plastic_opaque_rand` to `plastic_rand`
+
+**Dependencies**
+
+- Require `procfunc>=0.35,<0.36`
+- Raise dependency floors, drop the `imageio`, `opencv-python` and `trimesh` upper caps, require `cvdpack>=0.6.0`, and split a `test` extra out of `dev`
+
+**New assets and scenes**
+
+- Add v2 chair generators with office and wooden-dining families, assembled from independently-sampled seat, back and base parts
+- Add lever, bar-pull, knob and curved-pull handle generators, wired into doors and storage
+- Add geonode doors with 1-5 panel bodies in same-material, two-tone or opaque-plus-glass finishes
+- Rework storage into traceable shelves and cabinet-with-door generators, replacing the old cabinet and slot-cabinet assets
+- Add a `room_rand` scene with weighted dining and sofa furniture setups plus a placement culling pass
+- Register `curve_demo`, `trim_demo`, `dining_setup_rand` and `centered_sofa_setup_rand` scenes
+- Add leather and patterned wall paint base materials
+
+**Geometry, subdivision and UVs**
+
+- Rebuild table legs, lamps, ceiling lights and handles at low base polycount with edge creasing and subsurf
+- Unify table pedestal bases into one swept generator; `base_single_stand_rand` is now `pedestal_base_rand`
+- Add a symmetric swept trim profile, rebuilding painting frames as mitered swept quads and adding window casing
+- Add metric and swap-UV options to swept-curve UVs, and radial or metric UVs to handles
+- Fix UV seams on swept curve-to-mesh profiles so textures no longer snap to zero at the seam
+- Gap skirting boards under doorways and square off the profile back against the wall
+- Fit window size and margin to the wall they are placed on, and crease glass panes so frame subsurf no longer shrinks the glass inward
+- Diversify lamp shade shapes and fix patterned lampshade materials
+- Fix lever handle cap shading under subdivision
+
+**Materials**
+
+- Unify carpet, granite, plastic and smooth-stone into continuous distributions, replacing the discrete style variants
+- Vary wall paint colors more widely, reaching deeper and more saturated tones
+- Concentrate mirror splat and spotting along a UV gradient rather than uniform speckle
+- Drop displacement from `plastic_tough_packaging` and rein in `plastic_rand` displacement magnitude
+- Fix invisible scratches in the deep-dirty and shallow wood presets
+- Fix a rare shader stack-budget (SVM) overflow that produced black wall materials
+
+**Rendering and ground truth**
+
+- Raise the default render sample count from 256 to 1024
+- Make render exporters respect the objects and lights lists, taking them as separate typed inputs
+- Add an `object-data` export pass writing per-object index, pose, scale and bounding box
+- Add stereo rigid-body point-track export, plus point-cloud and 3D-box ground-truth visualizers behind `scripts/visualize_gt.py`, replacing the removed `visualize_renders_as_videos.py`
+- Write the index, depth and surface-normal EXR passes at 32-bit
+- Add `--sampling_noise_threshold` and validate `--passes` values against the available export types
+- Keep subdivision on instanced ceiling lamps and scattered clutter through mesh realization
+- Preserve generator names on warped primitives, vases and small objects so ground-truth index tables name them correctly
+
+**Render checks and diagnostics**
+
+- Reorganize `render_error_check` into a package with a shared severity context and `generate.py --error_severity CHECK=MODE`
+- Add render-validity checks for geometry, transforms, visibility, attributes, black frames, non-converged sampling, Cycles shader errors, displacement coordinates, object-index consistency and degenerate UVs
+- Add material strict-mode checks flagging normal-map inputs, textures sampled without an explicit Vector, and floating interface nodes
+- Standardize RNG draws and generator determinism so codegen reproductions match
+- Categorize wandb render-watch crashes and alert when the crash rate over recent jobs exceeds a threshold
+
+**Example projects**
+
+- Add generic random-walk animation and camera motion primitives
+- Add a `flying_indoor` example project with grouped stereo video and per-camera sharding, replacing `examples/render_floatingobj_stereo.py` and `examples/stereo_video_sbatch.sh`
+- Link pregenerated flying-indoor data on HuggingFace from the example-projects docs
+- Expand the floating-object pool with per-generator sampling weights and shared material overrides
+
+**Integration renders and CI**
+
+- Gate PR integration renders to the assets whose coverage-relevant sources changed, and shard presets and environments once instead of 12x
+- Render a surface-normal pass on every integration seed, record per-asset triangle count and render time, and group viewer images into per-category sections
+
 v2.0.0a1
 - Complete rewrite on top of the procfunc procedural-generation engine
 - Add 60 new procedural materials

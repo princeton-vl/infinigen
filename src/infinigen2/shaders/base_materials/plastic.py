@@ -18,6 +18,7 @@ __all__ = [
     "plastic_high_gloss",
     "plastic_opaque",
     "plastic_opaque_rand",
+    "plastic_rand",
     "plastic_sandblasted",
     "plastic_soft_touch",
     "plastic_tough_packaging",
@@ -30,50 +31,78 @@ __all__ = [
 ]
 
 
-def plastic_translucent_rand(
+def plastic_rand(
     rng: pf.RNG,
     vector: pf.ProcNode[pf.Vector],
+    translucence: t.SocketOrVal[float] | None = None,
+    base_color: t.SocketOrVal[pf.Color] | None = None,
 ) -> pf.Material:
-    h = pf.random.uniform(rng, 0.0, 1.0)
-    s = pf.random.uniform(rng, 0.1, 1.0)
-    v = pf.random.uniform(rng, 0.03, 0.95)
-    color = pf.color.hsv_to_rgba((h, s, v))
+    if translucence is None:
+        translucence = 0.0
 
-    roughness = pf.random.uniform(rng, 0.15, 0.59)
-    ior = pf.random.uniform(rng, 1.2, 1.35)
-    transmission = pf.random.uniform(rng, 0.4, 1.0)
+    m_gloss = pf.random.uniform(rng, 0.0, 1.0)
+    m_size = pf.random.uniform(rng, 0.0, 1.0)
+    m_colorvar = pf.random.uniform(rng, 0.0, 1.0)
+    m_value = pf.random.uniform(rng, 0.0, 1.0)
+    m_sat = pf.random.uniform(rng, 0.0, 1.0) ** 1.4
+    hue = pf.random.uniform(rng, 0.0, 1.0)
 
-    noise_size = pf.random.log_uniform(rng, 0.0001, 2.0)
-    noise_height = pf.random.uniform(rng, 0.05, 0.55)
-    specular = pf.random.uniform(rng, 0.3, 1.0)
-    noise_detail = pf.random.uniform(rng, 0.0, 4.0)
+    if base_color is None:
+        value = 0.02 + 0.95 * m_value**1.2
+        saturation = m_sat * 0.9
+        base_color = pf.color.hsv_color(hue=hue, saturation=saturation, value=value)
 
+    c2_scale = 1.0 + (pf.random.uniform(rng, 0.5, 1.5) - 1.0) * m_colorvar
+    color_2 = pf.nodes.color.hue_saturation(fac=1.0, color=base_color, value=c2_scale)
+
+    roughness = 0.9 * (0.01 / 0.9) ** m_gloss
+    roughness_min = roughness * pf.random.uniform(rng, 0.5, 1.0)
+
+    specular = pf.random.uniform(rng, 0.2, 1.0)
+    specular_min = specular * pf.random.uniform(rng, 0.35, 1.0)
+
+    ior_opaque = pf.random.uniform(rng, 1.33, 1.55)
+    ior_translucent = pf.random.uniform(rng, 1.2, 1.35)
+    ior = ior_opaque + (ior_translucent - ior_opaque) * translucence
+
+    noise_size = 0.0002 * 5000.0 ** (m_size**2)
+    relief = pf.random.uniform(rng, 0.0, 1.2)
+    taper = 0.5 * relief * noise_size / 2.0e-3
+    noise_height = relief / (1.0 + taper**2)
+    noise_detail = pf.random.uniform(rng, 0.0, 5.0)
+    noise_distortion_strength = pf.random.uniform(rng, 0.4, 1.0)
+    noise_distortion_size = pf.random.uniform(rng, 0.0, 1.0)
     noise_seed = pf.random.uniform(rng, -1000.0, 1000.0)
-
-    roughness_variation = pf.random.uniform(rng, 1.0, 2.0)
-    roughness_max = roughness * roughness_variation
 
     return _plastic(
         vector=vector,
-        surface_color_1=color,
-        surface_color_2=color,
-        surface_min_roughness=roughness,
-        surface_max_roughness=roughness_max,
-        surface_min_specular=specular,
+        surface_color_1=base_color,
+        surface_color_2=color_2,
+        surface_min_roughness=roughness_min,
+        surface_max_roughness=roughness,
+        surface_min_specular=specular_min,
         surface_max_specular=specular,
         surface_ior=ior,
-        surface_transmission=transmission,
+        surface_transmission=translucence,
         subsurface_weight=0.0,
         subsurface_radius=(1.0, 0.2, 0.1),
         subsurface_scale=0.05,
         subsurface_anisotropy=0.0,
         noise_size=noise_size,
         noise_detail=noise_detail,
-        noise_distortion_strength=1.0,
-        noise_distortion_size=pf.random.uniform(rng, 0.0, 1.0),
+        noise_distortion_strength=noise_distortion_strength,
+        noise_distortion_size=noise_distortion_size,
         noise_height=noise_height,
         noise_seed=noise_seed,
     )
+
+
+def plastic_translucent_rand(
+    rng: pf.RNG,
+    vector: pf.ProcNode[pf.Vector],
+) -> pf.Material:
+    translucence = pf.random.uniform(rng, 0.4, 1.0)
+    return plastic_rand(rng, vector, translucence=translucence)
 
 
 @pf.nodes.node_function
@@ -277,11 +306,9 @@ def plastic_grayscale_rand(
     rng: pf.RNG,
     vector: pf.ProcNode[pf.Vector],
 ) -> pf.Material:
-    h = pf.random.uniform(rng, 0.0, 1.0)
-    s = 0.0
-    v = pf.random.log_uniform(rng, 0.02, 0.9)
-    base_color = pf.color.hsv_to_rgba((h, s, v))
-    return plastic_opaque_rand(rng, vector, base_color=base_color)
+    value = pf.random.uniform(rng, 0.02, 0.9)
+    base_color = pf.color.hsv_color(hue=0.0, saturation=0.0, value=value)
+    return plastic_rand(rng, vector, base_color=base_color)
 
 
 def plastic_opaque_rand(
@@ -292,7 +319,7 @@ def plastic_opaque_rand(
     if base_color is None:
         h = pf.random.uniform(rng, 0.0, 1.0)
         s = pf.random.uniform(rng, 0.2, 0.8)
-        v = pf.random.log_uniform(rng, 0.01, 0.8)
+        v = pf.random.uniform(rng, 0.01, 0.8)
         base_color = pf.color.hsv_to_rgba((h, s, v))
 
     roughness = pf.random.uniform(rng, 0.3, 1.0)
@@ -300,7 +327,7 @@ def plastic_opaque_rand(
     ior = pf.random.uniform(rng, 1.2, 1.55)
 
     scale = pf.random.uniform(rng, 2.0, 7.0)
-    noise_size = pf.random.log_uniform(rng, 0.002, 0.02)
+    noise_size = pf.random.uniform(rng, 0.002, 0.02)
     noise_detail = pf.random.uniform(rng, 1.0, 6.0)
     noise_seed = pf.random.uniform(rng, -1000.0, 1000.0)
 
@@ -324,7 +351,8 @@ def plastic_opaque_rand(
     )
 
     noise_distortion_strength = pf.random.uniform(rng, 0.4, 1.0)
-    displacement_strength = pf.random.uniform(rng, 0.0, 4.0)
+    grain_depth = pf.random.uniform(rng, 0.0, 1.5e-4)
+    displacement_strength = grain_depth / 3.0e-3
 
     return plastic_opaque(
         vector=vector,
@@ -637,7 +665,6 @@ def _plastic(
     displacement = pf.nodes.shader.displacement(
         height=fac,
         scale=displacement_scale * 0.5,
-        normal=(0.0, 0.0, 0.0),
     )
     return pf.Material(
         surface=principled,
@@ -1301,7 +1328,7 @@ def plastic_tough_packaging(
     noise_detail: t.SocketOrVal[float] = 3.0,
     noise_seed: t.SocketOrVal[float] = 0.0,
 ) -> pf.Material:
-    return _plastic(
+    material = _plastic(
         vector=vector,
         surface_color_1=base_color,
         surface_color_2=base_color,
@@ -1322,6 +1349,7 @@ def plastic_tough_packaging(
         noise_height=1.0,
         noise_seed=noise_seed,
     )
+    return pf.Material(surface=material.surface)
 
 
 def plastic_black_rubberized_preset(vector: pf.ProcNode[pf.Vector]) -> pf.Material:

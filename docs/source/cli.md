@@ -2,7 +2,9 @@
 
 This page documents the command-line entry points shipped with Infinigen.
 
-## `infinigen2`
+## Infinigen 2.0
+
+### `infinigen2`
 
 The main Infinigen 2.0 generation CLI: build one or more generators into a scene and render or export the result.
 
@@ -15,7 +17,9 @@ The main Infinigen 2.0 generation CLI: build one or more generators into a scene
 
 To list the available generators, run `infinigen2 --list` (optionally filtering by category, e.g. `infinigen2 --list Scene`).
 
-## `infinigen.datagen.manage_jobs`
+## Infinigen 1.0
+
+### `infinigen.datagen.manage_jobs`
 
 The Infinigen 1.0 datagen job manager: orchestrate large-scale scene generation across a local machine or a SLURM cluster.
 

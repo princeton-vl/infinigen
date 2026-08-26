@@ -1,0 +1,38 @@
+name: Compatibility tests
+
+on:
+  push:
+    branches: [develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lowest_versions:
+    if: github.event_name == 'push' || github.head_ref == 'develop'
+    runs-on: ${{ fromJSON(vars.CI_RUNNER || '"ubuntu-latest"') }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+          fetch-depth: 0
+
+      - name: Set up SSH for procfunc
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.PROCFUNC_DEPLOY_KEY }}
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.12.1"
+
+      - name: Install lowest supported test dependencies
+        run: |
+          uv venv --python 3.11
+          uv pip install --resolution lowest-direct -e ".[test]"
+
+      - name: Run Infinigen2 unit tests
+        run: |
+          uv run --no-sync pytest tests/infinigen2 -k 'not skip_for_ci and not render_gpu' \
+            -n 4 --durations=20

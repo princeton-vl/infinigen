@@ -32,8 +32,17 @@
     "name": "infinigen2.exporters.imu.save_imu"
   },
   {
+    "category": "Exporter",
+    "name": "infinigen2.exporters.object_data.save_object_data"
+  },
+  {
+    "category": "Exporter",
+    "name": "infinigen2.exporters.rigidbody_point_tracks.save_point_tracks"
+  },
+  {
     "category": "Material",
     "name": "infinigen2.shaders.composites.bricks.bricks_rand",
+    "integration_test_string": "bricks_rand material_plane_uv render_cycles",
     "presets": [
       "bricks_checkered_preset",
       "bricks_checkered_sparse_preset",
@@ -47,11 +56,13 @@
   },
   {
     "category": "Material",
-    "name": "infinigen2.shaders.composites.bricks.bricks_pristine_rand"
+    "name": "infinigen2.shaders.composites.bricks.bricks_pristine_rand",
+    "integration_test_string": "bricks_pristine_rand material_plane_uv render_cycles"
   },
   {
     "category": "Material",
     "name": "infinigen2.shaders.composites.bricks.bricks_paint_rand",
+    "integration_test_string": "bricks_paint_rand material_plane_uv render_cycles",
     "presets": [
       "bricks_paint_bumpy_preset",
       "bricks_paint_spots_preset",
@@ -62,6 +73,7 @@
   {
     "category": "Material",
     "name": "infinigen2.shaders.composites.bricks.bricks_masonry_rand",
+    "integration_test_string": "bricks_masonry_rand material_plane_uv render_cycles",
     "presets": [
       "brick_masonry_brown_preset",
       "brick_masonry_granite_preset",
@@ -78,7 +90,8 @@
   },
   {
     "category": "Material",
-    "name": "infinigen2.shaders.base_materials.brick_concrete.brick_concrete_rand"
+    "name": "infinigen2.shaders.base_materials.brick_concrete.brick_concrete_rand",
+    "integration_test_string": "brick_concrete_rand material_plane_uv render_cycles"
   },
   {
     "category": "Mask",
@@ -306,6 +319,16 @@
   },
   {
     "category": "Material",
+    "name": "infinigen2.shaders.base_materials.leather.leather_rand",
+    "presets": [
+      "leather_animal_preset",
+      "leather_furniture_patina_preset",
+      "leather_furniture_rough_preset",
+      "leather_handheld_preset"
+    ]
+  },
+  {
+    "category": "Material",
     "name": "infinigen2.shaders.base_materials.terrazzo.terrazzo_rand"
   },
   {
@@ -326,27 +349,32 @@
   },
   {
     "category": "Material",
-    "name": "infinigen2.shaders.composites.tiles.tile_rand"
+    "name": "infinigen2.shaders.composites.tiles.tile_rand",
+    "integration_test_string": "tile_rand material_plane_uv render_cycles"
   },
   {
     "original_proj": "Procfunc",
     "category": "Material",
-    "name": "infinigen2.shaders.composites.tiles.tile_indoor_wall_rand"
+    "name": "infinigen2.shaders.composites.tiles.tile_indoor_wall_rand",
+    "integration_test_string": "tile_indoor_wall_rand material_plane_uv render_cycles"
   },
   {
     "original_proj": "Procfunc",
     "category": "Material",
-    "name": "infinigen2.shaders.composites.tiles.tile_indoor_ground_rand"
+    "name": "infinigen2.shaders.composites.tiles.tile_indoor_ground_rand",
+    "integration_test_string": "tile_indoor_ground_rand material_plane_uv render_cycles"
   },
   {
     "original_proj": "Procfunc",
     "category": "Material",
-    "name": "infinigen2.shaders.composites.tiles.tile_outdoor_wall_rand"
+    "name": "infinigen2.shaders.composites.tiles.tile_outdoor_wall_rand",
+    "integration_test_string": "tile_outdoor_wall_rand material_plane_uv render_cycles"
   },
   {
     "original_proj": "Procfunc",
     "category": "Material",
-    "name": "infinigen2.shaders.composites.tiles.tile_outdoor_ground_rand"
+    "name": "infinigen2.shaders.composites.tiles.tile_outdoor_ground_rand",
+    "integration_test_string": "tile_outdoor_ground_rand material_plane_uv render_cycles"
   },
   {
     "category": "Material",
@@ -388,6 +416,10 @@
   },
   {
     "category": "Material",
+    "name": "infinigen2.shaders.functionality_lists.paint_patterned_rand"
+  },
+  {
+    "category": "Material",
     "name": "infinigen2.shaders.functionality_lists.wall_material_rand"
   },
   {
@@ -424,39 +456,71 @@
   },
   {
     "category": "Scene",
-    "name": "infinigen2.scenes.asset_demo.material_sphere"
+    "name": "infinigen2.scenes.demo_curve.curve_demo"
   },
   {
     "category": "Scene",
-    "name": "infinigen2.scenes.asset_demo.material_torus_uv"
+    "name": "infinigen2.scenes.demo_curve.trim_demo"
   },
   {
     "category": "Scene",
-    "name": "infinigen2.scenes.asset_demo.material_banana"
+    "name": "infinigen2.scenes.demo_material.material_banana",
+    "num_seeds": 0
   },
   {
     "category": "Scene",
-    "name": "infinigen2.scenes.asset_demo.material_monkey"
+    "name": "infinigen2.scenes.demo_material.material_cube",
+    "num_seeds": 0
   },
   {
     "category": "Scene",
-    "name": "infinigen2.scenes.asset_demo.material_cube"
+    "name": "infinigen2.scenes.demo_material.material_monkey",
+    "num_seeds": 0
   },
   {
     "category": "Scene",
-    "name": "infinigen2.scenes.asset_demo.material_plane_uv"
+    "name": "infinigen2.scenes.demo_material.material_plane_horizontal_uv",
+    "num_seeds": 0
   },
   {
     "category": "Scene",
-    "name": "infinigen2.scenes.asset_demo.material_plane_orthographic"
+    "name": "infinigen2.scenes.demo_material.material_plane_orthographic",
+    "num_seeds": 0
   },
   {
     "category": "Scene",
-    "name": "infinigen2.scenes.asset_demo.material_plane_horizontal_uv"
+    "name": "infinigen2.scenes.demo_material.material_plane_uv",
+    "num_seeds": 0
   },
   {
     "category": "Scene",
-    "name": "infinigen2.scenes.asset_demo.object_demo"
+    "name": "infinigen2.scenes.demo_material.material_sphere",
+    "num_seeds": 0
+  },
+  {
+    "category": "Scene",
+    "name": "infinigen2.scenes.demo_material.material_torus_uv",
+    "num_seeds": 0
+  },
+  {
+    "category": "Scene",
+    "name": "infinigen2.scenes.demo_object.object_demo",
+    "num_seeds": 0
+  },
+  {
+    "category": "Scene",
+    "name": "infinigen2.scenes.room.room_furniture.dining_setup_rand",
+    "integration_test_string": "dining_setup_rand object_demo render_cycles"
+  },
+  {
+    "category": "Scene",
+    "name": "infinigen2.scenes.room.room_furniture.centered_sofa_setup_rand",
+    "integration_test_string": "centered_sofa_setup_rand object_demo render_cycles"
+  },
+  {
+    "category": "Scene",
+    "name": "infinigen2.scenes.floating_objects.floating_objects_rand",
+    "integration_test_string": "floating_objects_rand object_demo render_cycles"
   },
   {
     "category": "Scene",
@@ -464,11 +528,15 @@
   },
   {
     "category": "Scene",
+    "name": "infinigen2.scenes.room.room.room_rand"
+  },
+  {
+    "category": "Scene",
     "name": "infinigen2.scenes.room.room_shape.room_shape_rand"
   },
   {
     "category": "Object",
-    "name": "infinigen2.objects.random_primitives.primitives_rand"
+    "name": "infinigen2.objects.random_primitives.primitive_with_effect_rand"
   },
   {
     "category": "Object",
@@ -508,11 +576,39 @@
   },
   {
     "category": "Object",
-    "name": "infinigen2.objects.table.base_single_stand_rand"
+    "name": "infinigen2.objects.table.pedestal_base_rand"
   },
   {
     "category": "Object",
     "name": "infinigen2.objects.table.base_square_rand"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen2.objects.chair.office_chair_rand"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen2.objects.chair.chair_back_rand"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen2.objects.chair.dining_chair_rand"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen2.objects.chair.chair_rand"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen2.objects.chair.curvy_seat_rand"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen2.objects.chair.round_seat_rand"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen2.objects.chair.wheeled_base_rand"
   },
   {
     "category": "Object",
@@ -532,6 +628,30 @@
   },
   {
     "category": "Object",
+    "name": "infinigen2.objects.door.door_body_rand"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen2.objects.door.door_with_handle_rand"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen2.objects.handles.lever_handle_rand"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen2.objects.handles.bar_pull_handle_rand"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen2.objects.handles.curved_pull_handle_rand"
+  },
+  {
+    "category": "Object",
+    "name": "infinigen2.objects.handles.knob_handle_rand"
+  },
+  {
+    "category": "Object",
     "name": "infinigen2.objects.rug.rug_rand"
   },
   {
@@ -548,11 +668,11 @@
   },
   {
     "category": "Object",
-    "name": "infinigen2.objects.cabinet.cabinet_rand"
+    "name": "infinigen2.objects.storage.shelves_rand"
   },
   {
     "category": "Object",
-    "name": "infinigen2.objects.slot_cabinet.slot_cabinet_rand"
+    "name": "infinigen2.objects.storage.cabinet_with_door_rand"
   },
   {
     "category": "Object",
@@ -567,61 +687,58 @@
     "name": "infinigen2.objects.wall_art.mirror_rand"
   },
   {
-    "category": "Cameras",
-    "name": "infinigen2.cameras.stereo_cameras_in_bbox_rand"
+    "category": "Object",
+    "name": "infinigen2.scenes.floating_objects.obj_with_postprocessing"
   },
   {
     "category": "Cameras",
-    "name": "infinigen2.cameras.monocular_camera_in_bbox_rand"
+    "name": "infinigen2.cameras.monocular_camera_in_bbox_rand",
+    "num_seeds": 3
   },
   {
     "category": "Cameras",
-    "name": "infinigen2.cameras.monocular_360_camera_rand"
+    "name": "infinigen2.cameras.monocular_360_camera_rand",
+    "num_seeds": 3
   },
   {
     "category": "Cameras",
-    "name": "infinigen2.cameras.linear_pan_camera_rand"
+    "name": "infinigen2.cameras.linear_pan_camera_rand",
+    "num_seeds": 3
   },
   {
     "category": "Cameras",
-    "name": "infinigen2.cameras.orbit_90_camera_rand"
+    "name": "infinigen2.cameras.orbit_90_camera_rand",
+    "num_seeds": 3
   },
   {
     "category": "Cameras",
-    "name": "infinigen2.cameras.material_orbit_camera_rand"
+    "name": "infinigen2.cameras.rrt_camera",
+    "num_seeds": 3
   },
   {
     "category": "Cameras",
-    "name": "infinigen2.cameras.rrt_camera"
+    "name": "infinigen2.cameras.rrt_camera_fast",
+    "num_seeds": 3
   },
   {
     "category": "Cameras",
-    "name": "infinigen2.cameras.rrt_camera_fast"
-  },
-  {
-    "category": "Cameras",
-    "name": "infinigen2.cameras.random_walk_camera"
-  },
-  {
-    "category": "Cameras",
-    "name": "infinigen2.cameras.stereo_random_walk_camera"
+    "name": "infinigen2.cameras.random_walk_camera",
+    "num_seeds": 3
   },
   {
     "category": "Material",
-    "name": "infinigen2.shaders.base_materials.plastic.plastic_opaque_rand",
+    "name": "infinigen2.shaders.base_materials.plastic.plastic_rand",
     "presets": [
       "plastic_black_rubberized_preset",
+      "plastic_black_translucent_preset",
       "plastic_tough_packaging_preset",
+      "plastic_translucent_bumps_preset",
       "plastic_white_textured_preset"
     ]
   },
   {
     "category": "Material",
-    "name": "infinigen2.shaders.base_materials.plastic.plastic_translucent_rand",
-    "presets": [
-      "plastic_black_translucent_preset",
-      "plastic_translucent_bumps_preset"
-    ]
+    "name": "infinigen2.shaders.base_materials.plastic.plastic_translucent_rand"
   },
   {
     "category": "Material",

@@ -3,19 +3,58 @@
 
 # Authors: Alexander Raistrick
 
+import logging
+import os
+
 import bpy
+import imageio.v3 as iio
 import numpy as np
 import procfunc as pf
 import pytest
 from procfunc.util.manifest import import_item
 
-from infinigen2 import GENERATORS_MANIFEST
+from infinigen2 import GENERATORS_MANIFEST, context
 from infinigen2.exporters.render_error_check import (
     SHADER_NODE_COUNT_FAIL,
+    AdaptiveSamplingError,
+    CyclesShaderError,
     DisplacementCoordError,
+    FrameCheckError,
+    HiddenRenderObjectError,
+    MaterialNodeError,
+    MissingAttributeError,
+    NonFiniteGeometryError,
+    ShaderTooComplexError,
+    SingularTransformError,
+    UVCoordError,
+    assert_adaptive_sampling_converged,
+    assert_displacement_coords_safe,
+    assert_frames_not_black,
+    assert_geometry_finite,
+    assert_material_attributes_present,
+    assert_material_nodes_valid,
+    assert_render_objects_visible,
+    assert_shader_complexity_ok,
+    assert_transforms_nonsingular,
+    assert_uv_coords_satisfied,
     check_material_uv_coords,
+    configure_sample_count_output,
     count_material_nodes,
+    detect_cycles_errors,
+    hidden_render_objects,
+    material_node_issues,
+    missing_attribute_issues,
+    nonfinite_vertex_counts,
+    singular_transform_objects,
     unsafe_displacement_materials,
+)
+from infinigen2.exporters.render_error_check.adaptive_sampling import (
+    _frames_at_sample_cap,
+)
+from infinigen2.exporters.render_error_check.material_nodes import (
+    FLOATING_INTERFACE_CHECK,
+    NORMAL_INPUT_CHECK,
+    TEXTURE_VECTOR_CHECK,
 )
 from infinigen2.shaders import functionality_lists
 from infinigen2.shaders.composites import bricks
@@ -183,8 +222,13 @@ def test_gate_passes_on_safe_coords():
     _raise_if_unsafe([mat])  # must not raise
 
 
+@pf.nodes.node_function
+def _uv_map_nodegroup():
+    return pf.nodes.shader.uv_map(uv_map="UVMap")
+
+
 def test_uv_map_nested_in_group_displacement_flagged():
-    mat = _bricks_material(pf.nodes.shader.uv_map(uv_map="UVMap"))
+    mat = _bricks_material(_uv_map_nodegroup())
     groups_with_uv = [
         n
         for n in mat.node_tree.nodes
@@ -214,7 +258,7 @@ def test_uv_map_only_on_surface_not_flagged():
     assert unsafe_displacement_materials([mat]) == {}
 
 
-def _plane_with_material(coord_node, valid_uv=True):
+def _plane_object_with_material(coord_node, valid_uv=True):
     pf.ops.object.clear_scene()
     obj = pf.ops.primitives.mesh_plane(size=2)
     if valid_uv:
@@ -222,7 +266,11 @@ def _plane_with_material(coord_node, valid_uv=True):
         pf.ops.attr.write_uv_coords(obj, uvs * 2)
     mat = bricks.bricks_rand(np.random.default_rng(0), coord_node)
     pf.ops.object.set_material(obj, surface=mat.surface, displacement=mat.displacement)
-    return obj.item()
+    return obj
+
+
+def _plane_with_material(coord_node, valid_uv=True):
+    return _plane_object_with_material(coord_node, valid_uv).item()
 
 
 def _remove_uv_layers(obj):
@@ -282,3 +330,497 @@ def test_accept_by_material_index():
     _remove_uv_layers(obj)
     issues = check_material_uv_coords(obj, mat_index=0)
     assert len(issues) == 1
+
+
+def _node_material(name):
+    mat = bpy.data.materials.new(name)
+    mat.use_nodes = True
+    mat.use_fake_user = True
+    return mat
+
+
+def test_normal_map_node_flagged():
+    mat = _node_material("normal_map")
+    mat.node_tree.nodes.new("ShaderNodeNormalMap")
+    issues = material_node_issues(mat)
+    assert set(issues) == {NORMAL_INPUT_CHECK}
+    assert any("ShaderNodeNormalMap" in i for i in issues[NORMAL_INPUT_CHECK])
+
+
+def test_linked_normal_input_flagged():
+    mat = _node_material("linked_normal")
+    tree = mat.node_tree
+    bsdf = next(n for n in tree.nodes if n.bl_idname == "ShaderNodeBsdfPrincipled")
+    coord = tree.nodes.new("ShaderNodeTexCoord")
+    tree.links.new(coord.outputs["Normal"], bsdf.inputs["Normal"])
+    issues = material_node_issues(mat)
+    assert any("'Normal' input set" in i for i in issues[NORMAL_INPUT_CHECK])
+
+
+def test_implicit_texture_vector_flagged():
+    mat = _node_material("implicit_vector")
+    mat.node_tree.nodes.new("ShaderNodeTexNoise")
+    issues = material_node_issues(mat)
+    assert set(issues) == {TEXTURE_VECTOR_CHECK}
+    assert any("Vector input unlinked" in i for i in issues[TEXTURE_VECTOR_CHECK])
+
+
+def test_explicit_texture_vector_ok():
+    mat = _node_material("explicit_vector")
+    tree = mat.node_tree
+    noise = tree.nodes.new("ShaderNodeTexNoise")
+    coord = tree.nodes.new("ShaderNodeTexCoord")
+    tree.links.new(coord.outputs["Object"], noise.inputs["Vector"])
+    assert material_node_issues(mat) == {}
+
+
+def test_baked_constant_vector_still_flagged():
+    """A constant baked into the Vector default (unlinked) is ignored by Cycles
+    for texture nodes, so it must still be flagged."""
+    mat = _node_material("baked_constant_vector")
+    noise = mat.node_tree.nodes.new("ShaderNodeTexNoise")
+    noise.inputs["Vector"].default_value = (1.0, 1.0, 1.0)
+    issues = material_node_issues(mat)
+    assert any("Vector input unlinked" in i for i in issues[TEXTURE_VECTOR_CHECK])
+
+
+def test_one_d_noise_no_implicit_vector():
+    mat = _node_material("one_d_noise")
+    noise = mat.node_tree.nodes.new("ShaderNodeTexNoise")
+    noise.noise_dimensions = "1D"
+    assert material_node_issues(mat) == {}
+
+
+def test_floating_output_in_group_flagged():
+    mat = _node_material("floating_output")
+    inner = bpy.data.node_groups.new("inner", "ShaderNodeTree")
+    inner.nodes.new("ShaderNodeOutputMaterial")
+    grp = mat.node_tree.nodes.new("ShaderNodeGroup")
+    grp.node_tree = inner
+    issues = material_node_issues(mat)
+    assert set(issues) == {FLOATING_INTERFACE_CHECK}
+    assert any("floating output node" in i for i in issues[FLOATING_INTERFACE_CHECK])
+
+
+def test_top_level_output_not_flagged():
+    mat = _node_material("clean_default")
+    assert material_node_issues(mat) == {}
+
+
+def test_real_material_no_issues():
+    mat = _bricks_material(pf.nodes.shader.coord().object)
+    assert material_node_issues(mat) == {}
+
+
+def test_black_frame_check(tmp_path):
+    black = tmp_path / "black.png"
+    bright = tmp_path / "bright.png"
+    iio.imwrite(black, np.zeros((8, 8, 3), dtype=np.uint8))
+    iio.imwrite(bright, np.full((8, 8, 3), 128, dtype=np.uint8))
+
+    assert assert_frames_not_black([bright], mean_pixel_thresh=0.02) == {}
+    assert assert_frames_not_black([black], mean_pixel_thresh=None) == {}
+
+    with context.override_globals(error_mode_black_frame="warn"):
+        dark = assert_frames_not_black([black, bright], mean_pixel_thresh=0.02)
+    assert set(dark) == {"black.png"}
+
+    with context.override_globals(error_mode_black_frame="ignore"):
+        assert assert_frames_not_black([black], mean_pixel_thresh=0.02) == {}
+
+    with context.override_globals(error_mode_black_frame="error"):
+        with pytest.raises(FrameCheckError):
+            assert_frames_not_black([black], mean_pixel_thresh=0.02)
+
+
+def test_override_globals_restores():
+    orig = context.globals.error_mode_black_frame
+    with context.override_globals(error_mode_black_frame="ignore"):
+        assert context.globals.error_mode_black_frame == "ignore"
+    assert context.globals.error_mode_black_frame == orig
+
+
+def test_frames_at_sample_cap_parsing():
+    log = (
+        "Fra:1 Mem:10M | Scene, ViewLayer | Sample 0/64\n"
+        "Fra:1 Mem:12M | Scene, ViewLayer | Sample 64/64\n"
+        "Fra:2 Mem:10M | Scene, ViewLayer | Sample 0/64\n"
+        "Fra:2 Mem:12M | Scene, ViewLayer | Sample 48/64\n"
+    )
+    assert _frames_at_sample_cap(log, 64) == {1}
+    assert _frames_at_sample_cap(log, 256) == set()
+
+
+def _adaptive_test_render(tmp_path, max_samples, threshold):
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    bpy.ops.mesh.primitive_monkey_add()
+    bpy.ops.object.camera_add(location=(0, -4, 0), rotation=(1.5708, 0, 0))
+    bpy.context.scene.camera = bpy.context.object
+    bpy.ops.object.light_add(type="AREA", location=(2, -2, 3))
+    bpy.context.object.data.energy = 200
+
+    scene = bpy.context.scene
+    scene.render.engine = "CYCLES"
+    scene.render.resolution_x = 96
+    scene.render.resolution_y = 64
+    scene.render.filepath = str(tmp_path / "rgb_")
+    scene.cycles.device = "CPU"
+    scene.cycles.use_adaptive_sampling = True
+    scene.cycles.samples = max_samples
+    scene.cycles.adaptive_min_samples = 0
+    scene.cycles.adaptive_threshold = threshold
+
+    configure_sample_count_output(scene.view_layers["ViewLayer"], tmp_path)
+    with detect_cycles_errors(replay=False) as render_log:
+        bpy.ops.render.render(animation=True)
+    return render_log["text"], tmp_path
+
+
+def test_adaptive_sampling_unconverged_raises(tmp_path):
+    log, folder = _adaptive_test_render(tmp_path, max_samples=8, threshold=0.0001)
+    with (
+        context.override_globals(error_mode_unconverged_samples="error"),
+        pytest.raises(AdaptiveSamplingError),
+    ):
+        assert_adaptive_sampling_converged(
+            log, folder, max_samples=8, fail_fraction=0.05
+        )
+
+
+def test_adaptive_sampling_converged_passes(tmp_path):
+    log, folder = _adaptive_test_render(tmp_path, max_samples=4096, threshold=0.25)
+    fractions = assert_adaptive_sampling_converged(
+        log, folder, max_samples=4096, fail_fraction=0.05
+    )
+    assert all(v <= 0.05 for v in fractions.values())
+
+
+def test_adaptive_sampling_unconverged_warn_mode(tmp_path):
+    log, folder = _adaptive_test_render(tmp_path, max_samples=8, threshold=0.0001)
+    with context.override_globals(error_mode_unconverged_samples="warn"):
+        fractions = assert_adaptive_sampling_converged(
+            log, folder, max_samples=8, fail_fraction=0.05
+        )
+    assert max(fractions.values()) > 0.05
+
+
+def _plane():
+    pf.ops.object.clear_scene()
+    return pf.ops.primitives.mesh_plane(size=1)
+
+
+def test_nonfinite_geometry_flagged():
+    mo = _plane()
+    obj = mo.item()
+    co = np.empty(len(obj.data.vertices) * 3)
+    obj.data.vertices.foreach_get("co", co)
+    co[0] = np.nan
+    obj.data.vertices.foreach_set("co", co)
+    obj.data.update()
+    bpy.context.view_layer.update()
+    assert nonfinite_vertex_counts([mo]).get(obj.name, 0) >= 1
+    with pytest.raises(NonFiniteGeometryError):
+        assert_geometry_finite([mo])
+
+
+def test_finite_geometry_ok():
+    mo = _plane()
+    assert nonfinite_vertex_counts([mo]) == {}
+    assert_geometry_finite([mo])
+
+
+def test_singular_transform_flagged():
+    mo = _plane()
+    obj = mo.item()
+    obj.scale = (1, 1, 0)
+    bpy.context.view_layer.update()
+    assert obj.name in singular_transform_objects([mo])
+    with pytest.raises(SingularTransformError):
+        assert_transforms_nonsingular([mo])
+
+
+def test_nonsingular_transform_ok():
+    mo = _plane()
+    assert singular_transform_objects([mo]) == {}
+    assert_transforms_nonsingular([mo])
+
+
+def test_hidden_render_object_flagged():
+    mo = _plane()
+    mo.item().hide_render = True
+    assert hidden_render_objects([mo]) == {mo.item().name: "hide_render"}
+    with context.override_globals(error_mode_hidden_render_object="error"):
+        with pytest.raises(HiddenRenderObjectError):
+            assert_render_objects_visible([mo])
+
+
+def test_visible_camera_off_flagged():
+    mo = _plane()
+    mo.item().visible_camera = False
+    assert hidden_render_objects([mo]) == {mo.item().name: "visible_camera=False"}
+
+
+def test_holdout_object_not_flagged():
+    mo = _plane()
+    mo.item().is_holdout = True
+    assert hidden_render_objects([mo]) == {}
+
+
+def test_visible_object_ok():
+    mo = _plane()
+    assert hidden_render_objects([mo]) == {}
+    assert_render_objects_visible([mo])
+
+
+def _attribute_material(name, attribute_name):
+    mat = _node_material(name)
+    node = mat.node_tree.nodes.new("ShaderNodeAttribute")
+    node.attribute_type = "GEOMETRY"
+    node.attribute_name = attribute_name
+    bsdf = next(
+        n for n in mat.node_tree.nodes if n.bl_idname == "ShaderNodeBsdfPrincipled"
+    )
+    mat.node_tree.links.new(node.outputs["Fac"], bsdf.inputs["Metallic"])
+    return mat
+
+
+def test_missing_attribute_flagged():
+    mo = _plane()
+    obj = mo.item()
+    obj.data.materials.append(_attribute_material("attr_missing", "does_not_exist"))
+    bpy.context.view_layer.update()
+    assert any("does_not_exist" in i for i in missing_attribute_issues(obj))
+    with context.override_globals(error_mode_missing_attribute="error"):
+        with pytest.raises(MissingAttributeError):
+            assert_material_attributes_present([mo])
+
+
+def test_present_attribute_ok():
+    mo = _plane()
+    obj = mo.item()
+    obj.data.attributes.new("myattr", "FLOAT", "POINT")
+    obj.data.materials.append(_attribute_material("attr_present", "myattr"))
+    bpy.context.view_layer.update()
+    assert missing_attribute_issues(obj) == []
+
+
+def _assert_severity_modes(check, call, error_type, caplog):
+    field = "error_mode_" + check
+
+    with (
+        context.override_globals(**{field: "error"}),
+        pytest.raises(error_type),
+    ):
+        call()
+
+    caplog.clear()
+    with (
+        context.override_globals(**{field: "warn"}),
+        caplog.at_level(logging.WARNING),
+    ):
+        call()
+    assert caplog.records, f"{check} in warn mode logged nothing"
+
+    caplog.clear()
+    with (
+        context.override_globals(**{field: "ignore"}),
+        caplog.at_level(logging.WARNING),
+    ):
+        call()
+    assert not caplog.records, f"{check} in ignore mode logged {caplog.records}"
+
+
+def _plane_with_node_material(make_material):
+    """make_material runs after the scene is cleared, which purges materials."""
+    mo = _plane()
+    mo.item().data.materials.append(make_material())
+    bpy.context.view_layer.update()
+    return mo
+
+
+def test_displacement_coords_severity(caplog):
+    mo = _plane_object_with_material(pf.nodes.shader.uv_map(uv_map="UVMap"))
+    _assert_severity_modes(
+        "displacement_coords",
+        lambda: assert_displacement_coords_safe([mo]),
+        DisplacementCoordError,
+        caplog,
+    )
+
+
+def _too_complex_material():
+    return _make_material("severity_too_big", group_size=SHADER_NODE_COUNT_FAIL + 10)
+
+
+def test_shader_complexity_severity(caplog):
+    mo = _plane_with_node_material(_too_complex_material)
+    _assert_severity_modes(
+        "shader_complexity",
+        lambda: assert_shader_complexity_ok([mo]),
+        ShaderTooComplexError,
+        caplog,
+    )
+
+
+def test_uv_coords_severity(caplog):
+    mo = _plane_object_with_material(pf.nodes.shader.coord().uv)
+    _remove_uv_layers(mo.item())
+    _assert_severity_modes(
+        "uv_coords",
+        lambda: assert_uv_coords_satisfied([mo]),
+        UVCoordError,
+        caplog,
+    )
+
+
+def test_finite_geometry_severity(caplog):
+    mo = _plane()
+    obj = mo.item()
+    co = np.empty(len(obj.data.vertices) * 3)
+    obj.data.vertices.foreach_get("co", co)
+    co[0] = np.nan
+    obj.data.vertices.foreach_set("co", co)
+    obj.data.update()
+    bpy.context.view_layer.update()
+    _assert_severity_modes(
+        "finite_geometry",
+        lambda: assert_geometry_finite([mo]),
+        NonFiniteGeometryError,
+        caplog,
+    )
+
+
+def test_singular_transform_severity(caplog):
+    mo = _plane()
+    mo.item().scale = (1, 1, 0)
+    bpy.context.view_layer.update()
+    _assert_severity_modes(
+        "singular_transform",
+        lambda: assert_transforms_nonsingular([mo]),
+        SingularTransformError,
+        caplog,
+    )
+
+
+def _emit_cycles_error():
+    """Cycles writes to fd 2 from C, which is what detect_cycles_errors redirects."""
+    with detect_cycles_errors(replay=False):
+        os.write(2, b"SVM stack limit exceeded\n")
+
+
+def test_cycles_shader_severity(caplog):
+    _assert_severity_modes(
+        "cycles_shader", _emit_cycles_error, CyclesShaderError, caplog
+    )
+
+
+def _normal_map_material():
+    mat = _node_material("severity_normal_map")
+    mat.node_tree.nodes.new("ShaderNodeNormalMap")
+    return mat
+
+
+def test_material_normal_input_severity(caplog):
+    mo = _plane_with_node_material(_normal_map_material)
+    _assert_severity_modes(
+        "material_normal_input",
+        lambda: assert_material_nodes_valid([mo]),
+        MaterialNodeError,
+        caplog,
+    )
+
+
+def _texture_vector_material():
+    mat = _node_material("severity_texture_vector")
+    mat.node_tree.nodes.new("ShaderNodeTexNoise")
+    return mat
+
+
+def test_material_texture_vector_severity(caplog):
+    mo = _plane_with_node_material(_texture_vector_material)
+    _assert_severity_modes(
+        "material_texture_vector",
+        lambda: assert_material_nodes_valid([mo]),
+        MaterialNodeError,
+        caplog,
+    )
+
+
+def _floating_interface_material(name):
+    mat = _node_material(name)
+    inner = bpy.data.node_groups.new(f"{name}_inner", "ShaderNodeTree")
+    inner.nodes.new("ShaderNodeOutputMaterial")
+    grp = mat.node_tree.nodes.new("ShaderNodeGroup")
+    grp.node_tree = inner
+    return mat
+
+
+def _severity_floating_material():
+    return _floating_interface_material("severity_floating")
+
+
+def test_material_floating_interface_severity(caplog):
+    mo = _plane_with_node_material(_severity_floating_material)
+    _assert_severity_modes(
+        "material_floating_interface",
+        lambda: assert_material_nodes_valid([mo]),
+        MaterialNodeError,
+        caplog,
+    )
+
+
+def _mixed_rules_material():
+    mat = _floating_interface_material("mixed_rules")
+    mat.node_tree.nodes.new("ShaderNodeNormalMap")
+    return mat
+
+
+def test_relaxing_normal_input_leaves_floating_interface_fatal():
+    mo = _plane_with_node_material(_mixed_rules_material)
+    with (
+        context.override_globals(error_mode_material_normal_input="warn"),
+        pytest.raises(MaterialNodeError, match="floating output node"),
+    ):
+        assert_material_nodes_valid([mo])
+
+
+def test_parse_error_modes_valid():
+    assert context.parse_error_modes(["uv_coords=warn"]) == {"uv_coords": "warn"}
+
+
+def test_parse_error_modes_unknown_check():
+    with pytest.raises(ValueError, match="unknown check"):
+        context.parse_error_modes(["bogus=error"])
+
+
+def test_parse_error_modes_unknown_mode():
+    with pytest.raises(ValueError, match="invalid mode"):
+        context.parse_error_modes(["uv_coords=loud"])
+
+
+def test_parse_error_modes_missing_equals():
+    with pytest.raises(ValueError, match="expected CHECK=MODE"):
+        context.parse_error_modes(["uv_coords"])
+
+
+def test_set_error_modes_relaxes():
+    orig = context.globals.error_mode_uv_coords
+    try:
+        context.set_error_modes({"uv_coords": "ignore"})
+        assert context.globals.error_mode_uv_coords == "ignore"
+    finally:
+        context.globals.error_mode_uv_coords = orig
+
+
+def test_set_error_modes_unknown_check():
+    with pytest.raises(ValueError, match="unknown check"):
+        context.set_error_modes({"bogus": "warn"})
+
+
+def test_set_error_modes_procfunc_check():
+    orig = pf.context.globals.warn_mode_empty_geonodes
+    try:
+        context.set_error_modes(context.parse_error_modes(["empty_geonodes=error"]))
+        assert pf.context.globals.warn_mode_empty_geonodes == "throw"
+    finally:
+        pf.context.globals.warn_mode_empty_geonodes = orig

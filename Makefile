@@ -19,11 +19,13 @@ flip_fluids:
 clean_docs:
 	rm -rf docs/build
 
+STRICT_ASSET_URLS ?=
+
 docs: clean_docs
 	@if [ -n "$(OUTPUT_DIR)" ]; then \
-		uv run sphinx-build docs/source $(OUTPUT_DIR); \
+		INFINIGEN_DOCS_STRICT_ASSET_URLS=$(STRICT_ASSET_URLS) uv run sphinx-build docs/source $(OUTPUT_DIR); \
 	else \
-		uv run sphinx-build docs/source docs/build; \
+		INFINIGEN_DOCS_STRICT_ASSET_URLS=$(STRICT_ASSET_URLS) uv run sphinx-build docs/source docs/build; \
 	fi
 
 DOCKER_BUILD_PROGRESS ?= auto

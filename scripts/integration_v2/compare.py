@@ -9,10 +9,24 @@ import os
 import subprocess
 from pathlib import Path
 
+import baseline_diff
 import tomllib
-from collection import collect_images_structured, print_collection_summary
-from display import build_comparison_data
-from flask import Flask, redirect, render_template, request, send_file, session
+from display import (
+    ROW_SORT_KEYS,
+    build_comparison_data,
+    build_section_controls,
+    build_version_totals,
+    collect_images_structured,
+    print_collection_summary,
+)
+from flask import (
+    Flask,
+    redirect,
+    render_template,
+    request,
+    send_file,
+    session,
+)
 from werkzeug.utils import safe_join
 
 app = Flask(__name__)
@@ -45,8 +59,11 @@ def get_network_ips():
     return "127.0.0.1", "127.0.0.1"
 
 
+DEFAULT_REPO = "princeton-vl/infinigen_internal"
+
+
 def get_git_info(path: Path) -> dict[str, str | None]:
-    info = {"branch": None, "commit": None}
+    info = {"branch": None, "commit": None, "pr": None, "repo": None, "tag": None}
     # Prefer metadata written by launch.sh
     toml_path = path / "git_info.toml"
     if toml_path.exists():
@@ -54,12 +71,50 @@ def get_git_info(path: Path) -> dict[str, str | None]:
             data = tomllib.loads(toml_path.read_text())
             for key in info:
                 if key in data:
-                    info[key] = data[key]
-            return info
+                    info[key] = str(data[key])
         except Exception:
             pass
 
     return info
+
+
+def build_version_meta(
+    version_paths: list[Path], version_names: list[str]
+) -> list[dict]:
+    """Per-version display metadata for the header: BEFORE/AFTER role, branch,
+    commit, PR number, plus GitHub links for each. version_names[0] is the
+    baseline (BEFORE) and version_names[-1] the PR render (AFTER)."""
+    is_pair = len(version_names) == 2
+    meta = []
+    for idx, (path, name) in enumerate(zip(version_paths, version_names)):
+        git = get_git_info(path)
+        repo = git["repo"] or DEFAULT_REPO
+        role = ""
+        if is_pair:
+            role = "before" if idx == 0 else "after"
+
+        entry = {
+            "name": name,
+            "role": role,
+            "tag": git["tag"],
+            "branch": git["branch"],
+            "commit": git["commit"],
+            "pr": git["pr"] if role != "before" else None,
+            "tag_url": None,
+            "branch_url": None,
+            "commit_url": None,
+            "pr_url": None,
+        }
+        if git["tag"]:
+            entry["tag_url"] = f"https://github.com/{repo}/releases/tag/{git['tag']}"
+        if git["branch"]:
+            entry["branch_url"] = f"https://github.com/{repo}/tree/{git['branch']}"
+        if git["commit"]:
+            entry["commit_url"] = f"https://github.com/{repo}/commit/{git['commit']}"
+        if entry["pr"]:
+            entry["pr_url"] = f"https://github.com/{repo}/pull/{entry['pr']}"
+        meta.append(entry)
+    return meta
 
 
 def scan_versions_directory(parent_dir: Path) -> list[dict]:
@@ -121,6 +176,7 @@ def index():
 
     version_paths = [Path(v["path"]) for v in stored_versions]
     version_names = [p.name for p in version_paths]
+    version_meta = build_version_meta(version_paths, version_names)
 
     collection_results = []
     for version_path, version_name in zip(version_paths, version_names):
@@ -128,23 +184,43 @@ def index():
         collection_results.append(result)
 
     print_collection_summary(collection_results)
-    rows_data = build_comparison_data(collection_results, version_names)
+    sort_order = request.args.get("sort")
+    if sort_order is not None and sort_order not in ROW_SORT_KEYS:
+        choices = ", ".join(ROW_SORT_KEYS)
+        return f"Unknown sort '{sort_order}'. Choose one of: {choices}", 400
+
+    rows_data = build_comparison_data(
+        collection_results, version_names, sort_order=sort_order
+    )
+    version_totals = build_version_totals(rows_data, version_names)
+
+    perf_enabled = False
+    if len(version_names) == 2:
+        perf_enabled = _annotate_perf(rows_data, version_paths[1], version_paths[0])
 
     mode = request.args.get("mode", "sidebyside")
-    template = "mode_toggle.html" if mode == "toggle" else "mode_sidebyside.html"
-
-    all_assets_sets = [set(result.assets.keys()) for result in collection_results]
-    assets_match = len(all_assets_sets) <= 1 or all(
-        s == all_assets_sets[0] for s in all_assets_sets
-    )
 
     return render_template(
-        template,
+        "compare.html",
         rows=rows_data,
         version_names=version_names,
+        version_meta=version_meta,
+        version_totals=version_totals,
+        section_controls=build_section_controls(rows_data),
         mode=mode,
-        assets_match=assets_match,
+        perf_enabled=perf_enabled,
     )
+
+
+def _annotate_perf(rows_data: list, run_path: Path, base_path: Path) -> bool:
+    try:
+        baseline_diff.annotate_rows(
+            rows_data, run_path, base_path, baseline_diff.get_threshold()
+        )
+        return True
+    except Exception as e:
+        print(f"Perf annotation skipped: {e}")
+        return False
 
 
 @app.route("/select-versions")
@@ -251,7 +327,8 @@ def main():
     log = logging.getLogger("werkzeug")
     log.setLevel(logging.ERROR)
 
-    app.run(host="0.0.0.0", port=args.port, debug=True)
+    # the deployed viewer is reachable publicly; the werkzeug debugger must stay off
+    app.run(host="0.0.0.0", port=args.port, debug=bool(os.environ.get("COMPARE_DEBUG")))
 
 
 if __name__ == "__main__":

@@ -67,19 +67,20 @@ def patterned_color_rand(
     return color
 
 
-def fabric_patterned_rand(
+def _fabric_patterned_with_color_rand(
     rng: pf.RNG,
     vector: t.SocketOrVal[pf.Vector],
     color1: t.SocketOrVal[pf.Color] | None = None,
     color2: t.SocketOrVal[pf.Color] | None = None,
     color3: t.SocketOrVal[pf.Color] | None = None,
     tile_mask: TileShapeResult | None = None,
-    scale: float = 20.0,
-) -> pf.Material:
+    scale: float | None = None,
+) -> tuple[pf.Material, pf.ProcNode[pf.Color]]:
     rngs = rng.spawn(9)
 
+    if scale is None:
+        scale = pf.random.uniform(rngs[0], 10.0, 50.0)
     if tile_mask is None:
-        scale = pf.random.uniform(rngs[0], 10.0, 50)
         tile_mask = tile_mask_rand(
             rngs[0],
             tile_coord_transform_rand(rngs[1], vector, scale=scale),
@@ -108,10 +109,32 @@ def fabric_patterned_rand(
         height=displacement_offset, midlevel=0.0
     )
 
-    return pf.Material(
+    material = pf.Material(
         surface=res.surface,
         displacement=displacement,
     )
+    return material, color
+
+
+def fabric_patterned_rand(
+    rng: pf.RNG,
+    vector: t.SocketOrVal[pf.Vector],
+    color1: t.SocketOrVal[pf.Color] | None = None,
+    color2: t.SocketOrVal[pf.Color] | None = None,
+    color3: t.SocketOrVal[pf.Color] | None = None,
+    tile_mask: TileShapeResult | None = None,
+    scale: float | None = None,
+) -> pf.Material:
+    material, _ = _fabric_patterned_with_color_rand(
+        rng,
+        vector,
+        color1=color1,
+        color2=color2,
+        color3=color3,
+        tile_mask=tile_mask,
+        scale=scale,
+    )
+    return material
 
 
 def fabric_patterned_translucent_rand(
@@ -120,16 +143,20 @@ def fabric_patterned_translucent_rand(
     color1: t.SocketOrVal[pf.Color] | None = None,
     color2: t.SocketOrVal[pf.Color] | None = None,
     color3: t.SocketOrVal[pf.Color] | None = None,
-    scale: float = 20.0,
+    scale: float | None = None,
     translucency: float = 0.5,
 ) -> pf.Material:
     # rng goes straight to the base call (no spawn) so consumption matches the
     # opaque distribution exactly and downstream placement rng stays in sync.
-    material = fabric_patterned_rand(
-        rng, vector, color1=color1, color2=color2, color3=color3, scale=scale
+    material, pattern_color = _fabric_patterned_with_color_rand(
+        rng,
+        vector,
+        color1=color1,
+        color2=color2,
+        color3=color3,
+        scale=scale,
     )
-    tint = color1 if color1 is not None else pf.Color((0.7, 0.7, 0.7))
-    translucent = pf.nodes.shader.translucent_bsdf(color=tint)
+    translucent = pf.nodes.shader.translucent_bsdf(color=pattern_color)
     surface = pf.nodes.shader.mix_shader(
         factor=translucency, a=material.surface, b=translucent
     )

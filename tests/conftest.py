@@ -4,11 +4,27 @@
 # Authors: Vineet Bansal
 
 import logging
+import sys
 
 import bpy
-import gin
 import numpy as np
 import pytest
+from procfunc.util.teardown import exit_skipping_teardown
+
+_session_exit_code = 0
+
+
+def pytest_sessionfinish(session, exitstatus):
+    global _session_exit_code
+    _session_exit_code = int(exitstatus)
+
+
+@pytest.hookimpl(trylast=True)
+def pytest_unconfigure(config):
+    sys.stdout.flush()
+    sys.stderr.flush()
+    logging.shutdown()
+    exit_skipping_teardown(_session_exit_code)
 
 
 def pytest_configure(config):
@@ -23,7 +39,12 @@ def pytest_configure(config):
 @pytest.fixture(scope="function", autouse=True)
 def cleanup():
     yield
-    gin.clear_config()
+    try:
+        import gin  # keep-local: v1-only dep, absent in the v2 test env
+    except ModuleNotFoundError:
+        pass
+    else:
+        gin.clear_config()
     bpy.ops.wm.read_factory_settings(use_empty=True)
 
 

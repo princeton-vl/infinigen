@@ -10,7 +10,8 @@ import re
 import shutil
 import subprocess
 import time
-from datetime import datetime
+from collections import deque
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import wandb
@@ -54,7 +55,29 @@ SLURM_REASONS = [
     ("DUE TO PREEMPTION", "preempted"),
     ("DUE TO TIME LIMIT", "time_limit"),
     ("DUE TO NODE FAILURE", "node_fail"),
+    ("oom_kill event", "oom"),
 ]
+
+DISK_PATTERNS = (
+    "No space left on device",
+    "Disk quota exceeded",
+)
+
+GPU_FAULT_PATTERNS = (
+    "Uncorrectable ECC",
+    "Illegal address in CUDA",
+    "Launch failed in CUDA",
+    "Failed to retain CUDA context",
+    "Failed to create CUDA context",
+    "Failed to load OptiX kernel",
+    "CUDA error",
+    "NVIDIA-SMI has failed",
+)
+
+GPU_OOM_PATTERNS = (
+    "out of GPU",
+    "System is out of GPU memory",
+)
 
 
 # metadata['hardware']['gpus_all'] reports nvidia-smi's verbose name; collapse
@@ -85,6 +108,79 @@ def _camel_to_snake(name: str) -> str:
     return re.sub(r"(?<!^)(?=[A-Z])", "_", name).lower()
 
 
+_SLUG_STOPWORDS = {"a", "an", "and", "for", "in", "is", "of", "the", "to", "which"}
+
+
+def _message_slug(msg: str, n_words: int = 5) -> str:
+    """Normalize a log message into a short deduped category slug: quoted strings,
+    paths and numbers are stripped so all instances of one message template
+    collapse to the same slug."""
+    msg = re.sub(r"'[^']*'|\"[^\"]*\"", " ", msg)
+    msg = re.sub(r"\S*/\S*", " ", msg)
+    words = re.findall(r"[A-Za-z][A-Za-z_]+", msg.lower())
+    deduped = []
+    for w in words:
+        if len(w) >= 2 and w not in deduped:
+            deduped.append(w)
+    deduped = deduped[:n_words]
+    while deduped and deduped[-1] in _SLUG_STOPWORDS:
+        deduped.pop()
+    return "_".join(deduped)
+
+
+EXC_LINE_RE = re.compile(
+    r"^([A-Za-z_][\w.]*?(?:Error|Exception|Interrupt|Exit))(?::\s*(.*))?$"
+)
+
+RAISED_LINE_RE = re.compile(r"^([A-Za-z_][\w.]*\.)?([A-Z]\w+)(?::\s*(.*))?$")
+
+
+def _classify_message(msg: str) -> str | None:
+    if any(p in msg for p in DISK_PATTERNS):
+        return "disk_full"
+    if any(p in msg for p in GPU_OOM_PATTERNS):
+        return "gpu_oom"
+    if any(p in msg for p in GPU_FAULT_PATTERNS) or re.search(r"\bXid\b", msg):
+        return "gpu_fault"
+    if "out of memory" in msg.lower():
+        return "oom"
+    return None
+
+
+def _find_exception_line(last_tb: str) -> tuple[str, str] | None:
+    """The `SomeError: message` line terminating a traceback: the first
+    column-0 line after the header that names an exception class, also catching
+    custom classes not named *Error/*Exception (e.g. RejectedScene) by requiring
+    the preceding frame line to be indented."""
+    lines = last_tb.splitlines()
+    for i, line in enumerate(lines):
+        if line.startswith(" "):
+            continue
+        m = EXC_LINE_RE.match(line)
+        if m:
+            return m.group(1), m.group(2) or ""
+        prev_indented = i > 0 and lines[i - 1].startswith(" ")
+        m = RAISED_LINE_RE.match(line)
+        if m and prev_indented:
+            return (m.group(1) or "") + m.group(2), m.group(3) or ""
+    return None
+
+
+def _classify_traceback(last_tb: str) -> str:
+    if not last_tb.strip():
+        return "truncated_traceback"
+    found = _find_exception_line(last_tb)
+    if found is None:
+        return _classify_message(last_tb) or "unknown_traceback"
+    exc_cls, exc_msg = found
+    special = _classify_message(exc_msg)
+    if special is not None:
+        return special
+    cls_snake = _camel_to_snake(exc_cls.rsplit(".", 1)[-1])
+    slug = _message_slug(re.sub(r"^Error:\s*", "", exc_msg))
+    return f"{cls_snake}.{slug}" if slug else cls_snake
+
+
 def get_error_type(err_lines: list[str]) -> str | None:
     if not err_lines:
         return None
@@ -97,27 +193,40 @@ def get_error_type(err_lines: list[str]) -> str | None:
 
     if "Traceback (most recent call last):" in text:
         last_tb = text.rsplit("Traceback (most recent call last):", 1)[1]
-        if "out of memory" in last_tb.lower():
-            return "oom"
-        m = re.search(r"(?:^|\.|\s)([A-Z]\w*(?:Error|Exception))(?=[:\s]|$)", last_tb)
-        if m:
-            return _camel_to_snake(m.group(1))
-        return "unknown_traceback"
+        return _classify_traceback(last_tb)
 
-    if "out of memory" in tail.lower():
-        return "oom"
-    if (
-        "CUDA error" in tail
-        or re.search(r"\bXid\b", tail)
-        or "NVIDIA-SMI has failed" in tail
-    ):
-        return "gpu_error"
+    special = _classify_message(tail)
+    if special is not None:
+        return special
     if "Segmentation fault" in tail or "core dumped" in tail:
         return "segfault"
     if "CANCELLED" in tail:
         return "cancelled"
 
     return None
+
+
+WARNING_LINE_RE = re.compile(r"(?:\[([\w.]+)\]\s*)?\[WARNING\]\s*\|?\s*(.*)")
+
+
+def count_warnings(err_lines: list[str]) -> dict[str, float]:
+    """Count WARNING log lines into warn/<category> counts. Category is the
+    logger name (when the format includes one) plus a slug of the message
+    template, so repeated warnings dedupe into one readable wandb chart each."""
+    counts: dict[str, float] = {}
+    for line in err_lines:
+        m = WARNING_LINE_RE.search(line)
+        if m is None:
+            continue
+        logger_name, msg = m.groups()
+        slug = _message_slug(msg)
+        if logger_name and slug.startswith(logger_name):
+            slug = slug[len(logger_name) :].strip("_")
+        category = f"{logger_name}.{slug}" if logger_name else slug
+        key = f"warn/{category or 'unlabeled'}"
+        counts[key] = counts.get(key, 0) + 1
+        counts["warn/total"] = counts.get("warn/total", 0) + 1
+    return counts
 
 
 def get_disk_used(path: Path) -> float | None:
@@ -200,20 +309,54 @@ def get_jobstats(jobid: str) -> dict[str, float] | None:
     return metrics or None
 
 
+TERMINAL_STATUSES = (
+    "preempted",
+    "time_limit",
+    "node_fail",
+    "cancelled",
+    "killed",
+    "pack_failed",
+)
+
+
+def enrich_completed(
+    metadata: dict | None,
+    path: str,
+    stats: dict[str, float],
+    accumulate: dict[str, float],
+) -> None:
+    accumulate["jobs/completed"] = 1
+    if metadata is None:
+        return
+    for gen, t in metadata.get("generator_times", {}).items():
+        stats[f"gentime/{gen}"] = t
+    disk_used = get_disk_used(Path(path))
+    if disk_used is not None:
+        stats["disk_used"] = disk_used
+    imgs = metadata.get("exports", {}).get("ExportType.IMAGE", [])
+    accumulate["frames_completed"] = len(imgs)
+
+
 def info_for_event(event: str) -> tuple[dict, dict, dict]:
-    start_str, end_str, _node, _gpu, path, errfile, *_ = event.split()
+    fields = event.split()
+    start_str, end_str, _node, _gpu, path, errfile = fields[:6]
+    status = fields[7] if len(fields) > 7 else None
 
     start = datetime.strptime(start_str, "%Y-%m-%dT%H:%M:%S%z")
     end = datetime.strptime(end_str, "%Y-%m-%dT%H:%M:%S%z")
 
     duration = (end - start).total_seconds()
     hours = duration / 3600.0
-    err_lines = Path(errfile).read_text().splitlines() if Path(errfile).exists() else []
+    errfile_exists = Path(errfile).exists()
+    err_lines = Path(errfile).read_text().splitlines() if errfile_exists else []
     error_type = get_error_type(err_lines)
 
     stats = {"duration": duration}
     accumulate: dict[str, float] = {"gpu_hrs/total": hours}
+    for k, v in count_warnings(err_lines).items():
+        accumulate[k] = accumulate.get(k, 0) + v
 
+    # only left shards write metadata, so right-shard tasks report without it
     metadata_path = Path(path) / "metadata.json"
     metadata = None
     if metadata_path.exists():
@@ -235,28 +378,62 @@ def info_for_event(event: str) -> tuple[dict, dict, dict]:
         if js is not None:
             per_event.update(js)
 
-    if error_type == "preempted":
+    # Trust the status the job wrote; errfile guessing misreads unreachable outputs
+    if status == "preempted" or error_type == "preempted":
         accumulate["jobs/preempted"] = 1
         return stats, accumulate, per_event
 
+    if status == "completed":
+        enrich_completed(metadata, path, stats, accumulate)
+        return stats, accumulate, per_event
+
+    if status in TERMINAL_STATUSES:
+        accumulate["jobs/crashed"] = 1
+        accumulate[f"crashreason/{status}"] = 1
+        return stats, accumulate, per_event
+
     if error_type is not None or metadata is None:
-        reason = error_type or "no_metadata"
+        if error_type is not None:
+            reason = error_type
+        elif not errfile_exists:
+            reason = "no_errfile"
+        else:
+            reason = "no_metadata"
         accumulate["jobs/crashed"] = 1
         accumulate[f"crashreason/{reason}"] = 1
         return stats, accumulate, per_event
 
-    for gen, t in metadata.get("generator_times", {}).items():
-        stats[f"gentime/{gen}"] = t
+    # only a status-less legacy line may reach the success path unrecognized
+    if status is not None:
+        accumulate["jobs/crashed"] = 1
+        accumulate[f"crashreason/unknown_{status}"] = 1
+        return stats, accumulate, per_event
 
-    disk_used = get_disk_used(Path(path))
-    if disk_used is not None:
-        stats["disk_used"] = disk_used
-
-    imgs = metadata.get("exports", {}).get("ExportType.IMAGE", [])
-    accumulate["frames_completed"] = len(imgs)
-    accumulate["jobs/completed"] = 1
-
+    enrich_completed(metadata, path, stats, accumulate)
     return stats, accumulate, per_event
+
+
+def check_crash_alert(
+    recent_outcomes: deque,
+    rate_thresh: float,
+    run_name: str,
+) -> bool:
+    if len(recent_outcomes) < recent_outcomes.maxlen:
+        return False
+    n_crashed = sum(recent_outcomes)
+    rate = n_crashed / len(recent_outcomes)
+    if rate < rate_thresh:
+        return False
+    wandb.alert(
+        title=f"{run_name} render crash rate high",
+        text=(
+            f"{n_crashed}/{len(recent_outcomes)} of the last {len(recent_outcomes)} "
+            f"jobs crashed (rate {rate:.0%} >= threshold {rate_thresh:.0%})"
+        ),
+        level=wandb.AlertLevel.WARN,
+        wait_duration=timedelta(hours=1),
+    )
+    return True
 
 
 def main():
@@ -266,21 +443,44 @@ def main():
     parser.add_argument("--poll", type=int, default=5)
     parser.add_argument("--wandb_project", type=str, default="infinigen2")
     parser.add_argument(
+        "--name",
+        type=str,
+        default=None,
+        help="wandb run name; defaults to jobnamestr. Set it per subset when running several watchers",
+    )
+    parser.add_argument(
         "--wandb_run_id",
         type=str,
         default=None,
         help="Resume an existing wandb run by id so new metrics append to the same chart",
     )
+    parser.add_argument(
+        "--skip_history",
+        action="store_true",
+        help="Ignore state.log lines that already exist at startup; only log events appended after launch",
+    )
+    parser.add_argument(
+        "--alert_crash_rate",
+        type=float,
+        default=0.5,
+        help="Send a wandb alert when this fraction of the last --alert_window jobs crashed",
+    )
+    parser.add_argument("--alert_window", type=int, default=12)
     args = parser.parse_args()
 
     wandb.init(
         project=args.wandb_project,
-        name=args.jobnamestr.replace("*", ""),
+        name=args.name or args.jobnamestr.replace("*", ""),
         id=args.wandb_run_id,
         resume="allow" if args.wandb_run_id else None,
     )
 
     file_seen_lines: dict[Path, int] = {}
+    if args.skip_history:
+        for f in args.logdir.glob(f"*{args.jobnamestr}*_state.log"):
+            file_seen_lines[f] = len(f.read_text().splitlines())
+
+    recent_outcomes: deque = deque(maxlen=args.alert_window)
     accumulated: dict[str, float] = {
         "jobs/completed": 0,
         "jobs/crashed": 0,
@@ -307,6 +507,10 @@ def main():
                 stats, accumulate, per_event = info_for_event(event)
                 for k, v in accumulate.items():
                     accumulated[k] = accumulated.get(k, 0.0) + v
+                if accumulate.get("jobs/crashed"):
+                    recent_outcomes.append(1)
+                elif accumulate.get("jobs/completed"):
+                    recent_outcomes.append(0)
                 for k, v in stats.items():
                     if isinstance(v, (int, float)):
                         all_event_stats.setdefault(k, []).append(v)
@@ -321,6 +525,11 @@ def main():
             log_data[k] = sum(vals) / len(vals)
 
         wandb.log(log_data)
+
+        if new_events and check_crash_alert(
+            recent_outcomes, args.alert_crash_rate, args.jobnamestr
+        ):
+            print(f"  ALERT sent: crash rate over last {len(recent_outcomes)} jobs")
 
         print(
             f"  completed={accumulated.get('jobs/completed', 0)}"

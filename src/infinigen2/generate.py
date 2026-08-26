@@ -25,6 +25,7 @@ from pathlib import Path
 from typing import Any, Callable
 import bpy
 import numpy as np
+from infinigen2 import context
 from infinigen2 import list as list_command
 
 os.environ["OPENCV_IO_ENABLE_OPENEXR"] = "1"
@@ -52,13 +53,15 @@ from infinigen2.exporters.util.format import (
 )
 from infinigen2.exporters.util.blender_render import DisplacementMode
 from infinigen2 import GENERATORS_MANIFEST
-from infinigen2.scenes.placement_utils import delete_object
+from infinigen2.cameras import camera_with_distance_framing_objects
 from infinigen2.exporters.realize_mesh import realize_scene
 from procfunc.util.manifest import import_item
 from procfunc.util.teardown import skip_teardown_on_exit
 from infinigen2.util.hardware_info import get_hardware_info
+from infinigen2.util.scene_cleanup import delete_object
 from infinigen2.util.codestats import compute_stats
 from infinigen2 import graph_json
+from infinigen2.util.polycount import estimated_eval_tricount
 
 logger = logging.getLogger(__name__)
 
@@ -144,6 +147,8 @@ def get_parser():
         type=ExportType,
         nargs="+",
         default=[ExportType.IMAGE],
+        choices=list(ExportType),
+        metavar="{" + ",".join(e.value for e in ExportType) + "}",
     )
     parser.add_argument(
         "--save_blend",
@@ -215,6 +220,26 @@ def get_parser():
         type=str,
         choices=["delete", "cleanstate", "exit", "none"],
         default="none",
+    )
+
+    parser.add_argument(
+        "--error_severity",
+        nargs="*",
+        default=[],
+        metavar="CHECK=MODE",
+        help="Set the severity of runtime checks, across the infinigen and procfunc "
+        "contexts. MODE is one of " + ", ".join(context.ERROR_MODES) + ". CHECK is one "
+        "of: " + ", ".join(context.check_names()),
+    )
+
+    parser.add_argument(
+        "--sampling_noise_threshold",
+        type=float,
+        default=0.005,
+        help="Cycles adaptive-sampling noise threshold (adaptive_threshold): the "
+        "per-pixel noise level below which a pixel stops sampling. Raise it to let "
+        "noisier pixels converge sooner; a future noise regression then trips the "
+        "unconverged-samples check.",
     )
 
     return parser
@@ -302,6 +327,7 @@ def _cleanup_except_returnvals(return_data: dict) -> list[str]:
     valid_objects = list(return_data.get("objects", []))
     valid_objects.extend(return_data.get("cameras", []))
     valid_objects.extend(return_data.get("lights", []))
+    valid_objects.extend(return_data.get("curves", []))
     if "obj" in return_data:
         valid_objects.append(return_data["obj"])
     valid_objects = [o.item() for o in valid_objects]
@@ -362,19 +388,28 @@ def _centroid_camera(
     return camera
 
 
+def _dummy_camera(data: dict) -> pf.CameraObject:
+    floor = data.get("floor")
+    if floor is not None:
+        return _centroid_camera(data["objects"], (0.2, 0.2, 0.5), footprint=floor)
+    camera = camera_with_distance_framing_objects(
+        data["objects"], pf.Vector((1, 1, 0.4)), margin_pct=0.05, use_bbox=True
+    )
+    camera.item().name = "Camera"
+    return camera
+
+
 def _ensure_cameras_and_lights(data: dict):
     """Create dummy camera/lights if none exist. Mutates data in-place."""
     cameras = data.get("cameras", [])
     if not isinstance(cameras, cg.Proxy) and len(cameras) == 0:
-        dummy_camera = _centroid_camera(
-            data["objects"], (0.2, 0.2, 0.5), footprint=data.get("floor")
-        )
-        data["cameras"] = [dummy_camera]
+        data["cameras"] = [_dummy_camera(data)]
         cameras = data["cameras"]
 
     lights = data.get("lights", [])
-    if not isinstance(lights, cg.Proxy) and len(lights) == 0:
-        light = pf.ops.primitives.point_lamp(energy=150)
+    has_environment = data.get("environment") is not None
+    if not isinstance(lights, cg.Proxy) and len(lights) == 0 and not has_environment:
+        light = pf.ops.primitives.point_lamp(energy=1500)
         loc = cameras[0].item().matrix_world @ pf.Vector((0, 0.5, -1))
         pf.ops.object.set_transform(light, location=loc)
         data["lights"] = [light]
@@ -485,6 +520,31 @@ def _as_material(result: Any) -> pf.Material:
     return pf.Material(surface=pf.nodes.shader.diffuse_bsdf(color=result))
 
 
+def _unpack_scene(result, data: dict):
+    # all_objects is the full scene set so far, not just this step's additions.
+    data["objects"] = result.all_objects
+    data["all_objects"] = result.all_objects
+    data["cameras"] += getattr(result, "cameras", [])
+    data["lights"] += getattr(result, "lights", [])
+    if getattr(result, "environment", None) is not None:
+        data["environment"] = result.environment
+    curves = getattr(result, "curves", None)
+    if curves:
+        data["curves"] = list(curves)
+        data["curve"] = curves[0]
+    if hasattr(result, "colliders"):
+        data["colliders"] = result.colliders
+    if getattr(result, "floor", None) is not None:
+        data["floor"] = result.floor
+    if getattr(result, "dimensions", None) is not None:
+        data["dimensions"] = result.dimensions
+        dims = result.dimensions
+        data["bbox"] = (
+            np.zeros(3),
+            np.array([float(dims.x), float(dims.y), float(dims.z)]),
+        )
+
+
 def _unpack_by_category(category: str, result, data: dict):
     match category:
         case "Material" | "MaterialOverlay":
@@ -500,15 +560,7 @@ def _unpack_by_category(category: str, result, data: dict):
             if hasattr(result, "light") and result.light is not None:
                 data.setdefault("lights", []).append(result.light)
         case "Scene":
-            data["objects"] += result.all_objects
-            data["cameras"] += getattr(result, "cameras", [])
-            data["lights"] += getattr(result, "lights", [])
-            if hasattr(result, "colliders"):
-                data["colliders"] = result.colliders
-            if getattr(result, "floor", None) is not None:
-                data["floor"] = result.floor
-            if getattr(result, "dimensions", None) is not None:
-                data["dimensions"] = result.dimensions
+            _unpack_scene(result, data)
         case "Environment":
             if result.environment is not None:
                 data["environment"] = result.environment
@@ -516,7 +568,7 @@ def _unpack_by_category(category: str, result, data: dict):
         case "Exporter":
             data["exports"] = data["exports"] + [result]
         case "Cameras":
-            data["cameras"] = result
+            data["cameras"] = result if isinstance(result, list) else [result]
         case _:
             raise ValueError(f"Unknown category: {category}")
 
@@ -551,6 +603,7 @@ def execute_generators(
 
     realized = False
     generator_times = {}
+    render_time_sec = 0.0
 
     for generator_str, category, generator_func in generators:
         gen_rng, rng = rng.spawn(2)
@@ -571,11 +624,9 @@ def execute_generators(
 
         if category == "Exporter":
             _ensure_cameras_and_lights(data)
-            exp_data = {
-                **data,
-                "frame_start": data["exporter_frame_start"],
-                "frame_end": data["exporter_frame_end"],
-            }
+            exp_data = dict(data)
+            exp_data["frame_start"] = data["exporter_frame_start"]
+            exp_data["frame_end"] = data["exporter_frame_end"]
             for cam_idx in data.get("camera_indices", [0]):
                 exp_data["camera"] = data["cameras"][cam_idx]
                 result = _execute_step(
@@ -597,13 +648,32 @@ def execute_generators(
 
         elapsed = time.perf_counter() - start_time
         generator_times[generator_str] = elapsed
+        if category == "Exporter":
+            render_time_sec += elapsed
 
         logger.info(f"Finished {generator_str} in {elapsed:.3f}s")
 
     for name, elapsed in generator_times.items():
         logger.info(f"{name}: {elapsed:.3f}s")
 
+    try:
+        objects = data["objects"]
+        base_tris = 0
+        for obj in objects:
+            item = obj.item()
+            if item.type != "MESH":
+                continue
+            mesh = item.data
+            base_tris += len(mesh.loops) - 2 * len(mesh.polygons)
+        subdiv_tris = sum(estimated_eval_tricount(obj) for obj in objects)
+    except Exception as e:
+        logger.warning(f"Could not count triangles for render metrics: {e}")
+        base_tris, subdiv_tris = 0, 0
+
     data["generator_times"] = generator_times
+    data["base_tris"] = base_tris
+    data["subdiv_tris"] = subdiv_tris
+    data["render_time_sec"] = round(render_time_sec, 3)
     return {k: v for k, v in data.items() if k not in pipeline_parameters}
 
 
@@ -666,7 +736,10 @@ def _main():  # noqa: C901
     args.output.mkdir(parents=True, exist_ok=True)
     _configure_log_level(args)
 
-    # pf.context.globals.set_strict()
+    try:
+        context.set_error_modes(context.parse_error_modes(args.error_severity))
+    except ValueError as e:
+        parser.error(str(e))
 
     seed = args.seed if args.seed is not None else int.from_bytes(os.urandom(8), "big")
     rng = np.random.default_rng(seed)
@@ -699,7 +772,7 @@ def _main():  # noqa: C901
         resolution=args.resolution,
         min_samples=32,
         max_samples=args.samples,
-        samples_adaptive_threshold=0.005,
+        samples_adaptive_threshold=args.sampling_noise_threshold,
         export_passes=args.passes,
         film_exposure=2.0,
         displacement_mode=getattr(DisplacementMode, args.displacement_mode),
@@ -773,6 +846,9 @@ def _main():  # noqa: C901
         "seed": hex(seed),
         "hardware": get_hardware_info(),
         "generator_times": generator_times,
+        "base_tris": results.get("base_tris"),
+        "subdiv_tris": results.get("subdiv_tris"),
+        "render_time_sec": results.get("render_time_sec"),
         "exports": {k.value: [str(p) for p in v] for k, v in exports.items()},
     }
     with open(args.output / "metadata.json", "w") as f:

@@ -46,7 +46,6 @@ def _paint_weartear_flakes(
 
     surface_1 = pf.nodes.shader.diffuse_bsdf(
         color=pf.Color((0.029, 0.022, 0.019)),
-        normal=(0.0, 0.0, 0.0),
     )
     surface = pf.nodes.shader.mix_shader(
         factor=wear_and_tear_result,
@@ -55,7 +54,8 @@ def _paint_weartear_flakes(
     )
 
     displacement_1 = pf.nodes.shader.displacement(
-        height=-0.0005, midlevel=0.0, normal=(0.0, 0.0, 0.0)
+        height=-0.0005,
+        midlevel=0.0,
     )
     displacement = pf.nodes.math.mix(
         factor=wear_and_tear_result,
@@ -118,7 +118,6 @@ def paint_overlay_rand(
     paint_thickness_displacement = pf.nodes.shader.displacement(
         height=pf.random.uniform(rv, 0.00001, 0.0001),
         midlevel=0.0,
-        normal=(0.0, 0.0, 0.0),
     )
 
     displacement = pf.nodes.math.mix(

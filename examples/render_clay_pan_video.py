@@ -8,7 +8,6 @@ depth/normal/object/flow."""
 import argparse
 import logging
 import os
-import sys
 from pathlib import Path
 
 import bpy
@@ -22,6 +21,7 @@ logging.basicConfig(
 )
 
 import procfunc as pf
+from procfunc.util.teardown import skip_teardown_on_exit
 
 from infinigen2.exporters.render_cycles import (
     render_cycles,
@@ -117,13 +117,13 @@ def main():
             rng=gen_rng,
             objects=objects,
             colliders=living.colliders,
-            dimensions=dimensions,
+            bbox=(np.zeros(3), np.array(dimensions)),
             frame_start=frame_start,
             frame_end=frame_end,
         )
     camera = cameras[0]
 
-    cleanup_except(objects + list(cameras) + list(living.lights))
+    cleanup_except(objects + list(living.lights) + list(cameras))
 
     if args.save_blend is not None:
         pf.ops.file.save_blend(output_path=args.save_blend)
@@ -137,6 +137,7 @@ def main():
 
     render_kwargs = dict(
         objects=objects,
+        lights=list(living.lights),
         camera=camera,
         output_folder=output,
         frame_start=render_start,
@@ -253,5 +254,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
-    sys.exit(0)
+    with skip_teardown_on_exit():
+        main()

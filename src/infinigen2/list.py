@@ -5,6 +5,7 @@
 
 import argparse
 
+import numpy as np
 import pandas as pd
 from procfunc.util.teardown import skip_teardown_on_exit
 
@@ -36,7 +37,9 @@ def get_parser():
     parser.add_argument("-k", type=str, default=None)
     parser.add_argument("--columns", nargs="+", default=["name"])
     parser.add_argument("--separator", type=str, default=" ")
-    parser.add_argument("--missing_values", choices=["error", "drop"], default="drop")
+    parser.add_argument(
+        "--missing_values", choices=["error", "drop", "keep"], default="drop"
+    )
     parser.add_argument("--head", type=int, default=None)
     parser.add_argument("--tail", type=int, default=None)
     return parser
@@ -78,6 +81,12 @@ def _preset_manifest() -> pd.DataFrame:
     return pd.DataFrame({"name": preset_dotted_names(), "category": "MaterialPreset"})
 
 
+def _format_cell(value: object) -> str:
+    if not isinstance(value, (list, tuple, np.ndarray)) and pd.isna(value):
+        return ""
+    return str(value)
+
+
 def _main():
     parser = get_parser()
     args = parser.parse_args()
@@ -90,6 +99,10 @@ def _main():
     if "shortname" in args.columns:
         items["shortname"] = items["name"].str.split(".").str[-1]
 
+    for column in args.columns:
+        if column not in items.columns:
+            items[column] = pd.NA
+
     match args.missing_values:
         case "error":
             for column in args.columns:
@@ -100,6 +113,8 @@ def _main():
                     )
         case "drop":
             items = items.dropna(subset=args.columns)
+        case "keep":
+            pass
 
     if args.k is not None:
         items = items[items["name"].str.contains(args.k)]
@@ -110,7 +125,7 @@ def _main():
         items = items.tail(args.tail)
 
     for row in items.itertuples():
-        values = [str(getattr(row, col)) for col in args.columns]
+        values = [_format_cell(getattr(row, col)) for col in args.columns]
         print(args.separator.join(values))
 
 

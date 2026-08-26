@@ -77,7 +77,8 @@ def edgewear_mask(
     )
 
     bevel = pf.nodes.shader.bevel(
-        samples=20, radius=bevel_radius, normal=(0.0, 0.0, 0.0)
+        samples=20,
+        radius=bevel_radius,
     )
 
     surface_0_b = pf.nodes.shader.geometry()

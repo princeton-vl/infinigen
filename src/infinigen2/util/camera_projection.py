@@ -12,8 +12,6 @@ import numpy as np
 import procfunc as pf
 from mathutils import Matrix
 
-import infinigen2.scenes.collision_collection as ccol
-
 logger = logging.getLogger(__name__)
 
 
@@ -161,6 +159,19 @@ def project_points(
     return projected
 
 
+def project_points_from_parameters(
+    points_N3: np.ndarray, K: np.ndarray, camera_to_world: np.ndarray
+) -> np.ndarray:
+    """Project world points using K and an OpenCV-convention camera pose."""
+    world_to_camera = np.linalg.inv(camera_to_world)
+    points_hom_N4 = np.concatenate([points_N3, np.ones((len(points_N3), 1))], -1)
+    camera_points = points_hom_N4 @ world_to_camera.T
+    projected = camera_points[:, :3] @ K.T
+    projected[:, :2] /= projected[:, [-1]]
+    projected[:, 2] = camera_points[:, 2]
+    return projected
+
+
 def is_projection_within_image(
     projected: np.ndarray,
     resolution: tuple[int, int] | None = None,
@@ -184,36 +195,6 @@ def is_projection_within_image(
         * (d > 0)
     )
     return res
-
-
-def camera_depth_raycast(
-    cam: pf.CameraObject,
-    colliders: ccol.CollisionSet,
-    meshgridcoords: np.ndarray,
-) -> np.ndarray:
-    # meshgridcoords: (N, 2) normalized coords in [-1, 1] x [-1, 1]
-    # dir_cam = (u * sensor_w/2, v * sensor_h/2, -focal_len) in mm, rotated to world
-    # matches infinigen1 get_sensor_coords convention
-    bpy.context.view_layer.update()
-    cam_item = cam.item()
-    cam_pos = np.array(cam_item.matrix_world.translation)
-    rot = np.array(cam_item.matrix_world.to_3x3())
-    half_w = cam_item.data.sensor_width / 2
-    half_h = cam_item.data.sensor_height / 2
-    f = cam_item.data.lens
-
-    depths = np.full(len(meshgridcoords), np.inf)
-    for i, (u, v) in enumerate(meshgridcoords):
-        dir_cam = np.array([u * half_w, v * half_h, -f])
-        dir_world = rot @ (dir_cam / np.linalg.norm(dir_cam))
-        locs, _, _ = ccol.raycast(
-            colliders,
-            cam_pos.reshape(1, 3),
-            dir_world.reshape(1, 3),
-        )
-        if len(locs) > 0:
-            depths[i] = np.linalg.norm(locs[0] - cam_pos)
-    return depths
 
 
 def get_camera_parameters(

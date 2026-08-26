@@ -185,7 +185,6 @@ def fabric(
         height=displacement_height + alpha_1,
         midlevel=0.0,
         scale=size * displacement_scale,
-        normal=(0.0, 0.0, 0.0),
     )
     return FabricResult(
         surface=shader,

@@ -9,9 +9,28 @@ from typing import Iterable
 import bpy
 import procfunc as pf
 
-from infinigen2.scenes.placement_utils import delete_object
+__all__ = [
+    "cleanup_except",
+    "delete_object",
+]
 
 logger = logging.getLogger(__name__)
+
+
+def delete_object(obj: bpy.types.Object) -> None:
+    data = getattr(obj, "data", None)
+    item_type = getattr(obj, "type", None)
+    name = obj.name
+    bpy.data.objects.remove(obj, do_unlink=True)
+    if data is None or not hasattr(data, "users") or data.users != 0:
+        logger.debug(f"Deleting {name} ({item_type}) but NOT deleting its data")
+        return
+    else:
+        logger.debug(f"Deleting {name} ({item_type}) and associated data")
+    if item_type == "MESH":
+        bpy.data.meshes.remove(data)
+    elif item_type == "LIGHT":
+        bpy.data.lights.remove(data)
 
 
 def cleanup_except(keep: Iterable[pf.Object]) -> list[str]:

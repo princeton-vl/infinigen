@@ -563,7 +563,7 @@ def flower(
     )
 
     obj = pf.nodes.to_mesh_object(res)
-    pf.ops.modifier.subdivide_surface(obj, levels=2)
+    pf.ops.modifier.subdivide_surface(obj, levels=2, _skip_apply=True)
     return FlowerResult(mesh=obj)
 
 
@@ -618,5 +618,5 @@ def flower_rand(
     )
 
     obj = pf.nodes.to_mesh_object(res)
-    pf.ops.modifier.subdivide_surface(obj, levels=2)
+    pf.ops.modifier.subdivide_surface(obj, levels=2, _skip_apply=True)
     return FlowerResult(mesh=obj)

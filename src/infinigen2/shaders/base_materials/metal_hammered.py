@@ -65,7 +65,6 @@ def metal_hammered(
     displacement = pf.nodes.shader.displacement(
         height=height,
         midlevel=0.0,
-        normal=(0.0, 0.0, 0.0),
     )
 
     return pf.Material(
@@ -84,9 +83,9 @@ def metal_hammered_rand(
     return metal_hammered(
         vector=vector,
         base_color=metal_any_color_rand(r_color),
-        scale=pf.random.log_uniform(r_params, 0.1, 0.18),
+        scale=pf.random.uniform(r_params, 0.1, 0.18),
         seed=pf.random.uniform(r_params, -1000.0, 1000.0),
         roughness=pf.random.uniform(r_params, 0.15, 0.35),
-        displacement_strength=pf.random.log_uniform(r_params, 0.04, 0.09),
+        displacement_strength=pf.random.uniform(r_params, 0.04, 0.09),
         displacement_power=pf.random.uniform(r_params, 2.0, 2.6),
     )

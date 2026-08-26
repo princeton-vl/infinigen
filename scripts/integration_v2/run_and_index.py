@@ -6,6 +6,7 @@
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 import time
@@ -47,6 +48,9 @@ def parse_asset_fields(asset_dir: str) -> tuple[str, str, str]:
         "mask",
         "preset",
         "environment",
+        "camera",
+        "landing",
+        "example",
     }:
         return "unknown", name, name
 
@@ -58,21 +62,36 @@ def parse_asset_fields(asset_dir: str) -> tuple[str, str, str]:
     return asset_type, generator, f"{obj_name}-{renderer}-{variant}"
 
 
+def read_render_stats(asset_output_dir: Path | None) -> dict:
+    """Read the render metrics (base_tris, subdiv_tris, render_time_sec) generate.py
+    wrote into this asset's metadata.json."""
+    if asset_output_dir is None:
+        return {}
+    path = asset_output_dir / "metadata.json"
+    if not path.exists():
+        return {}
+    try:
+        return json.loads(path.read_text())
+    except (OSError, ValueError):
+        return {}
+
+
 def collect_pngs(asset_output_dir: Path, index_root: Path) -> list[str]:
     if not asset_output_dir.exists():
         return []
 
-    pngs = []
-    for p in sorted(asset_output_dir.rglob("*.png")):
-        rel_asset = p.relative_to(asset_output_dir)
-        if "tmp_" in rel_asset.parts:
+    paths = [p for ext in ("*.png", "*.mp4") for p in asset_output_dir.rglob(ext)]
+
+    images = []
+    for p in sorted(paths):
+        if "tmp_" in p.relative_to(asset_output_dir).parts:
             continue
         try:
             rel = p.resolve().relative_to(index_root.resolve())
         except Exception:
             rel = p.resolve()
-        pngs.append(rel.as_posix())
-    return pngs
+        images.append(rel.as_posix())
+    return images
 
 
 def main() -> int:
@@ -83,11 +102,6 @@ def main() -> int:
     events_dir.mkdir(parents=True, exist_ok=True)
     logs_dir.mkdir(parents=True, exist_ok=True)
 
-    event_id = str(uuid.uuid4())
-    started = time.time()
-    proc = subprocess.run(args.cmd, text=True, capture_output=True)
-    ended = time.time()
-
     output_dir_arg = parse_output_dir(args.cmd)
     asset_output_dir = output_dir_arg.resolve() if output_dir_arg else None
     asset_dir_rel = ""
@@ -97,11 +111,30 @@ def main() -> int:
         except Exception:
             asset_dir_rel = asset_output_dir.as_posix()
 
+    asset_type, generator, variant_key = parse_asset_fields(asset_dir_rel)
+
+    # isolate this asset's coverage under coverage_data/<generator>
+    env = None
+    if os.environ.get("INFINIGEN_COVERAGE"):
+        cov_dir = index_root / "coverage_data" / generator
+        cov_dir.mkdir(parents=True, exist_ok=True)
+        env = os.environ.copy()
+        env["COVERAGE_FILE"] = str(cov_dir / "data")
+
+    event_id = str(uuid.uuid4())
+    started = time.time()
+    proc = subprocess.run(args.cmd, text=True, capture_output=True, env=env)
+    ended = time.time()
+
     pngs = collect_pngs(asset_output_dir, index_root) if asset_output_dir else []
 
-    status = "success" if pngs else "no_outputs"
-
-    asset_type, generator, variant_key = parse_asset_fields(asset_dir_rel)
+    # keep the viewer's verdict aligned with CI's, which keys on returncode
+    if proc.returncode != 0:
+        status = "failed"
+    elif not pngs:
+        status = "no_outputs"
+    else:
+        status = "success"
 
     stderr_path = ""
     if proc.stderr:
@@ -109,11 +142,22 @@ def main() -> int:
         stderr_file.write_text(proc.stderr)
         stderr_path = stderr_file.relative_to(index_root).as_posix()
 
+    duration_sec = round(ended - started, 3)
+    render_stats = read_render_stats(asset_output_dir)
+    base_tris = render_stats.get("base_tris")
+    # Runs predating the base/subdiv split only recorded the evaluated (subdivided) count.
+    subdiv_tris = render_stats.get("subdiv_tris", render_stats.get("tris"))
+    gpu_time_sec = render_stats.get("render_time_sec")
+    # CPU (scene-build) time is the wall-clock left after the GPU render.
+    cpu_time_sec = None
+    if gpu_time_sec is not None:
+        cpu_time_sec = round(max(0.0, duration_sec - gpu_time_sec), 3)
+
     event = {
         "event_id": event_id,
         "timestamp_start": started,
         "timestamp_end": ended,
-        "duration_sec": round(ended - started, 3),
+        "duration_sec": duration_sec,
         "status": status,
         "returncode": proc.returncode,
         "cmd": args.cmd,
@@ -123,6 +167,10 @@ def main() -> int:
         "variant_key": variant_key,
         "images": pngs,
         "stderr_path": stderr_path,
+        "base_tris": base_tris,
+        "subdiv_tris": subdiv_tris,
+        "cpu_time_sec": cpu_time_sec,
+        "gpu_time_sec": gpu_time_sec,
     }
 
     event_path = events_dir / f"{event_id}.json"

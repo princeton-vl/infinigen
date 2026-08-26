@@ -131,7 +131,6 @@ def wood_shader(
     displacement = pf.nodes.shader.displacement(
         height=displacement_height_0 + additional_displacement,
         midlevel=0.0,
-        normal=(0.0, 0.0, 0.0),
     )
     return WoodShaderResult(
         bsdf=principled,
@@ -313,7 +312,7 @@ def wood_grain_generator(
     grain_map_base_value = pf.nodes.math.vector_length(grain_map_numerator_value_vector)
     grain_map_b_a = grain_settings_grain_size * 2.0
     grain_random_noise = pf.nodes.texture.noise(
-        vector=None,
+        vector=vector,
         noise_dimensions="4D",
         scale=1.0 / grain_map_b_a,
         roughness=0.0,
@@ -762,7 +761,6 @@ def wood_grain_flaky_preset(
 
     diffuse = pf.nodes.shader.diffuse_bsdf(
         color=pf.Color((0.526, 0.526, 0.526)),
-        normal=(0.0, 0.0, 0.0),
     )
 
     return pf.Material(
@@ -1342,7 +1340,7 @@ def wood_grain_generator_rand(
     flake_noise_size = pf.random.uniform(rng, 0.1, 1.0)
     flake_spread = pf.random.uniform(rng, 0.346, 0.723)
     flake_smoothness = pf.random.uniform(rng, 0.08, 0.893)
-    knot_settings_density = pf.random.uniform(rng, 1.0, 5.0)
+    knot_settings_density = pf.random.clip_gaussian(rng, 4.0, 6.0, 1.0, 27.0)
     knot_settings_knot_size = pf.random.uniform(rng, 0.0, 0.06)
     knot_settings_distortion_size = pf.random.uniform(rng, 0.07, 0.1)
     knot_settings_distortion_strength = pf.random.uniform(rng, 0.88, 1.11)
@@ -1354,9 +1352,11 @@ def wood_grain_generator_rand(
     primary_warp_vertical_stretch = pf.random.uniform(rng, 0.5, 2.0)
     primary_warp_detail = pf.random.uniform(rng, 2.0, 8.1)
     primary_warp_warp_strength = pf.random.uniform(rng, 1.0, 2.0)
-    secondary_warp_noise_size = pf.random.uniform(rng, 0.1, 1.0)
-    secondary_warp_vertical_stretch = pf.random.uniform(rng, 0.15, 2.6)
-    secondary_warp_detail = pf.random.uniform(rng, 1.0, 11.5)
+    # correlate the secondary-warp trio so the concentric-ring corner is actually sampled
+    ring_factor = pf.random.uniform(rng, 0.0, 1.0)
+    secondary_warp_noise_size = 1.0 - ring_factor * 0.9
+    secondary_warp_vertical_stretch = 2.6 - ring_factor * 2.45
+    secondary_warp_detail = 1.0 + ring_factor * 10.5
     secondary_warp_warp_strength = pf.random.uniform(rng, 0.0, 2.0)
     details_noise_size = pf.random.uniform(rng, 0.5, 1.0)
     details_detail = pf.random.clip_gaussian(rng, 4.0, 0.5, 0.0, 4.0)
@@ -1452,6 +1452,8 @@ def wood_grain_rand(
     """
     Intended for indoor wooden floors and furniture
     """
+    # swap U/V so grain runs along the long-axis convention; planks bypass this
+    vector = pf.nodes.math.combine_xyz(x=vector.y, y=vector.x)
     generator_result = wood_grain_generator_rand(rng, vector)
 
     color_1, color_2, flake_color, fiber_color, knot_color = wood_color_rand(rng)

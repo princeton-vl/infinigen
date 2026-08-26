@@ -16,14 +16,16 @@ subsets of it onto each target's real surface.
 import functools
 import logging
 import math
+import re
 from typing import Callable, NamedTuple
 
 import procfunc as pf
 from procfunc.nodes import types as t
 
 from infinigen2.objects import random_primitives
-from infinigen2.scenes import collision_collection as ccol
-from infinigen2.scenes.placement_utils import keep_non_colliding
+from infinigen2.scenes.placement import collision as ccol
+from infinigen2.scenes.placement.culling import keep_non_colliding
+from infinigen2.scenes.placement.distribute import propagate_modifiers_to_instances
 
 __all__ = [
     "objects_scatter_rand",
@@ -32,6 +34,11 @@ __all__ = [
 ]
 
 logger = logging.getLogger(__name__)
+
+
+def _smallobj_label(data_name: str) -> str:
+    # strips the pool index and any blender copy suffix, leaving primitive_effect
+    return re.sub(r"_\d+(\.\d+)?$", "", data_name)
 
 
 def _scatter_region(
@@ -228,16 +235,18 @@ def _pick_child(
 def _bake_and_filter(
     geometry: pf.ProcNode,
     parent: pf.MeshObject,
+    templates: list[pf.MeshObject],
     colliders: ccol.CollisionSet,
 ) -> tuple[list[pf.MeshObject], ccol.CollisionSet]:
     """Realize instances into world space (the geonode ran in parent-local space)
     and drop any that collide with already-placed geometry."""
     instances = pf.nodes.to_aliases(geometry)
+    propagate_modifiers_to_instances(templates, instances)
     for alias in instances:
         alias.item().matrix_world = (
             parent.item().matrix_world @ alias.item().matrix_world
         )
-        alias.item().name = alias.item().data.name
+        alias.item().name = _smallobj_label(alias.item().data.name)
     kept, colliders = keep_non_colliding(instances, colliders, key=lambda o: o)
     logger.debug(
         "small objects on %s (z=%.2f): placed %d, kept %d, dropped %d by collision",
@@ -284,7 +293,7 @@ def _scatter_on_target(
             id=pf.nodes.geo.input_index(),
         ),
     )
-    return _bake_and_filter(geometry, parent, colliders)
+    return _bake_and_filter(geometry, parent, list(child), colliders)
 
 
 def _row_on_target(
@@ -322,7 +331,7 @@ def _row_on_target(
             id=pf.nodes.geo.input_index(),
         ),
     )
-    return _bake_and_filter(geometry, parent, colliders)
+    return _bake_and_filter(geometry, parent, list(child), colliders)
 
 
 def _mixed_on_target(
@@ -345,17 +354,18 @@ def small_objects_collection_rand(rng: pf.RNG) -> pf.Collection:
     n_pool = int(pf.random.randint(rng, 8, 17))
     meshes = []
     for i, rng_mesh in enumerate(rng.spawn(n_pool)):
-        mesh = random_primitives.primitives_rand(
+        mesh = random_primitives.primitive_with_effect_rand(
             rng_mesh,
             target_size=pf.random.clip_gaussian(rng_mesh, 0.13, 0.07, 0.08, 0.3),
+            max_subsurf_levels=1,
         ).mesh
         pf.ops.mesh.transform_apply(mesh)
         bmin, _ = pf.ops.attr.bbox_min_max(mesh, global_coords=False)
         pf.ops.object.set_transform(mesh, location=(0, 0, -bmin[2]))
         pf.ops.mesh.transform_apply(mesh)
-        # collection_info(separate_children) indexes by natural-name sort; give stable
-        # draw-order names (warp realization reuses "mesh_single_vertex", which would tie).
-        mesh.item().name = mesh.item().data.name = f"smallobj_{i:03d}"
+        # index keeps the stem unique, which propagate_modifiers_to_instances requires
+        label = mesh.item().name.split(".")[0]
+        mesh.item().data.name = f"{label}_{i:03d}"
         meshes.append(mesh)
     return pf.Collection(meshes)
 

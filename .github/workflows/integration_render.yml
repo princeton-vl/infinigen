@@ -2,21 +2,28 @@ name: Integration Render
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
+    types: [opened, synchronize, reopened, ready_for_review, closed]
   push:
     branches:
-      - develop2
-      - main2
+      - develop
+      - main
+      - integration-staging
   workflow_dispatch:
     inputs:
       pr_number:
         description: "PR number to tag outputs and comment on"
         required: false
         type: string
+      validation:
+        description: "Use the isolated staging archive"
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  # Per-PR group; develop pushes share one group, main pushes stay per-SHA.
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || (github.event_name == 'push' && github.ref_name == 'develop' && 'push-develop') || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref_name == 'develop') }}
 
 env:
   RENDER_ARCHIVE_ROOT: /home/renderbot/integration_test_archive/renders/integration
@@ -24,13 +31,14 @@ env:
 
 jobs:
   render:
-    if: github.repository == 'princeton-vl/infinigen_internal' && github.event.pull_request.draft == false
+    if: github.repository == 'princeton-vl/infinigen_internal' && github.event.pull_request.draft == false && github.event.action != 'closed'
     runs-on: [self-hosted, renderbot]
 
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: false
+          fetch-depth: 0
 
       - name: Install infinigen & dependencies
         run: |
@@ -48,24 +56,48 @@ jobs:
           RUN_LABEL="nopr"
           [ -n "$PR_NUMBER" ] && RUN_LABEL="pr${PR_NUMBER}"
 
-          REL_PATH="$(date -u +'%Y-%m-%dT%H-%M-%SZ')_${GITHUB_SHA:0:7}"
+          RUN_PATH="$(date -u +'%Y-%m-%dT%H-%M-%SZ')_${GITHUB_SHA:0:7}"
+          echo "OUTPUT_DIR=$RUNNER_TEMP/integration-renders-${RUN_LABEL}-${RUN_PATH}" >> "$GITHUB_ENV"
+          uv run python scripts/integration_v2/run_paths.py \
+            --archive-root "$RENDER_ARCHIVE_ROOT" \
+            --run-path "$RUN_PATH" \
+            --base-ref "${{ github.base_ref }}" \
+            --ref-name "${{ github.ref_name }}" \
+            --validation "${{ inputs.validation }}" >> "$GITHUB_ENV"
 
-          # Baseline to diff against in the viewer: the PR's target branch
-          # (<base>_latest), falling back to develop_latest when that branch has
-          # no baseline yet. base_ref is empty for push / dispatch, so those keep
-          # develop_latest.
-          BASELINE="develop_latest"
-          BASE_REF="${{ github.base_ref }}"
-          if [ -n "$BASE_REF" ] && [ -e "$RENDER_ARCHIVE_ROOT/${BASE_REF}_latest" ]; then
-            BASELINE="${BASE_REF}_latest"
-          fi
+      # Gating runs before any GPU work, so say what the render covers up front.
+      - name: Announce planned renders
+        if: ${{ github.event.pull_request.number || inputs.pr_number }}
+        continue-on-error: true
+        env:
+          INFINIGEN_CHANGED_ONLY: ${{ github.event_name == 'pull_request' && github.base_ref != 'main' && vars.INTEGRATION_CHANGED_ONLY || '' }}
+          COVERAGE_BASE_REF: origin/${{ github.base_ref }}
+          ASSET_COVERAGE_BASELINE: ${{ env.BASELINE_COVERAGE }}
+        run: |
+          set -e
+          mkdir -p "$OUTPUT_DIR"
+          uv run python scripts/integration_v2/launch_andromeda.py \
+            --output_path "$OUTPUT_DIR" \
+            --dry-run
+          uv run python scripts/integration_v2/compose_pr_comment.py \
+            --phase planned \
+            --commit "$GITHUB_SHA" \
+            --run-id "$GITHUB_RUN_ID" \
+            --run-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            --gating-report "$OUTPUT_DIR/gating_report.json" \
+            --out "$RUNNER_TEMP/planned_body.md"
 
-          {
-            echo "REL_PATH=$REL_PATH"
-            echo "OUTPUT_DIR=$RUNNER_TEMP/integration-renders-${RUN_LABEL}-${REL_PATH}"
-            echo "TARGET_DIR=$RENDER_ARCHIVE_ROOT/$REL_PATH"
-            echo "BASELINE=$BASELINE"
-          } >> "$GITHUB_ENV"
+      - name: Post planned render comment
+        if: ${{ github.event.pull_request.number || inputs.pr_number }}
+        continue-on-error: true
+        uses: actions/github-script@v7
+        env:
+          BODY_FILE: planned_body.md
+          PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
+        with:
+          script: |
+            const sticky = require(`${process.env.GITHUB_WORKSPACE}/.github/scripts/sticky_comment.js`);
+            await sticky({github, context});
 
       - name: Run integration renders
         id: render
@@ -73,10 +105,16 @@ jobs:
         env:
           GPU_MEM_USED_MAX_MB: 10000
           GIT_BRANCH_OVERRIDE: ${{ github.head_ref || github.ref_name }}
+          PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
           MATERIAL_PARALLEL: 1
           MATERIAL_LIMIT: -1
           OBJECT_LIMIT: -1
           SCENE_LIMIT: -1
+          INFINIGEN_COVERAGE: 1
+          # Gate only PRs to non-main; pushes (baseline) + dispatch + PRs to main render all
+          INFINIGEN_CHANGED_ONLY: ${{ github.event_name == 'pull_request' && github.base_ref != 'main' && vars.INTEGRATION_CHANGED_ONLY || '' }}
+          COVERAGE_BASE_REF: origin/${{ github.base_ref }}
+          ASSET_COVERAGE_BASELINE: ${{ env.BASELINE_COVERAGE }}
         run: |
           set -e
           mkdir -p "$OUTPUT_DIR"
@@ -85,29 +123,76 @@ jobs:
             --jobs-per-gpu 4 \
             --gpus available
 
+      - name: Reduce per-asset coverage
+        if: always()
+        run: |
+          uv run python scripts/integration_v2/reduce_coverage.py \
+            "$OUTPUT_DIR/coverage_data" \
+            --out-json "$OUTPUT_DIR/asset_coverage.json" \
+            --out-xml coverage.xml || true
+
+      - name: Validate render artifacts
+        if: always()
+        run: |
+          uv run python scripts/integration_v2/validate_run.py \
+            "$OUTPUT_DIR" \
+            --coverage "$OUTPUT_DIR/asset_coverage.json"
+
+      - name: Upload coverage artifact
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-integration
+          path: |
+            coverage.xml
+            ${{ env.OUTPUT_DIR }}/asset_coverage.json
+            ${{ env.OUTPUT_DIR }}/gating_report.json
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Pixel diff vs baseline
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        run: |
+          uv run python scripts/integration_v2/baseline_diff.py pixel \
+            --pr "$OUTPUT_DIR" \
+            --baseline "$RENDER_ARCHIVE_ROOT/$BASELINE" \
+            --report "$OUTPUT_DIR/pixel_diff.json" \
+            --summary "$OUTPUT_DIR/pixel_diff.md"
+
+      - name: Perf diff vs baseline
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        run: |
+          uv run python scripts/integration_v2/baseline_diff.py perf \
+            --pr "$OUTPUT_DIR" \
+            --baseline "$RENDER_ARCHIVE_ROOT/$BASELINE" \
+            --report "$OUTPUT_DIR/perf_diff.json" \
+            --summary "$OUTPUT_DIR/perf_diff.md"
+
       - name: Archive renders to permanent storage
         if: ${{ !cancelled() }}
         run: |
           set -e
-          # Skip (don't fail) when the render produced no output — e.g. it
-          # crashed before writing anything. This also guards against an empty
-          # OUTPUT_DIR turning `rsync -a "$OUTPUT_DIR"/ ...` into `rsync -a / ...`,
-          # which would copy the whole filesystem until the disk fills.
-          if [ ! -d "$OUTPUT_DIR" ] || [ -z "$(ls -A "$OUTPUT_DIR" 2>/dev/null)" ]; then
-            echo "No render output at '$OUTPUT_DIR' — nothing to archive."
+          # count real events; gating_report.json lands before any GPU work
+          EVENTS=0
+          if [ -d "$OUTPUT_DIR/render_index/events" ]; then
+            EVENTS=$(find "$OUTPUT_DIR/render_index/events" -name '*.json' | wc -l)
+          fi
+          if [ "$EVENTS" -eq 0 ]; then
+            echo "No renders recorded under '$OUTPUT_DIR' — nothing to archive."
             exit 0
           fi
 
           mkdir -p "$TARGET_DIR"
-          rsync -a "$OUTPUT_DIR"/ "$TARGET_DIR"/
+          rsync -a --exclude coverage_data "$OUTPUT_DIR"/ "$TARGET_DIR"/
 
-          # On a push to a tracked branch, point that branch's baseline at this
-          # run. develop_materials also keeps the historical develop_latest alias.
-          if [ "${{ github.event_name }}" = "push" ]; then
-            ln -sfn "$TARGET_DIR" "$RENDER_ARCHIVE_ROOT/${{ github.ref_name }}_latest"
-            if [ "${{ github.ref_name }}" = "develop_materials" ]; then
-              ln -sfn "$TARGET_DIR" "$RENDER_ARCHIVE_ROOT/develop_latest"
-            fi
+          # only a clean push repoints the baseline every later PR diffs against
+          if [ "${{ github.event_name }}" = "push" ] && [ "${{ steps.render.outcome }}" = "success" ]; then
+            ln -sfn "$TARGET_DIR" "$ARCHIVE_ROOT/${{ github.ref_name }}_latest"
+          elif [ "${{ github.event_name }}" = "push" ]; then
+            echo "Render did not succeed — keeping the previous ${{ github.ref_name }}_latest."
           fi
 
       - name: Print viewer link
@@ -118,29 +203,34 @@ jobs:
           echo "${VIEWER_BASE_URL}/?v=${BASELINE}&v=${REL_PATH}"
           echo "Path: ${TARGET_DIR}"
 
+      - name: Compose PR comment
+        if: ${{ !cancelled() && (github.event.pull_request.number || inputs.pr_number) }}
+        run: |
+          uv run python scripts/integration_v2/compose_pr_comment.py \
+            --phase done \
+            --viewer-base "$VIEWER_BASE_URL" \
+            --rel-path "$REL_PATH" \
+            --baseline "$BASELINE" \
+            --target-dir "$TARGET_DIR" \
+            --commit "$GITHUB_SHA" \
+            --run-id "$GITHUB_RUN_ID" \
+            --run-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            --gating-report "$OUTPUT_DIR/gating_report.json" \
+            --pixel-summary "$OUTPUT_DIR/pixel_diff.md" \
+            --perf-summary "$OUTPUT_DIR/perf_diff.md" \
+            --render-index "$OUTPUT_DIR" \
+            --out "$RUNNER_TEMP/comment_body.md"
+
       - name: Comment PR with viewer link
         if: ${{ !cancelled() && (github.event.pull_request.number || inputs.pr_number) }}
         uses: actions/github-script@v7
+        env:
+          BODY_FILE: comment_body.md
+          PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
         with:
           script: |
-            const pr = context.payload.pull_request?.number || core.getInput('pr_number');
-            const { VIEWER_BASE_URL, REL_PATH, TARGET_DIR } = process.env;
-            const baseline = process.env.BASELINE || 'develop_latest';
-            const body = [
-              "Integration renders are ready:",
-              `${VIEWER_BASE_URL}/?v=${REL_PATH}`,
-              "",
-              `Compare vs ${baseline}:`,
-              `${VIEWER_BASE_URL}/?v=${baseline}&v=${REL_PATH}`,
-              "",
-              `Path: ${TARGET_DIR}`,
-            ].join("\n");
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: pr,
-              body,
-            });
+            const sticky = require(`${process.env.GITHUB_WORKSPACE}/.github/scripts/sticky_comment.js`);
+            await sticky({github, context});
 
       - name: Fail job if any render failed
         if: always()
