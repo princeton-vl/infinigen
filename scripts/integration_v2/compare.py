@@ -12,6 +12,7 @@ from pathlib import Path
 import baseline_diff
 import tomllib
 from display import (
+    ROW_SORT_KEYS,
     build_comparison_data,
     build_section_controls,
     build_version_totals,
@@ -183,7 +184,14 @@ def index():
         collection_results.append(result)
 
     print_collection_summary(collection_results)
-    rows_data = build_comparison_data(collection_results, version_names)
+    sort_order = request.args.get("sort")
+    if sort_order is not None and sort_order not in ROW_SORT_KEYS:
+        choices = ", ".join(ROW_SORT_KEYS)
+        return f"Unknown sort '{sort_order}'. Choose one of: {choices}", 400
+
+    rows_data = build_comparison_data(
+        collection_results, version_names, sort_order=sort_order
+    )
     version_totals = build_version_totals(rows_data, version_names)
 
     perf_enabled = False

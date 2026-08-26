@@ -34,6 +34,7 @@ from pathlib import Path
 from urllib.parse import quote
 
 import compare
+from display import ROW_SORT_KEYS
 
 _IMAGE_REF = re.compile(r'/images/([^"\'\s>]+)')
 
@@ -54,12 +55,16 @@ def rewrite_html(html: str) -> str:
     return html.replace('href="/select-versions"', 'href="index.html"')
 
 
-def render_pages(out_dir: Path, versions: list[tuple[str, Path]]) -> set[str]:
+def render_pages(
+    out_dir: Path, versions: list[tuple[str, Path]], sort_order: str | None
+) -> set[str]:
     compare.safe_mode = False
     compare.scan_directory = None
     client = compare.app.test_client()
 
     query = "&".join(f"v={quote(str(p), safe='/')}" for _, p in versions)
+    if sort_order is not None:
+        query += f"&sort={quote(sort_order)}"
     resp = client.get(f"/?{query}")
     if resp.status_code != 200:
         raise SystemExit(f"viewer returned {resp.status_code}")
@@ -152,6 +157,11 @@ def main() -> int:
         help="generator-name glob to drop from the viewer (e.g. 'material_*'); repeatable.",
     )
     parser.add_argument(
+        "--sort",
+        choices=ROW_SORT_KEYS,
+        help="viewer row ordering to capture; by default the viewer uses MSE ordering.",
+    )
+    parser.add_argument(
         "--name",
         help="subfolder for this comparison; defaults to '<a>-vs-<b>' from the version names.",
     )
@@ -173,7 +183,7 @@ def main() -> int:
             link = Path(tmp) / name
             alias_version(link, path, name, args.excludes)
             aliased.append((name, link))
-        refs = render_pages(pages_dir, aliased)
+        refs = render_pages(pages_dir, aliased, args.sort)
 
     total = copy_referenced(args.out, refs, sources)
     write_listing(args.out)

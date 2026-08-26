@@ -5,13 +5,16 @@ import json
 import math
 import sys
 from pathlib import Path
+from urllib.parse import urlencode
 
 from PIL import Image
 
 _SCRIPTS = Path(__file__).resolve().parents[2] / "scripts" / "integration_v2"
 sys.path.insert(0, str(_SCRIPTS))
 
+import compare  # noqa: E402
 import display  # noqa: E402
+import freeze  # noqa: E402
 from display import (  # noqa: E402
     build_comparison_data,
     build_section_controls,
@@ -19,10 +22,19 @@ from display import (  # noqa: E402
 )
 
 
-def _event(root: Path, name: str, idx: int, gen: str, atype: str, variant: str, images):
+def _event(
+    root: Path,
+    name: str,
+    idx: int,
+    gen: str,
+    atype: str,
+    variant: str,
+    images,
+    color=0,
+):
     for image in images:
         (root / image).parent.mkdir(parents=True, exist_ok=True)
-        Image.new("RGB", (2, 2)).save(root / image)
+        Image.new("RGB", (2, 2), color=color).save(root / image)
     events = root / "render_index" / "events"
     events.mkdir(parents=True, exist_ok=True)
     payload = {
@@ -247,3 +259,119 @@ def test_pairwise_mse_skips_video():
     png = {"pass_type": "image", "filename": "x/0000.png"}
     assert display._pairwise_mse(img, png, Path("a"), Path("b")) is None
     assert display._pairwise_mse(img, img, Path("a"), Path("b")) is None
+
+
+def _sort_rows():
+    def row(asset, asset_type, new=False, not_run=False, mse=None):
+        return {
+            "asset": asset,
+            "asset_type": asset_type,
+            "is_new": new,
+            "not_run": not_run,
+            "avg_mse": mse,
+        }
+
+    return [
+        row("unknown_row", "unknown"),
+        row("landing_row", "landing"),
+        row("preset_row", "preset"),
+        row("camera_row", "camera"),
+        row("env_row", "environment"),
+        row("mask_row", "mask"),
+        row("mat_new", "material", new=True),
+        row("mat_old", "material", mse=0.1),
+        row("obj_notrun", "object", not_run=True),
+        row("obj_big", "object", mse=5.0),
+        row("obj_small", "object", mse=0.2),
+        row("obj_new", "object", new=True),
+        row("scene_old", "scene", mse=1.0),
+        row("scene_new", "scene", new=True),
+    ]
+
+
+def test_row_sort_defaults_to_mse():
+    rows = _sort_rows()
+    display._sort_rows(rows, ["before", "after"], sort_order=None)
+
+    assert [r["asset"] for r in rows[:4]] == [
+        "obj_big",
+        "scene_old",
+        "obj_small",
+        "mat_old",
+    ]
+    assert rows[-1]["asset"] == "obj_notrun"
+
+
+def test_type_row_sort_orders_by_type_then_new():
+    rows = _sort_rows()
+    display._sort_rows(rows, ["before", "after"], sort_order="type")
+
+    assert [r["asset"] for r in rows] == [
+        "scene_new",
+        "scene_old",
+        "obj_new",
+        "obj_big",
+        "obj_small",
+        "obj_notrun",
+        "mat_new",
+        "mat_old",
+        "mask_row",
+        "env_row",
+        "camera_row",
+        "preset_row",
+        "landing_row",
+        "unknown_row",
+    ]
+
+
+def _viewer_sort_run(root: Path, name: str, scene_color: int, object_color: int):
+    version = root / name
+    assets = [
+        ("scene_rand", "scene", scene_color),
+        ("object_rand", "object", object_color),
+    ]
+    for idx, (asset, asset_type, color) in enumerate(assets):
+        image = f"{name}/{asset}/Camera/0000.png"
+        _event(
+            version,
+            name,
+            idx,
+            asset,
+            asset_type,
+            "demo-cycles-0",
+            [image],
+            color=color,
+        )
+    return version
+
+
+def test_viewer_type_sort_is_opt_in(tmp_path):
+    before = _viewer_sort_run(tmp_path, "before", 0, 0)
+    after = _viewer_sort_run(tmp_path, "after", 10, 255)
+    query = urlencode([("v", before), ("v", after)])
+    client = compare.app.test_client()
+
+    default_html = client.get(f"/?{query}").get_data(as_text=True)
+    type_html = client.get(f"/?{query}&sort=type").get_data(as_text=True)
+
+    object_row = 'data-asset="object_rand" data-not-run'
+    scene_row = 'data-asset="scene_rand" data-not-run'
+    assert default_html.index(object_row) < default_html.index(scene_row)
+    assert type_html.index(scene_row) < type_html.index(object_row)
+    assert client.get(f"/?{query}&sort=unknown").status_code == 400
+
+
+def test_freeze_forwards_type_sort(tmp_path):
+    before = _viewer_sort_run(tmp_path, "before", 0, 0)
+    after = _viewer_sort_run(tmp_path, "after", 10, 255)
+    pages = tmp_path / "pages"
+    pages.mkdir()
+
+    freeze.render_pages(
+        pages, [("before", before), ("after", after)], sort_order="type"
+    )
+
+    html = (pages / "index.html").read_text()
+    object_row = 'data-asset="object_rand" data-not-run'
+    scene_row = 'data-asset="scene_rand" data-not-run'
+    assert html.index(scene_row) < html.index(object_row)

@@ -748,12 +748,41 @@ def _attach_metrics(rows: list[dict], version_names: list[str]) -> None:
             _attach_obj_metrics(obj, before_overall, before_cats, is_after)
 
 
-def _row_sort_key(row: dict) -> tuple:
-    # not_run rows last; within a group highest MSE first (inf error rows at top).
+def _row_mse_sort_key(row: dict) -> tuple:
     not_run_rank = 1 if row["not_run"] else 0
     mse = row["avg_mse"]
     mse_rank = math.inf if mse is None else -mse
     return (not_run_rank, mse_rank, row["asset"])
+
+
+def _row_type_sort_key(row: dict) -> tuple:
+    type_rank = {
+        "scene": 0,
+        "object": 1,
+        "material": 2,
+        "mask": 3,
+        "environment": 4,
+        "camera": 5,
+        "preset": 6,
+        "landing": 7,
+    }.get(row["asset_type"], 8)
+    new_rank = 0 if row["is_new"] else 1
+    not_run_rank = 1 if row["not_run"] else 0
+    mse = row["avg_mse"]
+    mse_rank = math.inf if mse is None else -mse
+    return (type_rank, new_rank, not_run_rank, mse_rank, row["asset"])
+
+
+ROW_SORT_KEYS = {"type": _row_type_sort_key}
+
+
+def _sort_rows(
+    rows: list[dict], version_names: list[str], sort_order: str | None
+) -> None:
+    if sort_order is not None:
+        rows.sort(key=ROW_SORT_KEYS[sort_order])
+    elif len(version_names) == 2:
+        rows.sort(key=_row_mse_sort_key)
 
 
 def build_version_totals(rows: list[dict], version_names: list[str]) -> dict[str, dict]:
@@ -782,7 +811,9 @@ def build_version_totals(rows: list[dict], version_names: list[str]) -> dict[str
 
 
 def build_comparison_data(
-    collection_results: list, version_names: list[str]
+    collection_results: list,
+    version_names: list[str],
+    sort_order: str | None = None,
 ) -> list[dict]:
     all_assets = {}
     for result in collection_results:
@@ -800,7 +831,6 @@ def build_comparison_data(
     rows = _fold_presets(rows, _preset_parents(collection_results))
     _attach_metrics(rows, version_names)
 
-    if len(version_names) == 2:
-        rows.sort(key=_row_sort_key)
+    _sort_rows(rows, version_names, sort_order)
 
     return rows
