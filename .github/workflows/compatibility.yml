@@ -17,11 +17,6 @@ jobs:
           submodules: false
           fetch-depth: 0
 
-      - name: Set up SSH for procfunc
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.PROCFUNC_DEPLOY_KEY }}
-
       - name: Set up uv
         uses: astral-sh/setup-uv@v7
         with:
