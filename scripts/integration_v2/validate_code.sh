@@ -12,6 +12,7 @@ c0e2a0c1496cd753ca48d7b66609252d79fe3e7c stale integration-render gate (supersed
 6601e9b7a4f31bccbf6c79db1c634f7be5288641 stale gate coverage-flush follow-up (superseded on develop; rebase to drop)
 63dee4d441fcbb8db9af12739a43a62a443e13c1 unapproved Blender add-on bindings pushed directly to develop (removed by history rewrite; rebase to drop)
 7b515778cdd359df63ead6a8f651d9af2bd73422 pre-a3 develop lineage (rewritten onto main to strip agent trailers; rebase onto current develop)
+cfab1c645c4eee31ddb26e808eeace8421fe8822 pre-a5 develop lineage (rebased onto main after the 2.0.0a4 hotfix; rebase onto current develop)
 EOF
 )
 

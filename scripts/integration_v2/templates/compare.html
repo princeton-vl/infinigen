@@ -14,7 +14,7 @@
 {% if v.pr %} <a class="vh-pr" href="{{ v.pr_url }}" target="_blank" rel="noopener">PR #{{ v.pr }}</a>{% endif %}
 {% endmacro %}
 
-{% macro image_tile(img) -%}
+{% macro image_tile(img, source_url) -%}
 <div class="image-wrapper"
      data-renderer="{{ img.renderer }}"
      data-missing="{{ 'true' if not img.path else 'false' }}">
@@ -37,13 +37,13 @@
     {% if img.command_text %}
     <details class="error-details">
         <summary>Show command</summary>
-        <pre>{{ img.command_text }}</pre>
+        <pre>{{ img.command_text | link_sources(source_url) }}</pre>
     </details>
     {% endif %}
     {% if img.stderr_text %}
     <details class="error-details">
         <summary>Show stderr</summary>
-        <pre>{{ img.stderr_text }}</pre>
+        <pre>{{ img.stderr_text | link_sources(source_url) }}</pre>
     </details>
     {% endif %}
 </div>
@@ -57,7 +57,7 @@
     <div class="images-container{% if section.key == 'presets' %} preset-strip{% endif %}"
          data-scroll-group="{{ section.scroll_group }}">
         {% for img in section.images %}
-        {{ image_tile(img) }}
+        {{ image_tile(img, source_urls.get(obj.version)) }}
         {% endfor %}
     </div>
 </details>

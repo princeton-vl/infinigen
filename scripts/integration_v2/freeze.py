@@ -34,7 +34,10 @@ from pathlib import Path
 from urllib.parse import quote
 
 import compare
+import tomllib
 from display import ROW_SORT_KEYS
+
+PUBLIC_REPO = "princeton-vl/infinigen"
 
 _IMAGE_REF = re.compile(r'/images/([^"\'\s>]+)')
 
@@ -114,13 +117,15 @@ def _filter_events(dst_ri: Path, src_ri: Path, excludes: list[str]) -> None:
 
 
 def alias_version(link: Path, src: Path, tag: str, excludes: list[str]) -> None:
-    # Alias under the app's version name; label it with `tag` and drop excluded events.
+    # Alias as `tag`, link sources to the public repo at that tag, drop excluded events.
     skip = {"git_info.toml", "render_index"} if excludes else {"git_info.toml"}
     _symlink_children(link, src, skip)
-    original = (
-        (src / "git_info.toml").read_text() if (src / "git_info.toml").exists() else ""
-    )
-    (link / "git_info.toml").write_text(f'{original}\ntag = "{tag}"\n')
+    git_info = {}
+    if (src / "git_info.toml").exists():
+        git_info = tomllib.loads((src / "git_info.toml").read_text())
+    git_info.update(tag=tag, repo=PUBLIC_REPO, source_ref=tag)
+    lines = [f"{key} = {json.dumps(str(value))}" for key, value in git_info.items()]
+    (link / "git_info.toml").write_text("\n".join(lines) + "\n")
     if excludes:
         _filter_events(link / "render_index", src / "render_index", excludes)
 

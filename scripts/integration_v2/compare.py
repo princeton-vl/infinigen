@@ -6,6 +6,7 @@
 import argparse
 import logging
 import os
+import re
 import subprocess
 from pathlib import Path
 
@@ -27,6 +28,7 @@ from flask import (
     send_file,
     session,
 )
+from markupsafe import Markup, escape
 from werkzeug.utils import safe_join
 
 app = Flask(__name__)
@@ -63,7 +65,14 @@ DEFAULT_REPO = "princeton-vl/infinigen_internal"
 
 
 def get_git_info(path: Path) -> dict[str, str | None]:
-    info = {"branch": None, "commit": None, "pr": None, "repo": None, "tag": None}
+    info = {
+        "branch": None,
+        "commit": None,
+        "pr": None,
+        "repo": None,
+        "tag": None,
+        "source_ref": None,
+    }
     # Prefer metadata written by launch.sh
     toml_path = path / "git_info.toml"
     if toml_path.exists():
@@ -76,6 +85,48 @@ def get_git_info(path: Path) -> dict[str, str | None]:
             pass
 
     return info
+
+
+_SOURCE_PATH = re.compile(
+    r'(?P<path>[\w./-]*\.py)(?:", line (?P<line>\d+)|:(?P<colon_line>\d+))?'
+)
+_REPO_ROOT_DIR = re.compile(r"(?:^|/)((?:src|scripts|tests|examples|docs)/[\w./-]+)$")
+
+
+def source_base_url(git: dict[str, str | None]) -> str | None:
+    ref = git["source_ref"] or git["commit"]
+    if not ref:
+        return None
+    repo = git["repo"] or DEFAULT_REPO
+    return f"https://github.com/{repo}/blob/{ref}"
+
+
+def link_sources(text: str, base_url: str | None) -> Markup:
+    if not base_url:
+        return escape(text)
+    out = []
+    last = 0
+    for match in _SOURCE_PATH.finditer(text):
+        path = match.group("path")
+        rel = _REPO_ROOT_DIR.search(path)
+        if rel is None or "site-packages" in path:
+            continue
+        line = match.group("line") or match.group("colon_line")
+        url = f"{base_url}/{rel.group(1)}"
+        if line:
+            url += f"#L{line}"
+        out.append(escape(text[last : match.start()]))
+        out.append(
+            Markup('<a href="{}" target="_blank" rel="noopener">{}</a>').format(
+                url, match.group(0)
+            )
+        )
+        last = match.end()
+    out.append(escape(text[last:]))
+    return Markup("").join(out)
+
+
+app.add_template_filter(link_sources)
 
 
 def build_version_meta(
@@ -104,6 +155,7 @@ def build_version_meta(
             "branch_url": None,
             "commit_url": None,
             "pr_url": None,
+            "source_url": source_base_url(git),
         }
         if git["tag"]:
             entry["tag_url"] = f"https://github.com/{repo}/releases/tag/{git['tag']}"
@@ -205,6 +257,7 @@ def index():
         rows=rows_data,
         version_names=version_names,
         version_meta=version_meta,
+        source_urls={m["name"]: m["source_url"] for m in version_meta},
         version_totals=version_totals,
         section_controls=build_section_controls(rows_data),
         mode=mode,
