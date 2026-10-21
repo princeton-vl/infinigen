@@ -319,12 +319,13 @@ def _get_imu_tum_data(obj: bpy.types.Object, start: int, end: int) -> tuple[str,
     # format data
     for i in range(length):
         bpy.context.scene.frame_set(i + start)
+        timestamp = str((i + start) / fps)
         rot_euler = obj.rotation_euler
         rot_quat = rot_euler.to_quaternion()
         imu_text.append(
             " ".join(
                 [
-                    str(i + start),
+                    timestamp,
                     str(rvx[i]),
                     str(rvy[i]),
                     str(rvz[i]),
@@ -337,7 +338,7 @@ def _get_imu_tum_data(obj: bpy.types.Object, start: int, end: int) -> tuple[str,
         tum_text.append(
             " ".join(
                 [
-                    str(i + start),
+                    timestamp,
                     str(obj.location[0]),
                     str(obj.location[1]),
                     str(obj.location[2]),

@@ -114,3 +114,49 @@ def test_export_imu_tum_and_camera(tmp_path, save_blend=False):
     if save_blend:
         blend_path = tmp_path / f"{inspect.currentframe().f_code.co_name}.blend"  # type: ignore
         pf.ops.file.save_blend(blend_path)
+
+
+def _imu_tum_rows_at_fps(tmp_path, fps):
+    """Export the same 2-second motion at the given fps and return (imu, tum) rows."""
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    scene = bpy.context.scene
+    scene.render.fps, scene.render.fps_base = fps, 1.0
+
+    obj = bpy.data.objects.new("probe", None)
+    scene.collection.objects.link(obj)
+    end = 2 * fps
+    # x eases 0 -> 2 m (bezier), z-rotation turns 0 -> 2 rad (linear), both over 2 s
+    for frame, x, rz in [(0, 0.0, 0.0), (end, 2.0, 2.0)]:
+        obj.location = (x, 0, 0)
+        obj.rotation_euler = (0, 0, rz)
+        obj.keyframe_insert("location", frame=frame)
+        obj.keyframe_insert("rotation_euler", frame=frame)
+    for fc in obj.animation_data.action.fcurves:
+        for kp in fc.keyframe_points:
+            kp.interpolation = (
+                "LINEAR" if fc.data_path == "rotation_euler" else "BEZIER"
+            )
+
+    paths = imu.save_imu_tum_files(tmp_path / str(fps), [obj], 0, end)
+
+    def read_rows(suffix):
+        path = next(p for p in paths if p.name.endswith(suffix))
+        return np.loadtxt(path, comments="#")
+
+    return read_rows("_imu.txt"), read_rows("_tum.txt")
+
+
+def test_imu_tum_units_independent_of_fps(tmp_path):
+    """The same real motion must export identical timestamps and IMU values at any fps."""
+    for fps in (24, 8):
+        imu_rows, tum_rows = _imu_tum_rows_at_fps(tmp_path, fps)
+        half_second = fps // 2
+
+        # timestamps are seconds, not frame numbers
+        assert imu_rows[half_second, 0] == pytest.approx(0.5)
+        assert tum_rows[half_second, 0] == pytest.approx(0.5)
+
+        # 2 rad over 2 s linear -> 1 rad/s
+        assert imu_rows[half_second, 3] == pytest.approx(1.0, abs=1e-4)
+        # bezier ease x(t) = 2(3s^2 - 2s^3), s = t/2 -> x''(0.5 s) = 1.5 m/s^2
+        assert imu_rows[half_second, 4] == pytest.approx(1.5, abs=1e-3)
