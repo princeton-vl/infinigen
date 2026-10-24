@@ -22,7 +22,7 @@ def hidden_render_objects(objects: list[pf.MeshObject]) -> dict[str, str]:
         obj = mo.item()
         if obj.hide_render:
             hidden[obj.name] = "hide_render"
-        elif not obj.visible_camera:
+        elif obj.type == "MESH" and not obj.visible_camera:
             hidden[obj.name] = "visible_camera=False"
     return hidden
 

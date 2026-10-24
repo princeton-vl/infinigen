@@ -503,6 +503,18 @@ def test_visible_camera_off_flagged():
     assert hidden_render_objects([mo]) == {mo.item().name: "visible_camera=False"}
 
 
+def test_default_point_lamp_not_flagged():
+    light = pf.ops.primitives.point_lamp(energy=2000)
+    assert not light.item().visible_camera
+    assert hidden_render_objects([light]) == {}
+
+
+def test_hidden_render_lamp_flagged():
+    light = pf.ops.primitives.point_lamp(energy=2000)
+    light.item().hide_render = True
+    assert hidden_render_objects([light]) == {light.item().name: "hide_render"}
+
+
 def test_holdout_object_not_flagged():
     mo = _plane()
     mo.item().is_holdout = True
