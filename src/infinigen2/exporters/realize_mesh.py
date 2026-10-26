@@ -10,6 +10,7 @@ import bpy
 import procfunc as pf
 
 from infinigen2.exporters.render_cycles import configure_cycles_devices
+from infinigen2.util.bpy_compat import new_interface_socket
 
 __all__ = [
     "bake_shared_modifier_prefixes",
@@ -22,12 +23,8 @@ logger = logging.getLogger(__name__)
 
 def _geometry_node_group_empty_new():
     group = bpy.data.node_groups.new("Geometry Nodes", "GeometryNodeTree")
-    group.interface.new_socket(
-        name="Geometry", in_out="INPUT", socket_type="NodeSocketGeometry"
-    )
-    group.interface.new_socket(
-        name="Geometry", in_out="OUTPUT", socket_type="NodeSocketGeometry"
-    )
+    new_interface_socket(group, "Geometry", "INPUT", "NodeSocketGeometry")
+    new_interface_socket(group, "Geometry", "OUTPUT", "NodeSocketGeometry")
     input_node = group.nodes.new("NodeGroupInput")
     output_node = group.nodes.new("NodeGroupOutput")
     output_node.is_active_output = True

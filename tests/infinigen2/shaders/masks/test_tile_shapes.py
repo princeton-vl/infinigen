@@ -13,6 +13,7 @@ from procfunc.nodes import types as t
 from procfunc.nodes.util import bpy_node_info
 
 from infinigen2.shaders.masks import tile_shapes
+from infinigen2.util.bpy_compat import eevee_engine_name, scene_compositor_node_tree
 
 pytestmark = pytest.mark.render_gpu
 
@@ -141,7 +142,7 @@ def _scene(material: bpy.types.Material, width: int, height: int) -> bpy.types.S
     scene.collection.objects.link(camera)
     scene.camera = camera
 
-    scene.render.engine = "BLENDER_EEVEE_NEXT"
+    scene.render.engine = eevee_engine_name()
     scene.eevee.taa_render_samples = 1
     scene.render.resolution_x = width
     scene.render.resolution_y = height
@@ -157,12 +158,12 @@ def _scene(material: bpy.types.Material, width: int, height: int) -> bpy.types.S
     aov = scene.view_layers[0].aovs.add()
     aov.name = AOV_NAME
     aov.type = "COLOR"
-    scene.use_nodes = True
-    nodes = scene.node_tree.nodes
+    tree = scene_compositor_node_tree(scene)
+    nodes = tree.nodes
     nodes.clear()
     layers = nodes.new("CompositorNodeRLayers")
     composite = nodes.new("CompositorNodeComposite")
-    scene.node_tree.links.new(layers.outputs[AOV_NAME], composite.inputs["Image"])
+    tree.links.new(layers.outputs[AOV_NAME], composite.inputs["Image"])
     bpy.context.window.scene = active_scene
     return scene
 

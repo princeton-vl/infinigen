@@ -674,6 +674,7 @@ dependencies = [
     { name = "scipy" },
     { name = "shapely" },
     { name = "trimesh" },
+    { name = "typing-extensions" },
 ]
 
 [package.optional-dependencies]
@@ -818,6 +819,7 @@ requires-dist = [
     { name = "tqdm", marker = "extra == 'infinigen1'" },
     { name = "trimesh", specifier = ">=3.22" },
     { name = "ty", marker = "extra == 'dev'" },
+    { name = "typing-extensions", specifier = ">=4.5" },
     { name = "usd-core", marker = "extra == 'sim'" },
     { name = "wandb", marker = "extra == 'wandb'" },
 ]

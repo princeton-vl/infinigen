@@ -8,12 +8,13 @@
 import logging
 import math
 from collections.abc import Callable
-from typing import Any, NamedTuple, TypedDict, Unpack
+from typing import Any, NamedTuple, TypedDict
 
 import bpy
 import procfunc as pf
 from procfunc.ops.addons import require_blender_addon
 from procfunc.util import log
+from typing_extensions import Unpack
 
 from infinigen2.shaders.functionality_lists import terrain_material_rand
 

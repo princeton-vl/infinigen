@@ -54,6 +54,7 @@ from infinigen2.exporters.render_error_check.adaptive_sampling import (
 )
 from infinigen2.shaders import functionality_lists
 from infinigen2.shaders.composites import bricks
+from infinigen2.util.bpy_compat import attribute_factor_output
 
 
 def _make_material(name, group_size=0):
@@ -538,7 +539,7 @@ def _attribute_material(name, attribute_name):
     bsdf = next(
         n for n in mat.node_tree.nodes if n.bl_idname == "ShaderNodeBsdfPrincipled"
     )
-    mat.node_tree.links.new(node.outputs["Fac"], bsdf.inputs["Metallic"])
+    mat.node_tree.links.new(attribute_factor_output(node), bsdf.inputs["Metallic"])
     return mat
 
 

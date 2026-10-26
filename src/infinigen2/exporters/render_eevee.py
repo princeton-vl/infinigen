@@ -9,11 +9,11 @@ import logging
 from contextlib import nullcontext
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Unpack
 
 import bpy
 import procfunc as pf
 from procfunc.util.log import Suppress
+from typing_extensions import Unpack
 
 from infinigen2.exporters.util.blender_render import (
     DisplacementMode,
@@ -35,6 +35,7 @@ from infinigen2.exporters.util.format import (
     RenderPass,
     ensure_path_placeholders,
 )
+from infinigen2.util.bpy_compat import eevee_engine_name, set_displacement_method
 from infinigen2.util.camera_projection import adjust_camera_sensor
 
 __all__ = [
@@ -120,7 +121,7 @@ def render_eevee(
     if unsupported:
         raise ValueError(f"Eevee exporter does not support {unsupported=}")
 
-    bpy.context.scene.render.engine = "BLENDER_EEVEE_NEXT"
+    bpy.context.scene.render.engine = eevee_engine_name()
     bpy.context.scene.render.resolution_x = resolution[0]
     bpy.context.scene.render.resolution_y = resolution[1]
     bpy.context.scene.render.fps = frame_rate
@@ -145,7 +146,7 @@ def render_eevee(
         DisplacementMode.REALIZE_MESH,
     ]:
         for material in bpy.data.materials:
-            material.displacement_method = displacement_mode.value
+            set_displacement_method(material, displacement_mode.value)
 
     bpy.context.scene.render.use_persistent_data = frame_end > frame_start
 
