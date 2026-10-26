@@ -248,8 +248,6 @@ def _sofa_geometry(
     back_cushion = cushion.cushion_box_geometry(
         size=back_cushion_dimensions,
         material=fabric_material,
-        piping_material=fabric_material,
-        location=(0.0, 0.0, 0.0),
         anchor=(0.1, 0.5, 1.0),
         edge_radius=back_cushion_radius,
         crown=back_cushion_crown,
@@ -278,8 +276,6 @@ def _sofa_geometry(
     seat_cushion = cushion.cushion_box_geometry(
         size=seat_cushion_dimensions * (1.0, 1.03, 1.0),
         material=fabric_material,
-        piping_material=fabric_material,
-        location=(0.0, 0.0, 0.0),
         anchor=(0.0, 0.5, 0.0),
         edge_radius=cushion_radius,
         crown=seat_cushion_crown,
