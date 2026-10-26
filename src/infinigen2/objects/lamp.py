@@ -361,28 +361,25 @@ def _lamp_vase_base_geometry_rand(
     base_radius: float,
     base_height: float,
 ) -> pf.ProcNode[pf.MeshObject]:
-    rngs = rng.spawn(11)
+    rngs = rng.spawn(10)
     resolution = 32
     neck_scale = pf.random.uniform(rngs[0], 0.2, 0.8)
-    inner_radius = pf.control.choice(
-        rngs[1],
-        [(1.0, 0.5), (pf.random.uniform(rngs[2], 0.8, 1.0), 0.5)],
-    )
+    inner_radius = 1.0 - 0.2 * pf.random.uniform(rngs[1], 0.0, 1.0) ** 2
     geometry = vase.vase_body(
         u_resolution=resolution,
         v_resolution=resolution,
         height=base_height,
         diameter=base_radius,
         profile_inner_radius=inner_radius,
-        profile_star_points=pf.random.randint(rngs[3], 8, resolution // 2 + 1),
-        top_scale=neck_scale * pf.random.uniform(rngs[4], 0.8, 1.2),
-        neck_mid_position=pf.random.uniform(rngs[5], 0.7, 0.95),
-        neck_position=0.5 * neck_scale + 0.5 + pf.random.uniform(rngs[6], -0.05, 0.05),
+        profile_star_points=pf.random.randint(rngs[2], 8, resolution // 2 + 1),
+        top_scale=neck_scale * pf.random.uniform(rngs[3], 0.8, 1.2),
+        neck_mid_position=pf.random.uniform(rngs[4], 0.7, 0.95),
+        neck_position=0.5 * neck_scale + 0.5 + pf.random.uniform(rngs[5], -0.05, 0.05),
         neck_scale=neck_scale,
-        shoulder_position=pf.random.uniform(rngs[7], 0.3, 0.7),
-        shoulder_thickness=pf.random.uniform(rngs[8], 0.1, 0.25),
-        foot_scale=pf.random.uniform(rngs[9], 0.4, 0.6),
-        foot_height=pf.random.uniform(rngs[10], 0.01, 0.1),
+        shoulder_position=pf.random.uniform(rngs[6], 0.3, 0.7),
+        shoulder_thickness=pf.random.uniform(rngs[7], 0.1, 0.25),
+        foot_scale=pf.random.uniform(rngs[8], 0.4, 0.6),
+        foot_height=pf.random.uniform(rngs[9], 0.01, 0.1),
     )
     extruded = pf.nodes.geo.extrude_mesh(
         mesh=geometry,

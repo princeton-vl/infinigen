@@ -569,19 +569,16 @@ def _phyllo_rand(
     (
         rng_leaf_choice,
         rng_plant,
-        rng_petiole_choice,
+        rng_petiole,
         rng_sparse_choice,
         rng_normal_size,
         rng_large_size,
         rng_size_choice,
         rng_sparse_size,
-        rng_width_choice,
-        rng_width_normal,
+        rng_width,
         rng_density,
         rng_sparse_target,
-        rng_base_choice,
-        rng_base_low,
-        rng_base_high,
+        rng_base,
         rng_curve_x,
         rng_curve_y,
         rng_stem_warble,
@@ -594,11 +591,9 @@ def _phyllo_rand(
         rng_color,
         rng_material,
         rng_phase,
-    ) = rng.spawn(27)
+    ) = rng.spawn(24)
     if petiole_length_fraction is None:
-        petiole_length_fraction = pf.control.choice(
-            rng_petiole_choice, [(0.0, 1.0), (0.28, 1.0)]
-        )
+        petiole_length_fraction = pf.random.uniform(rng_petiole, 0.0, 0.28)
     leaf_generator = pf.control.choice(
         rng_leaf_choice,
         [(leaf.leaf_simple_rand, 1.0), (leaf_broadleaf.leaf_broadleaf_rand, 1.0)],
@@ -627,10 +622,7 @@ def _phyllo_rand(
         ** 0.5
     )
     if leaf_width is None:
-        leaf_width = pf.control.choice(
-            rng_width_choice,
-            [(pf.random.uniform(rng_width_normal, 0.8, 1.2), 3.0), (0.5, 1.0)],
-        )
+        leaf_width = pf.random.uniform(rng_width, 0.5, 1.2)
     if density is None:
         density = pf.random.log_uniform(rng_density, 0.6, 1.6)
     sparse_target = (
@@ -641,13 +633,7 @@ def _phyllo_rand(
     if count is None:
         count = _leaf_count(target_count, leaf_size, leaf_width, density, sparse)
     if base_fraction is None:
-        base_fraction = pf.control.choice(
-            rng_base_choice,
-            [
-                (pf.random.uniform(rng_base_low, 0.0, 0.025), 3.0),
-                (pf.random.uniform(rng_base_high, 0.04, 0.15), 1.0),
-            ],
-        )
+        base_fraction = 0.15 * pf.random.uniform(rng_base, 0.0, 1.0) ** 3
     if stem_curve_x_degrees is None:
         stem_curve_x_degrees = pf.random.clip_gaussian(
             rng_curve_x, 0.0, 20.0, -55.0, 55.0

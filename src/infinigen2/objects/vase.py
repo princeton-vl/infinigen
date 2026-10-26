@@ -415,17 +415,14 @@ def vase_material_rand(rng: pf.RNG, vec) -> pf.Material:
 
 
 def vase_rand(rng: pf.RNG) -> VaseResult:
-    rng, rng_radius_choice, rng_radius_val, rng_mat = rng.spawn(4)
+    rng, rng_radius, rng_mat = rng.spawn(3)
     z = pf.random.uniform(rng, 0.17, 0.5)
     x = z * pf.random.uniform(rng, 0.3, 0.6)
 
     v_resolution = 24
     neck_scale = pf.random.uniform(rng, 0.2, 0.8)
 
-    profile_inner_radius = pf.control.choice(
-        rng_radius_choice,
-        [(1.0, 0.5), (pf.random.uniform(rng_radius_val, 0.8, 1.0), 0.5)],
-    )
+    profile_inner_radius = 1.0 - 0.2 * pf.random.uniform(rng_radius, 0.0, 1.0) ** 2
     profile_star_points = pf.random.randint(rng, 16, 33)
 
     # two cage samples per flute is the coarsest ring that still resolves the star

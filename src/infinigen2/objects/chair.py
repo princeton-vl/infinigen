@@ -1728,14 +1728,7 @@ def _dining_slat_back(
     slat_width = pf.random.uniform(rng, 0.0225, 0.061875)
     aspect = pf.random.clip_gaussian(rng, 0.8, 0.15, 0.4, 1.0)
     slat_depth = slat_width * aspect
-    rng_gap_choice, rng_gap_dense, rng_gap_wide = rng.spawn(3)
-    gap = pf.control.choice(
-        rng_gap_choice,
-        [
-            (pf.random.uniform(rng_gap_dense, 0.0127, width * 0.15), 2.0),
-            (pf.random.uniform(rng_gap_wide, 0.0127, width), 1.0),
-        ],
-    )
+    gap = 0.0127 + (width - 0.0127) * pf.random.uniform(rng, 0.0, 1.0) ** 3
     crest_height = pf.random.clip_gaussian(rng, 0.0675, 0.035, 0.0375, 0.15)
     corner_r = pf.random.uniform(rng, 0.0, 0.49) * crest_height
     usable_span = width - slat_width - 2.0 * corner_r
@@ -1933,11 +1926,10 @@ def chair_dining_rand(rng: pf.RNG, dimensions: pf.Vector | None = None) -> Chair
         rng_backrest_sel,
         rng_leg_sel,
         rng_slat_sel,
-        rng_dip_sel,
         rng_dip,
         rng_back_bend,
         rng_seat,
-    ) = rng.spawn(17)
+    ) = rng.spawn(16)
     if dimensions is None:
         dimensions = chair_dining_dimensions_rand(rng_dims)
     vec = pf.nodes.shader.coord().uv
@@ -1963,8 +1955,7 @@ def chair_dining_rand(rng: pf.RNG, dimensions: pf.Vector | None = None) -> Chair
 
     front_bow = pf.random.clip_gaussian(rng, 0.08, 0.1, 0.0, 0.3) * dimensions[0]
     back_bow = pf.random.uniform(rng, 0.0, 0.25) * dimensions[0]
-    dip_active = pf.control.choice(rng_dip_sel, [(0.0, 0.5), (1.0, 0.5)])
-    front_dip = dip_active * pf.random.uniform(rng_dip, 0.0, 0.15) * dimensions[0]
+    front_dip = 0.15 * pf.random.uniform(rng_dip, 0.0, 1.0) ** 2 * dimensions[0]
     thickness = pf.random.clip_gaussian(rng, 0.06, 0.04, 0.02, 0.2)
 
     back_height = pf.random.uniform(rng, 0.35, 0.55)
@@ -2063,11 +2054,10 @@ def chair_bench_rand(rng: pf.RNG, dimensions: pf.Vector | None = None) -> ChairR
         rng_backrest_sel,
         rng_leg_sel,
         rng_slat_sel,
-        rng_dip_sel,
         rng_dip,
         rng_back_bend,
         rng_seat,
-    ) = rng.spawn(16)
+    ) = rng.spawn(15)
     if dimensions is None:
         dimensions = chair_bench_dimensions_rand(rng_dims)
     vec = pf.nodes.shader.coord().uv
@@ -2093,8 +2083,7 @@ def chair_bench_rand(rng: pf.RNG, dimensions: pf.Vector | None = None) -> ChairR
 
     front_bow = pf.random.clip_gaussian(rng, 0.08, 0.1, 0.0, 0.3) * dimensions[0]
     back_bow = pf.random.uniform(rng, 0.0, 0.25) * dimensions[0]
-    dip_active = pf.control.choice(rng_dip_sel, [(0.0, 0.5), (1.0, 0.5)])
-    front_dip = dip_active * pf.random.uniform(rng_dip, 0.0, 0.15) * dimensions[0]
+    front_dip = 0.15 * pf.random.uniform(rng_dip, 0.0, 1.0) ** 2 * dimensions[0]
     thickness = pf.random.clip_gaussian(rng, 0.06, 0.04, 0.02, 0.2)
 
     back_height = pf.random.uniform(rng, 0.35, 0.55)

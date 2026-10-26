@@ -237,9 +237,7 @@ def bed_rand(rng: pf.RNG, dimensions: pf.Vector | None = None) -> BedResult:
         r_mattress,
     ) = rng.spawn(8)
     if dimensions is None:
-        width = pf.control.choice(
-            r_size, [(0.90, 1.0), (1.20, 1.0), (1.40, 1.0), (1.60, 1.0), (1.80, 1.0)]
-        )
+        width = pf.random.uniform(r_size, 0.90, 1.80)
         dimensions = pf.Vector((2.0, width, pf.random.uniform(r_thick, 0.20, 0.24)))
     frame_height = pf.random.uniform(r_frame, 0.32, 0.40)
     head_height = pf.random.uniform(r_head, 0.85, 1.00)

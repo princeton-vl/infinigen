@@ -303,9 +303,7 @@ def concrete_rand(
         displacement_depth = pf.random.uniform(rng, 0.002, 0.01)
 
     if micro_grain is None:
-        micro_grain = pf.control.choice(
-            rng, [(pf.random.uniform(rng, 0.2, 0.6), 1.0), (0.0, 1.0)]
-        )
+        micro_grain = 0.6 * pf.random.uniform(rng, 0.0, 1.0) ** 2
     if micro_grain_scale is None:
         micro_grain_scale = pf.random.uniform(rng, 100.0, 400.0)
 

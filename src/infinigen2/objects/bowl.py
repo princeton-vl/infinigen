@@ -242,7 +242,7 @@ def bowl_rand(rng: pf.RNG) -> BowlResult:
     broad_lobes = pf.random.randint(rng_broad_lobes, 3, 7)
     fine_ribs = pf.random.randint(rng_fine_ribs, 8, 25)
     rib_count = pf.control.choice(rng_count, [(broad_lobes, 0.4), (fine_ribs, 0.6)])
-    rib_sharpness = pf.control.choice(rng_sharp, [(0.0, 0.6), (1.0, 0.4)])
+    rib_sharpness = pf.random.uniform(rng_sharp, 0.0, 1.0)
     twist_angle = pf.random.uniform(rng_twist_angle, -0.8, 0.8)
     twist = pf.control.choice(rng_twist, [(0.0, 0.65), (twist_angle, 0.35)])
     uv = pf.nodes.shader.coord().uv

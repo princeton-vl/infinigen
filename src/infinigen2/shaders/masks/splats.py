@@ -820,14 +820,14 @@ def splat_dots_rand(
     if size is None:
         size = pf.random.uniform(rng, 0.05, 0.3)
 
-    detail = pf.control.choice(rng, [(0.0, 2.0), (1.0, 1.0), (2.0, 0.5)])
+    detail = 2.0 * pf.random.uniform(rng, 0.0, 1.0) ** 2
     smoothness = pf.random.uniform(rng, 0.262597, 0.41376)
     distortion_size = pf.random.uniform(rng, 2.0, 3.0)
     distortion_strength = pf.random.uniform(rng, 1.0, 3.0)
     distortion_detail = 4.0
     opacity_variation = pf.random.uniform(rng, 0.333333, 1.0)
     seed = pf.random.uniform(rng, 0.0, 100.0)
-    noise_settings_use_noise = pf.control.choice(rng, [(0.0, 1.0), (1.0, 1.0)])
+    noise_settings_use_noise = pf.random.uniform(rng, 0.0, 1.0)
     noise_settings_noise_size = 0.3
     noise_settings_noise_detail = 4.0
     border_settings_border_thickness = 0.636047
