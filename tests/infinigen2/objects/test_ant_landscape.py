@@ -13,6 +13,8 @@ from procfunc.tracer import TraceLevel
 
 from infinigen2.objects import ant_landscape
 
+pytestmark = pytest.mark.skip(reason="needs a Blender extension; excluded for now")
+
 _LANDSCAPE_GENERATORS = [
     ant_landscape.landscape_canyon_rand,
     ant_landscape.landscape_cliff_rand,

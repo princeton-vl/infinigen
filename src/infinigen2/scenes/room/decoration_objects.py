@@ -23,7 +23,7 @@ import numpy as np
 import procfunc as pf
 from procfunc.nodes import types as t
 
-from infinigen2.objects import boulder, bowl, lamp, plant_pot, random_primitives, vase
+from infinigen2.objects import bowl, lamp, plant_pot, random_primitives, vase
 from infinigen2.scenes.placement import collision as ccol
 from infinigen2.scenes.placement.culling import keep_non_colliding
 from infinigen2.scenes.placement.distribute import propagate_modifiers_to_instances
@@ -529,7 +529,6 @@ def decoration_smallobj_rand(rng: pf.RNG) -> MeshResult:
             (plant_pot.plant_pot_small_rand, 0.5),
             (bowl.bowl_rand, 0.5),
             (vase.cup_rand, 0.5),
-            (boulder.rock_rand, 0.5),
         ],
     )
     return func(rng_object)

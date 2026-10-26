@@ -34,6 +34,11 @@ def get_parser():
         help="List the `*_preset` variants of the generator modules instead of the "
         "manifest entries; each renders like a material via `material_cube`.",
     )
+    parser.add_argument(
+        "--integration",
+        action="store_true",
+        help="Drop entries whose `skip_tests` gives a reason not to test them.",
+    )
     parser.add_argument("-k", type=str, default=None)
     parser.add_argument("--columns", nargs="+", default=["name"])
     parser.add_argument("--separator", type=str, default=" ")
@@ -115,6 +120,9 @@ def _main():
 
     if args.categories is not None:
         items = items[items["category"].isin(args.categories)]
+
+    if args.integration and "skip_tests" in items.columns:
+        items = items[items["skip_tests"].isna()]
 
     if "shortname" in args.columns:
         items["shortname"] = items["_shortname"]

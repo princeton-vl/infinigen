@@ -59,11 +59,11 @@ def _serialize_value(value: Any) -> Any:
         return {"$repr": repr(value)}
 
 
-def _serialize_arg(arg: Any, node_ids: dict[int, str]) -> Any:
+def _serialize_arg(arg: Any, node_ids: dict[cg.Node, str]) -> Any:
     """Serialize an arg that may be a Node reference, constant, or nested structure."""
 
     if isinstance(arg, cg.Node):
-        node_id = node_ids.get(id(arg))
+        node_id = node_ids.get(arg)
         if node_id is None:
             logger.warning(f"Node {arg} not found in node_ids")
             return {"$ref": "???"}
@@ -83,7 +83,7 @@ def _func_name(node: cg.FunctionCallNode) -> str:
 def _serialize_node(
     node: cg.Node,
     node_id: str,
-    node_ids: dict[int, str],
+    node_ids: dict[cg.Node, str],
 ) -> dict:
     args = [_serialize_arg(a, node_ids) for a in node.args]
     kwargs = {k: _serialize_arg(v, node_ids) for k, v in node.kwargs.items()}
@@ -160,11 +160,11 @@ def _serialize_node(
 
 def _serialize_graph(
     graph: cg.ComputeGraph,
-    node_ids: dict[int, str],
+    node_ids: dict[cg.Node, str],
 ) -> dict:
     nodes = []
     for node in cg.traverse_depth_first(graph):
-        nid = node_ids[id(node)]
+        nid = node_ids[node]
         nodes.append(_serialize_node(node, nid, node_ids))
 
     outputs = _serialize_arg(graph.outputs.obj(), node_ids)
@@ -184,12 +184,12 @@ def to_json(
     all_graphs = list(cg.traverse_nested_graphs(graph))
 
     # Assign node IDs across all graphs
-    node_ids: dict[int, str] = {}
+    node_ids: dict[cg.Node, str] = {}
     counter = 0
     for g in all_graphs:
         for node in cg.traverse_depth_first(g):
-            if id(node) not in node_ids:
-                node_ids[id(node)] = f"n{counter}"
+            if node not in node_ids:
+                node_ids[node] = f"n{counter}"
                 counter += 1
 
     graphs_data = [_serialize_graph(g, node_ids) for g in all_graphs]

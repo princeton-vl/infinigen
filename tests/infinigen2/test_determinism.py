@@ -12,6 +12,7 @@ migration; geometry/transforms are deterministic today.
 """
 
 import hashlib
+import random
 import re
 from pathlib import Path
 
@@ -56,6 +57,23 @@ _BANNED = [
         r"|choice|bytes|shuffle|permutation|permuted|integers|uniform|normal"
         r"|standard_normal|beta|binomial|gamma|poisson)\b",
         "numpy global RNG; thread the seeded np.random.Generator (rng) instead",
+    ),
+    (
+        r"\b(default_rng|RandomState|np\.random\.Generator)\s*\(",
+        "fresh rng stream; take a seeded rng argument and spawn from it",
+    ),
+    (
+        r"^\s*(from\s+numpy\.random\s+import|import\s+numpy\.random)",
+        "numpy.random import bypasses the rng scan; thread the seeded rng",
+    ),
+    (
+        r"(?<![\w.])id\s*\(",
+        "id() addresses are reused after free and vary run to run; key by the "
+        "object itself or by bpy session_uid",
+    ),
+    (
+        r"(?<![\w.])hash\s*\(",
+        "str hash() is randomized per process (PYTHONHASHSEED)",
     ),
     (
         r"\btime\.(time|perf_counter|monotonic|process_time)\s*\(",
@@ -117,8 +135,23 @@ def _scene_geometry_signature() -> list[tuple]:
     return sorted(sigs)
 
 
+def _global_rng_state() -> tuple:
+    np_state = np.random.get_state()
+    return random.getstate(), np_state[1].tobytes(), np_state[2:]
+
+
 def _build(pathspec: str, kind: str, room_count: int | None) -> list[tuple]:
     bpy.ops.wm.read_factory_settings(use_empty=True)
+    before = _global_rng_state()
+    _build_into_scene(pathspec, kind, room_count)
+    assert _global_rng_state() == before, (
+        f"{pathspec}: consumed the global random/np.random stream instead of the "
+        f"seeded rng argument"
+    )
+    return _scene_geometry_signature()
+
+
+def _build_into_scene(pathspec: str, kind: str, room_count: int | None) -> None:
     func = import_item(pathspec)
     if kind == "Material":
         res = func(
@@ -130,12 +163,14 @@ def _build(pathspec: str, kind: str, room_count: int | None) -> list[tuple]:
         func(rng=np.random.default_rng(SEED))
     else:
         func(rng=np.random.default_rng(SEED), room_count=room_count)
-    return _scene_geometry_signature()
 
 
 # Generators we cannot assert deterministic yet, with the blocking reason.
 # These flip to expected-pass once the dependency lands.
 _DETERMINISM_BLOCKED = {}
+
+
+_SKIP_TESTS = GENERATORS_MANIFEST.set_index("name")["skip_tests"].dropna().to_dict()
 
 
 def _determinism_params():
@@ -149,9 +184,8 @@ def _determinism_params():
         )
         for name in df["name"].values:
             short = name.rsplit(".", 1)[-1]
-            marks = ()
-            if short in _DETERMINISM_BLOCKED:
-                marks = pytest.mark.skip(reason=_DETERMINISM_BLOCKED[short])
+            reason = _SKIP_TESTS.get(name, _DETERMINISM_BLOCKED.get(short))
+            marks = () if reason is None else pytest.mark.skip(reason=reason)
             room_count = 1 if short == "house_furnished_rand" else None
             yield pytest.param(name, category, room_count, id=short, marks=marks)
 

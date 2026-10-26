@@ -833,35 +833,43 @@
   },
   {
     "category": "Object",
-    "name": "infinigen2.objects.ant_landscape.landscape_canyon_rand"
+    "name": "infinigen2.objects.ant_landscape.landscape_canyon_rand",
+    "skip_tests": "needs the antlandscape Blender extension, which installs online on first call"
   },
   {
     "category": "Object",
-    "name": "infinigen2.objects.ant_landscape.landscape_cliff_rand"
+    "name": "infinigen2.objects.ant_landscape.landscape_cliff_rand",
+    "skip_tests": "needs the antlandscape Blender extension, which installs online on first call"
   },
   {
     "category": "Object",
-    "name": "infinigen2.objects.ant_landscape.landscape_generalized_rand"
+    "name": "infinigen2.objects.ant_landscape.landscape_generalized_rand",
+    "skip_tests": "needs the antlandscape Blender extension, which installs online on first call"
   },
   {
     "category": "Object",
-    "name": "infinigen2.objects.ant_landscape.landscape_mesa_rand"
+    "name": "infinigen2.objects.ant_landscape.landscape_mesa_rand",
+    "skip_tests": "needs the antlandscape Blender extension, which installs online on first call"
   },
   {
     "category": "Object",
-    "name": "infinigen2.objects.ant_landscape.landscape_mountain_rand"
+    "name": "infinigen2.objects.ant_landscape.landscape_mountain_rand",
+    "skip_tests": "needs the antlandscape Blender extension, which installs online on first call"
   },
   {
     "category": "Object",
-    "name": "infinigen2.objects.ant_landscape.landscape_rand"
+    "name": "infinigen2.objects.ant_landscape.landscape_rand",
+    "skip_tests": "needs the antlandscape Blender extension, which installs online on first call"
   },
   {
     "category": "Object",
-    "name": "infinigen2.objects.ant_landscape.landscape_river_rand"
+    "name": "infinigen2.objects.ant_landscape.landscape_river_rand",
+    "skip_tests": "needs the antlandscape Blender extension, which installs online on first call"
   },
   {
     "category": "Object",
-    "name": "infinigen2.objects.ant_landscape.landscape_volcano_rand"
+    "name": "infinigen2.objects.ant_landscape.landscape_volcano_rand",
+    "skip_tests": "needs the antlandscape Blender extension, which installs online on first call"
   },
   {
     "category": "Object",
@@ -898,35 +906,43 @@
   },
   {
     "category": "Object",
-    "name": "infinigen2.objects.boulder.boulder_abstract_rand"
+    "name": "infinigen2.objects.boulder.boulder_abstract_rand",
+    "skip_tests": "needs the antlandscape Blender extension, which installs online on first call"
   },
   {
     "category": "Object",
-    "name": "infinigen2.objects.boulder.boulder_cauliflower_rand"
+    "name": "infinigen2.objects.boulder.boulder_cauliflower_rand",
+    "skip_tests": "needs the antlandscape Blender extension, which installs online on first call"
   },
   {
     "category": "Object",
-    "name": "infinigen2.objects.boulder.boulder_crystalline_rand"
+    "name": "infinigen2.objects.boulder.boulder_crystalline_rand",
+    "skip_tests": "needs the antlandscape Blender extension, which installs online on first call"
   },
   {
     "category": "Object",
-    "name": "infinigen2.objects.boulder.boulder_flatstones_rand"
+    "name": "infinigen2.objects.boulder.boulder_flatstones_rand",
+    "skip_tests": "needs the antlandscape Blender extension, which installs online on first call"
   },
   {
     "category": "Object",
-    "name": "infinigen2.objects.boulder.boulder_rand"
+    "name": "infinigen2.objects.boulder.boulder_rand",
+    "skip_tests": "needs the antlandscape Blender extension, which installs online on first call"
   },
   {
     "category": "Object",
-    "name": "infinigen2.objects.boulder.boulder_ridged_rand"
+    "name": "infinigen2.objects.boulder.boulder_ridged_rand",
+    "skip_tests": "needs the antlandscape Blender extension, which installs online on first call"
   },
   {
     "category": "Object",
-    "name": "infinigen2.objects.boulder.boulder_rock_rand"
+    "name": "infinigen2.objects.boulder.boulder_rock_rand",
+    "skip_tests": "needs the antlandscape Blender extension, which installs online on first call"
   },
   {
     "category": "Object",
-    "name": "infinigen2.objects.boulder.rock_rand"
+    "name": "infinigen2.objects.boulder.rock_rand",
+    "skip_tests": "needs the antlandscape Blender extension, which installs online on first call"
   },
   {
     "category": "Object",

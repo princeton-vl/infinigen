@@ -345,7 +345,10 @@ def _manifest_entries() -> tuple[dict[str, int], dict[str, str]]:
         name = e.get("name")
         if not name:
             continue
-        if category in _VIDEO_CATEGORIES:
+        if e.get("skip_tests"):
+            # Integration never renders these, so a gallery would only link 404s.
+            count = 0
+        elif category in _VIDEO_CATEGORIES:
             count = e.get("num_seeds") or 0
         elif e.get("num_seeds") == 0:
             # Deterministic entrypoints (asset_demo base shapes) get no example gallery.

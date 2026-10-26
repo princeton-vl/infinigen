@@ -4,7 +4,7 @@ set -u
 OUTPUT_PATH=$1
 PARALLEL_JOBS=$2
 REST_ARGS=${@:3}
-LIST_ARGS=""
+LIST_ARGS="--integration"
 
 if [ -z "$OUTPUT_PATH" ]; then
     echo "Please provide an output path"

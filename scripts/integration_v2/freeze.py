@@ -58,6 +58,22 @@ def rewrite_html(html: str) -> str:
     return html.replace('href="/select-versions"', 'href="index.html"')
 
 
+def _ref_exists(ref: str, roots: dict[str, Path]) -> bool:
+    version, _, rel = ref.partition("/")
+    root = roots.get(version)
+    return root is not None and bool(rel) and (root / rel).is_file()
+
+
+def drop_missing_media(html: str, missing: set[str]) -> str:
+    # A frozen page has no server to 404 gracefully, so unrendered media becomes the placeholder.
+    placeholder = '<div class="missing-placeholder">Not generated in this run</div>'
+    for ref in missing:
+        src = re.escape(f'src="/images/{ref}"')
+        html = re.sub(rf"<video[^>]*{src}[^>]*></video>", placeholder, html)
+        html = re.sub(rf"<img[^>]*{src}[^>]*>", placeholder, html)
+    return html
+
+
 def render_pages(
     out_dir: Path, versions: list[tuple[str, Path]], sort_order: str | None
 ) -> set[str]:
@@ -72,8 +88,12 @@ def render_pages(
     if resp.status_code != 200:
         raise SystemExit(f"viewer returned {resp.status_code}")
     html = resp.get_data(as_text=True)
-    (out_dir / "index.html").write_text(rewrite_html(html))
+    roots = dict(versions)
     refs = set(_IMAGE_REF.findall(html))
+    missing = {ref for ref in refs if not _ref_exists(ref, roots)}
+    html = drop_missing_media(html, missing)
+    (out_dir / "index.html").write_text(rewrite_html(html))
+    refs -= missing
 
     help_html = client.get("/help").get_data(as_text=True)
     (out_dir / "help.html").write_text(

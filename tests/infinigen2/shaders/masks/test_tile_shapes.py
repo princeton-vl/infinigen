@@ -14,6 +14,8 @@ from procfunc.nodes.util import bpy_node_info
 
 from infinigen2.shaders.masks import tile_shapes
 
+pytestmark = pytest.mark.render_gpu
+
 AOV_NAME = "tile_coordinates"
 SHAPE_NAMES = (
     "triangle",

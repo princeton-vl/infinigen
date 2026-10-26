@@ -8,7 +8,7 @@ from collections.abc import Callable
 import procfunc as pf
 import pytest
 
-from infinigen2.objects import boulder, bowl, plant_pot, random_primitives, vase
+from infinigen2.objects import bowl, plant_pot, random_primitives, vase
 from infinigen2.objects.lamp import LampResult
 from infinigen2.scenes.placement import collision as ccol
 from infinigen2.scenes.room import decoration_objects
@@ -17,7 +17,6 @@ SMALL_OBJECT_GENERATORS = {
     func.__name__: func
     for func in (
         bowl.bowl_rand,
-        boulder.rock_rand,
         plant_pot.plant_pot_small_rand,
         vase.cup_rand,
     )

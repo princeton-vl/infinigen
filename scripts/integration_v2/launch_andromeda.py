@@ -299,6 +299,7 @@ def list_items(selector: list[str], extra_args: list[str]) -> list[str]:
         sys.executable,
         "-m",
         "infinigen2.list",
+        "--integration",
         *selector,
         "--missing_values",
         "drop",

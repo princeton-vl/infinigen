@@ -17,13 +17,17 @@ def iter_all_nodes(
         seen = set()
     for node in node_tree.nodes:
         yield node
-        if node.type == "GROUP" and node.node_tree and id(node.node_tree) not in seen:
-            seen.add(id(node.node_tree))
+        if (
+            node.type == "GROUP"
+            and node.node_tree
+            and node.node_tree.session_uid not in seen
+        ):
+            seen.add(node.node_tree.session_uid)
             yield from iter_all_nodes(node.node_tree, seen)
 
 
 def flattened_node_count(node_tree: bpy.types.NodeTree, memo: dict[int, int]) -> int:
-    cached = memo.get(id(node_tree))
+    cached = memo.get(node_tree.session_uid)
     if cached is not None:
         return cached
     n = 0
@@ -32,7 +36,7 @@ def flattened_node_count(node_tree: bpy.types.NodeTree, memo: dict[int, int]) ->
             n += flattened_node_count(node.node_tree, memo)
         else:
             n += 1
-    memo[id(node_tree)] = n
+    memo[node_tree.session_uid] = n
     return n
 
 

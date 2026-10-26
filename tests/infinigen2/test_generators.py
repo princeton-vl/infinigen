@@ -37,6 +37,9 @@ def _assert_render_valid(objects: list[pf.MeshObject]):
     assert_uv_coords_satisfied(objects)
 
 
+_SKIP_TESTS = GENERATORS_MANIFEST.set_index("name")["skip_tests"].dropna().to_dict()
+
+
 def _manifest_params(df, defaults: dict):
     sub = df[["name"]].copy()
     for col, val in defaults.items():
@@ -45,7 +48,9 @@ def _manifest_params(df, defaults: dict):
         else:
             sub[col] = val
     for row in sub.itertuples(index=False):
-        yield pytest.param(*row, id=row[0])
+        reason = _SKIP_TESTS.get(row[0])
+        marks = () if reason is None else pytest.mark.skip(reason=reason)
+        yield pytest.param(*row, id=row[0], marks=marks)
 
 
 def validate_trace_generator(
@@ -150,7 +155,7 @@ _PRIMITIVES_TRACE_EXCLUDES = {
     "infinigen2.objects.table.table_side_rand",
 }
 _PRIMITIVES_TRACE_FUNCS = _OBJECT_FUNCS[
-    ~_OBJECT_FUNCS["name"].isin(_PRIMITIVES_TRACE_EXCLUDES)
+    ~_OBJECT_FUNCS["name"].isin(_PRIMITIVES_TRACE_EXCLUDES | set(_SKIP_TESTS))
 ]
 
 
@@ -159,12 +164,14 @@ def _primitives_trace_params():
         pathspec = row[0]
         marks = []
         if pathspec == "infinigen2.objects.toilet.toilet_rand":
-            marks = pytest.mark.xfail(
-                reason=(
-                    "Linux CI and a local current-develop merge expose a direct/traced "
-                    "execution parity gap for toilet_rand (7367 vs 7655 evaluated faces)"
-                ),
-                strict=True,
+            marks.append(
+                pytest.mark.xfail(
+                    reason=(
+                        "Linux CI and a local current-develop merge expose a direct/traced "
+                        "execution parity gap for toilet_rand (7367 vs 7655 evaluated faces)"
+                    ),
+                    strict=True,
+                )
             )
         yield pytest.param(pathspec, id=pathspec, marks=marks)
 

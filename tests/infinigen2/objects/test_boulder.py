@@ -12,6 +12,8 @@ from procfunc.tracer import TraceLevel
 
 from infinigen2.objects import boulder
 
+pytestmark = pytest.mark.skip(reason="needs a Blender extension; excluded for now")
+
 _BOULDER_STYLE_GENERATORS = [
     boulder.boulder_abstract_rand,
     boulder.boulder_cauliflower_rand,

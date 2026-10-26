@@ -637,3 +637,18 @@ def test_freeze_links_sources_to_public_repo_at_version_tag(tmp_path: Path) -> N
     assert compare.source_base_url(git) == (
         "https://github.com/princeton-vl/infinigen/blob/v2.0.0a1"
     )
+
+
+def test_freeze_replaces_unrendered_media_with_placeholder(tmp_path: Path) -> None:
+    before = _renamed_run(tmp_path, "before", "rock_rand")
+    after = _renamed_run(tmp_path, "after", "rock_rand")
+    (after / "after" / "rock_rand" / "Camera" / "0000.png").unlink()
+    pages = tmp_path / "pages"
+    pages.mkdir()
+
+    refs = freeze.render_pages(pages, [("before", before), ("after", after)], None)
+
+    html = (pages / "index.html").read_text()
+    assert all(ref.startswith("before/") for ref in refs) and refs
+    assert 'src="../after/' not in html
+    assert "Not generated in this run" in html

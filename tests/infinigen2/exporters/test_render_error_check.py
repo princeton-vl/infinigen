@@ -419,6 +419,7 @@ def _adaptive_test_render(tmp_path, max_samples, threshold):
     return render_log["text"], tmp_path
 
 
+@pytest.mark.render_gpu
 def test_adaptive_sampling_unconverged_raises(tmp_path):
     log, folder = _adaptive_test_render(tmp_path, max_samples=8, threshold=0.0001)
     with (
@@ -430,6 +431,7 @@ def test_adaptive_sampling_unconverged_raises(tmp_path):
         )
 
 
+@pytest.mark.render_gpu
 def test_adaptive_sampling_converged_passes(tmp_path):
     log, folder = _adaptive_test_render(tmp_path, max_samples=4096, threshold=0.25)
     fractions = assert_adaptive_sampling_converged(
@@ -438,6 +440,7 @@ def test_adaptive_sampling_converged_passes(tmp_path):
     assert all(v <= 0.05 for v in fractions.values())
 
 
+@pytest.mark.render_gpu
 def test_adaptive_sampling_unconverged_warn_mode(tmp_path):
     log, folder = _adaptive_test_render(tmp_path, max_samples=8, threshold=0.0001)
     with context.override_globals(error_mode_unconverged_samples="warn"):

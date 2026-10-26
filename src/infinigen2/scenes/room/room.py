@@ -1143,10 +1143,10 @@ def room_kitchen_rand(
         n_plain_walls=pf.random.randint(rng_plain, 1, 4),
         plain_wall_offset=pf.random.randint(rng_plain, 0, 4),
     )
-    plain_ids = {id(p) for p in room.plain_wall_planes}
+    plain_walls = set(room.plain_wall_planes)
     kitchen_setup = kitchen_setup_rand(
         rng_setup,
-        wall_planes=[p for p in room.wall_planes if id(p) not in plain_ids],
+        wall_planes=[p for p in room.wall_planes if p not in plain_walls],
         reserved_wall_planes=room.plain_wall_planes,
         bbox_min=pf.Vector((0.0, 0.0, 0.0)),
         bbox_max=dimensions,
