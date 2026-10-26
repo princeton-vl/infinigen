@@ -1051,7 +1051,7 @@ def _door_affordance_collider(
         location=(center.x, center.y, height / 2),
         rotation_euler=(0.0, 0.0, angle),
     )
-    collider.item().name = f"door_affordance.{index:02d}"
+    collider.item().name = f"door_affordance_{index:02d}"
     collider.item().hide_render = True
     collider.item().display_type = "WIRE"
     return collider

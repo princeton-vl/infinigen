@@ -279,7 +279,7 @@ def lights_with_shared_wattage_rand(
     lights = []
     for i, w in enumerate(watt_per_light):
         light = lights_point_colored_rand(rng, energy=float(w))
-        light.item().name = f"floating_light.{i:02d}"
+        light.item().name = f"floating_light_{i:02d}"
         lights.append(light)
 
     return lights

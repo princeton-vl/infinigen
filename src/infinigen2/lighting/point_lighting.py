@@ -73,7 +73,7 @@ def lights_floating_colored_rand(
         light = lights_point_colored_rand(
             light_rngs[i], energy=float(fractions[i] * total_wattage)
         )
-        light.item().name = f"colored_light.{i:02d}"
+        light.item().name = f"colored_light_{i:02d}"
         lights.append(light)
 
     distribute_in_bbox(rng, lights, bbox)
