@@ -114,9 +114,15 @@ def _storage_drawers_rand(
         handle=handle,
     ).mesh
     copies = [drawers.clone() for _ in slots[1:]]
-    pf.ops.object.set_transform(drawers, location=slots[0][0])
+    location = slots[0][0]
+    uv = pf.ops.attr.uv_coords(drawers)
+    pf.ops.attr.write_uv_coords(drawers, uv + (location.y, location.z))
+    pf.ops.object.set_transform(drawers, location=location)
     for index, copy in enumerate(copies, start=1):
-        pf.ops.object.set_transform(copy, location=slots[index][0])
+        location = slots[index][0]
+        uv = pf.ops.attr.uv_coords(copy)
+        pf.ops.attr.write_uv_coords(copy, uv + (location.y, location.z))
+        pf.ops.object.set_transform(copy, location=location)
         pf.ops.object.join(drawers, copy)
     return drawers
 
