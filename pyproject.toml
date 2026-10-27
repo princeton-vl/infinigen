@@ -43,10 +43,9 @@ dependencies = [
 [project.optional-dependencies]
 terrain = [
     "infinigen[infinigen1]", # terrain is a v1 feature
-    "landlab==2.6.0",
+    "landlab>=2.9",
     "pyrender<0.2.0",
-    # landlab needs pkg_resources, removed in setuptools>=81
-    "setuptools<81"
+    "setuptools>=84.1"
 ]
 vis = [
     "einops",
@@ -93,7 +92,7 @@ infinigen1 = [
     "coacd",
     "networkx",
     "psutil",
-    "scikit-learn<1.4.0",
+    "scikit-learn>=1.5",
     "shapely<=2.0.5",
     "tqdm",
     "submitit", # v1 datagen SLURM
