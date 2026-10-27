@@ -933,16 +933,17 @@ def splats_mask_rand(
     mask = splat_dots_rand(rng=rng_dots_initial, vector=vector, size=initial_size)
     mask = mask + splat_dots_rand(rng=rng_dots_second, vector=vector)
 
-    for _i in range(3):
-        size = size * pf.random.uniform(rng, 0.5, 1.5)
+    size_mults = pf.random.uniform(rng, (0.5,) * 3, (1.5,) * 3)
+    for i in range(3):
+        size = size * size_mults[i]
         newmask = pf.control.choice(
-            rng_choices[_i],
+            rng_choices[i],
             [
                 (splat_dots_rand, 1.0),
                 (splats_streaks_rand, 1.0),
                 (lambda *_, **__: 0.0, 1.0),
             ],
-        )(rng_chosen[_i], vector, size=size)
+        )(rng_chosen[i], vector, size=size)
         mask = mask + newmask
 
     if allow_gradient:

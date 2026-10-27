@@ -150,7 +150,7 @@ def _sample_object_transform(
 ) -> None:
     """Sample a random rotation and size for obj, set them, and bake the scale so the
     object presents a rigid transform for collision/placement."""
-    angles = [pf.random.uniform(rng, 0, 2 * math.pi) for _ in range(3)]
+    angles = pf.random.uniform(rng, (0.0,) * 3, (2 * math.pi,) * 3)
     axes = [pf.random.clip_gaussian(rng, 1.0, 0.1, 0.8, 1.2) for _ in range(3)]
     scale = pf.Vector(tuple(axes))
 

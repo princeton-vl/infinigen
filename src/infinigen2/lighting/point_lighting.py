@@ -31,7 +31,7 @@ def lights_point_colored_rand(
 ) -> pf.LightObject:
     """A point light whose emission uses a fully-random RGB color."""
     if color is None:
-        color = tuple(pf.random.uniform(rng, 0.0, 1.0) for _ in range(3))
+        color = tuple(pf.random.uniform(rng, (0.0,) * 3, (1.0,) * 3))
     if shadow_soft_size is None:
         shadow_soft_size = pf.random.uniform(rng, 0.01, 0.20)
 

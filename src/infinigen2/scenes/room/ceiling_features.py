@@ -252,12 +252,12 @@ def ceiling_skylight_grid_rand(
     margin_frac = pf.random.uniform(rng, 0.0, 1.0)
 
     # fit per-axis counts; min_margin within [floor, (extent-win)/2]
+    splits = pf.random.uniform(rng, (0.4,) * 2, (0.6,) * 2)
     fits = []
-    for axis, n_cap in ((0, 4), (1, 3)):
+    for axis, n_cap, split in ((0, 4, splits[0]), (1, 3, splits[1])):
         size = win_dims[axis]
         max_margin = max(floor_margin, (extent[axis] - size) / 2)
         min_margin = floor_margin + (max_margin - floor_margin) * margin_frac
-        split = pf.random.uniform(rng, 0.4, 0.6)
         fit = fit_grid_margins(extent[axis], size, spacing, min_margin, split, n_cap)
         fits.append(fit)
 
@@ -387,8 +387,9 @@ def ceiling_light_bar_lights_rand(
 
     # one area lamp per bar, just below the ceiling, facing down
     lights: list[pf.LightObject] = []
-    for bar in bars:
-        lamp_energy = per_energy * pf.random.uniform(rng, 0.75, 1.25)
+    energy_mults = pf.random.uniform(rng, (0.75,) * len(bars), (1.25,) * len(bars))
+    for bar, energy_mult in zip(bars, energy_mults, strict=True):
+        lamp_energy = per_energy * energy_mult
         light = pf.ops.primitives.light.area_lamp(
             shape="RECTANGLE",
             size_x=footprint[0],
