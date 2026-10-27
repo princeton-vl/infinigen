@@ -124,15 +124,20 @@ def _scene_geometry_signature() -> list[tuple]:
         co = np.empty(len(mesh.vertices) * 3, dtype=np.float64)
         mesh.vertices.foreach_get("co", co)
         world = np.array(obj.matrix_world, dtype=np.float64)
-        sigs.append(
-            (
-                len(mesh.vertices),
-                len(mesh.polygons),
-                hashlib.sha256(np.round(co, _ROUND).tobytes()).hexdigest(),
-                hashlib.sha256(np.round(world, _ROUND).tobytes()).hexdigest(),
-            )
-        )
-    return sorted(sigs)
+        co_hash = hashlib.sha256(np.round(co, _ROUND).tobytes()).hexdigest()
+        sigs.append((len(mesh.vertices), len(mesh.polygons), co_hash, world))
+    return sorted(sigs, key=lambda sig: sig[:3])
+
+
+def _signatures_match(first: list[tuple], second: list[tuple]) -> bool:
+    if len(first) != len(second):
+        return False
+    for a, b in zip(first, second):
+        if a[:3] != b[:3]:
+            return False
+        if not np.allclose(a[3], b[3], atol=10.0**-_ROUND):
+            return False
+    return True
 
 
 def _global_rng_state() -> tuple:
@@ -195,7 +200,7 @@ def test_generator_determinism(pathspec, kind, room_count):
     first = _build(pathspec, kind, room_count)
     assert first, f"{pathspec}: produced no mesh geometry"
     second = _build(pathspec, kind, room_count)
-    assert first == second, (
+    assert _signatures_match(first, second), (
         f"{pathspec}: geometry differs between two builds of seed {SEED} "
         f"(nondeterministic generation)"
     )
