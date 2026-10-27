@@ -7,6 +7,64 @@
 #define VROCK_ON_TILED_LANDSCAPE 0
 #define VROCK_ON_GROUND 1
 
+#ifndef __CUDACC__
+#include <cstdint>
+#include <cstring>
+// Per-thread cache (CPU only) of the mask noise and attachment SDF at Voronoi
+// cell centres, which many query points share. Both are pure functions of the
+// centre and a tag for the duration of a call(), so keying on the centre's float
+// bits gives bitwise identical results; call() bumps the generation to
+// invalidate entries. Off by default (lookup() misses, store() does nothing);
+// the optimized terrain turns it on with set_attachment_cache(1).
+namespace vrock_attachment_cache {
+    const int SIZE = 1 << 16;
+    struct Entry {
+        uint32_t x, y, z;
+        uint32_t tag;
+        uint32_t generation;
+        float value;
+    };
+    static uint32_t generation = 1;
+    inline bool &enabled() {
+        static bool on = false;
+        return on;
+    }
+    inline Entry *thread_entries() {
+        static thread_local Entry entries[SIZE];
+        return entries;
+    }
+    inline uint32_t bits(float f) {
+        uint32_t u;
+        memcpy(&u, &f, sizeof(u));
+        return u;
+    }
+    inline Entry *slot(float3_nonbuiltin p, uint32_t tag) {
+        uint32_t x = bits(p.x), y = bits(p.y), z = bits(p.z);
+        uint32_t h = x * 73856093u ^ y * 19349663u ^ z * 83492791u ^ tag * 2654435761u;
+        h ^= h >> 15;
+        return thread_entries() + (h & (SIZE - 1));
+    }
+    inline bool lookup(float3_nonbuiltin p, uint32_t tag, float *value) {
+        if (!enabled()) return false;
+        Entry *e = slot(p, tag);
+        if (e->generation == generation && e->tag == tag && e->x == bits(p.x) && e->y == bits(p.y) && e->z == bits(p.z)) {
+            *value = e->value;
+            return true;
+        }
+        return false;
+    }
+    inline void store(float3_nonbuiltin p, uint32_t tag, float value) {
+        if (!enabled()) return;
+        Entry *e = slot(p, tag);
+        e->x = bits(p.x); e->y = bits(p.y); e->z = bits(p.z);
+        e->tag = tag;
+        e->generation = generation;
+        e->value = value;
+    }
+    const uint32_t ATTACHMENT_TAG = 0xFFFFFFFFu;
+}
+#endif
+
 DEVICE_FUNC void single_group_voronoi_rocks(
     float3_nonbuiltin position,
     float3_nonbuiltin *cell_center,
@@ -75,8 +133,19 @@ DEVICE_FUNC void single_group_voronoi_rocks(
     }
     float gap_freq = exp(log(gap_min_freq) + (log(gap_max_freq) - log(gap_min_freq)) * hash_to_float(seed, 6));
     perturbation = pow(gap_base, Perlin(position.x, position.x, position.x, myhash(seed, 5), gap_octaves, gap_freq)) * gap_scale / freq;
+    int mask_seed = myhash(seed, 7);
     for (int i = 0; i < n_neighbors; i++) {
-        masks[i] = Perlin(positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2], myhash(seed, 7), mask_octaves, mask_freq) + mask_shift < 0;
+        float mask_noise;
+#ifndef __CUDACC__
+        float3_nonbuiltin center(positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2]);
+        if (!vrock_attachment_cache::lookup(center, (uint32_t)mask_seed, &mask_noise)) {
+            mask_noise = Perlin(positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2], mask_seed, mask_octaves, mask_freq);
+            vrock_attachment_cache::store(center, (uint32_t)mask_seed, mask_noise);
+        }
+#else
+        mask_noise = Perlin(positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2], mask_seed, mask_octaves, mask_freq);
+#endif
+        masks[i] = mask_noise + mask_shift < 0;
     }
 }
 
@@ -117,6 +186,11 @@ DEVICE_FUNC void voronoi_rocks(
             }
             else {
                 float sdf_a;
+#ifndef __CUDACC__
+                if (!vrock_attachment_cache::lookup(cell_center[j], vrock_attachment_cache::ATTACHMENT_TAG, &sdf_a)) {
+#else
+                {
+#endif
                 if (attachment == VROCK_ON_TILED_LANDSCAPE) {
                     landtiles(cell_center[j], &sdf_a, NULL, is_caved, attachment_i_params, attachment_f_params, caves_i_params, caves_f_params);
                 }
@@ -125,6 +199,10 @@ DEVICE_FUNC void voronoi_rocks(
                 }
                 else {
                     assert(0);
+                }
+#ifndef __CUDACC__
+                vrock_attachment_cache::store(cell_center[j], vrock_attachment_cache::ATTACHMENT_TAG, sdf_a);
+#endif
                 }
                 solid = abs(sdf_a) < 0.5 / freq;
             }

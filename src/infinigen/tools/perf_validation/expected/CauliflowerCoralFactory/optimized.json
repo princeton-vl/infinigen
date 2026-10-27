@@ -1,0 +1,56 @@
+{
+ "kind": "assets",
+ "optimized": "all",
+ "rows": [
+  {
+   "target": "CauliflowerCoralFactory",
+   "seed": 0,
+   "triangles": 5777840
+  },
+  {
+   "target": "CauliflowerCoralFactory",
+   "seed": 1,
+   "triangles": 6012148
+  },
+  {
+   "target": "CauliflowerCoralFactory",
+   "seed": 2,
+   "triangles": 5993125
+  },
+  {
+   "target": "CauliflowerCoralFactory",
+   "seed": 3,
+   "triangles": 7874020
+  },
+  {
+   "target": "CauliflowerCoralFactory",
+   "seed": 4,
+   "triangles": 6108100
+  },
+  {
+   "target": "CauliflowerCoralFactory",
+   "seed": 5,
+   "triangles": 6608176
+  },
+  {
+   "target": "CauliflowerCoralFactory",
+   "seed": 6,
+   "triangles": 5161352
+  },
+  {
+   "target": "CauliflowerCoralFactory",
+   "seed": 7,
+   "triangles": 5587056
+  },
+  {
+   "target": "CauliflowerCoralFactory",
+   "seed": 8,
+   "triangles": 5716952
+  },
+  {
+   "target": "CauliflowerCoralFactory",
+   "seed": 9,
+   "triangles": 6567472
+  }
+ ]
+}

@@ -8,6 +8,7 @@ import bpy
 import numpy as np
 from numpy.random import normal, uniform
 
+from infinigen._optimized import optimizable
 from infinigen.assets.objects.leaves.leaf_maple import nodegroup_leaf_shader
 from infinigen.assets.objects.leaves.leaf_v2 import (
     nodegroup_apply_wave,
@@ -761,6 +762,7 @@ class LeafFactoryGinko(AssetFactory):
             ],
         }
 
+    @optimizable("LEAVES", "infinigen.perf.assets.objects.leaves.leaf_ginko")
     def create_asset(self, **params):
         bpy.ops.mesh.primitive_plane_add(
             size=2,

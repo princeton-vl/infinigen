@@ -11,6 +11,7 @@ from mathutils import Vector
 from numpy.random import uniform
 
 import infinigen.core.util.blender as butil
+from infinigen._optimized import optimizable
 from infinigen.assets.objects.corals.base import BaseCoralFactory
 from infinigen.assets.utils.decorate import displace_vertices, geo_extension
 from infinigen.assets.utils.object import join_objects, new_empty, new_icosphere
@@ -102,6 +103,7 @@ class StarBaseCoralFactory(BaseCoralFactory):
         )
         nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": geometry})
 
+    @optimizable("CORALS", "infinigen.perf.assets.objects.corals.star")
     def create_asset(self, face_size=0.01, **params):
         obj = new_icosphere(subdivisions=3)
         obj.location[-1] = uniform(0.25, 0.5)

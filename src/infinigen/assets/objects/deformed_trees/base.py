@@ -32,7 +32,7 @@ class BaseDeformedTreeFactory(AssetFactory):
             self.base_factory = GenericTreeFactory(
                 factory_seed, tree_params, None, NoApply, coarse
             )
-            self.trunk_surface = weighted_sample(material_assignments.bark)
+            self.trunk_surface = weighted_sample(material_assignments.bark)()
             self.base_hue = uniform(0.02, 0.08)
             self.material = surface.shaderfunc_to_material(
                 self.shader_rings, self.base_hue

@@ -16,6 +16,7 @@ from mathutils.bvhtree import BVHTree
 from numpy import ascontiguousarray as AC
 
 import infinigen
+from infinigen._optimized import optimizable
 from infinigen.assets.composition import material_assignments
 from infinigen.assets.materials import (
     fluid as fluid_materials,
@@ -141,6 +142,7 @@ class CollectiveOcMesher(UntexturedOcMesher):
 class Terrain:
     instance = None
 
+    @optimizable("TERRAIN", "infinigen.perf.terrain.core")
     def __init__(
         self,
         seed,
@@ -725,6 +727,7 @@ class Terrain:
 
         return scene_bvh, camera_selection_answers, vertexwise_min_dist
 
+    @optimizable("TERRAIN", "infinigen.perf.terrain.core")
     def tag_terrain(self, obj):
         if len(obj.data.vertices) == 0:
             return

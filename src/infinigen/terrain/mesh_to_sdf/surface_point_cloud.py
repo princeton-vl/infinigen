@@ -16,6 +16,8 @@ import numpy as np
 import trimesh
 from sklearn.neighbors import KDTree
 
+from infinigen._optimized import optimizable
+
 from .scan import Scan, get_camera_transform_looking_at_origin
 from .utils import check_voxels, get_raster_points, sample_uniform_points_in_unit_sphere
 
@@ -32,6 +34,7 @@ class BadMeshException(Exception):
 
 
 class SurfacePointCloud:
+    @optimizable("TERRAIN", "infinigen.perf.terrain.mesh_to_sdf.surface_point_cloud")
     def __init__(self, mesh, points, normals=None, scans=None):
         self.mesh = mesh
         self.points = points
@@ -50,6 +53,7 @@ class SurfacePointCloud:
             )
             return samples
 
+    @optimizable("TERRAIN", "infinigen.perf.terrain.mesh_to_sdf.surface_point_cloud")
     def get_sdf(
         self,
         query_points,

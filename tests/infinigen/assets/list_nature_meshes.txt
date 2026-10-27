@@ -3,6 +3,11 @@
 # infinigen.assets.objects.creatures.CrustaceanFactory # slow, fails 120sec timeout
 # infinigen.assets.objects.creatures.JellyfishFactory
 # infinigen.assets.objects.creatures.SnakeFactory
+# infinigen.assets.objects.deformed_trees.DeformedTreeFactory # slow, 70-170 sec
+# infinigen.assets.objects.deformed_trees.FallenTreeFactory # slow, 70-170 sec
+# infinigen.assets.objects.deformed_trees.HollowTreeFactory # slow, 70-170 sec
+# infinigen.assets.objects.deformed_trees.RottenTreeFactory # slow, 70-170 sec
+# infinigen.assets.objects.deformed_trees.TruncatedTreeFactory # slow, 70-170 sec
 # infinigen.assets.objects.tropic_plants.CoconutTreeFactory
 # infinigen.assets.objects.tropic_plants.LeafPalmPlantFactory
 # infinigen.assets.objects.tropic_plants.LeafPalmTreeFactory
@@ -23,7 +28,6 @@
 #LeafFactoryIvy
 #LizardFactory
 #OctopusFactory
-#ReedMonocotFactory
 infinigen.assets.objects.cactus.CactusFactory
 infinigen.assets.objects.cactus.ColumnarCactusFactory
 infinigen.assets.objects.cactus.GlobularCactusFactory
@@ -86,6 +90,7 @@ infinigen.assets.objects.monocot.TussockMonocotFactory
 infinigen.assets.objects.monocot.VeratrumMonocotFactory
 infinigen.assets.objects.monocot.WheatEarMonocotFactory
 infinigen.assets.objects.monocot.WheatMonocotFactory
+infinigen.assets.objects.monocot.grasses.ReedMonocotFactory
 infinigen.assets.objects.mushroom.MushroomFactory
 infinigen.assets.objects.particles.DustMoteFactory
 infinigen.assets.objects.particles.LichenFactory

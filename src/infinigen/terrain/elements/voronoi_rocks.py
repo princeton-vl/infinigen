@@ -8,6 +8,7 @@ import gin
 import numpy as np
 from numpy import ascontiguousarray as AC
 
+from infinigen._optimized import optimizable
 from infinigen.core.util.organization import (
     ElementNames,
     ElementTag,
@@ -25,6 +26,11 @@ def none_to_0(x):
     if x is None:
         return 0
     return x
+
+
+@optimizable("TERRAIN", "infinigen.perf.terrain.elements.voronoi_rocks")
+def _configure_library(element):
+    """The default implementation has nothing to configure."""
 
 
 @gin.configurable
@@ -125,6 +131,7 @@ class VoronoiRocks(Element):
 
         self.meta_params = [not isinstance(attachment, LandTiles), caves is not None]
         Element.__init__(self, "voronoi_rocks", material, transparency)
+        _configure_library(self)
         self.tag = ElementTag.VoronoiRocks
 
 

@@ -9,6 +9,7 @@ import json
 import gin
 import numpy as np
 
+from infinigen._optimized import optimizable
 from infinigen.core.util.organization import AssetFile, LandTile, Process
 from infinigen.terrain.utils import boundary_smooth, read, smooth
 
@@ -150,6 +151,7 @@ def assets_to_data(
     return L, N, data
 
 
+@optimizable("TERRAIN", "infinigen.perf.terrain.assets.landtiles.core")
 def landtile_asset(
     folder,
     preset_name,

@@ -1,0 +1,58 @@
+{
+ "kind": "assets",
+ "optimized": null,
+ "tolerance": 1e-05,
+ "why": "The default mushroom uses Blender's spin operator, whose face order follows a pointer-keyed map, so a seed can come out a few triangles apart from one run to the next even on one CPU (seed 9: 964,518 in six runs of seven, 964,522 in one). The optimized mushroom's native spin does not.",
+ "rows": [
+  {
+   "target": "MushroomFactory",
+   "seed": 0,
+   "triangles": 2066644
+  },
+  {
+   "target": "MushroomFactory",
+   "seed": 1,
+   "triangles": 1489818
+  },
+  {
+   "target": "MushroomFactory",
+   "seed": 2,
+   "triangles": 1069088
+  },
+  {
+   "target": "MushroomFactory",
+   "seed": 3,
+   "triangles": 1380290
+  },
+  {
+   "target": "MushroomFactory",
+   "seed": 4,
+   "triangles": 2889876
+  },
+  {
+   "target": "MushroomFactory",
+   "seed": 5,
+   "triangles": 2109332
+  },
+  {
+   "target": "MushroomFactory",
+   "seed": 6,
+   "triangles": 3033516
+  },
+  {
+   "target": "MushroomFactory",
+   "seed": 7,
+   "triangles": 482088
+  },
+  {
+   "target": "MushroomFactory",
+   "seed": 8,
+   "triangles": 2198724
+  },
+  {
+   "target": "MushroomFactory",
+   "seed": 9,
+   "triangles": 964518
+  }
+ ]
+}

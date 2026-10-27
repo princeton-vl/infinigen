@@ -1,0 +1,56 @@
+{
+ "kind": "assets",
+ "optimized": null,
+ "rows": [
+  {
+   "target": "StarCoralFactory",
+   "seed": 0,
+   "triangles": 3419154
+  },
+  {
+   "target": "StarCoralFactory",
+   "seed": 1,
+   "triangles": 3122064
+  },
+  {
+   "target": "StarCoralFactory",
+   "seed": 2,
+   "triangles": 4116741
+  },
+  {
+   "target": "StarCoralFactory",
+   "seed": 3,
+   "triangles": 4335587
+  },
+  {
+   "target": "StarCoralFactory",
+   "seed": 4,
+   "triangles": 3697078
+  },
+  {
+   "target": "StarCoralFactory",
+   "seed": 5,
+   "triangles": 5160522
+  },
+  {
+   "target": "StarCoralFactory",
+   "seed": 6,
+   "triangles": 4444184
+  },
+  {
+   "target": "StarCoralFactory",
+   "seed": 7,
+   "triangles": 4273708
+  },
+  {
+   "target": "StarCoralFactory",
+   "seed": 8,
+   "triangles": 3511870
+  },
+  {
+   "target": "StarCoralFactory",
+   "seed": 9,
+   "triangles": 2707332
+  }
+ ]
+}

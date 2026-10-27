@@ -9,6 +9,7 @@ from typing import Tuple
 
 import numpy as np
 
+from infinigen._optimized import optimizable
 from infinigen.assets import colors
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
@@ -957,6 +958,7 @@ def get_random_bark_params(seed):
 
 
 class BarkRandom:
+    @optimizable("TREES", "infinigen.perf.assets.materials.plant.bark_random")
     def apply(self, obj, selection=None, **kwargs):
         geo_params, color_params = get_random_bark_params(seed=np.random.randint(1e5))
 

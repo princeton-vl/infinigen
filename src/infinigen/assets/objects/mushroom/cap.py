@@ -10,6 +10,7 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
+from infinigen._optimized import optimizable_class
 from infinigen.assets.utils.decorate import (
     displace_vertices,
     geo_extension,
@@ -34,6 +35,7 @@ from infinigen.core.util.random import log_uniform
 __all__ = ["MushroomCapFactory"]
 
 
+@optimizable_class("MUSHROOM", "infinigen.perf.assets.objects.mushroom.factories")
 class MushroomCapFactory(AssetFactory):
     def __init__(self, factory_seed, base_hue, material_func, coarse=False):
         super().__init__(factory_seed, coarse)

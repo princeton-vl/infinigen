@@ -24,6 +24,7 @@ except ImportError as e:
     landlab = None
     _landlab_import_error = e
 
+from infinigen._optimized import optimizable
 from infinigen.core.util.organization import AssetFile
 from infinigen.core.util.random import random_general as rg
 from infinigen.terrain.elements.core import Element
@@ -34,6 +35,7 @@ __all__ = ["upsidedown_mountains_asset", "assets_to_data"]
 
 
 @gin.configurable
+@optimizable("TERRAIN", "infinigen.perf.terrain.assets.upsidedown_mountains")
 def upsidedown_mountains_asset(
     folder,
     device,

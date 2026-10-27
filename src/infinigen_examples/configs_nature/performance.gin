@@ -1,0 +1,11 @@
+# Enable every optional optimized implementation.
+#
+#   python -m infinigen_examples.generate_nature --configs performance ...
+#
+# For some of them instead, bind the list directly:
+#
+#   -p "optimized.packages=['trees', 'mushroom']"
+#
+# An implementation whose native kernels are not built logs one line and
+# uses the default one instead.
+optimized.packages = True

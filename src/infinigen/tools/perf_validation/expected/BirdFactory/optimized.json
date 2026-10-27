@@ -1,0 +1,56 @@
+{
+ "kind": "assets",
+ "optimized": "all",
+ "rows": [
+  {
+   "target": "BirdFactory",
+   "seed": 0,
+   "triangles": 138888
+  },
+  {
+   "target": "BirdFactory",
+   "seed": 1,
+   "triangles": 167168
+  },
+  {
+   "target": "BirdFactory",
+   "seed": 2,
+   "triangles": 123914
+  },
+  {
+   "target": "BirdFactory",
+   "seed": 3,
+   "triangles": 149346
+  },
+  {
+   "target": "BirdFactory",
+   "seed": 4,
+   "triangles": 132942
+  },
+  {
+   "target": "BirdFactory",
+   "seed": 5,
+   "triangles": 130500
+  },
+  {
+   "target": "BirdFactory",
+   "seed": 6,
+   "triangles": 223596
+  },
+  {
+   "target": "BirdFactory",
+   "seed": 7,
+   "triangles": 134052
+  },
+  {
+   "target": "BirdFactory",
+   "seed": 8,
+   "triangles": 120208
+  },
+  {
+   "target": "BirdFactory",
+   "seed": 9,
+   "triangles": 148158
+  }
+ ]
+}

@@ -20,6 +20,7 @@ import numpy as np
 from numpy.random import randint
 
 import infinigen
+from infinigen._optimized import optimizable
 from infinigen.core.util.logging import LogLevel
 from infinigen.core.util.math import int_hash
 from infinigen.core.util.organization import Task
@@ -192,12 +193,20 @@ def apply_gin_configs(
     gin.add_config_file_search_path(root / "infinigen_examples/")
 
     with LogLevel(logger=logging.getLogger(), level=logging.WARNING):
+        # infinigen.perf registers the optimized.* settings with gin, so it is
+        # imported before parsing.
+        from infinigen import perf  # noqa: F401
+
         gin.parse_config_files_and_bindings(
             configs,
             bindings=overrides,
             skip_unknown=skip_unknown,
             finalize_config=finalize_config,
         )
+
+    # Apply any optimized.* selection; by default nothing is selected (see
+    # docs/source/OptimizedImplementations.md).
+    perf.apply_gin_selection()
 
 
 @gin.configurable
@@ -239,6 +248,7 @@ def configure_render_cycles(
         bpy.context.scene.render.use_persistent_data = True
 
 
+@optimizable("RUNTIME", "infinigen.perf.core.init")
 def configure_cycles_devices(use_gpu=True):
     if use_gpu is False:
         logger.info(f"Job will use CPU-only due to {use_gpu=}")
@@ -296,10 +306,22 @@ def require_blender_addon(addon: str, fail: str = "fatal", allow_online=False):
 
     long = f"bl_ext.blender_org.{addon}"
 
+    # An add-on can be listed in preferences without being registered, e.g.
+    # after Blender's state is reset; callers need it registered.
+    _, addon_registered = addon_utils.check(long)
     addon_present = long in bpy.context.preferences.addons.keys()
 
-    if addon_present:
+    if addon_present and addon_registered:
         logger.debug(f"Addon {addon} already present.")
+        return True
+
+    if addon_present and not addon_registered:
+        logger.debug(f"Addon {addon} listed but not registered; enabling again.")
+        try:
+            bpy.ops.preferences.addon_enable(module=long)
+        except Exception as e:  # noqa: BLE001
+            report_fail(f"re-enabling {addon=} failed with {e}")
+            return False
         return True
 
     builtin_local_addons = set(a.__name__ for a in addon_utils.modules(refresh=True))
@@ -330,6 +352,19 @@ def require_blender_addon(addon: str, fail: str = "fatal", allow_online=False):
 
     if long not in bpy.context.preferences.addons.keys():
         report_fail(f"Attempted to install {addon=} but wasnt found after install")
+        return False
+
+    # Listed after the install is not necessarily registered.
+    if not addon_utils.check(long)[1]:
+        logger.info(f"Addon {addon} listed but not registered; registering it.")
+        try:
+            addon_utils.enable(long, default_set=False, persistent=True)
+        except Exception as e:  # noqa: BLE001
+            report_fail(f"registering {addon=} failed with {e}")
+            return False
+        if not addon_utils.check(long)[1]:
+            report_fail(f"{addon=} is listed but its register() did not run")
+            return False
 
     return True
 

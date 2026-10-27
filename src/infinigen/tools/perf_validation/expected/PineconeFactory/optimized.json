@@ -1,0 +1,56 @@
+{
+ "kind": "assets",
+ "optimized": "all",
+ "rows": [
+  {
+   "target": "PineconeFactory",
+   "seed": 0,
+   "triangles": 1260246
+  },
+  {
+   "target": "PineconeFactory",
+   "seed": 1,
+   "triangles": 799262
+  },
+  {
+   "target": "PineconeFactory",
+   "seed": 2,
+   "triangles": 1265924
+  },
+  {
+   "target": "PineconeFactory",
+   "seed": 3,
+   "triangles": 749594
+  },
+  {
+   "target": "PineconeFactory",
+   "seed": 4,
+   "triangles": 959280
+  },
+  {
+   "target": "PineconeFactory",
+   "seed": 5,
+   "triangles": 722818
+  },
+  {
+   "target": "PineconeFactory",
+   "seed": 6,
+   "triangles": 727318
+  },
+  {
+   "target": "PineconeFactory",
+   "seed": 7,
+   "triangles": 944658
+  },
+  {
+   "target": "PineconeFactory",
+   "seed": 8,
+   "triangles": 699428
+  },
+  {
+   "target": "PineconeFactory",
+   "seed": 9,
+   "triangles": 699246
+  }
+ ]
+}

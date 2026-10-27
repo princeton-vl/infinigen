@@ -6,16 +6,19 @@
 
 import numpy as np
 
+from infinigen._optimized import optimizable
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes
 from infinigen.core.util import blender as butil
 
 
+@optimizable("CORE", "infinigen.perf.core.nodes.nodegroups.transfer_attributes")
 def uvs_to_attribute(obj, name="uv_map"):
     assert obj.type == "MESH"
 
     n = len(obj.data.vertices)
-    data = np.empty((n, 3), dtype=np.float32)
+    # zeros: a vertex with no loop is never written below
+    data = np.zeros((n, 3), dtype=np.float32)
 
     for loop in obj.data.loops:
         u, v = obj.data.uv_layers.active.data[loop.index].uv
@@ -27,6 +30,7 @@ def uvs_to_attribute(obj, name="uv_map"):
     return attr
 
 
+@optimizable("CORE", "infinigen.perf.core.nodes.nodegroups.transfer_attributes")
 def attribute_to_uvs(obj, attr_name):
     assert obj.type == "MESH"
 

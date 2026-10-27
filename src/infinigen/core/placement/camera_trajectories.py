@@ -15,6 +15,7 @@ import gin
 import numpy as np
 from tqdm import tqdm
 
+from infinigen._optimized import optimizable
 from infinigen.core.placement.camera import configure_cameras, terrain_camera_query
 from infinigen.core.util import blender as butil
 from infinigen.core.util.rrt import AnimPolicyRRT
@@ -61,6 +62,7 @@ def compute_poses(
 
 
 @gin.configurable
+@optimizable("PLACEMENT", "infinigen.perf.core.placement.camera_trajectories")
 def compute_trajectories(
     cam_rigs,
     base_views,

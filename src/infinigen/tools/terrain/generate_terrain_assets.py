@@ -9,6 +9,7 @@ from pathlib import Path
 
 import bpy
 
+from infinigen._optimized import optimizable
 from infinigen.core import init
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed, int_hash
@@ -18,6 +19,7 @@ from infinigen.terrain.assets.landtiles import landtile_asset
 from infinigen.terrain.assets.upsidedown_mountains import upsidedown_mountains_asset
 
 
+@optimizable("TERRAIN", "infinigen.perf.tools.terrain.generate_terrain_assets")
 def asset_generation(
     output_folder,
     assets,

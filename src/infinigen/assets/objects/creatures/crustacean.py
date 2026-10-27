@@ -32,6 +32,7 @@ from infinigen.assets.objects.creatures.parts.crustacean.leg import (
 from infinigen.assets.objects.creatures.parts.crustacean.tail import (
     CrustaceanTailFactory,
 )
+from infinigen.assets.objects.creatures.util import joining
 from infinigen.assets.objects.creatures.util.creature import genome_to_creature
 from infinigen.assets.objects.creatures.util.genome import (
     CreatureGenome,
@@ -248,7 +249,8 @@ def shader_eye(nw: NodeWrangler):
     )
 
 
-def crustacean_postprocessing(body_parts, extras, params):
+def crustacean_postprocessing(root, params):
+    body_parts, extras = joining.postprocess_inputs(root)
     tag_list = ["body", "claw", "leg"]
     materials = [
         shaderfunc_to_material(shader_crustacean, params["material"])
@@ -311,7 +313,9 @@ class CrustaceanFactory(AssetFactory):
             root,
             parts,
             genome,
-            postprocess_func=crustacean_postprocessing,
+            postprocess_func=lambda root: crustacean_postprocessing(
+                root, genome.postprocess_params
+            ),
             rigging=rigging,
             min_remesh_size=0.005,
             face_size=kwargs["face_size"],

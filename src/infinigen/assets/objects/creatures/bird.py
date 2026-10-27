@@ -13,6 +13,7 @@ from numpy.random import normal as N
 from numpy.random import uniform as U
 
 import infinigen.assets.materials.creature as creature_materials
+from infinigen._optimized import optimizable
 from infinigen.assets.composition import material_assignments
 from infinigen.assets.objects.creatures import parts
 from infinigen.assets.objects.creatures.util import creature, genome, joining
@@ -334,6 +335,7 @@ class BirdFactory(AssetFactory):
             self.eyeball_material = creature_materials.eyeball.Eyeball()
             self.beak_material = creature_materials.beak.Beak()
 
+    @optimizable("CREATURES", "infinigen.perf.assets.objects.creatures.bird")
     def create_asset(self, i, placeholder, hair=True, **kwargs):
         dynamic = self.animation_mode is not None
 
@@ -443,6 +445,7 @@ class FlyingBirdFactory(AssetFactory):
 
         return p
 
+    @optimizable("CREATURES", "infinigen.perf.assets.objects.creatures.bird")
     def create_asset(self, i, placeholder, hair=True, animate=False, **kwargs):
         genome = flying_bird_genome(self.animation_mode)
         root, parts = creature.genome_to_creature(

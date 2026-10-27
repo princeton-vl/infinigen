@@ -248,7 +248,7 @@ class ReedMonocotFactory(GrassesMonocotFactory):
 
         assign_material(obj, [self.material, self.branch_material])
         write_material_index(
-            obj, surface.read_attr_data(obj, "ear", "FACE").astype(int)[:, 0]
+            obj, surface.read_attr_data(obj, "ear", "FACE").astype(int)
         )
         tag_object(obj, "reed")
         return obj

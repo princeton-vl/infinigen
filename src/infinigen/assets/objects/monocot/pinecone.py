@@ -9,6 +9,7 @@ import numpy as np
 from numpy.random import uniform
 
 import infinigen.core.util.blender as butil
+from infinigen._optimized import optimizable_class
 from infinigen.assets.objects.monocot.growth import MonocotGrowthFactory
 from infinigen.assets.utils.draw import shape_by_angles, shape_by_xs
 from infinigen.assets.utils.object import new_circle
@@ -25,6 +26,7 @@ from infinigen.core.util.random import log_uniform
 __all__ = ["PineconeFactory"]
 
 
+@optimizable_class("MONOCOT", "infinigen.perf.assets.objects.monocot.pinecone")
 class PineconeFactory(MonocotGrowthFactory):
     def __init__(self, factory_seed, coarse=False):
         super().__init__(factory_seed, coarse)

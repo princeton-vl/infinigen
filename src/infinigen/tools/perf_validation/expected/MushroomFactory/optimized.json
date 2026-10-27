@@ -1,0 +1,56 @@
+{
+ "kind": "assets",
+ "optimized": "all",
+ "rows": [
+  {
+   "target": "MushroomFactory",
+   "seed": 0,
+   "triangles": 2051792
+  },
+  {
+   "target": "MushroomFactory",
+   "seed": 1,
+   "triangles": 1476394
+  },
+  {
+   "target": "MushroomFactory",
+   "seed": 2,
+   "triangles": 1060204
+  },
+  {
+   "target": "MushroomFactory",
+   "seed": 3,
+   "triangles": 1372426
+  },
+  {
+   "target": "MushroomFactory",
+   "seed": 4,
+   "triangles": 2869640
+  },
+  {
+   "target": "MushroomFactory",
+   "seed": 5,
+   "triangles": 2098444
+  },
+  {
+   "target": "MushroomFactory",
+   "seed": 6,
+   "triangles": 2997224
+  },
+  {
+   "target": "MushroomFactory",
+   "seed": 7,
+   "triangles": 480300
+  },
+  {
+   "target": "MushroomFactory",
+   "seed": 8,
+   "triangles": 2194776
+  },
+  {
+   "target": "MushroomFactory",
+   "seed": 9,
+   "triangles": 964178
+  }
+ ]
+}

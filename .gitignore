@@ -116,3 +116,18 @@ usd/
 docs/source/api/infinigen2*.rst
 docs/source/api/modules.rst
 docs/source/api/
+
+# Cython output of the infinigen.perf extensions (named after the module, so
+# the *pyx.cpp rule does not match it)
+_native_fields.cpp
+_adaptive_triangulation.cpp
+_meshing.cpp
+_adaptive.cpp
+_spin.cpp
+_voronoi.cpp
+_tree_ops.cpp
+_cylinder_mesher.cpp
+_particle_sampler.cpp
+
+# pytest scratch directories
+pytest-of-*/

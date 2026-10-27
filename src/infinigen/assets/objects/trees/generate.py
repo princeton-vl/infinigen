@@ -11,6 +11,7 @@ import gin
 import numpy as np
 from numpy.random import uniform
 
+from infinigen._optimized import optimizable
 from infinigen.assets.composition import material_assignments
 from infinigen.assets.objects.cloud import CloudFactory
 from infinigen.assets.objects.fruits import (
@@ -93,6 +94,7 @@ class GenericTreeFactory(AssetFactory):
 
         self.min_dist = min_dist
 
+    @optimizable("TREES", "infinigen.perf.assets.objects.trees.generate")
     def create_placeholder(self, i, loc, rot):
         logger.debug("generating tree skeleton")
         skeleton_obj = tree.tree_skeleton(
@@ -131,6 +133,7 @@ class GenericTreeFactory(AssetFactory):
 
         return coarse_mesh
 
+    @optimizable("TREES", "infinigen.perf.assets.objects.trees.generate")
     def finalize_placeholders(self, placeholders):
         if not self.coarse_mesh_placeholder:
             return
@@ -146,6 +149,7 @@ class GenericTreeFactory(AssetFactory):
             distance = self.min_dist
         return dict(face_size=detail.target_face_size(distance), distance=distance)
 
+    @optimizable("TREES", "infinigen.perf.assets.objects.trees.generate")
     def create_asset(
         self, placeholder, face_size, distance, **kwargs
     ) -> bpy.types.Object:
@@ -302,6 +306,7 @@ def random_tree_child_factory(seed, leaf_params, leaf_type, season, **kwargs):
         raise ValueError(f"Unrecognized {leaf_type=}")
 
 
+@optimizable("TREES", "infinigen.perf.assets.objects.trees.generate")
 def make_leaf_collection(
     seed, leaf_params, n_leaf, leaf_types, decimate_rate=0.0, season=None
 ):
@@ -351,6 +356,11 @@ def random_leaf_collection(season, n=5):
     )
 
 
+@optimizable("TREES", "infinigen.perf.assets.objects.trees.generate")
+def _delete_leaf_templates(objs):
+    butil.delete(objs)
+
+
 def make_twig_collection(
     seed,
     twig_params,
@@ -383,7 +393,7 @@ def make_twig_collection(
 
     if child_col is not None:
         child_col.hide_viewport = False
-        butil.delete(list(child_col.objects))
+        _delete_leaf_templates(list(child_col.objects))
     return col
 
 

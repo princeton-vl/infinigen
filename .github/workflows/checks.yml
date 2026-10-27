@@ -101,3 +101,32 @@ jobs:
         run: |
           uv run pytest tests/infinigen2 -k 'not skip_for_ci and not render_gpu' \
             -n 4 --durations=20
+
+  perf_default_path:
+    runs-on: ${{ fromJSON(vars.CI_RUNNER || '"ubuntu-latest"') }}
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+          fetch-depth: 0
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.8.3"
+
+      # infinigen.perf is v1 code and needs the v1 dependencies; unit_tests stays
+      # lean so its import test still catches v2 code that needs them.
+      - name: Install with dev and v1 dependencies
+        run: |
+          uv venv
+          uv pip install -e ".[dev,infinigen1]"
+
+      # Nothing is selected and no kernels are built, so this tests the default
+      # path; tests that need an optimized implementation skip themselves.
+      - name: Default path unaffected by infinigen.perf
+        run: |
+          uv run --no-sync pytest tests/infinigen/performance_v1 -q --durations=10

@@ -1,0 +1,56 @@
+{
+ "kind": "assets",
+ "optimized": "all",
+ "rows": [
+  {
+   "target": "BushFactory",
+   "seed": 0,
+   "triangles": 153666
+  },
+  {
+   "target": "BushFactory",
+   "seed": 1,
+   "triangles": 99364
+  },
+  {
+   "target": "BushFactory",
+   "seed": 2,
+   "triangles": 153514
+  },
+  {
+   "target": "BushFactory",
+   "seed": 3,
+   "triangles": 146254
+  },
+  {
+   "target": "BushFactory",
+   "seed": 4,
+   "triangles": 145374
+  },
+  {
+   "target": "BushFactory",
+   "seed": 5,
+   "triangles": 98648
+  },
+  {
+   "target": "BushFactory",
+   "seed": 6,
+   "triangles": 140816
+  },
+  {
+   "target": "BushFactory",
+   "seed": 7,
+   "triangles": 103392
+  },
+  {
+   "target": "BushFactory",
+   "seed": 8,
+   "triangles": 107912
+  },
+  {
+   "target": "BushFactory",
+   "seed": 9,
+   "triangles": 142416
+  }
+ ]
+}

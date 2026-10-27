@@ -1,0 +1,56 @@
+{
+ "kind": "assets",
+ "optimized": null,
+ "rows": [
+  {
+   "target": "BrainCoralFactory",
+   "seed": 0,
+   "triangles": 4674264
+  },
+  {
+   "target": "BrainCoralFactory",
+   "seed": 1,
+   "triangles": 3837152
+  },
+  {
+   "target": "BrainCoralFactory",
+   "seed": 2,
+   "triangles": 4653828
+  },
+  {
+   "target": "BrainCoralFactory",
+   "seed": 3,
+   "triangles": 4530256
+  },
+  {
+   "target": "BrainCoralFactory",
+   "seed": 4,
+   "triangles": 5371036
+  },
+  {
+   "target": "BrainCoralFactory",
+   "seed": 5,
+   "triangles": 4410240
+  },
+  {
+   "target": "BrainCoralFactory",
+   "seed": 6,
+   "triangles": 6532984
+  },
+  {
+   "target": "BrainCoralFactory",
+   "seed": 7,
+   "triangles": 4987304
+  },
+  {
+   "target": "BrainCoralFactory",
+   "seed": 8,
+   "triangles": 4352392
+  },
+  {
+   "target": "BrainCoralFactory",
+   "seed": 9,
+   "triangles": 4302648
+  }
+ ]
+}

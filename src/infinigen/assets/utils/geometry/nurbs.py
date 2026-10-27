@@ -25,14 +25,6 @@ except ImportError:
     )
     NURBS = None
 
-try:
-    import bnurbs
-except ImportError:
-    # logger.warning(
-    #    "Failed to import compiled `bnurbs` package, either installation failed or we are running a minimal install"
-    # )
-    bnurbs = None
-
 
 def compute_cylinder_topology(n: int, m: int, uvs=False, cyclic=True, h_neighbors=None):
     # n: num vertices in vertical direction
@@ -120,8 +112,6 @@ def blender_nurbs(
     name="loft_nurbs",
     resolution=(32, 32),
     cyclic_v=True,
-    kv_u=None,
-    kv_v=None,
 ):
     n, m, _ = ctrlpts.shape
 
@@ -155,17 +145,6 @@ def blender_nurbs(
     spline.use_endpoint_u = True
     spline.use_cyclic_v = cyclic_v
     spline.resolution_u, spline.resolution_v = resolution
-
-    if (kv_u is not None or kv_v is not None) and bnurbs is None:
-        logger.warning(
-            "Failed to import compiled `bnurbs` package. `bnurbs` extension is no longer compiled by default, "
-            f"please either install it via BUILD_BNURBS=True during install, or avoid calling {blender_nurbs.__name__}"
-        )
-
-    if kv_u is not None:
-        bnurbs.set_knotsu(spline, kv_u)
-    if kv_v is not None:
-        bnurbs.set_knotsv(spline, kv_v)
 
     return obj
 
@@ -223,45 +202,6 @@ def blender_mesh_from_pydata(points, edges, faces, uvs=None, name="pydata_mesh")
     return obj
 
 
-def blender_nurbs_to_geomdl(s: bpy.types.Spline):
-    if NURBS is None:
-        raise ImportError(
-            f"geomdl was not found at runtime, please either install `geomdl` or avoid calling {blender_nurbs_to_geomdl.__name__}"
-        )
-
-    surf = NURBS.Surface(normalize_kv=False)
-
-    surf.degree_u, surf.degree_v = (s.order_u - 1, s.order_v - 1)
-    surf.ctrlpts_size_u = s.point_count_u + (s.order_u - 1 if s.use_cyclic_u else 0)
-    surf.ctrlpts_size_v = s.point_count_v + (s.order_v - 1 if s.use_cyclic_v else 0)
-
-    if bnurbs is None:
-        logger.warning(
-            "Failed to import compiled `bnurbs` package. `bnurbs` extension is no longer compiled by default, "
-            f"please either install it via BUILD_BNURBS=True during install, or avoid calling {blender_nurbs_to_geomdl.__name__}"
-        )
-    surf.knotvector_u = bnurbs.get_knotsu(s)
-    surf.knotvector_v = bnurbs.get_knotsv(s)
-
-    ctrlpts = np.empty((len(s.points), 4))
-    for i, p in enumerate(s.points):
-        ctrlpts[i] = p.co
-
-    # geomdl has no notion of cyclic, needs to duplicate points
-    # IMPORTANT: blender stores u as the faster changing index
-    ctrlpts = ctrlpts.reshape((s.point_count_v, s.point_count_u, 4))
-    if s.use_cyclic_u:
-        ctrlpts = np.concatenate([ctrlpts, ctrlpts[:, 0 : s.order_u - 1, :]], axis=1)
-    if s.use_cyclic_v:
-        ctrlpts = np.concatenate([ctrlpts, ctrlpts[0 : s.order_v - 1, :, :]], axis=0)
-
-    ctrlpts = ctrlpts.transpose(1, 0, 2).reshape((-1, 4))
-
-    surf.ctrlpts = ctrlpts[:, :-1]
-    surf.weights = ctrlpts[:, -1]
-    return surf
-
-
 def geomdl_to_mesh(surf, eval_delta, name="geomdl_mesh"):
     surf.delta = eval_delta
     points = np.array(surf.evalpts)
@@ -275,24 +215,6 @@ def geomdl_to_mesh(surf, eval_delta, name="geomdl_mesh"):
     obj = bpy.data.objects.new(name, mesh)
     bpy.context.scene.collection.objects.link(obj)
     return obj
-
-
-def map_param_to_valid_domain(knots: np.array, order: int, u: np.array, cyclic: bool):
-    u_start, u_end = knots[[order - 1, -order]]
-    if not cyclic and ((u_start > u).any() or (u > u_end).any()):
-        raise ValueError("out of domain parameter")
-    _, r = np.divmod(u - u_start, u_end - u_start)
-    return r + u_start
-
-
-# for cyclic u or v, wrap them around to valid domain.
-# raise exception if not cyclic and out of domain
-def map_uv_to_valid_domain(s: bpy.types.Spline, uv: np.array):
-    knotsu = bnurbs.get_knotsu(s)
-    knotsv = bnurbs.get_knotsv(s)
-    u = map_param_to_valid_domain(knotsu, s.order_u, uv[:, 0], s.use_cyclic_u)
-    v = map_param_to_valid_domain(knotsv, s.order_v, uv[:, 1], s.use_cyclic_v)
-    return np.stack([u, v], axis=-1)
 
 
 def geomdl_nurbs(

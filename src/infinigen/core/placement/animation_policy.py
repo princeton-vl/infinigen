@@ -19,6 +19,7 @@ from numpy.random import normal as N
 from numpy.random import uniform as U
 from tqdm import tqdm
 
+from infinigen._optimized import optimizable
 from infinigen.assets.utils.geometry.curve import Curve
 from infinigen.core.placement.path_finding import path_finding
 from infinigen.core.util import blender as butil
@@ -323,6 +324,7 @@ class AnimPolicyFollowObject:
 
 
 @gin.configurable
+@optimizable("PLACEMENT", "infinigen.perf.core.placement.animation_policy")
 def validate_keyframe_range(
     obj,
     start_frame,
@@ -585,6 +587,7 @@ def keyframe(obj, loc, rot, t, interp="BEZIER"):
 
 
 @gin.configurable
+@optimizable("PLACEMENT", "infinigen.perf.core.placement.animation_policy")
 def animate_trajectory(
     obj,
     bvh,
@@ -696,6 +699,7 @@ def animate_trajectory(
             return
 
 
+@optimizable("PLACEMENT", "infinigen.perf.core.placement.animation_policy")
 def policy_create_bezier_path(
     start_pose_obj, bvh, policy_func, to_mesh=False, eval_offset=(0, 0, 0), **kwargs
 ):

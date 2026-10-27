@@ -8,6 +8,7 @@ import numpy as np
 from mathutils import Euler, kdtree
 from numpy.random import uniform
 
+from infinigen._optimized import optimizable_class
 from infinigen.assets.utils.mesh import polygon_angles
 from infinigen.assets.utils.object import join_objects
 from infinigen.core.placement.factory import AssetFactory
@@ -21,6 +22,7 @@ from .growth import MushroomGrowthFactory
 __all__ = ["MushroomFactory"]
 
 
+@optimizable_class("MUSHROOM", "infinigen.perf.assets.objects.mushroom.factories")
 class MushroomFactory(AssetFactory):
     max_cluster = 10
 

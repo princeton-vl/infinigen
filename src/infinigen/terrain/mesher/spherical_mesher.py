@@ -7,6 +7,7 @@
 import gin
 import numpy as np
 
+from infinigen._optimized import optimizable
 from infinigen.core.util.logging import Timer
 from infinigen.terrain.utils import Mesh, Vars, get_caminfo
 
@@ -17,6 +18,7 @@ magnifier = 1e6
 
 
 @gin.configurable
+@optimizable("TERRAIN", "infinigen.perf.terrain.mesher.spherical_mesher")
 def kernel_caller(kernels, XYZ, bounds=None):
     sdfs = []
     for kernel in kernels:
@@ -69,6 +71,7 @@ class SphericalMesher:
 
 @gin.configurable
 class OpaqueSphericalMesher(SphericalMesher):
+    @optimizable("TERRAIN", "infinigen.perf.terrain.mesher.spherical_mesher")
     def __init__(
         self,
         cameras,
@@ -169,6 +172,7 @@ class OpaqueSphericalMesher(SphericalMesher):
 
 @gin.configurable
 class TransparentSphericalMesher(SphericalMesher):
+    @optimizable("TERRAIN", "infinigen.perf.terrain.mesher.spherical_mesher")
     def __init__(
         self,
         cameras,

@@ -1,5 +1,36 @@
 # CHANGELOG
 
+v2.0.0a4
+
+**Optional optimized implementations**
+
+- Add `infinigen.perf`: alternative implementations of parts of the generator, all off by default. Select every one with `--configs performance`, some with `optimized.packages=[...]` or `infinigen.use_optimized([...])`, in any combination. The selection is recorded in each stage's gin config
+- Covered: terrain, leaves, monocot (with pinecone), small plants, trees, corals, creatures, placement, the mushroom factory, the shared attribute and collection helpers (`core`), and process-level settings (`runtime`: input prefetch, compressed stage outputs)
+- Each optimized definition is reached through a gate on the default one (`infinigen/_optimized.py`): a tree without `infinigen/perf` runs the default code, gin bindings apply to both, and the selection can change at any time
+- The switches an optimized implementation has are gin settings (`prefetch_input_scene`, `direct_monocot_leaves`, `native_pinecone`, `native_tree_meshing`, `native_tree_edge_length`, `isolation_enabled`, `only_needed_land_processes`, `compress_output_blend`)
+- The mushroom factory is about 9x faster with triangle counts within 1% of the default and a different topology
+- The optimized leaves build the scene's leaf at its final density directly instead of building a fine grid and decimating it away. Measured through `make_leaf_collection`, the route every scene leaf takes, the triangle counts agree to within a triangle; the meshes themselves differ
+- The optimized trees and bushes mesh each trunk and branch natively as its own tube, and displace the bark on that mesh, instead of voxel-remeshing the welded skin: trees build about 21x and bushes 22x faster than the default (3x with the remesh kept), with 25-33% fewer triangles. `native_tree_meshing.enabled = False` keeps the remesh
+- The optimized corals run the reaction diffusion as one compiled loop (numba; numpy without it) and build the cauliflower coral's subdivision and the star coral's flowers on arrays. Brain and honeycomb corals are identical to the default; the cauliflower and star corals differ by a few triangles. A coral reef scene's `corals` stage takes 1:15 instead of 39 minutes
+- The optimized placement animates cameras and creature paths by evaluating the animated object alone at each frame instead of the whole scene: `animate_cameras` takes 5-9 s instead of 5-8 minutes on a coarse scene, with identical keyframes
+- With `runtime` selected, GPU renders keep the OptiX kernels they compile in `~/.cache/infinigen/optix` (`optix_kernel_cache`) instead of the driver's cache, which a cluster that gives each job its own `/var/tmp` deletes with the job: a test render of a coral reef scene that took 168 s, nearly all of it compiling, took 12 s in a later job
+- The scratch view layer of scene isolation is never rendered. Saved with the scene, it was rendered after every frame of a video as a second Cycles session
+- `infinigen.tools.perf_validation` compares the meshes: each row gives the triangle counts, whether the two builds are identical and, if not, how far apart their surfaces are
+- The native kernels are built under `INFINIGEN_INSTALL_PERF` (default off); an ordinary install needs no compiler and the published wheel stays pure python
+- The terrain optimizations are faster on a single CPU: the erosion and snowfall implementations, skipping simulations the scene never reads, the meshers and the cave SDF
+- Optionally (`land_process_pool.enabled = True`, off by default) run erosion, snowfall and the cave assets in worker processes, several at once, on the CPUs the job has. It shortens the terrain stage of a job with several CPUs, 1.4 to 2.2x at 4 CPUs and 2.3 to 3.7x at 8, for 0.8 to 1.3 GB more peak memory, with the same terrain files; a one-CPU job is unchanged
+- The GPL-2.0-or-later kernels are in the optional `infinigen_gpl` submodule. An implementation whose kernel was not built, or whose submodule is not checked out, uses the default implementation
+- With everything selected and the land-process pool on, the nature scenes at full quality generate (coarse, fine terrain and populate, frame 1, eight CPUs) 3.3 to 16.5x faster than on main, 6.9x geometric mean over 20 scenes; 27.1 h in total became 3.4 h
+- See `docs/source/OptimizedImplementations.md`
+
+**Fixes**
+
+- Fix `ReedMonocotFactory`, the deformed tree factories, the reptile factories (snakes, lizards, chameleons), and `geo_instance_scatter` with `dist_max`, which crashed
+- Make bush generation reproducible across processes: the primitives their attractors are sampled from came out of Blender in a per-process face order
+- Make creature parts reproducible across processes: `nodegroup_to_part` extracted a node group's geometry outputs from a set, in memory-address order, so the same seed could build a different mesh from run to run. On one CPU a creature is now the same, bit for bit, on every run; on several, Blender's multithreaded Subdivision Surface still varies in the last bits (see `docs/source/OptimizedImplementations.md`)
+- Fix `uvs_to_attribute` leaving vertices without loops uninitialized, `require_blender_addon` trusting a listed but unregistered add-on, and a node-transpiler log call that raised with INFO logging on
+- Fix `delete_collection` reading a collection's object list after freeing it
+
 v2.0.0a3
 
 **Scenes**

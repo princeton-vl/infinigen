@@ -18,6 +18,7 @@ import bpy
 import gin
 
 import infinigen.assets.scatters
+from infinigen._optimized import optimizable
 from infinigen.core import init
 from infinigen.core.placement import camera as cam_util
 from infinigen.core.rendering.render import render_image
@@ -82,6 +83,16 @@ def is_static(obj):
             break
         obj = obj.parent
     return True
+
+
+@optimizable("RUNTIME", "infinigen.perf.core.execute_tasks")
+def _open_scene(path):
+    bpy.ops.wm.open_mainfile(filepath=str(path))
+
+
+@optimizable("RUNTIME", "infinigen.perf.core.execute_tasks")
+def _save_scene(path):
+    bpy.ops.wm.save_mainfile(filepath=str(path))
 
 
 @gin.configurable
@@ -216,7 +227,7 @@ def execute_tasks(
 
     if Task.Coarse not in task and task != Task.FineTerrain:
         with Timer("Reading input blendfile"):
-            bpy.ops.wm.open_mainfile(filepath=str(input_folder / "scene.blend"))
+            _open_scene(input_folder / "scene.blend")
             tag_system.load_tag(path=str(input_folder / "MaskTag.json"))
         butil.approve_all_drivers()
 
@@ -294,9 +305,7 @@ def execute_tasks(
                     input_folder / output_blend_name, output_folder / output_blend_name
                 )
             else:
-                bpy.ops.wm.save_mainfile(
-                    filepath=str(output_folder / output_blend_name)
-                )
+                _save_scene(output_folder / output_blend_name)
 
         tag_system.save_tag(path=str(output_folder / "MaskTag.json"))
 

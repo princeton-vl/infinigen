@@ -426,25 +426,29 @@ def animate_lizard_run(root, arma, params, ik_targets):
     # creature_animation.animate_run(root, arma, ik_targets)
 
 
-def reptile_postprocessing(body_parts, extras, params):
+def reptile_postprocessing(root, params=None):
+    body_parts, extras = joining.postprocess_inputs(root)
+
     def get_extras(k):
         return [o for o in extras if k in o.name]
 
-    main_template = weighted_sample(material_assignments.reptile)
+    main_template = weighted_sample(material_assignments.reptile)()
     body = body_parts + get_extras("BodyExtra")
     main_template.apply(body)
 
-    tongue.apply(get_extras("Tongue"))
-    bone.apply(get_extras("Horn"))
-    eyeball.apply(get_extras("Eyeball"), shader_kwargs={"coord": "X"})
-    nose.apply(get_extras("Nose"))
+    tongue.Tongue().apply(get_extras("Tongue"))
+    bone.Bone().apply(get_extras("Horn"))
+    eyeball.Eyeball().apply(get_extras("Eyeball"), shader_kwargs={"coord": "X"})
+    nose.Nose().apply(get_extras("Nose"))
 
 
-def chameleon_postprocessing(body_parts, extras, params):
+def chameleon_postprocessing(root, params=None):
+    body_parts, extras = joining.postprocess_inputs(root)
+
     def get_extras(k):
         return [o for o in extras if k in o.name]
 
-    main_template = weighted_sample(material_assignments.reptile)
+    main_template = weighted_sample(material_assignments.reptile)()
     body = body_parts + get_extras("BodyExtra")
     main_template.apply(body)
 

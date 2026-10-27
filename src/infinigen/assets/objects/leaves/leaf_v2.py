@@ -10,6 +10,7 @@ import bpy
 import numpy as np
 from numpy.random import normal, uniform
 
+from infinigen._optimized import optimizable
 from infinigen.assets import colors
 from infinigen.core import surface
 from infinigen.core.nodes import node_utils
@@ -33,6 +34,11 @@ __all__ = [
 ]
 
 
+@optimizable(
+    "LEAVES",
+    "infinigen.perf.assets.objects.leaves.leaf_v2",
+    qualname="shader_nodegroup_sub_vein",
+)
 @node_utils.to_nodegroup(
     "shader_nodegroup_sub_vein", singleton=False, type="ShaderNodeTree"
 )
@@ -345,6 +351,11 @@ def shader_nodegroup_shape(
     )
 
 
+@optimizable(
+    "LEAVES",
+    "infinigen.perf.assets.objects.leaves.leaf_v2",
+    qualname="shader_nodegroup_apply_vein_midrib",
+)
 @node_utils.to_nodegroup(
     "shader_nodegroup_apply_vein_midrib", singleton=False, type="ShaderNodeTree"
 )
@@ -1637,6 +1648,7 @@ class LeafFactoryV2(AssetFactory):
             ],
         }
 
+    @optimizable("LEAVES", "infinigen.perf.assets.objects.leaves.leaf_v2")
     def create_asset(self, **params):
         bpy.ops.mesh.primitive_plane_add(
             size=2,

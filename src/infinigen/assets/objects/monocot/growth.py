@@ -11,6 +11,7 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
+from infinigen._optimized import optimizable
 from infinigen.assets.utils.decorate import displace_vertices, geo_extension
 from infinigen.assets.utils.misc import assign_material
 from infinigen.assets.utils.nodegroup import geo_radius
@@ -81,6 +82,7 @@ class MonocotGrowthFactory(AssetFactory):
         raise NotImplementedError
 
     @staticmethod
+    @optimizable("MONOCOT", "infinigen.perf.assets.objects.monocot.growth")
     def decorate_leaf(
         obj,
         y_ratio=4,
@@ -204,6 +206,7 @@ class MonocotGrowthFactory(AssetFactory):
 
         return geo_flower
 
+    @optimizable("MONOCOT", "infinigen.perf.assets.objects.monocot.growth")
     def build_instance(self, i, face_size):
         obj = self.build_leaf(face_size)
         origin2leftmost(obj)

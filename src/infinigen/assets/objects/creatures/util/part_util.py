@@ -9,6 +9,7 @@ import logging
 import bpy
 import numpy as np
 
+from infinigen._optimized import optimizable
 from infinigen.assets.objects.creatures.util.creature import (
     Part,
     infer_skeleton_from_mesh,
@@ -21,6 +22,7 @@ from infinigen.core.util import blender as butil
 __all__ = ["nodegroup_to_part", "nurbs_to_part", "rdict_comb", "random_convex_coord"]
 
 
+@optimizable("CREATURES", "infinigen.perf.assets.objects.creatures.util.part_util")
 def nodegroup_to_part(
     nodegroup_func, params, kwargs=None, base_obj=None, split_extras=False
 ):
@@ -32,11 +34,13 @@ def nodegroup_to_part(
             ng = nodegroup_func(**kwargs)
         else:
             ng = nodegroup_func()
-        geo_outputs = {
+        # a list, in the group's own order: a set of sockets iterates in
+        # address order, which differs from run to run
+        geo_outputs = [
             o
             for o in ng_outputs(ng).values()
             if o.bl_socket_idname == "NodeSocketGeometry"
-        }
+        ]
         objs = {
             o.name: extract_nodegroup_geo(base_obj, ng, o.name, ng_params=params)
             for o in geo_outputs

@@ -10,12 +10,18 @@ import numpy as np
 from numpy import ascontiguousarray as AC
 
 import infinigen.terrain.mesh_to_sdf as mesh_to_sdf
+from infinigen._optimized import optimizable
+from infinigen.core.init import require_blender_addon
 from infinigen.core.util.blender import SelectObjects, ViewportMode
 from infinigen.core.util.organization import AssetFile
 from infinigen.terrain.utils import Mesh
 
 from .geometry_utils import increment_step, pitch_up, yaw_clockwise
 from .pcfg import generate_string
+
+# Cave.__init__ calls bpy.ops.mesh.primitive_vert_add, which this add-on
+# provides.
+require_blender_addon("extra_mesh_objects", fail="warn")
 
 __all__ = ["Cave", "caves_asset", "assets_to_data"]
 
@@ -148,8 +154,10 @@ class Cave:
     def make_active(self):
         bpy.context.view_layer.objects.active = bpy.data.objects[self.name]
 
+    @optimizable("TERRAIN", "infinigen.perf.terrain.assets.caves.core")
     def __init__(self, name="Cave") -> None:
         self.modifier_stack = []
+        require_blender_addon("extra_mesh_objects")
         bpy.ops.mesh.primitive_vert_add()
         bpy.context.active_object.name = name
         generated_string = generate_string(max_len=5000)
@@ -175,6 +183,7 @@ def add_cave(rescale, cave_z):
 
 
 @gin.configurable
+@optimizable("TERRAIN", "infinigen.perf.terrain.assets.caves.core")
 def caves_asset(
     folder,
     N=128,

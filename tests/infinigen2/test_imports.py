@@ -18,7 +18,6 @@ OPTIONAL_TOPLEVEL = {
     "geomdl",
     "landlab",
     "terrain",
-    "bnurbs",
     "mujoco",
     "coacd",
     "usd",

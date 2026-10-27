@@ -1,0 +1,56 @@
+{
+ "kind": "assets",
+ "optimized": "all",
+ "rows": [
+  {
+   "target": "AgaveMonocotFactory",
+   "seed": 0,
+   "triangles": 7199360
+  },
+  {
+   "target": "AgaveMonocotFactory",
+   "seed": 1,
+   "triangles": 3876016
+  },
+  {
+   "target": "AgaveMonocotFactory",
+   "seed": 2,
+   "triangles": 3950572
+  },
+  {
+   "target": "AgaveMonocotFactory",
+   "seed": 3,
+   "triangles": 5681332
+  },
+  {
+   "target": "AgaveMonocotFactory",
+   "seed": 4,
+   "triangles": 4378072
+  },
+  {
+   "target": "AgaveMonocotFactory",
+   "seed": 5,
+   "triangles": 5122912
+  },
+  {
+   "target": "AgaveMonocotFactory",
+   "seed": 6,
+   "triangles": 6188624
+  },
+  {
+   "target": "AgaveMonocotFactory",
+   "seed": 7,
+   "triangles": 5123628
+  },
+  {
+   "target": "AgaveMonocotFactory",
+   "seed": 8,
+   "triangles": 4140552
+  },
+  {
+   "target": "AgaveMonocotFactory",
+   "seed": 9,
+   "triangles": 2972660
+  }
+ ]
+}

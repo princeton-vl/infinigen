@@ -1,0 +1,56 @@
+{
+ "kind": "assets",
+ "optimized": "all",
+ "rows": [
+  {
+   "target": "GrassesMonocotFactory",
+   "seed": 0,
+   "triangles": 343890
+  },
+  {
+   "target": "GrassesMonocotFactory",
+   "seed": 1,
+   "triangles": 261088
+  },
+  {
+   "target": "GrassesMonocotFactory",
+   "seed": 2,
+   "triangles": 285624
+  },
+  {
+   "target": "GrassesMonocotFactory",
+   "seed": 3,
+   "triangles": 427501
+  },
+  {
+   "target": "GrassesMonocotFactory",
+   "seed": 4,
+   "triangles": 278731
+  },
+  {
+   "target": "GrassesMonocotFactory",
+   "seed": 5,
+   "triangles": 324287
+  },
+  {
+   "target": "GrassesMonocotFactory",
+   "seed": 6,
+   "triangles": 336129
+  },
+  {
+   "target": "GrassesMonocotFactory",
+   "seed": 7,
+   "triangles": 311208
+  },
+  {
+   "target": "GrassesMonocotFactory",
+   "seed": 8,
+   "triangles": 246675
+  },
+  {
+   "target": "GrassesMonocotFactory",
+   "seed": 9,
+   "triangles": 124234
+  }
+ ]
+}

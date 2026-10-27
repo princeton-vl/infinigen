@@ -113,9 +113,9 @@ class HollowTreeFactory(BaseDeformedTreeFactory):
                 type="PAIRS", number_cuts=10, interpolation="LINEAR"
             )
 
-        ring_material_index = list(obj.data.materials).index(
-            obj.data.materials["shader_rings"]
-        )
+        if self.material.name not in obj.data.materials:
+            obj.data.materials.append(self.material)
+        ring_material_index = list(obj.data.materials).index(self.material)
         surface.add_geomod(
             obj, self.geo_texture, apply=True, input_args=[ring_material_index]
         )

@@ -101,7 +101,7 @@ def node_attrs_available(node):
     attrs = set(node.__dir__())
     attrs = attrs.difference(UNIVERSAL_ATTR_NAMES)
     attrs = attrs.difference(SPECIAL_CASE_ATTR_NAMES)
-    logging.info(node.name, attrs)
+    logger.info("%s %s", node.name, attrs)
     return attrs
 
 

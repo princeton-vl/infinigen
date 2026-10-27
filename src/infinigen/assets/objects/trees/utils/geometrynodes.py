@@ -6,6 +6,7 @@
 import bpy
 import numpy as np
 
+from infinigen._optimized import optimizable
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes
 
@@ -996,6 +997,7 @@ def create_berry(sphere):
 """
 
 
+@optimizable("TREES", "infinigen.perf.assets.objects.trees.utils.geometrynodes")
 def sample_points_and_normals(obj, max_density=3, surface_dist=1, max_points=10000):
     # Need to instantiate point distribute
     m = add_node_modifier(obj)

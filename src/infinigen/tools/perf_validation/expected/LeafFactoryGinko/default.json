@@ -1,0 +1,56 @@
+{
+ "kind": "assets",
+ "optimized": null,
+ "rows": [
+  {
+   "target": "LeafFactoryGinko",
+   "seed": 0,
+   "triangles": 3692
+  },
+  {
+   "target": "LeafFactoryGinko",
+   "seed": 1,
+   "triangles": 3629
+  },
+  {
+   "target": "LeafFactoryGinko",
+   "seed": 2,
+   "triangles": 3650
+  },
+  {
+   "target": "LeafFactoryGinko",
+   "seed": 3,
+   "triangles": 3695
+  },
+  {
+   "target": "LeafFactoryGinko",
+   "seed": 4,
+   "triangles": 3687
+  },
+  {
+   "target": "LeafFactoryGinko",
+   "seed": 5,
+   "triangles": 3714
+  },
+  {
+   "target": "LeafFactoryGinko",
+   "seed": 6,
+   "triangles": 3685
+  },
+  {
+   "target": "LeafFactoryGinko",
+   "seed": 7,
+   "triangles": 3706
+  },
+  {
+   "target": "LeafFactoryGinko",
+   "seed": 8,
+   "triangles": 3714
+  },
+  {
+   "target": "LeafFactoryGinko",
+   "seed": 9,
+   "triangles": 3702
+  }
+ ]
+}

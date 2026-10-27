@@ -7,6 +7,7 @@
 import bpy
 import numpy as np
 
+from infinigen._optimized import optimizable
 from infinigen.core.util.logging import Suppress
 
 __all__ = ["set_active_obj", "compute_dists", "rodrigues_rot"]
@@ -223,6 +224,7 @@ def get_cos_sin(angle, convert_to_rad=False):
     return np.cos(angle), np.sin(angle)
 
 
+@optimizable("TREES", "infinigen.perf.assets.objects.trees.utils.helper")
 def rodrigues_rot(vec, axis, angle, convert_to_rad=False):
     axis = axis / np.linalg.norm(axis)
     cs, sn = get_cos_sin(angle, convert_to_rad)

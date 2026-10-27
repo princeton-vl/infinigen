@@ -11,6 +11,7 @@ import gin
 import numpy as np
 from numpy import ascontiguousarray as AC
 
+from infinigen._optimized import optimizable
 from infinigen.core.util.math import FixedSeed, int_hash
 from infinigen.core.util.organization import (
     AssetFile,
@@ -191,6 +192,7 @@ class LandTiles(Element):
         self.tag = ElementTag.Terrain
 
     @gin.configurable
+    @optimizable("TERRAIN", "infinigen.perf.terrain.elements.landtiles")
     def load_assets(
         self,
         on_the_fly_instances=5,

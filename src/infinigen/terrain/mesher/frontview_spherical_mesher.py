@@ -12,6 +12,7 @@ import numpy as np
 from numpy import ascontiguousarray as AC
 from tqdm import tqdm
 
+from infinigen._optimized import optimizable
 from infinigen.terrain.utils import (
     ASDOUBLE,
     ASINT,
@@ -38,6 +39,7 @@ class Timer(tTimer):
 
 @gin.configurable
 class FrontviewSphericalMesher:
+    @optimizable("TERRAIN", "infinigen.perf.terrain.mesher.frontview_spherical_mesher")
     def __init__(
         self,
         cam_pose,
@@ -160,6 +162,7 @@ class FrontviewSphericalMesher:
             self, dll, "get_final_mesh", [POINTER(c_double), POINTER(c_int32)]
         )
 
+    @optimizable("TERRAIN", "infinigen.perf.terrain.mesher.frontview_spherical_mesher")
     def __call__(self, kernels):
         n_elements = len(kernels)
 

@@ -38,6 +38,7 @@ HelloWorld
 GeneratingIndividualAssets
 ImplementingAssets
 ConfiguringInfinigen
+OptimizedImplementations
 ConfiguringCameras
 GroundTruthAnnotations
 ExportingToExternalFileFormats

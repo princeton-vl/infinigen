@@ -9,6 +9,7 @@ import bpy
 import mathutils
 import numpy as np
 
+from infinigen._optimized import optimizable
 from infinigen.core.util import blender as butil
 
 __all__ = ["MBallStructure"]
@@ -87,6 +88,7 @@ class MBallStructure:
     def ball(self, pos, rad, **kwargs):
         return self.capsule(pos, length=0, rad=rad, **kwargs)
 
+    @optimizable("PLACEMENT", "infinigen.perf.assets.utils.geometry.metaballs")
     def to_object(self):
         bm = bmesh.new()
 

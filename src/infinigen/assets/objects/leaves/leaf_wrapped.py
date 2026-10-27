@@ -8,6 +8,7 @@ import bpy
 import numpy as np
 from numpy.random import randint, uniform
 
+from infinigen._optimized import optimizable
 from infinigen.assets.objects.leaves.leaf_broadleaf import LeafFactoryBroadleaf
 from infinigen.assets.objects.leaves.leaf_ginko import LeafFactoryGinko
 from infinigen.assets.objects.leaves.leaf_maple import LeafFactoryMaple
@@ -221,6 +222,7 @@ class LeafFactoryWrapped(AssetFactory):
             LeafFactoryGinko(factory_seed, season=season, coarse=coarse),
         ]
 
+    @optimizable("LEAVES", "infinigen.perf.assets.objects.leaves.leaf_wrapped")
     def create_asset(self, **params):
         fac_id = randint(len(self.factory_list))
         fac = self.factory_list[fac_id]

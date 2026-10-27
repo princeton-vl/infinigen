@@ -5,6 +5,7 @@
 
 
 import infinigen.core.util.blender as butil
+from infinigen._optimized import optimizable
 from infinigen.assets.objects.corals.base import BaseCoralFactory
 from infinigen.assets.objects.corals.tentacles import make_radius_points_fn
 from infinigen.assets.utils.decorate import geo_extension
@@ -24,6 +25,7 @@ class CauliflowerBaseCoralFactory(BaseCoralFactory):
         super(CauliflowerBaseCoralFactory, self).__init__(factory_seed, coarse)
         self.points_fn = make_radius_points_fn(0.05, 0.6)
 
+    @optimizable("CORALS", "infinigen.perf.assets.objects.corals.laplacian")
     def create_asset(self, face_size=0.01, **params):
         mesh = build_laplacian_3d()
         obj = mesh2obj(mesh)
