@@ -6,6 +6,9 @@ on:
   # only triggered manually for now
   # pull_request:
 
+permissions:
+  contents: read
+
 env:
   INFINIGEN_INSTALL_TERRAIN: False
   INFINIGEN_INSTALL_CUSTOMGT: False
@@ -20,6 +23,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: false
+          persist-credentials: false
 
       - name: Lint with ruff
         run: |
@@ -40,6 +44,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: false
+          persist-credentials: false
 
       - name: Install infinigen & dependencies
         run: |

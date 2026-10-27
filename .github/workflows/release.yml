@@ -5,6 +5,9 @@ on:
     tags:
       - '*'
 
+permissions:
+  contents: read
+
 jobs:
   build_sdist_purepy:
     name: Build source/pure python wheels
@@ -16,6 +19,7 @@ jobs:
     - uses: actions/checkout@v4
       with:
         submodules: 'recursive'
+        persist-credentials: false
 
     - name: Build source/pure python wheels
       run: |
