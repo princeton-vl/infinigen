@@ -7,6 +7,7 @@
 
 Getting Started <self>
 Command Line Interface <cli>
+Exporting Assets <ExportingInfinigen2Assets>
 api/infinigen2
 procfunc <https://procfunc.readthedocs.io>
 Example Projects <ExampleProjects>
