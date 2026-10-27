@@ -472,6 +472,7 @@ class LeafGinkoResult(NamedTuple):
     mesh: pf.MeshObject
 
 
+@pf.tracer.generator
 def leaf_ginko(
     size: float = 0.15,
     vein_length: float = 0.45,
@@ -482,12 +483,35 @@ def leaf_ginko(
     scale_margin: float = 6.5,
     material: pf.Material | None = None,
 ) -> LeafGinkoResult:
+    return _leaf_ginko_mesh(
+        size=size,
+        vein_length=vein_length,
+        angle=math.radians(angle_deg),
+        multiplier=multiplier,
+        scale_vein=scale_vein,
+        scale_wave=scale_wave,
+        scale_margin=scale_margin,
+        material=material,
+    )
+
+
+@pf.tracer.generator
+def _leaf_ginko_mesh(
+    size: float,
+    vein_length: float,
+    angle: float,
+    multiplier: float,
+    scale_vein: float,
+    scale_wave: float,
+    scale_margin: float,
+    material: pf.Material | None,
+) -> LeafGinkoResult:
     if material is None:
         material = pf.Material(surface=pf.nodes.shader.principled_bsdf())
 
     geo = geo_leaf_ginko(
         vein_length=vein_length,
-        angle=math.radians(angle_deg),
+        angle=angle,
         multiplier=multiplier,
         scale_vein=scale_vein,
         scale_wave=scale_wave,
@@ -501,7 +525,6 @@ def leaf_ginko(
     pf.ops.object.set_material(obj, material=material)
     pf.ops.object.set_transform(obj, scale=(size, size, size))
     pf.ops.mesh.transform_apply(obj)
-    pf.ops.modifier.subdivide_surface(obj, levels=2, _skip_apply=True)
     return LeafGinkoResult(mesh=obj)
 
 
@@ -515,13 +538,15 @@ def leaf_ginkgo_rand(
         material = leaf_material_rand(rngs[0], vector=leaf_coord())
 
     rng_geo = rngs[1]
-    return leaf_ginko(
+    obj = _leaf_ginko_mesh(
         size=pf.random.uniform(rng_geo, 0.08, 0.2),
         vein_length=pf.random.uniform(rng_geo, 0.4, 0.5),
-        angle_deg=pf.random.uniform(rng_geo, -110.0, -70.0),
+        angle=math.radians(pf.random.uniform(rng_geo, -110.0, -70.0)),
         multiplier=pf.random.uniform(rng_geo, 1.9, 1.98),
         scale_vein=pf.random.uniform(rng_geo, 70.0, 90.0),
         scale_wave=pf.random.uniform(rng_geo, 4.0, 6.0),
         scale_margin=pf.random.uniform(rng_geo, 5.5, 7.5),
         material=material,
-    )
+    ).mesh
+    pf.ops.modifier.subdivide_surface(obj, levels=2, _skip_apply=True)
+    return LeafGinkoResult(mesh=obj)

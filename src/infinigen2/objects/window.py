@@ -555,6 +555,7 @@ class CurtainResult(NamedTuple):
     mesh: pf.MeshObject
 
 
+@pf.tracer.generator
 def curtain(
     width: float = 2.5,
     depth: float = 0.04875,
@@ -619,7 +620,7 @@ def curtain_rand(
     mid_r = (0.5 - base_coverage - var_r) * dimensions.y
 
     curtain_r2 = dimensions.y * 0.5
-    curtain_geo = _curtain_geometry(
+    return curtain(
         width=dimensions.y,
         depth=depth,
         height=dimensions.z,
@@ -633,8 +634,6 @@ def curtain_rand(
         curtain_frame_material=rail_material,
         curtain_material=material,
     )
-
-    return CurtainResult(mesh=pf.nodes.to_mesh_object(curtain_geo))
 
 
 @pf.nodes.node_function
@@ -973,89 +972,7 @@ def _glass_pane(
     return pf.nodes.geo.transform(geometry=glass, rotation=_WALL_REORIENT)
 
 
-def _window_build(
-    profile: WindowProfile,
-    frame_width: float,
-    panel_h_amount: int,
-    panel_v_amount: int,
-    sub_frame_width: float,
-    sub_frame_thickness: float,
-    sub_panel_h_amount: int,
-    sub_panel_v_amount: int,
-    shutter: bool,
-    shutter_panel_radius: float,
-    shutter_width: float,
-    shutter_thickness: float,
-    shutter_rotation: float,
-    shutter_interval: float,
-    frame_material: pf.Material | None,
-    glass_material: pf.Material | None,
-    include_glass_pane: bool,
-    include_portal: bool,
-) -> WindowResult:
-    if frame_material is None:
-        frame_material = pf.Material(surface=pf.nodes.shader.principled_bsdf())
-    if glass_material is None:
-        glass_material = pf.Material(surface=pf.nodes.shader.principled_bsdf())
-
-    dimensions = profile.dimensions
-    res = _window_geometry(
-        width=dimensions.y,
-        height=dimensions.z,
-        top_profile_height=profile.top_profile_height,
-        bottom_profile_height=profile.bottom_profile_height,
-        frame_width=frame_width,
-        frame_thickness=dimensions.x,
-        panel_h_amount=panel_h_amount,
-        panel_v_amount=panel_v_amount,
-        sub_frame_width=sub_frame_width,
-        sub_frame_thickness=sub_frame_thickness,
-        sub_panel_h_amount=sub_panel_h_amount,
-        sub_panel_v_amount=sub_panel_v_amount,
-        shutter=shutter,
-        shutter_panel_radius=shutter_panel_radius,
-        shutter_width=shutter_width,
-        shutter_thickness=shutter_thickness,
-        shutter_rotation=shutter_rotation,
-        shutter_interval=shutter_interval,
-        frame_material=frame_material,
-    )
-    frame_obj = pf.nodes.to_mesh_object(res.geometry)
-    pf.ops.uv.cube_project(frame_obj, uv_name="UVMap")
-
-    if include_glass_pane:
-        pane = _glass_pane(
-            width=dimensions.y,
-            height=dimensions.z,
-            top_profile_height=profile.top_profile_height,
-            bottom_profile_height=profile.bottom_profile_height,
-            material=glass_material,
-        )
-        pf.ops.object.join(frame_obj, pf.nodes.to_mesh_object(pane))
-
-    origin_offset = dimensions * 0.5
-    pf.ops.object.set_transform(frame_obj, location=origin_offset)
-    pf.ops.mesh.transform_apply(frame_obj)
-
-    portal_light = None
-    if include_portal:
-        portal_light = pf.ops.primitives.light.area_lamp(
-            shape="RECTANGLE",
-            size_x=dimensions.y,
-            size_y=dimensions.z,
-            energy=0.0,
-            portal=True,
-        )
-        reorient = Euler(_WALL_REORIENT).to_matrix()
-        flip = Euler((np.pi, 0.0, 0.0)).to_matrix()
-        pf.ops.object.set_transform(
-            portal_light,
-            location=origin_offset,
-            rotation_euler=tuple((reorient @ flip).to_euler()),
-        )
-    return WindowResult(mesh=frame_obj, light=portal_light, profile=profile)
-
-
+@pf.tracer.generator
 def window(
     dimensions: pf.Vector | None = None,
     frame_width: float = 0.035,
@@ -1081,9 +998,18 @@ def window(
     if dimensions is None:
         dimensions = pf.Vector((0.085, 2.5, 2.5))
     profile = WindowProfile(dimensions, top_profile_height, bottom_profile_height)
-    return _window_build(
-        profile=profile,
+    if frame_material is None:
+        frame_material = pf.Material(surface=pf.nodes.shader.principled_bsdf())
+    if glass_material is None:
+        glass_material = pf.Material(surface=pf.nodes.shader.principled_bsdf())
+
+    res = _window_geometry(
+        width=dimensions.y,
+        height=dimensions.z,
+        top_profile_height=top_profile_height,
+        bottom_profile_height=bottom_profile_height,
         frame_width=frame_width,
+        frame_thickness=dimensions.x,
         panel_h_amount=panel_h_amount,
         panel_v_amount=panel_v_amount,
         sub_frame_width=sub_frame_width,
@@ -1097,10 +1023,41 @@ def window(
         shutter_rotation=shutter_rotation,
         shutter_interval=shutter_interval,
         frame_material=frame_material,
-        glass_material=glass_material,
-        include_glass_pane=include_glass_pane,
-        include_portal=include_portal,
     )
+    frame_obj = pf.nodes.to_mesh_object(res.geometry)
+    pf.ops.uv.cube_project(frame_obj, uv_name="UVMap")
+
+    if include_glass_pane:
+        pane = _glass_pane(
+            width=dimensions.y,
+            height=dimensions.z,
+            top_profile_height=top_profile_height,
+            bottom_profile_height=bottom_profile_height,
+            material=glass_material,
+        )
+        pf.ops.object.join(frame_obj, pf.nodes.to_mesh_object(pane))
+
+    origin_offset = dimensions * 0.5
+    pf.ops.object.set_transform(frame_obj, location=origin_offset)
+    pf.ops.mesh.transform_apply(frame_obj)
+
+    portal_light = None
+    if include_portal:
+        portal_light = pf.ops.primitives.light.area_lamp(
+            shape="RECTANGLE",
+            size_x=dimensions.y,
+            size_y=dimensions.z,
+            energy=0.0,
+            portal=True,
+        )
+        reorient = Euler(_WALL_REORIENT).to_matrix()
+        flip = Euler((np.pi, 0.0, 0.0)).to_matrix()
+        pf.ops.object.set_transform(
+            portal_light,
+            location=origin_offset,
+            rotation_euler=tuple((reorient @ flip).to_euler()),
+        )
+    return WindowResult(mesh=frame_obj, light=portal_light, profile=profile)
 
 
 def _window_build_rand(
@@ -1166,8 +1123,8 @@ def _window_build_rand(
     if glass_material is None:
         glass_material = glass_material_rand(rng_glass, vec, glass_height=dimensions.z)
 
-    return _window_build(
-        profile=profile,
+    return window(
+        dimensions=dimensions,
         frame_width=frame_width,
         panel_h_amount=panel_h_amount,
         panel_v_amount=panel_v_amount,
@@ -1185,6 +1142,8 @@ def _window_build_rand(
         glass_material=glass_material,
         include_glass_pane=include_glass_pane,
         include_portal=include_portal,
+        top_profile_height=profile.top_profile_height,
+        bottom_profile_height=profile.bottom_profile_height,
     )
 
 

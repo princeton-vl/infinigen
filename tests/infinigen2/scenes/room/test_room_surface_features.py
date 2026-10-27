@@ -58,19 +58,19 @@ def test_wall_generators_run_standalone(
 
 def test_standalone_wall_has_vertical_metric_uvs(rng: pf.RNG) -> None:
     wall = wall_base._standalone_wall_rand(rng, width=1.75, height=2.25)
-    uvs = pf.ops.attr.uv_coords(wall)
-    bbox_min, bbox_max = pf.ops.attr.bbox_min_max(wall)
+    uvs = pf.ops.attr.uv_coords(wall.obj)
+    bbox_min, bbox_max = pf.ops.attr.bbox_min_max(wall.obj)
     extent = np.array(bbox_max) - np.array(bbox_min)
 
-    assert np.allclose(uvs.max(axis=0) - uvs.min(axis=0), (1.75, 2.25))
+    assert np.allclose(uvs.max(axis=0) - uvs.min(axis=0), (wall.width, wall.height))
     assert np.allclose(extent, (0.0, 1.75, 2.25))
-    assert np.allclose(pf.ops.attr.polygon_normals(wall), ((1.0, 0.0, 0.0),))
-    assert mesh_util.uv_winding_sign(wall) == -1.0
+    assert np.allclose(pf.ops.attr.polygon_normals(wall.obj), ((1.0, 0.0, 0.0),))
+    assert mesh_util.uv_winding_sign(wall.obj) == wall_base.SURFACE_UV_WINDING_SIGN
 
 
 def test_wall_generator_accepts_precreased_wall(rng: pf.RNG) -> None:
     wall = wall_base._standalone_wall_rand(rng, width=3.0, height=2.5)
-    pf.ops.attr.write_attribute(wall, 0.0, "crease_edge", domain="EDGE")
+    pf.ops.attr.write_attribute(wall.obj, 0.0, "crease_edge", domain="EDGE")
     material = pf.Material(surface=pf.nodes.shader.principled_bsdf())
 
     result = wall_base.wall_plain_rand(rng, wall=wall, wall_material=material)

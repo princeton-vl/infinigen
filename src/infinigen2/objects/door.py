@@ -117,19 +117,15 @@ def _opaque_and_glass(rng: pf.RNG, vec) -> tuple[pf.Material, pf.Material]:
     return furniture_material_rand(rng_frame, vec), glass_material_rand(rng_panel, vec)
 
 
-def _door_body_finish(geo: pf.ProcNode, bevel_width: float) -> DoorResult:
-    geo = metric_box_uv(geo)
-    obj = pf.nodes.to_mesh_object(geo)
-    pf.ops.modifier.bevel(obj, width=bevel_width, segments=6)
-    pf.ops.attr.write_attribute(obj, 1.0, "crease_edge", domain="EDGE", overwrite=True)
-    pf.ops.modifier.subdivide_surface(obj, levels=2, _skip_apply=True)
-    return DoorResult(mesh=obj)
-
-
+@pf.tracer.generator
 def door_body(
     dimensions: pf.Vector | None = None,
     frame_material: pf.Material | None = None,
     panel_material: pf.Material | None = None,
+    n_panels: int = 2,
+    margin_fraction: float = 0.12,
+    panel_thickness: float = 0.016,
+    bevel_width: float = 0.003,
 ) -> DoorResult:
     if dimensions is None:
         dimensions = pf.Vector((0.04, 0.8, 2.0))
@@ -143,8 +139,15 @@ def door_body(
         width=dimensions.y,
         height=dimensions.z,
         thickness=dimensions.x,
+        n_panels=n_panels,
+        margin_fraction=margin_fraction,
+        panel_thickness=panel_thickness,
     )
-    return _door_body_finish(geo, bevel_width=0.003)
+    geo = metric_box_uv(geo)
+    obj = pf.nodes.to_mesh_object(geo)
+    pf.ops.modifier.bevel(obj, width=bevel_width, segments=6)
+    pf.ops.attr.write_attribute(obj, 1.0, "crease_edge", domain="EDGE", overwrite=True)
+    return DoorResult(mesh=obj)
 
 
 def door_body_rand(
@@ -173,18 +176,19 @@ def door_body_rand(
     thickness = dimensions.x
     n_panels = pf.random.randint(rng, 1, 5)
     margin_fraction = pf.random.uniform(rng, 0.1, 0.22)
-    geo = _door_body_geometry(
+    panel_thickness = thickness * pf.random.uniform(rng, 0.35, 0.5)
+    bevel_width = pf.random.uniform(rng, 0.001, 0.005)
+    door = door_body(
+        dimensions=dimensions,
         frame_material=frame_material,
         panel_material=panel_material,
-        width=dimensions.y,
-        height=dimensions.z,
-        thickness=thickness,
         n_panels=n_panels,
         margin_fraction=margin_fraction,
-        panel_thickness=thickness * pf.random.uniform(rng, 0.35, 0.5),
-    )
-    bevel_width = pf.random.uniform(rng, 0.001, 0.005)
-    return _door_body_finish(geo, bevel_width=bevel_width)
+        panel_thickness=panel_thickness,
+        bevel_width=bevel_width,
+    ).mesh
+    pf.ops.modifier.subdivide_surface(door, levels=2, _skip_apply=True)
+    return DoorResult(mesh=door)
 
 
 def door_with_handle(
@@ -196,6 +200,7 @@ def door_with_handle(
     door = door_body(
         dimensions=dimensions, frame_material=material, panel_material=material
     ).mesh
+    pf.ops.modifier.subdivide_surface(door, levels=2, _skip_apply=True)
     handle = handles.handle_lever().mesh
     pf.ops.object.set_transform(
         handle,

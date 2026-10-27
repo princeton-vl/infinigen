@@ -383,6 +383,7 @@ def _sofa_geometry(
     return geometry
 
 
+@pf.tracer.generator
 def sofa(
     dimensions: pf.Vector | None = None,
     arm_dimensions: pf.Vector = (1.0, 0.105, 0.625),
@@ -444,7 +445,6 @@ def sofa(
     )
     obj = pf.nodes.to_mesh_object(res)
     pf.ops.uv.cube_project(obj, uv_name="UVMap")
-    pf.ops.modifier.subdivide_surface(obj, levels=5, _skip_apply=True)
 
     seat_top = baseboard_height + seat_thickness
     left_inset = _seat_inset(
@@ -563,7 +563,7 @@ def sofa_rand(
     inner_width = dimensions[1] - left_inset - right_inset
     seat_cushion_count = max(1, round(inner_width / cushion_target_width))
 
-    return sofa(
+    result = sofa(
         dimensions=(dimensions[0], dimensions[1], back_top),
         arm_dimensions=arm_dimensions,
         left_arm_thickness=left_arm_thickness,
@@ -587,6 +587,14 @@ def sofa_rand(
         piping_radius=piping_radius,
         body_radius=body_radius,
         arm_slant=arm_slant,
+    )
+    body = result.mesh
+    pf.ops.modifier.subdivide_surface(body, levels=5, _skip_apply=True)
+    return SofaResult(
+        mesh=body,
+        back_seat_line_start=result.back_seat_line_start,
+        back_seat_line_end=result.back_seat_line_end,
+        back_tilt=result.back_tilt,
     )
 
 

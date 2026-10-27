@@ -778,6 +778,7 @@ class LeafBroadleafResult(NamedTuple):
     mesh: pf.MeshObject
 
 
+@pf.tracer.generator
 def leaf_broadleaf(
     size: float = 0.15,
     vein_asymmetry: float = 0.0712,
@@ -807,7 +808,6 @@ def leaf_broadleaf(
     pf.ops.object.set_material(obj, material=material)
     pf.ops.object.set_transform(obj, scale=(size, size, size))
     pf.ops.mesh.transform_apply(obj)
-    pf.ops.modifier.subdivide_surface(obj, levels=2, _skip_apply=True)
     return LeafBroadleafResult(mesh=obj)
 
 
@@ -821,7 +821,7 @@ def leaf_broadleaf_rand(
         material = leaf_material_rand(rngs[0], vector=leaf_coord())
 
     rng_geo = rngs[1]
-    return leaf_broadleaf(
+    obj = leaf_broadleaf(
         size=pf.random.uniform(rng_geo, 0.06, 0.16),
         vein_asymmetry=pf.random.uniform(rng_geo, 0.0, 1.0),
         vein_density=pf.random.uniform(rng_geo, 3.0, 8.0),
@@ -830,4 +830,6 @@ def leaf_broadleaf_rand(
         midrib_width=pf.random.uniform(rng_geo, 0.5, 1.0),
         stem_length=pf.random.uniform(rng_geo, 0.7, 0.9),
         material=material,
-    )
+    ).mesh
+    pf.ops.modifier.subdivide_surface(obj, levels=2, _skip_apply=True)
+    return LeafBroadleafResult(mesh=obj)

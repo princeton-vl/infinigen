@@ -45,7 +45,6 @@ def _assemble(
     pf.ops.object.join(plant, pot)
     pf.ops.object.join(plant, fill)
     pf.ops.mesh.transform_apply(plant)
-    plant.item().name = "plant_pot"
     return plant
 
 

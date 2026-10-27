@@ -61,6 +61,7 @@ def _rug_geometry(
     return geo
 
 
+@pf.tracer.generator
 def rug(
     width: float = 2.5,
     length: float = 3.125,
@@ -79,7 +80,6 @@ def rug(
         material=material,
     )
     obj = pf.nodes.to_mesh_object(geo)
-    pf.ops.modifier.subdivide_surface(obj, levels=_RUG_SUBDIV_LEVELS, _skip_apply=True)
     return RugResult(mesh=obj)
 
 
@@ -102,14 +102,12 @@ def rug_rand(
         vec = pf.nodes.shader.geometry().position
         material = rug_material_rand(rng_material, vec)
 
-    geo = _rug_geometry(
+    obj = rug(
         width=dimensions[1],
         length=dimensions[0],
         fillet_radius=fillet_radius,
         thickness=dimensions[2],
         material=material,
-    )
-
-    obj = pf.nodes.to_mesh_object(geo)
+    ).mesh
     pf.ops.modifier.subdivide_surface(obj, levels=_RUG_SUBDIV_LEVELS, _skip_apply=True)
     return RugResult(mesh=obj)

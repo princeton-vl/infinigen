@@ -1019,7 +1019,7 @@ def _kitchen_setup_demo_rand(rng: pf.RNG) -> KitchenSetupResult:
     shape = room_shape_rand(rng_shape, dimensions=room_dimensions)
     walls = [
         plane_to_posed_canonical_mesh(
-            pf.nodes.to_mesh_object(pf.nodes.geo.object_info(wall).geometry)
+            pf.nodes.to_mesh_object(pf.nodes.geo.object_info(wall.obj).geometry)
         )
         for wall in shape.flat_walls
     ]
@@ -1031,7 +1031,8 @@ def _kitchen_setup_demo_rand(rng: pf.RNG) -> KitchenSetupResult:
         bbox_max=room_dimensions,
         colliders=colliders,
     )
-    for obj in walls + shape.flat_walls + [shape.walls, shape.floor, shape.ceiling]:
+    flat_walls = [wall.obj for wall in shape.flat_walls]
+    for obj in walls + flat_walls + [shape.walls, shape.floor, shape.ceiling]:
         delete_object(obj.item())
     ground = pf.ops.primitives.mesh_single_vertex()
     ground.item().name = "kitchen_setup_ground"

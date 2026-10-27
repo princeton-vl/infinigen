@@ -339,7 +339,6 @@ def bathtub(
         hole_radius,
     )
     obj = pf.nodes.to_mesh_object(geometry)
-    pf.ops.modifier.subdivide_surface(obj, levels=2, _skip_apply=True)
     return BathtubResult(mesh=obj)
 
 
@@ -362,7 +361,7 @@ def sink_bathroom(
     metal_material: pf.Material | None = None,
 ) -> SinkBathroomResult:
     floor_thickness = max(thickness, depth * 0.12, bottom_bevel_radius * 0.5)
-    result = bathtub(
+    obj = bathtub(
         width=size,
         size=width,
         depth=depth,
@@ -381,8 +380,9 @@ def sink_bathroom(
         hole_radius=hole_radius,
         surface_material=surface_material,
         metal_material=metal_material,
-    )
-    return SinkBathroomResult(mesh=result.mesh)
+    ).mesh
+    pf.ops.modifier.subdivide_surface(obj, levels=2, _skip_apply=True)
+    return SinkBathroomResult(mesh=obj)
 
 
 def _surface_material_rand(rng: pf.RNG) -> pf.Material:
@@ -531,7 +531,7 @@ def bathtub_rand(
         )
     if metal_material is None:
         metal_material = _metal_material_rand(rng_metal)
-    return bathtub(
+    obj = bathtub(
         width=width,
         size=size,
         depth=depth,
@@ -549,7 +549,9 @@ def bathtub_rand(
         hole_radius=hole_radius,
         surface_material=surface_material,
         metal_material=metal_material,
-    )
+    ).mesh
+    pf.ops.modifier.subdivide_surface(obj, levels=2, _skip_apply=True)
+    return BathtubResult(mesh=obj)
 
 
 def _sink_dimensions_rand(
@@ -730,5 +732,4 @@ def sink_pedestal(
     obj = pf.nodes.to_mesh_object(
         _pedestal_geometry(material, height, top_radius, bottom_radius, is_circular)
     )
-    pf.ops.modifier.subdivide_surface(obj, levels=2, _skip_apply=True)
     return SinkPedestalResult(mesh=obj)

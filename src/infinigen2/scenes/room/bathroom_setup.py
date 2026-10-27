@@ -644,18 +644,16 @@ def _pedestal_sink_support_rand(
     surface_material: pf.Material | None,
 ) -> _SinkSupportResult:
     rng_dimensions, rng_shape = rng.spawn(2)
-    pedestal = bathtub.sink_pedestal(
+    obj = bathtub.sink_pedestal(
         height=support_height,
         top_radius=sink_width * pf.random.uniform(rng_dimensions, 0.075, 0.1),
         bottom_radius=sink_width * pf.random.uniform(rng_dimensions, 0.1, 0.3),
         is_circular=pf.control.choice(rng_shape, [(True, 1.0), (False, 1.0)]),
         material=surface_material,
-    )
-    pf.ops.object.set_transform(
-        pedestal.mesh,
-        location=(sink_depth / 2.0, 0.0, 0.001),
-    )
-    return _SinkSupportResult([pedestal], [])
+    ).mesh
+    pf.ops.modifier.subdivide_surface(obj, levels=2, _skip_apply=True)
+    pf.ops.object.set_transform(obj, location=(sink_depth / 2.0, 0.0, 0.001))
+    return _SinkSupportResult([bathtub.SinkPedestalResult(mesh=obj)], [])
 
 
 def _cabinet_sink_support_rand(

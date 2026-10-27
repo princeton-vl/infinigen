@@ -20,6 +20,7 @@ __all__ = [
     "CushionResult",
     "cushion_bed_pillow_rand",
     "cushion_box_geometry",
+    "cushion_knife_edge",
     "cushion_throw_pillow_rand",
     "optional_piping_radius_rand",
     "support_loop_offset",
@@ -185,7 +186,8 @@ def optional_piping_radius_rand(rng: pf.RNG, piped_weight: float) -> float:
     return piping_fn(rng_radius)
 
 
-def _pillow(
+@pf.tracer.generator
+def cushion_knife_edge(
     size: pf.Vector,
     material: pf.Material,
     fullness: float,
@@ -200,7 +202,6 @@ def _pillow(
         piping_radius=piping_radius,
     )
     obj = pf.nodes.to_mesh_object(geometry)
-    pf.ops.modifier.subdivide_surface(obj, levels=6, _skip_apply=True)
     return CushionResult(mesh=obj)
 
 
@@ -225,7 +226,15 @@ def cushion_throw_pillow_rand(
         piping_radius = optional_piping_radius_rand(rng_piping, 0.4)
     if material is None:
         material = fabric_sturdy_rand(rng_fabric, pf.nodes.shader.coord().uv)
-    return _pillow(size, material, fullness, corner_pinch, piping_radius)
+    pillow = cushion_knife_edge(
+        size=size,
+        material=material,
+        fullness=fullness,
+        corner_pinch=corner_pinch,
+        piping_radius=piping_radius,
+    ).mesh
+    pf.ops.modifier.subdivide_surface(pillow, levels=6, _skip_apply=True)
+    return CushionResult(mesh=pillow)
 
 
 def cushion_bed_pillow_rand(
@@ -246,4 +255,12 @@ def cushion_bed_pillow_rand(
     corner_pinch = pf.random.uniform(rng, 0.02, 0.07)
     if material is None:
         material = fabric_general_rand(rng_fabric, pf.nodes.shader.coord().uv)
-    return _pillow(size, material, fullness, corner_pinch, 0.0)
+    pillow = cushion_knife_edge(
+        size=size,
+        material=material,
+        fullness=fullness,
+        corner_pinch=corner_pinch,
+        piping_radius=0.0,
+    ).mesh
+    pf.ops.modifier.subdivide_surface(pillow, levels=6, _skip_apply=True)
+    return CushionResult(mesh=pillow)

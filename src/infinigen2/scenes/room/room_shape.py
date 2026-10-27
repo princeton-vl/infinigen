@@ -3,6 +3,7 @@
 
 # Authors: Alexander Raistrick
 
+import math
 from typing import NamedTuple
 
 import numpy as np
@@ -14,21 +15,27 @@ from infinigen2.curves.room_edge import (
     RoomEdgeCurveResult,
     room_edge_curve_rand,
 )
+from infinigen2.scenes.room.wall_base import WallSurface
 from infinigen2.util.curve import curve_to_mesh_with_uv
 from infinigen2.util.mesh import crease_sharp, grid_from_corners
 
 __all__ = [
     "RoomEdgeToWallsResult",
+    "RoomFloorCeilingResult",
     "RoomShapeResult",
     "room_dimensions_rand",
     "room_edge_to_walls",
+    "room_floor_ceiling",
     "room_shape_rand",
 ]
 
 
+WALL_EDGE_OVERHANG = 0.01
+
+
 class RoomShapeResult(NamedTuple):
     walls: pf.MeshObject
-    flat_walls: list[pf.MeshObject]
+    flat_walls: list[WallSurface]
     floor: pf.MeshObject
     ceiling: pf.MeshObject
     dimensions: pf.Vector
@@ -54,9 +61,11 @@ def room_edge_to_walls(
     curve_line_end = pf.nodes.math.vector_multiply_add(
         a=height.astype(dtype=pf.Vector),
         b=(0.0, -1.0, 0.0),
-        addend=(0.0, -0.01, 0.0),
+        addend=(0.0, -WALL_EDGE_OVERHANG, 0.0),
     )
-    curve_line = pf.nodes.geo.curve_line(start=(0.0, 0.01, 0.0), end=curve_line_end)
+    curve_line = pf.nodes.geo.curve_line(
+        start=(0.0, WALL_EDGE_OVERHANG, 0.0), end=curve_line_end
+    )
 
     input_index = pf.nodes.geo.input_index()
 
@@ -69,24 +78,10 @@ def room_edge_to_walls(
         profile=capture_attribute.geometry,
     )
 
-    input_index_1 = pf.nodes.geo.input_index()
-
-    corners_of_face = pf.nodes.geo.corners_of_face(
-        face_index=input_index_1, sort_index=2
-    )
-
-    vertex_of_corner = pf.nodes.geo.vertex_of_corner(corners_of_face.corner_index)
-
-    sample_index = pf.nodes.geo.sample_index(
-        geometry=curve_to_mesh_with_uv_result.mesh,
-        index=vertex_of_corner,
-        value=is_edge_point_flat,
-    )
-
     capture_attribute_1 = pf.nodes.geo.capture_attribute(
         geometry=curve_to_mesh_with_uv_result.mesh,
         domain="FACE",
-        value=sample_index,
+        value=is_edge_point_flat,
     )
 
     input_edge_angle = pf.nodes.geo.input_mesh_edge_angle()
@@ -123,9 +118,40 @@ def room_dimensions_rand(
     return dimensions
 
 
+class RoomFloorCeilingResult(NamedTuple):
+    floor: pf.MeshObject
+    ceiling: pf.MeshObject
+
+
+@pf.tracer.generator
+def room_floor_ceiling(
+    width: float, depth: float, height: float, offset_epsilon: float
+) -> RoomFloorCeilingResult:
+    vertices_x = math.ceil(width / 0.8) + 1
+    vertices_y = math.ceil(depth / 0.8) + 1
+    floor = grid_from_corners(
+        point_1=(0, 0, -offset_epsilon),
+        point_2=(width, depth, -offset_epsilon),
+        vertices_x=vertices_x,
+        vertices_y=vertices_y,
+    )
+    ceiling = grid_from_corners(
+        point_1=(0, 0, height + offset_epsilon),
+        point_2=(width, depth, height + offset_epsilon),
+        vertices_x=vertices_x,
+        vertices_y=vertices_y,
+    )
+    floor_obj = pf.nodes.to_mesh_object(floor)
+    ceiling_obj = pf.nodes.to_mesh_object(pf.nodes.geo.flip_faces(ceiling))
+    pf.ops.attr.write_attribute(floor_obj, 1.0, "crease_edge", domain="EDGE")
+    pf.ops.attr.write_attribute(ceiling_obj, 1.0, "crease_edge", domain="EDGE")
+    pf.ops.uv.cube_project(ceiling_obj, uv_name="UVMap")
+    return RoomFloorCeilingResult(floor=floor_obj, ceiling=ceiling_obj)
+
+
 def _split_flat_walls(
-    walls_mesh: pf.MeshObject,
-) -> list[pf.MeshObject]:
+    walls_mesh: pf.MeshObject, wall_lengths: list[float], height: float
+) -> list[WallSurface]:
     wall_idx = pf.ops.attr.read_attribute(walls_mesh, "wall_idx", domain="FACE")
     uniq_idx = np.unique(wall_idx)
 
@@ -139,7 +165,8 @@ def _split_flat_walls(
         if not mask.any():
             continue
         wall = pf.ops.mesh.separate_mask(walls_mesh, face_mask=mask)
-        results.append(wall)
+        surface_height = height + 2 * WALL_EDGE_OVERHANG
+        results.append(WallSurface(wall, wall_lengths[int(idx)], surface_height))
 
     return results
 
@@ -199,39 +226,18 @@ def room_shape_rand(
 
     walls_mesh = pf.nodes.to_mesh_object(geo)
 
-    eps = floor_ceiling_offset_epsilon
-    floor = grid_from_corners(
-        point_1=(0, 0, -eps),
-        point_2=(dimensions.x, dimensions.y, -eps),
-        vertices_x=pf.nodes.math.ceil(dimensions.x / 0.8) + 1.0,
-        vertices_y=pf.nodes.math.ceil(dimensions.y / 0.8) + 1.0,
+    floor_ceiling = room_floor_ceiling(
+        float(dimensions.x),
+        float(dimensions.y),
+        float(dimensions.z),
+        floor_ceiling_offset_epsilon,
     )
+    floor = floor_ceiling.floor
+    ceiling = floor_ceiling.ceiling
 
-    ceiling = grid_from_corners(
-        point_1=(0, 0, dimensions.z + eps),
-        point_2=(dimensions.x, dimensions.y, dimensions.z + eps),
-        vertices_x=pf.nodes.math.ceil(dimensions.x / 0.8) + 1.0,
-        vertices_y=pf.nodes.math.ceil(dimensions.y / 0.8) + 1.0,
+    flat_walls = _split_flat_walls(
+        walls_mesh, edge_curve.wall_lengths, float(dimensions.z)
     )
-    ceiling = pf.nodes.geo.flip_faces(ceiling)
-
-    floor = pf.nodes.to_mesh_object(floor)
-    ceiling = pf.nodes.to_mesh_object(ceiling)
-
-    pf.ops.attr.write_attribute(
-        obj=floor,
-        data=1.0,
-        key="crease_edge",
-        domain="EDGE",
-    )
-    pf.ops.attr.write_attribute(
-        ceiling,
-        data=1.0,
-        key="crease_edge",
-        domain="EDGE",
-    )
-
-    flat_walls = _split_flat_walls(walls_mesh)
     camera = framing.camera_in_room_corner(floor, float(dimensions.z))
 
     return RoomShapeResult(
@@ -241,6 +247,6 @@ def room_shape_rand(
         ceiling=ceiling,
         dimensions=dimensions,
         edge_curve=edge_curve,
-        all_objects=[walls_mesh, *flat_walls, floor, ceiling],
+        all_objects=[walls_mesh, *[w.obj for w in flat_walls], floor, ceiling],
         cameras=[camera],
     )

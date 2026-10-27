@@ -18,6 +18,7 @@ from infinigen2.util.curve import curve_to_mesh_with_uv
 
 __all__ = [
     "MonitorResult",
+    "monitor",
     "monitor_body",
     "monitor_rand",
     "monitor_tv_rand",
@@ -209,26 +210,41 @@ def screen_material_rand(
     return material_fn(rng_material, vector)
 
 
-def _pedestal_rand(
-    rng: pf.RNG,
-    outer_width: float,
-    back_x: float,
+@pf.tracer.generator
+def monitor(
+    screen_dimensions: pf.Vector,
+    bezel_width: float,
+    chin_height: float,
+    screen_bottom: float,
+    screen_recess: float,
+    housing_size: pf.Vector,
     housing_center_z: float,
+    neck_size: pf.Vector,
+    neck_front_x: float,
+    foot_size: pf.Vector,
     material: pf.Material,
-) -> pf.ProcNode[pf.MeshObject]:
-    thickness = pf.random.uniform(rng, 0.007, 0.012)
-    foot_depth = (0.14 + outer_width * 0.1) * pf.random.uniform(rng, 0.9, 1.1)
-    foot_width = outer_width * pf.random.uniform(rng, 0.30, 0.40)
-    neck_depth = pf.random.uniform(rng, 0.018, 0.028)
-    neck_width = outer_width * pf.random.uniform(rng, 0.06, 0.09)
-    return pedestal_stand(
-        neck_size=pf.Vector(
-            (neck_depth, neck_width, housing_center_z - thickness * 0.5)
-        ),
-        neck_front_x=back_x + 0.005,
-        foot_size=pf.Vector((foot_depth, foot_width, thickness)),
+    screen_material: pf.Material,
+    stand_material: pf.Material,
+) -> MonitorResult:
+    body = monitor_body(
+        screen_dimensions=screen_dimensions,
+        bezel_width=bezel_width,
+        chin_height=chin_height,
+        screen_bottom=screen_bottom,
+        screen_recess=screen_recess,
+        housing_size=housing_size,
+        housing_center_z=housing_center_z,
         material=material,
+        screen_material=screen_material,
     )
+    stand = pedestal_stand(
+        neck_size=neck_size,
+        neck_front_x=neck_front_x,
+        foot_size=foot_size,
+        material=stand_material,
+    )
+    obj = pf.nodes.to_mesh_object(pf.nodes.geo.join_geometry([body, stand]))
+    return MonitorResult(mesh=obj)
 
 
 def monitor_rand(
@@ -278,25 +294,32 @@ def monitor_rand(
         stand_fn = pf.control.choice(rng_stand_choice, stand_options)
         stand_material = stand_fn(rng_stand_material, vector)
 
-    body = monitor_body(
+    housing_size = pf.Vector((housing_depth, housing_width, housing_height))
+    back_x = 0.001 - screen_dimensions.x - housing_depth
+    stand_thickness = pf.random.uniform(rng_stand, 0.007, 0.012)
+    foot_depth = (0.14 + outer_width * 0.1) * pf.random.uniform(rng_stand, 0.9, 1.1)
+    foot_width = outer_width * pf.random.uniform(rng_stand, 0.30, 0.40)
+    neck_depth = pf.random.uniform(rng_stand, 0.018, 0.028)
+    neck_width = outer_width * pf.random.uniform(rng_stand, 0.06, 0.09)
+    neck_size = pf.Vector(
+        (neck_depth, neck_width, housing_center_z - stand_thickness * 0.5)
+    )
+    foot_size = pf.Vector((foot_depth, foot_width, stand_thickness))
+    obj = monitor(
         screen_dimensions=screen_dimensions,
         bezel_width=bezel_width,
         chin_height=chin_height,
         screen_bottom=screen_bottom,
         screen_recess=screen_recess,
-        housing_size=pf.Vector((housing_depth, housing_width, housing_height)),
+        housing_size=housing_size,
         housing_center_z=housing_center_z,
+        neck_size=neck_size,
+        neck_front_x=back_x + 0.005,
+        foot_size=foot_size,
         material=material,
         screen_material=screen_material,
-    )
-    stand = _pedestal_rand(
-        rng_stand,
-        outer_width=outer_width,
-        back_x=0.001 - screen_dimensions.x - housing_depth,
-        housing_center_z=housing_center_z,
-        material=stand_material,
-    )
-    obj = pf.nodes.to_mesh_object(pf.nodes.geo.join_geometry([body, stand]))
+        stand_material=stand_material,
+    ).mesh
     pf.ops.modifier.subdivide_surface(obj, levels=2, _skip_apply=True)
     return MonitorResult(mesh=obj)
 

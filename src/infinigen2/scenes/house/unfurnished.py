@@ -25,6 +25,7 @@ from infinigen2.lighting import sky_lighting
 from infinigen2.objects import window
 from infinigen2.objects.door import door_composite_rand
 from infinigen2.scenes.house.floor_mesh import (
+    WALL_STRIP_OVERHANG,
     HouseCeilingCutoutResult,
     WallPlane,
     house_ceiling_cutout,
@@ -55,6 +56,7 @@ from infinigen2.scenes.room.room import wall_arrangement_rand
 from infinigen2.scenes.room.wall_base import (
     ROOM_SUBSURF_LEVELS,
     WallResult,
+    WallSurface,
     extrude_for_thickness,
     name_objects,
     shift_wall_ends,
@@ -160,10 +162,15 @@ def _plane_inward(plane: WallPlane) -> np.ndarray:
     return np.asarray((-direction[1], direction[0]))
 
 
+def _plane_surface(plane: WallPlane, height: float) -> WallSurface:
+    return WallSurface(plane.obj, plane.length, height + 2 * WALL_STRIP_OVERHANG)
+
+
 @pf.tracer.grammar
 def _exterior_wall_rand(
     rng: pf.RNG,
     plane: WallPlane,
+    wall: WallSurface,
     material: pf.Material,
     shared_window: window.WindowResult,
 ) -> WallResult:
@@ -197,7 +204,7 @@ def _exterior_wall_rand(
 
     rng_choice, rng_feature = rng.spawn(2)
     option = pf.control.choice(rng_choice, [(windows, 3.0), (mixed, 1.0)])
-    return option(rng_feature, plane.obj, material)
+    return option(rng_feature, wall, material)
 
 
 def _unique_objects(objects: list[ObjectT]) -> list[ObjectT]:
@@ -207,7 +214,7 @@ def _unique_objects(objects: list[ObjectT]) -> list[ObjectT]:
 @pf.tracer.grammar
 def interior_wall_arrangement_rand(
     rng: pf.RNG,
-    wall: pf.MeshObject,
+    wall: WallSurface,
     wall_material: pf.Material | None = None,
     wall_thickness: float = 0.05,
 ) -> WallResult:
@@ -529,6 +536,21 @@ def _filler_section(
     return np.asarray(orient(hull, 1.0).exterior.coords[:-1])
 
 
+@pf.tracer.generator
+def shell_filler(
+    section: tuple[tuple[float, float], ...], height: float, material: pf.Material
+) -> pf.MeshObject:
+    z_bounds = (-WALL_STRIP_OVERHANG, height + WALL_STRIP_OVERHANG)
+    obj = _prism(np.asarray(section), z_bounds, 0.8)
+    pf.ops.modifier.bevel(obj, width=0.006, segments=1)
+    pf.ops.object.set_material(
+        obj, surface=material.surface, displacement=material.displacement
+    )
+    pf.ops.uv.cube_project(obj, uv_name="UVMap")
+    mesh_util.crease_all_edges(obj)
+    return obj
+
+
 def _shell_fillers(
     planes_exterior: list[WallPlane],
     materials: list[pf.Material],
@@ -549,14 +571,8 @@ def _shell_fillers(
         section = _filler_section(vertex, group)
         if section is None:
             continue
-        obj = _prism(section, (-0.03, height + 0.03), 0.8)
-        pf.ops.modifier.bevel(obj, width=0.006, segments=1)
-        material = materials[group[0][0].room_index]
-        pf.ops.object.set_material(
-            obj, surface=material.surface, displacement=material.displacement
-        )
-        pf.ops.uv.cube_project(obj, uv_name="UVMap")
-        mesh_util.crease_all_edges(obj)
+        points = tuple((float(x), float(y)) for x, y in section)
+        obj = shell_filler(points, height, materials[group[0][0].room_index])
         pf.ops.modifier.subdivide_surface(
             obj, levels=ROOM_SUBSURF_LEVELS, _skip_apply=True
         )
@@ -638,7 +654,8 @@ def _join_room_corners(
         key = _plane_key(side.plane)
         low = _end_shift(turn_in.get(key, 0.0), side.plane.thickness, chamfer)
         high = _end_shift(turn_out.get(key, 0.0), side.plane.thickness, chamfer)
-        direction = np.array([*_plane_direction(side.plane), 0.0])
+        direction_xy = _plane_direction(side.plane)
+        direction = (float(direction_xy[0]), float(direction_xy[1]), 0.0)
         for obj in _unique_objects([*side.result.wall_planes, *side.result.backs]):
             shift_wall_ends(obj, direction, low, high)
     strips: dict[int, list[pf.MeshObject]] = defaultdict(list)
@@ -891,7 +908,7 @@ def house_walls_rand(
             arrangement = wall_plain_rand
         result = arrangement(
             plane_rng,
-            wall=plane.obj,
+            wall=_plane_surface(plane, height),
             wall_material=materials[plane.room_index],
             wall_thickness=plane.thickness / 2,
         )
@@ -904,12 +921,15 @@ def house_walls_rand(
         if plane.length < feature_min_width:
             result = wall_plain_rand(
                 plane_rng,
-                wall=plane.obj,
+                wall=_plane_surface(plane, height),
                 wall_material=material,
                 wall_thickness=plane.thickness,
             )
         else:
-            result = _exterior_wall_rand(plane_rng, plane, material, shared_window)
+            surface = _plane_surface(plane, height)
+            result = _exterior_wall_rand(
+                plane_rng, plane, surface, material, shared_window
+            )
         exterior.append(HouseWallSideResult(plane, result))
 
     sides = interior + exterior

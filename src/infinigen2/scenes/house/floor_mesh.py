@@ -26,6 +26,7 @@ __all__ = [
     "WallPlane",
     "house_ceiling_cutout",
     "house_floor_profile_to_planes",
+    "WALL_STRIP_OVERHANG",
     "vertical_strip",
 ]
 
@@ -232,6 +233,9 @@ def _polygon_edges(
     return [edge for ring in rings for edge in pairwise(ring.coords)]
 
 
+WALL_STRIP_OVERHANG = 0.03
+
+
 def vertical_strip(
     start: tuple[float, float], end: tuple[float, float], height: float, name: str
 ) -> pf.MeshObject:
@@ -239,7 +243,9 @@ def vertical_strip(
     # Square-room convention: first edge is vertical (V/up), second is U/along-wall.
     length = float(np.linalg.norm(np.asarray(end) - np.asarray(start)))
     along = mesh_util.split_gaps(np.array([0.0, length]), 0.8)
-    up = mesh_util.split_gaps(np.array([-0.03, height + 0.03]), 0.8)
+    up = mesh_util.split_gaps(
+        np.array([-WALL_STRIP_OVERHANG, height + WALL_STRIP_OVERHANG]), 0.8
+    )
     direction = (np.asarray(end) - np.asarray(start)) / length
     u0, v0 = np.meshgrid(along[:-1], up[:-1], indexing="ij")
     u1, v1 = np.meshgrid(along[1:], up[1:], indexing="ij")

@@ -22,6 +22,7 @@ __all__ = [
     "phyllo_points",
     "phyllo_dist",
     "phyllo_plant",
+    "phyllo_plant_mesh",
     "plant_phyllo_basal_rand",
     "plant_phyllo_ascending_rand",
 ]
@@ -445,13 +446,76 @@ def phyllo_plant(
         leaf_mesh = leaf.leaf_simple_rand(rng_leaf).mesh
     if target_count is None:
         target_count = count
-    first = _normalize_leaf(leaf_mesh)
     if stem_material is None:
         stem_material = pf.Material(
             surface=pf.nodes.shader.principled_bsdf(
                 base_color=(0.04, 0.10, 0.01, 1.0), roughness=0.65
             )
         )
+    obj = phyllo_plant_mesh(
+        leaf_mesh=leaf_mesh,
+        stem_material=stem_material,
+        seed=pf.random.randint(rng_geometry, 0, 10000),
+        count=count,
+        height=height,
+        radius=radius,
+        leaf_length=leaf_length,
+        leaf_size=leaf_size,
+        leaf_width=leaf_width,
+        petiole_length_fraction=petiole_length_fraction,
+        petiole_diameter_ratio=petiole_diameter_ratio,
+        density=density,
+        target_count=target_count,
+        sparse=sparse,
+        count_override=count_override,
+        base_fraction=base_fraction,
+        min_angle=min_angle,
+        max_angle=max_angle,
+        stem_curve_x_degrees=stem_curve_x_degrees,
+        stem_curve_y_degrees=stem_curve_y_degrees,
+        stem_warble=stem_warble,
+        stem_handles=stem_handles,
+        leaf_bend=leaf_bend,
+        leaf_droop=leaf_droop,
+        leaf_twist_degrees=leaf_twist_degrees,
+        leaf_warble=leaf_warble,
+        phase=phase,
+    ).mesh
+    pf.ops.modifier.subdivide_surface(obj, levels=2, _skip_apply=True)
+    return PhylloPlantResult(obj)
+
+
+@pf.tracer.generator
+def phyllo_plant_mesh(
+    leaf_mesh: pf.MeshObject,
+    stem_material: pf.Material,
+    seed: int,
+    count: int = 24,
+    height: float = 0.3,
+    radius: float = 0.008,
+    leaf_length: float = 0.16,
+    min_angle: float = 0.2,
+    max_angle: float = 0.9,
+    phase: float = 0.0,
+    leaf_size: float = 1.0,
+    leaf_width: float = 1.0,
+    petiole_length_fraction: float = 0.0,
+    petiole_diameter_ratio: float = 0.03,
+    density: float = 1.0,
+    base_fraction: float = 0.0,
+    target_count: float = 24.0,
+    sparse: float = 0.0,
+    count_override: bool = False,
+    stem_curve_x_degrees: float = 0.0,
+    stem_curve_y_degrees: float = 0.0,
+    stem_warble: float = 0.0,
+    stem_handles: int = 8,
+    leaf_bend: float = 0.0,
+    leaf_droop: float = 0.0,
+    leaf_twist_degrees: float = 0.0,
+    leaf_warble: float = 0.0,
+) -> PhylloPlantResult:
+    first = _normalize_leaf(leaf_mesh)
     geometry = _plant_geometry_group(
         first=first,
         stem_material=stem_material,
@@ -479,10 +543,9 @@ def phyllo_plant(
         leaf_twist_degrees=leaf_twist_degrees,
         leaf_warble=leaf_warble,
         phase=phase,
-        seed=pf.random.randint(rng_geometry, 0, 10000),
+        seed=seed,
     )
     obj = pf.nodes.to_mesh_object(geometry)
-    pf.ops.modifier.subdivide_surface(obj, levels=2, _skip_apply=True)
     return PhylloPlantResult(obj)
 
 

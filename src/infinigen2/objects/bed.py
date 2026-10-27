@@ -17,7 +17,16 @@ from infinigen2.shaders.functionality_lists import (
 )
 from infinigen2.util import mesh
 
-__all__ = ["BedResult", "bed", "bed_mattress_rand", "bed_rand"]
+__all__ = [
+    "BedPartResult",
+    "BedResult",
+    "bed",
+    "bed_board_solid",
+    "bed_mattress",
+    "bed_mattress_rand",
+    "bed_platform",
+    "bed_rand",
+]
 
 
 class BedResult(NamedTuple):
@@ -25,17 +34,14 @@ class BedResult(NamedTuple):
     mattress_child: pf.MeshObject
 
 
+class BedPartResult(NamedTuple):
+    mesh: pf.MeshObject
+
+
 @pf.tracer.generator
-def bed(
-    base: pf.MeshObject,
-    headboard: pf.MeshObject,
-    footboard: pf.MeshObject | None,
-    mattress_child: pf.MeshObject,
-    dimensions: pf.Vector,
-    frame_height: float,
-    base_material: pf.Material,
-    frame_material: pf.Material,
-) -> BedResult:
+def bed_platform(
+    dimensions: pf.Vector, frame_height: float, frame_material: pf.Material
+) -> BedPartResult:
     platform = mesh.box_with_support_loops(
         size=(dimensions.x + 0.08, dimensions.y + 0.08, 0.10),
         vertices_x=4,
@@ -50,8 +56,20 @@ def bed(
         surface=frame_material.surface,
         displacement=frame_material.displacement,
     )
-    # one level here plus the assembled bed's two keeps the soft parts at three
-    pf.ops.modifier.subdivide_surface(platform, levels=1)
+    return BedPartResult(platform)
+
+
+@pf.tracer.generator
+def bed(
+    platform: pf.MeshObject,
+    base: pf.MeshObject,
+    headboard: pf.MeshObject,
+    footboard: pf.MeshObject | None,
+    mattress_child: pf.MeshObject,
+    dimensions: pf.Vector,
+    frame_height: float,
+    base_material: pf.Material,
+) -> BedResult:
     pf.ops.object.set_transform(
         headboard, location=(-dimensions.x * 0.5 - 0.04, 0, frame_height - 0.10)
     )
@@ -68,11 +86,76 @@ def bed(
         )
         pf.ops.object.join(platform, footboard)
     pf.ops.uv.cube_project(platform, uv_name="UVMap")
-    pf.ops.modifier.subdivide_surface(platform, levels=2, _skip_apply=True)
-    platform.item().name = "bed"
     mattress_child.item().parent = platform.item()
     mattress_child.item().matrix_parent_inverse.identity()
     return BedResult(platform, mattress_child)
+
+
+@pf.tracer.generator
+def bed_board_solid(
+    board_dimensions: pf.Vector,
+    top_rise: float,
+    crease_all: bool,
+    crease_long: bool,
+    material: pf.Material,
+) -> BedPartResult:
+    profile = pf.Vector(
+        (
+            board_dimensions.x,
+            board_dimensions.y,
+            board_dimensions.z - top_rise * 0.75,
+        )
+    )
+    geo = chair.chair_back_solid(profile, top_rise=top_rise)
+    edge = pf.nodes.geo.input_mesh_edge_vertices()
+    dx = pf.nodes.math.absolute(edge.position_1.x - edge.position_2.x)
+    dy = pf.nodes.math.absolute(edge.position_1.y - edge.position_2.y)
+    dz = pf.nodes.math.absolute(edge.position_1.z - edge.position_2.z)
+    width_dominant = pf.nodes.func.boolean_and(
+        a=(dy > dx).astype(dtype=bool),
+        b=(dy > dz).astype(dtype=bool),
+    )
+    sharp = (
+        pf.nodes.geo.input_mesh_edge_angle().unsigned_angle > math.radians(40)
+    ).astype(dtype=bool)
+    long_crease = pf.nodes.func.boolean_and(a=crease_long, b=width_dominant)
+    crease = pf.nodes.func.boolean_or(
+        a=crease_all, b=pf.nodes.func.boolean_and(a=long_crease, b=sharp)
+    )
+    geo = pf.nodes.geo.store_named_attribute(
+        geometry=geo,
+        name="crease_edge",
+        value=crease.astype(dtype=float),
+        domain="EDGE",
+    )
+    obj = pf.nodes.to_mesh_object(geo)
+    pf.ops.object.set_material(
+        obj,
+        surface=material.surface,
+        displacement=material.displacement,
+    )
+    return BedPartResult(obj)
+
+
+@pf.tracer.generator
+def bed_mattress(
+    dimensions: pf.Vector, center_z: float, material: pf.Material
+) -> BedPartResult:
+    mattress_geo = mesh.box_with_support_loops(
+        size=dimensions,
+        vertices_x=30,
+        vertices_y=30,
+        vertices_z=6,
+        support_loop_offset=(0.12, 0.12, 0.07),
+    )
+    mattress = pf.nodes.to_mesh_object(mattress_geo)
+    pf.ops.object.set_transform(mattress, location=(0, 0, center_z))
+    pf.ops.object.set_material(
+        mattress,
+        surface=material.surface,
+        displacement=material.displacement,
+    )
+    return BedPartResult(mattress)
 
 
 def _bed_base_rand(
@@ -206,22 +289,8 @@ def bed_mattress_rand(
     center_z: float,
 ) -> pf.MeshObject:
     material = _bedding_rand(rng, pf.nodes.shader.coord().uv)
-    mattress_geo = mesh.box_with_support_loops(
-        size=dimensions,
-        vertices_x=30,
-        vertices_y=30,
-        vertices_z=6,
-        support_loop_offset=(0.12, 0.12, 0.07),
-    )
-    mattress = pf.nodes.to_mesh_object(mattress_geo)
-    pf.ops.object.set_transform(mattress, location=(0, 0, center_z))
-    pf.ops.object.set_material(
-        mattress,
-        surface=material.surface,
-        displacement=material.displacement,
-    )
+    mattress = bed_mattress(dimensions, center_z, material).mesh
     pf.ops.modifier.subdivide_surface(mattress, levels=3, _skip_apply=True)
-    mattress.item().name = "mattress"
     return mattress
 
 
@@ -265,42 +334,9 @@ def bed_rand(rng: pf.RNG, dimensions: pf.Vector | None = None) -> BedResult:
     )
 
     def solid_board(_r: pf.RNG, board_dimensions: pf.Vector) -> pf.MeshObject:
-        profile = pf.Vector(
-            (
-                board_dimensions.x,
-                board_dimensions.y,
-                board_dimensions.z - finish[0] * 0.75,
-            )
-        )
-        geo = chair.chair_back_solid(profile, top_rise=finish[0])
-        edge = pf.nodes.geo.input_mesh_edge_vertices()
-        dx = pf.nodes.math.absolute(edge.position_1.x - edge.position_2.x)
-        dy = pf.nodes.math.absolute(edge.position_1.y - edge.position_2.y)
-        dz = pf.nodes.math.absolute(edge.position_1.z - edge.position_2.z)
-        width_dominant = pf.nodes.func.boolean_and(
-            a=(dy > dx).astype(dtype=bool),
-            b=(dy > dz).astype(dtype=bool),
-        )
-        sharp = (
-            pf.nodes.geo.input_mesh_edge_angle().unsigned_angle > math.radians(40)
-        ).astype(dtype=bool)
-        long_crease = pf.nodes.func.boolean_and(a=finish[2], b=width_dominant)
-        crease = pf.nodes.func.boolean_or(
-            a=finish[1], b=pf.nodes.func.boolean_and(a=long_crease, b=sharp)
-        )
-        geo = pf.nodes.geo.store_named_attribute(
-            geometry=geo,
-            name="crease_edge",
-            value=crease.astype(dtype=float),
-            domain="EDGE",
-        )
-        obj = pf.nodes.to_mesh_object(geo)
-        pf.ops.object.set_material(
-            obj,
-            surface=frame_material.surface,
-            displacement=frame_material.displacement,
-        )
-        return obj
+        return bed_board_solid(
+            board_dimensions, finish[0], finish[1], finish[2], frame_material
+        ).mesh
 
     def slatted_board(r: pf.RNG, board_dimensions: pf.Vector) -> pf.MeshObject:
         def slat_count_rand(
@@ -344,7 +380,11 @@ def bed_rand(rng: pf.RNG, dimensions: pf.Vector | None = None) -> BedResult:
         pf.Vector((0.05, dimensions.y + 0.08, 0.10 + dimensions.z * 0.75)),
     )
     mattress = bed_mattress_rand(r_mattress, dimensions, 0.05 + dimensions.z * 0.5)
-    return bed(
+    platform = bed_platform(dimensions, frame_height, frame_material).mesh
+    # one level here plus the assembled bed's two keeps the soft parts at three
+    pf.ops.modifier.subdivide_surface(platform, levels=1)
+    assembled = bed(
+        platform,
         base,
         head,
         foot,
@@ -352,5 +392,7 @@ def bed_rand(rng: pf.RNG, dimensions: pf.Vector | None = None) -> BedResult:
         dimensions,
         frame_height,
         material,
-        frame_material,
     )
+    frame = assembled.mesh
+    pf.ops.modifier.subdivide_surface(frame, levels=2, _skip_apply=True)
+    return BedResult(frame, assembled.mattress_child)

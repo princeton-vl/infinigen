@@ -15,7 +15,9 @@ from infinigen2.util.scene_cleanup import delete_object
 
 __all__ = [
     "ROOM_SUBSURF_LEVELS",
+    "SURFACE_UV_WINDING_SIGN",
     "WallResult",
+    "WallSurface",
     "extrude_for_thickness",
     "finish_wall_plane",
     "fit_grid_margins",
@@ -26,13 +28,20 @@ __all__ = [
     "resolve_wall_inputs",
     "seat_upright_cabinet",
     "shift_wall_ends",
+    "standalone_wall",
     "upright_cabinet_footprint",
     "wall_storage_width_rand",
-    "wall_uv_dimensions",
     "wall_plain_rand",
 ]
 
 ROOM_SUBSURF_LEVELS = 6
+SURFACE_UV_WINDING_SIGN = -1.0
+
+
+class WallSurface(NamedTuple):
+    obj: pf.MeshObject
+    width: float
+    height: float
 
 
 class WallResult(NamedTuple):
@@ -51,16 +60,8 @@ class WallResult(NamedTuple):
     colliders: ccol.CollisionSet | None = None
 
 
-def _standalone_wall_rand(
-    rng: pf.RNG,
-    width: float | None = None,
-    height: float | None = None,
-) -> pf.MeshObject:
-    if width is None:
-        width = pf.random.clip_gaussian(rng, 4.5, 1.0, 2.5, 8.0)
-    if height is None:
-        height = pf.random.clip_gaussian(rng, 2.5, 0.5, 2.2, 4.5)
-
+@pf.tracer.generator
+def standalone_wall(width: float, height: float) -> pf.MeshObject:
     grid = pf.nodes.geo.mesh_grid(vertices_x=2, vertices_y=2, size_x=1.0, size_y=1.0)
     position = pf.nodes.geo.input_position()
     along = (position.x + 0.5) * width
@@ -77,15 +78,26 @@ def _standalone_wall_rand(
     wall_position = pf.nodes.math.combine_xyz(y=along, z=up)
     geometry = pf.nodes.geo.set_position(geometry=geometry, position=wall_position)
     wall = pf.nodes.to_mesh_object(geometry)
-    wall.item().name = "standalone_wall"
     return wall
+
+
+def _standalone_wall_rand(
+    rng: pf.RNG,
+    width: float | None = None,
+    height: float | None = None,
+) -> WallSurface:
+    if width is None:
+        width = pf.random.clip_gaussian(rng, 4.5, 1.0, 2.5, 8.0)
+    if height is None:
+        height = pf.random.clip_gaussian(rng, 2.5, 0.5, 2.2, 4.5)
+    return WallSurface(obj=standalone_wall(width, height), width=width, height=height)
 
 
 def resolve_wall_inputs(
     rng: pf.RNG,
-    wall: pf.MeshObject | None,
+    wall: WallSurface | None,
     wall_material: pf.Material | None,
-) -> tuple[pf.RNG, pf.MeshObject, pf.Material]:
+) -> tuple[pf.RNG, WallSurface, pf.Material]:
     if wall is not None and wall_material is not None:
         return rng, wall, wall_material
 
@@ -97,6 +109,7 @@ def resolve_wall_inputs(
     return rng_feature, wall, wall_material
 
 
+@pf.tracer.generator
 def extrude_for_thickness(obj: pf.MeshObject, thickness: float) -> pf.MeshObject:
     """Solidify a flat surface into a back-thickness slab (the lightblocker body)."""
     geo = pf.nodes.geo.object_info(obj).geometry
@@ -104,10 +117,9 @@ def extrude_for_thickness(obj: pf.MeshObject, thickness: float) -> pf.MeshObject
         mesh=geo,
         selection=True,
         offset_scale=-thickness,
-        uv_winding_sign=mesh_util.uv_winding_sign(obj),
+        uv_winding_sign=SURFACE_UV_WINDING_SIGN,
     )
     result = pf.nodes.to_mesh_object(extruded.mesh)
-    result.item().name = obj.item().name + "_thickened"
     return result
 
 
@@ -138,6 +150,7 @@ def plane_to_posed_canonical_mesh(
     return obj
 
 
+@pf.tracer.generator
 def finish_wall_plane(wall: pf.MeshObject, wall_material: pf.Material) -> pf.MeshObject:
     refined = mesh_util.refine_lattice_cage(wall, 0.8)
     if refined is not wall:
@@ -151,9 +164,6 @@ def finish_wall_plane(wall: pf.MeshObject, wall_material: pf.Material) -> pf.Mes
         displacement=wall_material.displacement,
     )
     mesh_util.crease_all_edges(refined)
-    pf.ops.modifier.subdivide_surface(
-        refined, levels=ROOM_SUBSURF_LEVELS, _skip_apply=True
-    )
     return refined
 
 
@@ -171,15 +181,12 @@ def name_objects(objs: list[pf.MeshObject], name: str) -> list[pf.MeshObject]:
     return objs
 
 
-def wall_uv_dimensions(wall: pf.MeshObject) -> tuple[float, float]:
-    uvs = pf.ops.attr.uv_coords(wall)
-    width = uvs[:, 0].max() - uvs[:, 0].min()
-    height = uvs[:, 1].max() - uvs[:, 1].min()
-    return width, height
-
-
+@pf.tracer.primitive(mutates=["wall"])
 def shift_wall_ends(
-    wall: pf.MeshObject, direction: np.ndarray, low: float, high: float
+    wall: pf.MeshObject,
+    direction: tuple[float, float, float],
+    low: float,
+    high: float,
 ) -> None:
     """Move each end of a wall mesh along world `direction`, keeping metric U."""
     if low == 0.0 and high == 0.0:
@@ -188,8 +195,9 @@ def shift_wall_ends(
     matrix = np.array(item.matrix_world)
     rotation = matrix[:3, :3]
     offset = matrix[:3, 3]
+    direction_world = np.asarray(direction)
     world = pf.ops.attr.vertex_positions(wall) @ rotation.T + offset
-    along = world @ direction
+    along = world @ direction_world
     at_low = np.isclose(along, along.min(), rtol=0.0, atol=1e-5)
     at_high = np.isclose(along, along.max(), rtol=0.0, atol=1e-5)
 
@@ -202,8 +210,8 @@ def shift_wall_ends(
     u_high = np.median(uvs[loops_high, 0])
     u_per_meter = (u_high - u_low) / (along.max() - along.min())
 
-    world[at_low] -= direction * low
-    world[at_high] += direction * high
+    world[at_low] -= direction_world * low
+    world[at_high] += direction_world * high
     uvs[loops_low, 0] -= u_per_meter * low
     uvs[loops_high, 0] += u_per_meter * high
     local = (world - offset) @ np.linalg.inv(rotation).T
@@ -214,32 +222,41 @@ def shift_wall_ends(
 
 def overlap_wall_plane_edges(wall: pf.MeshObject, overlap: float) -> None:
     along_wall = np.array(wall.item().matrix_world)[:3, 1]
-    shift_wall_ends(wall, along_wall / np.linalg.norm(along_wall), overlap, overlap)
+    direction = along_wall / np.linalg.norm(along_wall)
+    shift_wall_ends(
+        wall,
+        (float(direction[0]), float(direction[1]), float(direction[2])),
+        overlap,
+        overlap,
+    )
 
 
 def plain_wall(
-    wall: pf.MeshObject, wall_material: pf.Material, wall_thickness: float
+    wall: WallSurface, wall_material: pf.Material, wall_thickness: float
 ) -> tuple[pf.MeshObject, pf.MeshObject]:
     """Materialise, thicken and canonicalise a bare wall (no cutouts)."""
-    wall_thick = extrude_for_thickness(wall, wall_thickness)
+    wall_thick = extrude_for_thickness(wall.obj, wall_thickness)
     wall_thick.item().name = "room_wall_back"
-    wall = finish_wall_plane(wall, wall_material)
-    wall = plane_to_posed_canonical_mesh(wall)
-    return wall, wall_thick
+    finished = finish_wall_plane(wall.obj, wall_material)
+    pf.ops.modifier.subdivide_surface(
+        finished, levels=ROOM_SUBSURF_LEVELS, _skip_apply=True
+    )
+    finished = plane_to_posed_canonical_mesh(finished)
+    return finished, wall_thick
 
 
 @pf.tracer.grammar
 def wall_plain_rand(
     rng: pf.RNG,
-    wall: pf.MeshObject | None = None,
+    wall: WallSurface | None = None,
     wall_material: pf.Material | None = None,
     wall_thickness: float = 0.05,
 ) -> WallResult:
     rng, wall, wall_material = resolve_wall_inputs(rng, wall, wall_material)
-    wall, wall_thick = plain_wall(wall, wall_material, wall_thickness)
+    finished, wall_thick = plain_wall(wall, wall_material, wall_thickness)
     return WallResult(
-        all_objects=[wall, wall_thick],
-        wall_planes=[wall],
+        all_objects=[finished, wall_thick],
+        wall_planes=[finished],
         backs=[wall_thick],
         sills=[],
         storage_containers=[],

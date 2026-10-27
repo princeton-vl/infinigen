@@ -41,7 +41,6 @@ def scale_reference(
         location=location,
     )
     pf.ops.mesh.subdivide(res, number_cuts=1)
-    pf.ops.modifier.subdivide_surface(res, levels=3, _skip_apply=True)
     return res
 
 

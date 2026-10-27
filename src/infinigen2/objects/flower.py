@@ -534,6 +534,7 @@ def _flower_geometry(
     return flower_smooth
 
 
+@pf.tracer.generator
 def flower(
     center_rad: float = 0.0156,
     petal_dims: pf.Vector = (0.109, 0.0049, 0.0875),
@@ -563,7 +564,6 @@ def flower(
     )
 
     obj = pf.nodes.to_mesh_object(res)
-    pf.ops.modifier.subdivide_surface(obj, levels=2, _skip_apply=True)
     return FlowerResult(mesh=obj)
 
 
@@ -605,7 +605,7 @@ def flower_rand(
     wrinkle = pf.random.uniform(rng_geo, 0.003, 0.02)
     curl = pf.random.normal(rng_geo, np.deg2rad(30), np.deg2rad(50))
 
-    res = _flower_geometry(
+    obj = flower(
         center_rad=center_rad,
         petal_dims=petal_dims,
         seed_size=seed_size,
@@ -615,8 +615,6 @@ def flower_rand(
         curl=curl,
         petal_material=petal_mat,
         center_material=center_mat,
-    )
-
-    obj = pf.nodes.to_mesh_object(res)
+    ).mesh
     pf.ops.modifier.subdivide_surface(obj, levels=2, _skip_apply=True)
     return FlowerResult(mesh=obj)

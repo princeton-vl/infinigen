@@ -38,6 +38,7 @@ __all__ = [
     "monkey_rand",
     "plane_rand",
     "primitive_rand",
+    "primitive_with_effect",
     "primitive_with_effect_rand",
     "torus_rand",
     "uv_sphere_rand",
@@ -309,6 +310,40 @@ class PrimitivesResult(NamedTuple):
     mesh: pf.MeshObject
 
 
+@pf.tracer.generator
+def primitive_with_effect(
+    mesh: pf.MeshObject,
+    crease_threshold: float,
+    crease_softness: float,
+    aspect_x: float,
+    aspect_y: float,
+    aspect_z: float,
+    material: pf.Material,
+    target_size: float | None = None,
+) -> PrimitivesResult:
+    obj = pf.nodes.to_mesh_object(
+        crease_by_angle(
+            mesh,
+            threshold_degrees=crease_threshold,
+            softness_degrees=crease_softness,
+        )
+    )
+    s = 1.0
+    if target_size is not None:
+        dims = obj.item().dimensions
+        current_max = max(dims.x * aspect_x, dims.y * aspect_y, dims.z * aspect_z)
+        s = target_size / current_max if current_max > 0 else s
+    pf.ops.object.set_transform(
+        obj, scale=pf.Vector((s * aspect_x, s * aspect_y, s * aspect_z))
+    )
+    pf.ops.object.set_material(
+        obj,
+        surface=getattr(material, "surface", None),
+        displacement=getattr(material, "displacement", None),
+    )
+    return PrimitivesResult(mesh=obj)
+
+
 @pf.tracer.grammar
 def primitive_with_effect_rand(
     rng: pf.RNG,
@@ -347,36 +382,17 @@ def primitive_with_effect_rand(
     # blender dedupes the sampler's name with .00N; drop it before composing
     primitive_name = primitive.item().name.split(".")[0]
     result = effect_func(rng_effect, primitive)
-    obj = result.mesh
 
     crease_threshold = pf.random.clip_gaussian(rng_crease, 40.0, 40.0, 0.0, 180.0)
     crease_softness = pf.random.clip_gaussian(rng_crease, 0.0, 20.0, 1.0, 60.0)
-    obj = pf.nodes.to_mesh_object(
-        crease_by_angle(
-            obj,
-            threshold_degrees=crease_threshold,
-            softness_degrees=crease_softness,
-        )
-    )
-    obj.item().name = f"{primitive_name}_{effect_func.__name__}"
 
     subsurf_levels = result.subsurf_levels
     if max_subsurf_levels is not None:
         subsurf_levels = min(subsurf_levels, max_subsurf_levels)
-    pf.ops.modifier.subdivide_surface(obj, levels=subsurf_levels, _skip_apply=True)
 
     aspect_x = pf.random.uniform(rng_aspect, 0.6, 1.6)
     aspect_y = pf.random.uniform(rng_aspect, 0.6, 1.6)
     aspect_z = pf.random.uniform(rng_aspect, 0.6, 1.6)
-    s = 1.0
-    if target_size is not None:
-        dims = obj.item().dimensions
-        current_max = max(dims.x * aspect_x, dims.y * aspect_y, dims.z * aspect_z)
-        if current_max > 0:
-            s = target_size / current_max
-    pf.ops.object.set_transform(
-        obj, scale=pf.Vector((s * aspect_x, s * aspect_y, s * aspect_z))
-    )
 
     rotation = pf.Vector(
         (
@@ -403,9 +419,16 @@ def primitive_with_effect_rand(
         [(bsdf_simple_rand, 1.0), (all_materials_rand, 2.0)],
     )
     mat = mat_func(rng_mat, vec)
-    pf.ops.object.set_material(
-        obj,
-        surface=getattr(mat, "surface", None),
-        displacement=getattr(mat, "displacement", None),
-    )
+    obj = primitive_with_effect(
+        mesh=result.mesh,
+        crease_threshold=crease_threshold,
+        crease_softness=crease_softness,
+        aspect_x=aspect_x,
+        aspect_y=aspect_y,
+        aspect_z=aspect_z,
+        material=mat,
+        target_size=target_size,
+    ).mesh
+    obj.item().name = f"{primitive_name}_{effect_func.__name__}"
+    pf.ops.modifier.subdivide_surface(obj, levels=subsurf_levels, _skip_apply=True)
     return PrimitivesResult(mesh=obj)

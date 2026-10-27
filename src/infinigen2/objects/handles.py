@@ -346,16 +346,51 @@ def _finish(
         data_type="FLOAT",
     )
     obj = pf.nodes.to_mesh_object(geo)
-    # matches door.py so a handle joined into a door keeps the density it was built for
+    return HandleResult(mesh=obj)
+
+
+def _subdivided(obj: pf.MeshObject) -> HandleResult:
     pf.ops.modifier.subdivide_surface(obj, levels=2, _skip_apply=True)
     return HandleResult(mesh=obj)
 
 
-def handle_lever(material: pf.Material | None = None) -> HandleResult:
+def _default_material(material: pf.Material | None) -> pf.Material:
     if material is None:
-        material = pf.Material(surface=pf.nodes.shader.principled_bsdf())
-    geo = _handle_lever_geometry()
-    return _finish(geo, material)
+        return pf.Material(surface=pf.nodes.shader.principled_bsdf())
+    return material
+
+
+@pf.tracer.generator
+def handle_lever(
+    material: pf.Material | None = None,
+    rose_height: float = 0.06,
+    rose_radius: float = 0.01,
+    rose_depth: float = 0.01,
+    stub_height: float = 0.012,
+    stub_radius: float = 0.006,
+    stub_depth: float = 0.03,
+    lever_length: float = 0.12,
+    lever_width: float = 0.006,
+    button_depth: float = 0.007,
+    mini_lock_depth: float = 0.002,
+    turn_lock: bool = True,
+    has_lock: bool = True,
+) -> HandleResult:
+    geo = _handle_lever_geometry(
+        rose_height=rose_height,
+        rose_radius=rose_radius,
+        rose_depth=rose_depth,
+        stub_height=stub_height,
+        stub_radius=stub_radius,
+        stub_depth=stub_depth,
+        lever_length=lever_length,
+        lever_width=lever_width,
+        button_depth=button_depth,
+        mini_lock_depth=mini_lock_depth,
+        turn_lock=turn_lock,
+        has_lock=has_lock,
+    )
+    return _finish(geo, _default_material(material))
 
 
 def handle_lever_rand(rng: pf.RNG, material: pf.Material | None = None) -> HandleResult:
@@ -364,75 +399,125 @@ def handle_lever_rand(rng: pf.RNG, material: pf.Material | None = None) -> Handl
     rose_depth = pf.random.uniform(rng, 0.008, 0.02)
     stub_height = pf.random.uniform(rng, 0.008, 0.016)
     stub_radius = pf.random.uniform(rng, 0.0, 0.01)
-    geo = _handle_lever_geometry(
+    rose_radius = pf.random.uniform(rng, 0.0, rose_height / 2)
+    stub_depth = pf.random.uniform(rng, 0.02, 0.05)
+    lever_length = pf.random.uniform(rng, 0.08, 0.16)
+    lever_width = pf.random.uniform(rng, 0.01, 0.04)
+    button_depth = pf.random.uniform(rng, 0.005, 0.01)
+    mini_lock_depth = pf.random.uniform(rng, 0.005, 0.01)
+    turn_lock = pf.control.choice(rng, [(True, 1.0), (False, 1.0)])
+    has_lock = pf.control.choice(rng, [(True, 1.0), (False, 1.0)])
+    if material is None:
+        material = decorative_material_rand(rng_mat, pf.nodes.shader.coord().object)
+    obj = handle_lever(
+        material=material,
         rose_height=rose_height,
-        rose_radius=pf.random.uniform(rng, 0.0, rose_height / 2),
+        rose_radius=rose_radius,
         rose_depth=rose_depth,
         stub_height=stub_height,
         stub_radius=stub_radius,
-        stub_depth=pf.random.uniform(rng, 0.02, 0.05),
-        lever_length=pf.random.uniform(rng, 0.08, 0.16),
-        lever_width=pf.random.uniform(rng, 0.01, 0.04),
-        button_depth=pf.random.uniform(rng, 0.005, 0.01),
-        mini_lock_depth=pf.random.uniform(rng, 0.005, 0.01),
-        turn_lock=pf.control.choice(rng, [(True, 1.0), (False, 1.0)]),
-        has_lock=pf.control.choice(rng, [(True, 1.0), (False, 1.0)]),
+        stub_depth=stub_depth,
+        lever_length=lever_length,
+        lever_width=lever_width,
+        button_depth=button_depth,
+        mini_lock_depth=mini_lock_depth,
+        turn_lock=turn_lock,
+        has_lock=has_lock,
+    ).mesh
+    return _subdivided(obj)
+
+
+@pf.tracer.generator
+def handle_knob(
+    material: pf.Material | None = None,
+    base_radius: float = 0.016,
+    base_depth: float = 0.004,
+    stem_radius: float = 0.005,
+    stem_length: float = 0.014,
+    head_radius: float = 0.013,
+) -> HandleResult:
+    geo = _handle_knob_geometry(
+        base_radius=base_radius,
+        base_depth=base_depth,
+        stem_radius=stem_radius,
+        stem_length=stem_length,
+        head_radius=head_radius,
     )
-    if material is None:
-        material = decorative_material_rand(rng_mat, pf.nodes.shader.coord().object)
-    return _finish(geo, material)
-
-
-def handle_knob(material: pf.Material | None = None) -> HandleResult:
-    if material is None:
-        material = pf.Material(surface=pf.nodes.shader.principled_bsdf())
-    geo = _handle_knob_geometry()
-    return _finish(geo, material, crease_value=_KNOB_RIM_CREASE)
+    return _finish(geo, _default_material(material), crease_value=_KNOB_RIM_CREASE)
 
 
 def handle_knob_rand(rng: pf.RNG, material: pf.Material | None = None) -> HandleResult:
     rng, rng_mat = rng.spawn(2)
     stem_radius = pf.random.uniform(rng, 0.004, 0.007)
     head_radius = pf.random.uniform(rng, stem_radius * 1.8, 0.018)
-    geo = _handle_knob_geometry(
-        base_radius=pf.random.uniform(rng, 0.012, 0.02),
-        base_depth=pf.random.uniform(rng, 0.003, 0.006),
-        stem_radius=stem_radius,
-        stem_length=pf.random.uniform(rng, head_radius, 0.022),
-        head_radius=head_radius,
-    )
+    base_radius = pf.random.uniform(rng, 0.012, 0.02)
+    base_depth = pf.random.uniform(rng, 0.003, 0.006)
+    stem_length = pf.random.uniform(rng, head_radius, 0.022)
     if material is None:
         material = decorative_material_rand(rng_mat, pf.nodes.shader.coord().object)
-    return _finish(geo, material, crease_value=_KNOB_RIM_CREASE)
+    obj = handle_knob(
+        material=material,
+        base_radius=base_radius,
+        base_depth=base_depth,
+        stem_radius=stem_radius,
+        stem_length=stem_length,
+        head_radius=head_radius,
+    ).mesh
+    return _subdivided(obj)
 
 
-def handle_curved_pull(material: pf.Material | None = None) -> HandleResult:
-    if material is None:
-        material = pf.Material(surface=pf.nodes.shader.principled_bsdf())
-    geo = _handle_curved_pull_geometry()
-    return _finish(geo, material)
+@pf.tracer.generator
+def handle_curved_pull(
+    material: pf.Material | None = None,
+    arc_radius: float = 0.05,
+    profile_radius: float = 0.01,
+    span_scale: float = 2.0,
+    depth_scale: float = 1.5,
+) -> HandleResult:
+    geo = _handle_curved_pull_geometry(
+        arc_radius=arc_radius,
+        profile_radius=profile_radius,
+        span_scale=span_scale,
+        depth_scale=depth_scale,
+    )
+    return _finish(geo, _default_material(material))
 
 
 def handle_curved_pull_rand(
     rng: pf.RNG, material: pf.Material | None = None
 ) -> HandleResult:
     rng, rng_mat = rng.spawn(2)
-    geo = _handle_curved_pull_geometry(
-        arc_radius=pf.random.uniform(rng, 0.035, 0.06),
-        profile_radius=pf.random.uniform(rng, 0.006, 0.012),
-        span_scale=pf.random.uniform(rng, 1.4, 2.4),
-        depth_scale=pf.random.uniform(rng, 1.0, 1.8),
-    )
+    arc_radius = pf.random.uniform(rng, 0.035, 0.06)
+    profile_radius = pf.random.uniform(rng, 0.006, 0.012)
+    span_scale = pf.random.uniform(rng, 1.4, 2.4)
+    depth_scale = pf.random.uniform(rng, 1.0, 1.8)
     if material is None:
         material = decorative_material_rand(rng_mat, pf.nodes.shader.coord().object)
-    return _finish(geo, material)
+    obj = handle_curved_pull(
+        material=material,
+        arc_radius=arc_radius,
+        profile_radius=profile_radius,
+        span_scale=span_scale,
+        depth_scale=depth_scale,
+    ).mesh
+    return _subdivided(obj)
 
 
-def handle_bar_pull(material: pf.Material | None = None) -> HandleResult:
-    if material is None:
-        material = pf.Material(surface=pf.nodes.shader.principled_bsdf())
-    geo = _handle_bar_pull_geometry()
-    return _finish(geo, material)
+@pf.tracer.generator
+def handle_bar_pull(
+    material: pf.Material | None = None,
+    grip_length: float = 0.16,
+    grip_radius: float = 0.008,
+    standoff_length: float = 0.035,
+    standoff_radius: float = 0.006,
+) -> HandleResult:
+    geo = _handle_bar_pull_geometry(
+        grip_length=grip_length,
+        grip_radius=grip_radius,
+        standoff_length=standoff_length,
+        standoff_radius=standoff_radius,
+    )
+    return _finish(geo, _default_material(material))
 
 
 def handle_bar_pull_rand(
@@ -443,15 +528,19 @@ def handle_bar_pull_rand(
     rng, rng_mat = rng.spawn(2)
     if grip_length is None:
         grip_length = pf.random.uniform(rng, 0.1, 0.25)
-    geo = _handle_bar_pull_geometry(
-        grip_length=grip_length,
-        grip_radius=pf.random.uniform(rng, 0.006, 0.012),
-        standoff_length=pf.random.uniform(rng, 0.025, 0.045),
-        standoff_radius=pf.random.uniform(rng, 0.004, 0.008),
-    )
+    grip_radius = pf.random.uniform(rng, 0.006, 0.012)
+    standoff_length = pf.random.uniform(rng, 0.025, 0.045)
+    standoff_radius = pf.random.uniform(rng, 0.004, 0.008)
     if material is None:
         material = decorative_material_rand(rng_mat, pf.nodes.shader.coord().object)
-    return _finish(geo, material)
+    obj = handle_bar_pull(
+        material=material,
+        grip_length=grip_length,
+        grip_radius=grip_radius,
+        standoff_length=standoff_length,
+        standoff_radius=standoff_radius,
+    ).mesh
+    return _subdivided(obj)
 
 
 def handle_rand(rng: pf.RNG, material: pf.Material | None = None) -> HandleResult:

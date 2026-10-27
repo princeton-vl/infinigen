@@ -53,9 +53,9 @@ def _fit_and_ground(mutates_obj: pf.MeshObject, dimensions: pf.Vector) -> None:
     translation = (-center[0], -center[1], -minimum[2])
     obj.data.transform(Matrix.Translation(translation))
     obj.data.update()
-    obj.name = boulder.__name__
 
 
+@pf.tracer.generator
 def boulder(
     dimensions: pf.Vector = pf.Vector((1.0, 0.85, 0.65)),
     mesh_resolution: float = 0.02,

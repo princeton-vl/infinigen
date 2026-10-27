@@ -186,6 +186,7 @@ def _finish(result: _SinkGeometryResult) -> SinkResult:
     return SinkResult(mesh=obj, cutter=cutter_obj)
 
 
+@pf.tracer.generator
 def sink(
     material: pf.Material | None = None,
     width: float = 0.6,

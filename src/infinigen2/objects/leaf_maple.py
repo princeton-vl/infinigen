@@ -663,17 +663,33 @@ class LeafMapleResult(NamedTuple):
     mesh: pf.MeshObject
 
 
+@pf.tracer.generator
 def leaf_maple(
     size: float = 0.25,
     angle_deg: float = 0.0,
     multiplier: float = 1.96,
     material: pf.Material | None = None,
 ) -> LeafMapleResult:
+    return _leaf_maple_mesh(
+        size=size,
+        angle=math.radians(angle_deg),
+        multiplier=multiplier,
+        material=material,
+    )
+
+
+@pf.tracer.generator
+def _leaf_maple_mesh(
+    size: float,
+    angle: float,
+    multiplier: float,
+    material: pf.Material | None,
+) -> LeafMapleResult:
     if material is None:
         material = pf.Material(surface=pf.nodes.shader.principled_bsdf())
 
     geo = geo_leaf_maple(
-        angle=math.radians(angle_deg),
+        angle=angle,
         multiplier=multiplier,
     )
     obj = pf.nodes.to_mesh_object_with_attributes(
@@ -684,7 +700,6 @@ def leaf_maple(
     pf.ops.object.set_material(obj, material=material)
     pf.ops.object.set_transform(obj, scale=(size, size, size))
     pf.ops.mesh.transform_apply(obj)
-    pf.ops.modifier.subdivide_surface(obj, levels=2, _skip_apply=True)
     return LeafMapleResult(mesh=obj)
 
 
@@ -698,9 +713,11 @@ def leaf_maple_rand(
         material = leaf_material_rand(rngs[0], vector=leaf_coord())
 
     rng_geo = rngs[1]
-    return leaf_maple(
+    obj = _leaf_maple_mesh(
         size=pf.random.uniform(rng_geo, 0.15, 0.35),
-        angle_deg=pf.random.uniform(rng_geo, -15.0, 15.0),
+        angle=math.radians(pf.random.uniform(rng_geo, -15.0, 15.0)),
         multiplier=pf.random.uniform(rng_geo, 1.92, 2.0),
         material=material,
-    )
+    ).mesh
+    pf.ops.modifier.subdivide_surface(obj, levels=2, _skip_apply=True)
+    return LeafMapleResult(mesh=obj)

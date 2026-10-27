@@ -136,6 +136,7 @@ def _pot_geometry(
     return _PotGeometryResult(geo, inside)
 
 
+@pf.tracer.generator
 def pot(
     diameter: float = 0.24,
     height: float = 0.09,
@@ -184,6 +185,7 @@ def pot(
     )
 
 
+@pf.tracer.generator
 def bowl(
     diameter: float = 0.24,
     height: float = 0.09,

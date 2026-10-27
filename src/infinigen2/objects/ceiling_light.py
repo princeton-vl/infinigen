@@ -10,7 +10,7 @@ from typing import NamedTuple
 import procfunc as pf
 from procfunc.nodes import types as t
 
-from infinigen2.objects.lamp import light_point_indoor, light_point_indoor_rand
+from infinigen2.objects.lamp import light_point_indoor
 from infinigen2.shaders.base_materials.emissive_nonblocking import (
     lamp_bulb_nonemissive,
 )
@@ -155,6 +155,7 @@ def black_for_reflections(
     return pf.Material(surface=surface)
 
 
+@pf.tracer.generator
 def light_ceiling(
     radius: float = 0.12,
     thickness: float = 0.0275,
@@ -186,7 +187,6 @@ def light_ceiling(
     )
 
     obj = pf.nodes.to_mesh_object(geo.geometry)
-    pf.ops.modifier.subdivide_surface(obj, levels=2, _skip_apply=True)
 
     light = None
     if turned_on:
@@ -195,7 +195,7 @@ def light_ceiling(
             temperature=temperature,
             shadow_soft_size=shadow_soft_size,
         )
-        light.item().location.z = -0.03
+        pf.ops.object.set_transform(light, location=(0.0, 0.0, -0.03))
 
     return CeilingLightResult(mesh=obj, light=light)
 
@@ -221,33 +221,44 @@ def light_ceiling_rand(
 
     bulb_material = lamp_bulb_nonemissive()
 
-    geo = _ceiling_light_geometry(
+    if not turned_on:
+        result = light_ceiling(
+            radius=radius,
+            thickness=thickness,
+            inner_radius=inner_radius,
+            height=height,
+            inner_height=inner_height,
+            curvature=curvature,
+            turned_on=False,
+            frame_material=frame_material,
+            bulb_material=bulb_material,
+        )
+        mesh = result.mesh
+        pf.ops.modifier.subdivide_surface(mesh, levels=2, _skip_apply=True)
+        return CeilingLightResult(mesh=mesh, light=result.light)
+
+    if energy is None:
+        energy = pf.random.uniform(rng, 800, 3000) / 177
+    if shadow_soft_size is None:
+        shadow_soft_size = pf.random.uniform(rng, 0.02, 0.03)
+    rng_temperature, _rng_energy = rng.spawn(2)
+    if temperature is None:
+        temperature = pf.random.clip_gaussian(rng_temperature, 4500, 1000, 2000, 8000)
+
+    result = light_ceiling(
         radius=radius,
         thickness=thickness,
         inner_radius=inner_radius,
         height=height,
         inner_height=inner_height,
         curvature=curvature,
+        energy=energy,
+        temperature=temperature,
+        shadow_soft_size=shadow_soft_size,
+        turned_on=True,
         frame_material=frame_material,
         bulb_material=bulb_material,
     )
-
-    obj = pf.nodes.to_mesh_object(geo.geometry)
-    pf.ops.modifier.subdivide_surface(obj, levels=2, _skip_apply=True)
-
-    light = None
-    if turned_on:
-        if energy is None:
-            energy = pf.random.uniform(rng, 800, 3000) / 177
-        if shadow_soft_size is None:
-            shadow_soft_size = pf.random.uniform(rng, 0.02, 0.03)
-
-        light = light_point_indoor_rand(
-            rng,
-            energy=energy,
-            temperature=temperature,
-            shadow_soft_size=shadow_soft_size if shadow_soft_size is not None else 0.0,
-        )
-        pf.ops.object.set_transform(light, location=(0.0, 0.0, -0.03))
-
-    return CeilingLightResult(mesh=obj, light=light)
+    mesh = result.mesh
+    pf.ops.modifier.subdivide_surface(mesh, levels=2, _skip_apply=True)
+    return CeilingLightResult(mesh=mesh, light=result.light)

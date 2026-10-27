@@ -45,6 +45,7 @@ from infinigen2.scenes.room.sofa_setup import (
 from infinigen2.scenes.room.wall_base import (
     ROOM_SUBSURF_LEVELS,
     WallResult,
+    WallSurface,
     extrude_for_thickness,
     name_objects,
     overlap_wall_plane_edges,
@@ -105,7 +106,7 @@ class RoomResult(NamedTuple):
 @pf.tracer.grammar
 def wall_arrangement_rand(
     rng: pf.RNG,
-    wall: pf.MeshObject | None = None,
+    wall: WallSurface | None = None,
     window_obj: pf.MeshObject | None = None,
     window_portal: pf.LightObject | None = None,
     top_profile_height: float = 0.0,
@@ -197,7 +198,7 @@ def room_walls_rand(
     rng: pf.RNG,
     shape: RoomShapeResult,
     built_walls: list[WallResult],
-    open_walls: list[pf.MeshObject],
+    open_walls: list[WallSurface],
     wall_materials: list[pf.Material],
 ) -> WallResult:
     """Arrange `open_walls` and merge them with the already `built_walls`. Mounted

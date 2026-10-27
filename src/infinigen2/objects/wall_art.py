@@ -30,7 +30,9 @@ __all__ = [
     "art_frame_swept",
     "mirror_rand",
     "mirror_surface_material_rand",
+    "wall_art",
     "wall_art_rand",
+    "wall_art_swept",
 ]
 
 
@@ -183,6 +185,50 @@ def art_frame_swept(
     )
 
 
+def _finish(geo: pf.ProcNode) -> WallArtResult:
+    obj = pf.nodes.to_mesh_object(geo)
+    pf.ops.attr.write_attribute(obj, 1.0, "crease_edge", domain="EDGE")
+    return WallArtResult(mesh=obj)
+
+
+@pf.tracer.generator
+def wall_art(
+    dimensions: pf.Vector,
+    frame_width: float,
+    frame_material: pf.Material,
+    panel_material: pf.Material,
+    panel_depth_pct: float,
+) -> WallArtResult:
+    geo = art_frame(
+        dimensions=dimensions,
+        frame_width=frame_width,
+        frame_material=frame_material,
+        panel_material=panel_material,
+        panel_depth_pct=panel_depth_pct,
+    )
+    return _finish(geo)
+
+
+@pf.tracer.generator
+def wall_art_swept(
+    dimensions: pf.Vector,
+    frame_width: float,
+    frame_material: pf.Material,
+    panel_material: pf.Material,
+    panel_depth_pct: float,
+    frame_profile: pf.CurveObject,
+) -> WallArtResult:
+    geo = art_frame_swept(
+        dimensions=dimensions,
+        frame_width=frame_width,
+        frame_material=frame_material,
+        panel_material=panel_material,
+        panel_depth_pct=panel_depth_pct,
+        frame_profile=pf.nodes.geo.object_info(frame_profile).geometry,
+    )
+    return _finish(geo)
+
+
 def mirror_surface_material_rand(
     rng: pf.RNG,
     vector: t.SocketOrVal[pf.Vector],
@@ -252,8 +298,8 @@ def wall_art_rand(
         )
         panel_material = panel_material_fn(r_panel_mat, vec)
 
-    def _plain_frame() -> pf.ProcNode:
-        return art_frame(
+    def _plain_frame() -> WallArtResult:
+        return wall_art(
             dimensions=dimensions,
             frame_width=frame_width,
             frame_material=frame_material,
@@ -261,25 +307,23 @@ def wall_art_rand(
             panel_depth_pct=panel_depth_pct,
         )
 
-    def _moulded_frame() -> pf.ProcNode:
+    def _moulded_frame() -> WallArtResult:
         profile = trim_profile_rand(r_profile, width=dimensions.x, height=frame_width)
-        return art_frame_swept(
+        return wall_art_swept(
             dimensions=dimensions,
             frame_width=frame_width,
             frame_material=frame_material,
             panel_material=panel_material,
             panel_depth_pct=panel_depth_pct,
-            frame_profile=pf.nodes.geo.object_info(profile).geometry,
+            frame_profile=profile,
         )
 
     frame_fn = pf.control.choice(
         r_frame_style, [(_plain_frame, 1.0), (_moulded_frame, 2.0)]
     )
-    geo = frame_fn()
-    obj = pf.nodes.to_mesh_object(geo)
-    pf.ops.attr.write_attribute(obj, 1.0, "crease_edge", domain="EDGE")
-    pf.ops.modifier.subdivide_surface(obj, levels=4, _skip_apply=True)
-    return WallArtResult(mesh=obj)
+    art = frame_fn().mesh
+    pf.ops.modifier.subdivide_surface(art, levels=4, _skip_apply=True)
+    return WallArtResult(mesh=art)
 
 
 def mirror_rand(rng: pf.RNG, dimensions: pf.Vector | None = None) -> WallArtResult:

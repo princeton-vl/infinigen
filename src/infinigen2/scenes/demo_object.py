@@ -63,6 +63,7 @@ def object_demo(
     ref_rad = 0.3
     pos = (bbox_min[0] - ref_rad - 0.1, 0, 0)
     scale_ref = scale_reference(location=pos, radius=ref_rad)
+    pf.ops.modifier.subdivide_surface(scale_ref, levels=3, _skip_apply=True)
 
     return DevSceneResult(
         environment=environment,

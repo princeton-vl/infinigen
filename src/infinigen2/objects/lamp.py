@@ -41,6 +41,7 @@ _SHADE_CORNER_ATTRIBUTE = "lamp_shade_corner"
 _RACK_CORNER_ATTRIBUTE = "lamp_rack_corner"
 
 
+@pf.tracer.generator
 def light_point_indoor(
     energy: float = 10.0,
     temperature: float = 4500.0,
@@ -829,7 +830,6 @@ def _assemble_lamp(
         selection=corner,
     )
     mesh = pf.nodes.to_mesh_object(geo)
-    pf.ops.modifier.subdivide_surface(mesh, levels=2, _skip_apply=True)
 
     bulb_radius = 0.02
     point_light = light_point_indoor(
@@ -845,6 +845,7 @@ def _assemble_lamp(
     return LampResult(mesh=mesh, light=point_light)
 
 
+@pf.tracer.generator
 def lamp(
     stand_radius: float = 0.01,
     base_radius: float = 0.1,
@@ -863,6 +864,8 @@ def lamp(
     black_material: pf.Material | None = None,
     lampshade_material: pf.Material | None = None,
     metal_material: pf.Material | None = None,
+    base_geometry: pf.ProcNode[pf.MeshObject] | None = None,
+    base_material: pf.Material | None = None,
 ) -> LampResult:
     if black_material is None:
         black_material = pf.Material(surface=pf.nodes.shader.principled_bsdf())
@@ -895,20 +898,56 @@ def lamp(
         energy=energy,
         temperature=temperature,
     )
-    base_geometry = _classic_lamp_base(
-        stand_radius=stand_radius,
-        base_radius=base_radius,
-        base_height=base_height,
-        height=support_height,
-    )
+    if base_geometry is None:
+        base_geometry = _classic_lamp_base(
+            stand_radius=stand_radius,
+            base_radius=base_radius,
+            base_height=base_height,
+            height=support_height,
+        )
+    if base_material is None:
+        base_material = black_material
     return _assemble_lamp(
         parameters,
         base_geometry,
-        black_material,
+        base_material,
         black_material,
         lampshade_material,
         metal_material,
     )
+
+
+def _lamp_from_parameters(
+    parameters: _LampParameters,
+    support_shade_overlap: float,
+    base: tuple[pf.ProcNode[pf.MeshObject], pf.Material],
+    stem_material: pf.Material,
+    lampshade_material: pf.Material,
+) -> LampResult:
+    result = lamp(
+        stand_radius=parameters.stand_radius,
+        base_radius=parameters.base_radius,
+        base_height=parameters.flat_base_height,
+        shade_height=parameters.shade_height,
+        head_top_radius=parameters.head_top_radius,
+        head_bot_radius=parameters.head_bot_radius,
+        head_mid_radius=parameters.head_mid_radius,
+        profile_resolution=parameters.profile_resolution,
+        height=parameters.height,
+        rack_thickness=parameters.rack_thickness,
+        reverse_lamp=parameters.reverse_lamp,
+        support_shade_overlap=support_shade_overlap,
+        energy=parameters.energy,
+        temperature=parameters.temperature,
+        black_material=stem_material,
+        lampshade_material=lampshade_material,
+        metal_material=stem_material,
+        base_geometry=base[0],
+        base_material=base[1],
+    )
+    mesh = result.mesh
+    pf.ops.modifier.subdivide_surface(mesh, levels=2, _skip_apply=True)
+    return LampResult(mesh=mesh, light=result.light)
 
 
 def lamp_rand(
@@ -949,13 +988,8 @@ def lamp_rand(
         stem_material=stem_mat,
         vector=vec,
     )
-    return _assemble_lamp(
-        parameters,
-        base[0],
-        base[1],
-        black_material=stem_mat,
-        lampshade_material=lampshade_mat,
-        metal_material=stem_mat,
+    return _lamp_from_parameters(
+        parameters, support_shade_overlap, base, stem_mat, lampshade_mat
     )
 
 
@@ -998,13 +1032,8 @@ def lamp_floor_rand(
         stem_material=stem_mat,
         vector=vec,
     )
-    return _assemble_lamp(
-        parameters,
-        base[0],
-        base[1],
-        black_material=stem_mat,
-        lampshade_material=lampshade_mat,
-        metal_material=stem_mat,
+    return _lamp_from_parameters(
+        parameters, support_shade_overlap, base, stem_mat, lampshade_mat
     )
 
 
@@ -1047,13 +1076,8 @@ def lamp_ceiling_shade_rand(
         stem_material=stem_mat,
         _vector=vec,
     )
-    result = _assemble_lamp(
-        parameters,
-        base[0],
-        base[1],
-        black_material=stem_mat,
-        lampshade_material=lampshade_mat,
-        metal_material=stem_mat,
+    result = _lamp_from_parameters(
+        parameters, support_shade_overlap, base, stem_mat, lampshade_mat
     )
     pf.ops.object.set_transform(result.mesh, rotation_euler=(pi, 0, 0))
     light_location = result.light.item().location
