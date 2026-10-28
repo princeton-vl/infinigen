@@ -57,3 +57,18 @@ Each pass writes `%c/<name>-%f.png` under `--output` (`%c` = camera, `%f` = fram
 - **clay** + **ao-disp** — displaced mesh (`DISPLACEMENT_AND_BUMP`); fine surface detail shows up in the AO pass.
 - **rgb** — full materials, plus `camera.npz`.
 - **gt** — `depth`/`surface-normal`/`object`/`optical-flow` `.npy`; skipped with `--skip_gt`.
+
+## house tour video [[source]](https://github.com/princeton-vl/infinigen/blob/main/examples/house_tour/render.py)
+
+A collision-free RRT camera tour through three or four connected rooms of a procedurally generated house. Only the toured rooms are furnished and decorated, and subdivision is stripped from geometry outside them to keep the render light.
+
+```bash
+uv run python examples/house_tour/render.py --seed 0 --output outputs/house_tour
+```
+
+- `--seed` sets the house layout, furniture and small objects; `--trajectory_seed` (defaults to `--seed`) re-chooses the toured rooms and camera path without changing the house.
+- `--frames` (default `1 240`) is the planned tour length; `--render_frames` renders a sub-range of that same trajectory, so shards can split one tour.
+- `--room_count` (default 5), `--resolution` (default `640 360`) and `--samples` (default 128) control the house size and render quality.
+- Scenes whose render-level triangle count exceeds `--max_render_tris` (default 32M), or where no tour can be planned, raise `RejectedScene`; try another seed.
+
+The output folder receives rgb frames `%c/%f.png`, `camera.npz`, and `metadata.json` with seeds and per-step timings.
