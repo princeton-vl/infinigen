@@ -84,6 +84,8 @@ def classify_image(variant_key: str, filename: str) -> dict[str, str]:
         pass_type = "surface-normal"
     elif filename == "error":
         pass_type = "error"
+    elif filename.startswith("backfacing_"):
+        pass_type = "backfacing"
     else:
         pass_type = "other"
 
@@ -670,6 +672,7 @@ def _fold_presets(
 
 # key, title, stats category, folded-by-default, scroll group.
 SECTION_SPECS = [
+    ("backfacing", "Backfacing normals", None, False, "visuals"),
     ("seeds", "Random seeds", "distribution", False, "visuals"),
     ("normals", "Normals", None, True, "visuals"),
     ("presets", "Presets", "preset", False, "presets"),
@@ -685,6 +688,8 @@ def _image_section(img: dict) -> str:
         return "exports"
     if img.get("pass_type") == "surface-normal":
         return "normals"
+    if img.get("pass_type") == "backfacing":
+        return "backfacing"
     return "seeds"
 
 

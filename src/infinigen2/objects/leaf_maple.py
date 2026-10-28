@@ -523,7 +523,7 @@ def geo_leaf_maple(
         size_x=1.0, size_y=1.0, vertices_x=_ANGULAR_VERTS, vertices_y=_RING_VERTS
     )
     silhouette = maple_silhouette(
-        geometry=grid.mesh, angle=angle, multiplier=multiplier
+        geometry=pf.nodes.geo.flip_faces(grid.mesh), angle=angle, multiplier=multiplier
     )
     welded = pf.nodes.geo.merge_by_distance(geometry=silhouette, distance=1e-4)
 

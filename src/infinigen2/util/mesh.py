@@ -222,6 +222,19 @@ def _flip_index(
     return add
 
 
+# mesh_cylinder stores its top ring first, so ring r takes profile v - 1 - r
+@pf.nodes.node_function
+def _loft_ring_index(
+    u_resolution: t.SocketOrVal[int] = 0, v_resolution: t.SocketOrVal[int] = 0
+) -> pf.ProcNode[float]:
+    input_index = pf.nodes.geo.input_index().astype(dtype=float)
+    u = u_resolution.astype(dtype=float)
+    v = v_resolution.astype(dtype=float)
+    column = input_index % u
+    ring = pf.nodes.math.floor(input_index / u)
+    return column * v + (v - 1.0 - ring)
+
+
 class LoftingResult(NamedTuple):
     geometry: pf.ProcNode[pf.CurveObject]
     top: pf.ProcNode[bool]
@@ -294,12 +307,10 @@ def lofting(
         curve=resample_curve, count=v_resolution
     )
     input_position_1 = pf.nodes.geo.input_position()
-    flip_index_result_1 = _flip_index(
-        v_resolution=u_resolution, u_resolution=v_resolution
-    )
+    ring_index = _loft_ring_index(u_resolution=u_resolution, v_resolution=v_resolution)
     sample_index_1 = pf.nodes.geo.sample_index(
         geometry=resample_curve_count_1,
-        index=flip_index_result_1.astype(dtype=int),
+        index=ring_index.astype(dtype=int),
         value=input_position_1,
         data_type=NodeDataType.FLOAT_VECTOR,
     )

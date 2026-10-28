@@ -13,6 +13,10 @@
   },
   {
     "category": "Exporter",
+    "name": "infinigen2.exporters.render_error_check.backfacing.check_backfacing"
+  },
+  {
+    "category": "Exporter",
     "name": "infinigen2.exporters.render_eevee.render_eevee"
   },
   {

@@ -423,7 +423,7 @@ def geo_leaf_ginko(
         size_x=1.0, size_y=1.0, vertices_x=_ANGULAR_VERTS, vertices_y=_RING_VERTS
     )
     silhouette = ginko_silhouette(
-        geometry=grid.mesh,
+        geometry=pf.nodes.geo.flip_faces(grid.mesh),
         angle=angle,
         multiplier=multiplier,
         scale_margin=scale_margin,

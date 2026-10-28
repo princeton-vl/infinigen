@@ -368,23 +368,10 @@ def _round_seat_n_gon_cylinder(
         x=sample_curve.position.x, y=sample_curve.position.y
     )
     mesh_position_x = pf.nodes.math.vector_length(mesh_position_x_vector)
-    input_position_1 = pf.nodes.geo.input_position()
-    attribute_statistic = pf.nodes.geo.attribute_statistic(
-        geometry=radius_curve,
-        attribute=input_position_1.z,
-    )
-    mesh_position_z = pf.nodes.math.map_range(
-        value=sample_curve.position.z,
-        from_max=attribute_statistic.max,
-        from_min=attribute_statistic.min,
-        to_max=0.0,
-        to_min=mesh_position_z_to_min,
-        data_type=NodeDataType.FLOAT,
-    )
     mesh_position = pf.nodes.math.combine_xyz(
         x=input_position.x * mesh_position_x,
         y=input_position.y * mesh_position_x,
-        z=mesh_position_z,
+        z=input_position.z,
     )
     set_position = pf.nodes.geo.set_position(
         geometry=curve_to, position=mesh_position, offset=(0.0, 0.0, 0.0)
@@ -719,23 +706,10 @@ def _wheeled_base_n_gon_cylinder(
         x=sample_curve.position.x, y=sample_curve.position.y
     )
     mesh_position_x = pf.nodes.math.vector_length(mesh_position_x_vector)
-    input_position_1 = pf.nodes.geo.input_position()
-    attribute_statistic = pf.nodes.geo.attribute_statistic(
-        geometry=radius_curve,
-        attribute=input_position_1.z,
-    )
-    mesh_position_z = pf.nodes.math.map_range(
-        value=sample_curve.position.z,
-        from_max=attribute_statistic.max,
-        from_min=attribute_statistic.min,
-        to_max=0.0,
-        to_min=mesh_position_z_to_min,
-        data_type=NodeDataType.FLOAT,
-    )
     mesh_position = pf.nodes.math.combine_xyz(
         x=input_position.x * mesh_position_x,
         y=input_position.y * mesh_position_x,
-        z=mesh_position_z,
+        z=input_position.z,
     )
     set_position = pf.nodes.geo.set_position(
         geometry=curve_to, position=mesh_position, offset=(0.0, 0.0, 0.0)
@@ -836,12 +810,10 @@ def _wheeled_base_generate_table_top(
     transform_6 = pf.nodes.geo.transform(
         geometry=curve_to, translation=transform_6_translation
     )
-    join = pf.nodes.geo.join_geometry([store_named_attribute, transform_6])
-    flip_faces = pf.nodes.geo.flip_faces(join)
+    flip_faces = pf.nodes.geo.flip_faces(transform_6)
+    join = pf.nodes.geo.join_geometry([store_named_attribute, flip_faces])
     geometry_translation = pf.nodes.math.combine_xyz(z=thickness)
-    transform = pf.nodes.geo.transform(
-        geometry=flip_faces, translation=geometry_translation
-    )
+    transform = pf.nodes.geo.transform(geometry=join, translation=geometry_translation)
     return _WheeledBaseTableTopResult(transform, n_gon_cylinder_result.profile_curve)
 
 

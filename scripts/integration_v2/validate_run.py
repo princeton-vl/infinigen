@@ -6,6 +6,21 @@ import argparse
 import json
 from pathlib import Path
 
+BACKFACING_MAX_FRACTION = 0.001
+BACKFACING_EXCUSED = {
+    "curtain_rand",
+    "flower_rand",
+    "leaf_ginkgo_rand",
+    "leaf_maple_rand",
+    "leaf_simple_rand",
+    "obj_with_postprocessing",
+    "plant_phyllo_ascending_rand",
+    "plant_phyllo_basal_rand",
+    "plant_pot_large_rand",
+    "plant_pot_small_rand",
+    "primitive_with_effect_rand",
+}
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
@@ -49,6 +64,26 @@ def validation_errors(events: list[dict], coverage: dict[str, list[str]]) -> lis
     return errors
 
 
+def _backfacing_frame_error(asset_dir: str, frame: dict) -> str | None:
+    fraction = frame["bad_pixels"] / max(frame["hit_pixels"], 1)
+    if fraction <= BACKFACING_MAX_FRACTION:
+        return None
+    image = Path(frame["image"]).name if frame.get("image") else ""
+    objects = frame["bad_by_object"]
+    return f"{asset_dir}: {fraction:.1%} of pixels see a backface {objects} {image}"
+
+
+def backfacing_errors(output_path: Path) -> list[str]:
+    errors = []
+    for report in sorted(output_path.glob("*/*/backfacing.json")):
+        asset_dir = report.parent.parent.relative_to(output_path).as_posix()
+        if asset_dir.split("-")[1] in BACKFACING_EXCUSED:
+            continue
+        for frame in load_json(report, {}).get("frames", []):
+            errors.append(_backfacing_frame_error(asset_dir, frame))
+    return [e for e in errors if e is not None]
+
+
 def output_errors(output_path: Path) -> list[str]:
     gating_report = output_path / "gating_report.json"
     if not gating_report.is_file():
@@ -64,6 +99,7 @@ def main() -> int:
     coverage = load_json(args.coverage, {})
     errors = output_errors(args.output_path)
     errors.extend(validation_errors(events, coverage))
+    errors.extend(backfacing_errors(args.output_path))
     if errors:
         raise SystemExit("Invalid integration-render artifacts:\n" + "\n".join(errors))
     print(f"Validated {len(events)} render events and {len(coverage)} coverage entries")

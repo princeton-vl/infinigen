@@ -197,7 +197,7 @@ done
 
 # OBJECTS VISUAL CHECK
 for i in {0..5}; do
-    echo "$OBJECTS" | xargs $XARGS "${RENDER_RUNNER_ARGS[@]}" {} object_demo render_cycles $NORMAL_STEPS \
+    echo "$OBJECTS" | xargs $XARGS "${RENDER_RUNNER_ARGS[@]}" {} object_demo render_cycles check_backfacing $NORMAL_STEPS \
         $GEN_ARGS --output $OUTPUT_PATH/object-{}-demo-cycles-$i --seed $i \
         --passes rgb surface-normal -r 384 384 -s 128
 done
