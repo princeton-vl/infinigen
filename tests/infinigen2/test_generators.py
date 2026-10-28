@@ -24,6 +24,7 @@ from infinigen2.exporters.render_error_check import (
     assert_displacement_coords_safe,
     assert_shader_complexity_ok,
     assert_uv_coords_satisfied,
+    degenerate_geometry_defects,
 )
 from infinigen2.util.codestats.setup import build_model_from_compute_graph
 
@@ -154,6 +155,12 @@ _PRIMITIVES_TRACE_EXCLUDES = {
     "infinigen2.objects.table.table_dining_rand",
     "infinigen2.objects.table.table_side_rand",
 }
+# curtain cloth is a thin open tube booleaned against its rod, non-manifold by design
+_DEGENERATE_GEOMETRY_EXCLUDES = {
+    "infinigen2.objects.window.curtain_rand",
+    "infinigen2.objects.window.window_composite_rand",
+    "infinigen2.objects.window.window_rectangular_composite_rand",
+}
 _PRIMITIVES_TRACE_FUNCS = _OBJECT_FUNCS[
     ~_OBJECT_FUNCS["name"].isin(_PRIMITIVES_TRACE_EXCLUDES | set(_SKIP_TESTS))
 ]
@@ -192,8 +199,13 @@ def test_generators_object(rng, pathspec, min_parameters):
         f".mesh should be MeshObject, got {type(res.mesh)} from {pathspec}"
     )
     _assert_render_valid([res.mesh])
+    defects = degenerate_geometry_defects([res.mesh])
 
     validate_trace_generator(func, rng, min_parameters=min_parameters)
+
+    if pathspec in _DEGENERATE_GEOMETRY_EXCLUDES:
+        return
+    assert defects == {}, f"{pathspec} produced degenerate geometry: {defects}"
 
 
 def _evaluated_mesh_geometry(

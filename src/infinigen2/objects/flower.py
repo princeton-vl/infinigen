@@ -373,7 +373,7 @@ def _plant_seed(
 
     curve_value = pf.nodes.math.float_curve(
         value=norm_index_result,
-        curve=np.array([[0.0, 0.0], [0.3159, 0.4469], [1.0, 0.0156]]),
+        curve=np.array([[0.0, 0.03], [0.3159, 0.4469], [1.0, 0.0156]]),
         factor=1.0,
     )
     curve_to_curve_radius = pf.nodes.math.map_range(value=curve_value, to_max=3.0)

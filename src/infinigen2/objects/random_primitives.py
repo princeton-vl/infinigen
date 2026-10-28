@@ -238,21 +238,34 @@ def effect_solidify(rng: pf.RNG, obj: pf.MeshObject) -> EffectResult:
     return EffectResult(mesh=obj, subsurf_levels=4)
 
 
+def _screw_profile(obj: pf.MeshObject) -> None:
+    pf.ops.mesh.bisect(
+        obj, plane_no=(0.0, 1.0, 0.0), clear_inner=True, clear_outer=True
+    )
+    pf.ops.mesh.transform(obj, location=pf.Vector((2.0, 0.0, 0.0)))
+
+
 def effect_screw_ring(rng: pf.RNG, obj: pf.MeshObject) -> EffectResult:
+    _screw_profile(obj)
     pf.ops.modifier.screw(
         obj,
         angle=pf.random.uniform(rng, math.pi / 2, 2 * math.pi),
     )
+    pf.ops.mesh.normals_make_consistent(obj)
+    pf.ops.uv.cube_project(obj, uv_name="UVMap")
     return EffectResult(mesh=obj, subsurf_levels=3)
 
 
 def effect_screw_spiral(rng: pf.RNG, obj: pf.MeshObject) -> EffectResult:
+    _screw_profile(obj)
     pf.ops.modifier.screw(
         obj,
         angle=pf.random.uniform(rng, 0.2 * math.pi, 2 * math.pi),
         iterations=pf.random.randint(rng, 2, 5),
         screw_offset=pf.random.uniform(rng, 0.3, 1.2),
     )
+    pf.ops.mesh.normals_make_consistent(obj)
+    pf.ops.uv.cube_project(obj, uv_name="UVMap")
     return EffectResult(mesh=obj, subsurf_levels=2)
 
 

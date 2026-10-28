@@ -203,8 +203,8 @@ def _bed_base_rand(
         r_choice, r_body = r.spawn(2)
         leg_diameter = 0.06
         leg_width = leg_diameter / math.sqrt(2.0)
-        footprint_x = dims.x + 0.08
-        footprint_y = dims.y + 0.08
+        footprint_x = dims.x + 0.06
+        footprint_y = dims.y + 0.06
         straight_dimensions = pf.Vector(
             (
                 footprint_x + leg_diameter - leg_width,

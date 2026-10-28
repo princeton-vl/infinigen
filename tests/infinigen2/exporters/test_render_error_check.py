@@ -18,6 +18,7 @@ from infinigen2.exporters.render_error_check import (
     SHADER_NODE_COUNT_FAIL,
     AdaptiveSamplingError,
     CyclesShaderError,
+    DegenerateGeometryError,
     DisplacementCoordError,
     FrameCheckError,
     HiddenRenderObjectError,
@@ -31,6 +32,7 @@ from infinigen2.exporters.render_error_check import (
     assert_displacement_coords_safe,
     assert_frames_not_black,
     assert_geometry_finite,
+    assert_geometry_nondegenerate,
     assert_material_attributes_present,
     assert_material_nodes_valid,
     assert_render_objects_visible,
@@ -40,6 +42,7 @@ from infinigen2.exporters.render_error_check import (
     check_material_uv_coords,
     configure_sample_count_output,
     count_material_nodes,
+    degenerate_geometry_defects,
     detect_cycles_errors,
     hidden_render_objects,
     missing_attribute_issues,
@@ -474,6 +477,83 @@ def test_finite_geometry_ok():
     mo = _plane()
     assert nonfinite_vertex_counts([mo]) == {}
     assert_geometry_finite([mo])
+
+
+def _pydata_mesh(verts: list, faces: list) -> pf.MeshObject:
+    pf.ops.object.clear_scene()
+    mesh = bpy.data.meshes.new("pydata")
+    mesh.from_pydata(verts, [], faces)
+    obj = bpy.data.objects.new("pydata", mesh)
+    bpy.context.scene.collection.objects.link(obj)
+    bpy.context.view_layer.update()
+    return pf.MeshObject(obj)
+
+
+_GRID_VERTS = [(x, y, 0.0) for y in range(3) for x in range(3)]
+_GRID_FACES = [(0, 1, 4, 3), (1, 2, 5, 4), (3, 4, 7, 6), (4, 5, 8, 7)]
+
+
+def test_clean_geometry_ok():
+    mo = _pydata_mesh(_GRID_VERTS, _GRID_FACES)
+    assert degenerate_geometry_defects([mo]) == {}
+    assert_geometry_nondegenerate([mo])
+
+
+def test_collapsed_support_loop_flagged():
+    verts = [(x, y, 0.0) for y in range(2) for x in (0.0, 1.0, 1.0, 2.0)]
+    faces = [(0, 1, 5, 4), (1, 2, 6, 5), (2, 3, 7, 6)]
+    mo = _pydata_mesh(verts, faces)
+    defects = degenerate_geometry_defects([mo])[mo.item().name]
+    assert defects.zero_area_faces == 1
+    assert defects.zero_length_edges == 2
+    with (
+        context.override_globals(error_mode_degenerate_geometry="error"),
+        pytest.raises(DegenerateGeometryError),
+    ):
+        assert_geometry_nondegenerate([mo])
+
+
+def test_nonmanifold_fin_flagged():
+    verts = _GRID_VERTS + [(1.0, 0.0, 1.0), (1.0, 1.0, 1.0)]
+    faces = _GRID_FACES + [(1, 4, 10, 9)]
+    mo = _pydata_mesh(verts, faces)
+    defects = degenerate_geometry_defects([mo])[mo.item().name]
+    assert defects.nonmanifold_edges == 1
+    assert defects.flipped_edges == 0
+
+
+def test_flipped_face_flagged():
+    faces = [(0, 1, 4, 3), (4, 5, 2, 1)] + _GRID_FACES[2:]
+    mo = _pydata_mesh(_GRID_VERTS, faces)
+    defects = degenerate_geometry_defects([mo])[mo.item().name]
+    assert defects.flipped_edges == 2
+    assert defects.nonmanifold_edges == 0
+
+
+def _stacked_quads(gap: float, flip_top: bool, top_material: int) -> pf.MeshObject:
+    verts = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
+    verts += [(x + 0.25, y, gap) for x, y, _ in verts]
+    top = (7, 6, 5, 4) if flip_top else (4, 5, 6, 7)
+    mo = _pydata_mesh(verts, [(0, 1, 2, 3), top])
+    mo.item().data.polygons[1].material_index = top_material
+    return mo
+
+
+def test_coincident_faces_flagged():
+    mo = _stacked_quads(gap=1e-5, flip_top=False, top_material=1)
+    defects = degenerate_geometry_defects([mo])[mo.item().name]
+    assert defects.coincident_faces > 0
+    assert defects.nonmanifold_edges == 0
+
+
+@pytest.mark.parametrize(
+    "gap, flip_top, top_material",
+    [(1e-5, True, 1), (0.002, False, 1), (0.0, False, 0)],
+    ids=["contact", "thin_gap", "same_material_flush"],
+)
+def test_coincident_faces_allowed(gap: float, flip_top: bool, top_material: int):
+    mo = _stacked_quads(gap=gap, flip_top=flip_top, top_material=top_material)
+    assert degenerate_geometry_defects([mo]) == {}
 
 
 def test_singular_transform_flagged():

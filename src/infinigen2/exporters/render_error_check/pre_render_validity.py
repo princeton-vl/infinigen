@@ -19,6 +19,9 @@ from infinigen2.exporters.render_error_check.material_attributes import (
 from infinigen2.exporters.render_error_check.material_nodes import (
     assert_material_nodes_valid,
 )
+from infinigen2.exporters.render_error_check.mesh_quality import (
+    assert_geometry_nondegenerate,
+)
 from infinigen2.exporters.render_error_check.object_transform import (
     assert_transforms_nonsingular,
 )
@@ -43,6 +46,7 @@ def render_validity_check(
     assert_uv_coords_satisfied(objects)
     assert_material_nodes_valid(objects)
     assert_geometry_finite(objects)
+    assert_geometry_nondegenerate(objects)
     assert_transforms_nonsingular(objects)
     assert_material_attributes_present(objects)
     assert_render_objects_visible(objects)

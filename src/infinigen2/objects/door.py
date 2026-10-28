@@ -177,7 +177,8 @@ def door_body_rand(
     n_panels = pf.random.randint(rng, 1, 5)
     margin_fraction = pf.random.uniform(rng, 0.1, 0.22)
     panel_thickness = thickness * pf.random.uniform(rng, 0.35, 0.5)
-    bevel_width = pf.random.uniform(rng, 0.001, 0.005)
+    # front and back bevels must not meet across the panel or its edge collapses
+    bevel_width = min(pf.random.uniform(rng, 0.001, 0.005), panel_thickness * 0.4)
     door = door_body(
         dimensions=dimensions,
         frame_material=frame_material,

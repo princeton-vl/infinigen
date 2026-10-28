@@ -99,7 +99,7 @@ def ginko_silhouette(
         coordinate=dir_r * 0.5, multiplier=multiplier, scale_margin=scale_margin
     )
     g = (s1 - s05) * 2.0
-    r_b = pf.nodes.math.maximum((g - s1) / g, 0.0)
+    r_b = pf.nodes.math.maximum((g - s1) / g, 0.02)
 
     return pf.nodes.geo.set_position(geometry=geometry, position=dir_u * (v * r_b))
 
@@ -428,7 +428,7 @@ def geo_leaf_ginko(
         multiplier=multiplier,
         scale_margin=scale_margin,
     )
-    welded = pf.nodes.geo.merge_by_distance(geometry=silhouette, distance=1e-4)
+    welded = pf.nodes.geo.merge_by_distance(geometry=silhouette, distance=1e-5)
 
     input_position = pf.nodes.geo.input_position()
 

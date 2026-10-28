@@ -785,13 +785,14 @@ def box_with_support_loops(
         pf.nodes.math.subtract(vertices_y_float, 2.0),
         pf.nodes.math.subtract(vertices_z_float, 2.0),
     )
+    # spread between support loops; full-size spread then clamp stacks loops on them
     even = pf.nodes.math.map_range(
         clamp=False,
         value=index,
         from_min=ones,
         from_max=interior_index_max,
-        to_min=neg_half,
-        to_max=half,
+        to_min=neg_half + support_loop_offset,
+        to_max=half - support_loop_offset,
     )
     clamped = pf.nodes.math.vector_maximum(
         pf.nodes.math.vector_minimum(even, half - support_loop_offset),

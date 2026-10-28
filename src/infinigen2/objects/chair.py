@@ -159,7 +159,7 @@ def _curvy_seat_geometry(
     mid_pos: t.SocketOrVal[float] = 0.5,
 ) -> pf.ProcNode[pf.MeshObject]:
     curve_circle = pf.nodes.geo.curve_circle(resolution=u_resolution, radius=0.5)
-    transform = pf.nodes.geo.transform(geometry=curve_circle, scale=(0.0, 0.005, 1.0))
+    transform = pf.nodes.geo.transform(geometry=curve_circle, scale=(0.005, 0.005, 1.0))
     curve_circle_1 = pf.nodes.geo.curve_circle(resolution=u_resolution, radius=0.5)
     transform_1_scale = pf.nodes.math.combine_xyz(
         x=width * front_relative_width, y=0.005, z=1.0
@@ -820,8 +820,12 @@ def _wheeled_base_generate_table_top(
     fillet_curve_poly = pf.nodes.geo.fillet_curve_poly(
         curve=transform_4, radius=fillet_radius_vertical, count=4, limit_radius=True
     )
+    fillet_endpoints = pf.nodes.geo.curve_endpoint_selection(start_size=1, end_size=1)
+    fillet_profile = pf.nodes.geo.delete_geometry(
+        geometry=fillet_curve_poly, selection=fillet_endpoints, domain="POINT"
+    )
     transform_5 = pf.nodes.geo.transform(
-        geometry=fillet_curve_poly,
+        geometry=fillet_profile,
         rotation=(1.5708, 1.5708, 0.0),
         scale=thickness.astype(dtype=pf.Vector),
     )
@@ -948,8 +952,13 @@ def _wheeled_base_wheel(
     fillet_curve_poly = pf.nodes.geo.fillet_curve_poly(
         curve=curve_quadrilateral, radius=0.03, count=2, limit_radius=True
     )
+    fork_index = pf.nodes.geo.input_index()
+    fork_coincident = pf.nodes.math.modulo(fork_index.astype(dtype=float), 6.0) == 5.0
+    fork_profile = pf.nodes.geo.delete_geometry(
+        geometry=fillet_curve_poly, selection=fork_coincident, domain="POINT"
+    )
     curve_to = curve_to_mesh_with_uv(
-        curve=arc_top_result, profile=fillet_curve_poly, fill_caps=True
+        curve=arc_top_result, profile=fork_profile, fill_caps=True
     ).mesh
     curve_line_1_start = pf.nodes.math.combine_xyz(y=wheel_width)
     curve_line_1_end = pf.nodes.math.combine_xyz(y=wheel_width * -1.0)
@@ -1461,8 +1470,10 @@ def _chair_back_geometry(
     slats = pf.nodes.geo.realize_instances(slats)
 
     crest_width = dimensions.y + crest_margin * 2.0
+    # proud of the slats so their buried tops never z-fight the rail, even once bent
+    crest_depth = dimensions.x + 0.006
     crest = mesh.box_with_support_loops(
-        size=pf.nodes.math.combine_xyz(x=dimensions.x, y=crest_width, z=crest_height),
+        size=pf.nodes.math.combine_xyz(x=crest_depth, y=crest_width, z=crest_height),
         vertices_x=4,
         vertices_y=pf.nodes.math.add(crest_loops, 4),
         vertices_z=4,
@@ -1846,7 +1857,8 @@ def _dining_slat_back_rand(
     slat_depth = slat_width * aspect
     gap = 0.0127 + (width - 0.0127) * pf.random.uniform(rng, 0.0, 1.0) ** 3
     crest_height = pf.random.clip_gaussian(rng, 0.0675, 0.035, 0.0375, 0.15)
-    corner_r = pf.random.uniform(rng, 0.0, 0.49) * crest_height
+    # stays above the back's 1mm bevel, which otherwise collapses the support loops
+    corner_r = pf.random.uniform(rng, 0.05, 0.49) * crest_height
     crest_depth_r = pf.random.uniform(rng, 0.2, 0.49) * slat_depth
     slat_profile_resolution = pf.control.choice(rng, [(24, 2.0), (4, 1.0)])
     crest_align = pf.random.uniform(rng, 0.0, 1.0)

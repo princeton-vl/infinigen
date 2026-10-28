@@ -301,19 +301,30 @@ def _sofa_geometry(
     )
     seat_cushions = pf.nodes.geo.realize_instances(seat_cushions)
 
-    base_board_location = back_dimensions * (1.0, 0.0, 0.0)
+    # boards tuck into their neighbours so merge_by_distance cannot weld touching faces
+    board_tuck = 0.001
+    base_board_location = pf.nodes.math.combine_xyz(x=back_dimensions.x - board_tuck)
+    tucked_base_board_dimensions = base_board_dimensions + pf.nodes.math.combine_xyz(
+        x=board_tuck
+    )
     base_board = mesh_util.box_with_support_loops(
         location=base_board_location,
         anchor=(0.0, 0.5, -1.0),
-        size=base_board_dimensions,
+        size=tucked_base_board_dimensions,
         support_loop_offset=cushion.support_loop_offset(
-            body_radius, base_board_dimensions
+            body_radius, tucked_base_board_dimensions
         ),
     )
 
+    left_tuck = pf.nodes.func.switch(switch=has_left_arm, a=0.0, b=board_tuck)
+    right_tuck = pf.nodes.func.switch(switch=has_right_arm, a=0.0, b=board_tuck)
     back_board_dimensions = pf.nodes.math.combine_xyz(
         x=back_dimensions.x,
-        y=dimensions.y - left_arm_thickness - right_arm_thickness,
+        y=dimensions.y
+        - left_arm_thickness
+        - right_arm_thickness
+        + left_tuck
+        + right_tuck,
         z=back_dimensions.z,
     )
     back_board = mesh_util.box_with_support_loops(
@@ -327,7 +338,7 @@ def _sofa_geometry(
     back_board = pf.nodes.geo.transform(
         geometry=back_board,
         translation=pf.nodes.math.combine_xyz(
-            y=(left_arm_thickness - right_arm_thickness) * 0.5
+            y=(left_arm_thickness - left_tuck - right_arm_thickness + right_tuck) * 0.5
         ),
         rotation=(0, 0, 0),
         scale=(1, 1, 1),
