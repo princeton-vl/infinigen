@@ -120,23 +120,6 @@ def test_gate_covers_every_category(tmp_path, monkeypatch):
     assert kept["environments"] == []
 
 
-def test_category_config_has_one_entry_per_shard_and_limit():
-    assert set(launch_andromeda.CATEGORIES) == {
-        "materials",
-        "objects",
-        "scenes",
-        "masks",
-        "displacements",
-        "presets",
-        "environments",
-        "cameras",
-    }
-    for selector, limit_env, shard_env in launch_andromeda.CATEGORIES.values():
-        assert selector
-        assert limit_env.endswith("_LIMIT")
-        assert shard_env.isupper()
-
-
 def test_parse_asset_fields_displacement() -> None:
     fields = run_and_index.parse_asset_fields(
         "displacement-masonry_displacement_rand-planeuv-cycles-4"

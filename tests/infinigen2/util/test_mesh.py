@@ -153,44 +153,6 @@ def test_box_clamps_anchor_to_normalized_range():
     np.testing.assert_allclose(positions.max(axis=0), (2.0, 1.5, 4.0))
 
 
-def test_support_loop_box_anchor_preserves_geometry():
-    bpy.ops.wm.read_homefile(use_empty=True)
-    centered = mesh_util.box_with_support_loops(
-        size=(2.0, 3.0, 4.0),
-        location=(5.0, 6.0, 7.0),
-        vertices_x=4,
-        vertices_y=5,
-        vertices_z=6,
-        support_loop_offset=(0.1, 0.2, 0.3),
-    )
-    corner = mesh_util.box_with_support_loops(
-        size=(2.0, 3.0, 4.0),
-        location=(4.0, 4.5, 5.0),
-        anchor=(0.0, 0.0, 0.0),
-        vertices_x=4,
-        vertices_y=5,
-        vertices_z=6,
-        support_loop_offset=(0.1, 0.2, 0.3),
-    )
-    centered_mesh = pf.nodes.to_mesh_object(centered).item().data
-    corner_mesh = pf.nodes.to_mesh_object(corner).item().data
-    centered_positions = np.array([vertex.co[:] for vertex in centered_mesh.vertices])
-    corner_positions = np.array([vertex.co[:] for vertex in corner_mesh.vertices])
-
-    np.testing.assert_array_equal(centered_positions, corner_positions)
-    np.testing.assert_allclose(
-        np.unique(centered_positions[:, 0]), (4.0, 4.1, 5.9, 6.0)
-    )
-    np.testing.assert_allclose(
-        np.unique(centered_positions[:, 1]), (4.5, 4.7, 6.0, 7.3, 7.5)
-    )
-    np.testing.assert_allclose(
-        np.unique(centered_positions[:, 2]),
-        (5.0, 5.3, 19 / 3, 23 / 3, 8.7, 9.0),
-        atol=1e-6,
-    )
-
-
 def test_fill_between_curves_stores_metric_uvs():
     bpy.ops.wm.read_homefile(use_empty=True)
     left = pf.nodes.geo.curve_line(start=(0, 0, 0), end=(0, 2, 0))

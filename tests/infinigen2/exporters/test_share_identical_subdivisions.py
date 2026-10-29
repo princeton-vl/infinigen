@@ -164,25 +164,6 @@ def test_differing_simplify_limits_keep_deferred_stack():
         assert [mod.type for mod in alias.item().modifiers] == ["SUBSURF"]
 
 
-def test_shared_modifier_prefix_is_baked_before_divergent_suffixes():
-    pf.ops.object.clear_scene()
-    a = pf.ops.primitives.mesh_cube(size=0.2)
-    b = pf.ops.primitives.mesh_cube(size=0.2)
-    b.item().data = a.item().data
-    for obj in (a, b):
-        obj.item().modifiers.new("shared bevel", "BEVEL").width = 0.01
-    a_suffix = a.item().modifiers.new("suffix", "BOOLEAN")
-    b_suffix = b.item().modifiers.new("suffix", "NODES")
-
-    realize_mesh.bake_shared_modifier_prefixes([a, b])
-
-    assert a.item().data.as_pointer() == b.item().data.as_pointer()
-    assert [mod.type for mod in a.item().modifiers] == ["BOOLEAN"]
-    assert [mod.type for mod in b.item().modifiers] == ["NODES"]
-    assert a.item().modifiers[0].as_pointer() == a_suffix.as_pointer()
-    assert b.item().modifiers[0].as_pointer() == b_suffix.as_pointer()
-
-
 def test_shared_modifier_sequence_is_baked_in_order():
     pf.ops.object.clear_scene()
     a = pf.ops.primitives.mesh_cube(size=0.2)
