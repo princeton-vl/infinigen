@@ -340,14 +340,12 @@ def cutout_spaced_instances(
         )
         lightblocker.item().name = "room_wall_back"
 
-        cut = split.wall
+        geom = split.wall
     else:
         # flat hole: drop the footprint faces, leaving a sharp-edged opening
-        cut = pf.nodes.geo.separate_geometry(
+        geom = pf.nodes.geo.separate_geometry(
             faces_res.mesh, selection=faces_res.is_instance_face, domain="FACE"
         ).inverted
-    # weld coincident verts so boundary slivers don't break canonicalization
-    geom = pf.nodes.geo.merge_by_distance(cut, distance=0.001)
     if is_rectangular:
         geom = finish_wall_plane(pf.nodes.to_mesh_object(geom), surface_material)
         pf.ops.modifier.subdivide_surface(

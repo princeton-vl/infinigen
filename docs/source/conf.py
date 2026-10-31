@@ -345,7 +345,7 @@ def _manifest_entries() -> tuple[dict[str, int], dict[str, str]]:
         name = e.get("name")
         if not name:
             continue
-        if e.get("skip_tests"):
+        if e.get("skip_integration_test"):
             # Integration never renders these, so a gallery would only link 404s.
             count = 0
         elif category in _VIDEO_CATEGORIES:

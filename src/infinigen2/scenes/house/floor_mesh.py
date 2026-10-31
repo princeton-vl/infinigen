@@ -99,7 +99,9 @@ def _polygon_faces(
     quad_y = np.stack([y0, y0, y1, y1], axis=-1).reshape(-1, 4)[inside]
     quad_xy = np.stack([quad_x, quad_y], axis=-1).reshape(-1, 2)
 
-    pieces = shapely.get_parts(shapely.intersection(cells[rim], polygon))
+    # snap to the grid mesh_from_corners merges on, so no corner repeats after merging
+    clipped = shapely.intersection(cells[rim], polygon, grid_size=1e-6)
+    pieces = shapely.get_parts(clipped)
     is_area = (shapely.get_type_id(pieces) == 3) & (shapely.area(pieces) > 1e-6)
     pieces = shapely.normalize(pieces[is_area])
     if np.any(shapely.get_num_interior_rings(pieces) > 0):

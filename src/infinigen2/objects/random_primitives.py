@@ -7,6 +7,7 @@
 import math
 from typing import NamedTuple
 
+import numpy as np
 import procfunc as pf
 from procfunc.nodes import types as t
 
@@ -103,7 +104,10 @@ def cube_rand(rng: pf.RNG) -> pf.MeshObject:
 
 
 def monkey_rand(rng: pf.RNG) -> pf.MeshObject:
-    return pf.ops.primitives.mesh_monkey()
+    monkey = pf.ops.primitives.mesh_monkey()
+    valence = np.bincount(pf.ops.attr.edge_indices(monkey).ravel())
+    pf.ops.mesh.dissolve_verts(monkey, vertex_mask=valence == 2)
+    return monkey
 
 
 def plane_rand(rng: pf.RNG) -> pf.MeshObject:

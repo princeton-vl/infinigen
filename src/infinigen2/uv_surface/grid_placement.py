@@ -547,8 +547,10 @@ def _faces_from_instance_grid(
         domain="CORNER",
         data_type="FLOAT2",
     )
+    # clamped footprint rows coincide with the surface boundary row
+    welded = pf.nodes.geo.merge_by_distance(mesh_with_uv, distance=0.001)
     return FacesForInstanceGridBboxesResult(
-        mesh=mesh_with_uv,
+        mesh=welded,
         is_instance_face=captured.boolean,
         inset=with_inset.inset,
     )

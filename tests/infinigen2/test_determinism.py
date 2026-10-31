@@ -145,10 +145,10 @@ def _global_rng_state() -> tuple:
     return random.getstate(), np_state[1].tobytes(), np_state[2:]
 
 
-def _build(pathspec: str, kind: str, room_count: int | None) -> list[tuple]:
+def _build(pathspec: str, kind: str) -> list[tuple]:
     bpy.ops.wm.read_factory_settings(use_empty=True)
     before = _global_rng_state()
-    _build_into_scene(pathspec, kind, room_count)
+    _build_into_scene(pathspec, kind)
     assert _global_rng_state() == before, (
         f"{pathspec}: consumed the global random/np.random stream instead of the "
         f"seeded rng argument"
@@ -156,7 +156,7 @@ def _build(pathspec: str, kind: str, room_count: int | None) -> list[tuple]:
     return _scene_geometry_signature()
 
 
-def _build_into_scene(pathspec: str, kind: str, room_count: int | None) -> None:
+def _build_into_scene(pathspec: str, kind: str) -> None:
     func = import_item(pathspec)
     if kind == "Material":
         res = func(
@@ -164,10 +164,8 @@ def _build_into_scene(pathspec: str, kind: str, room_count: int | None) -> None:
         )
         plane = pf.ops.primitives.mesh_plane(size=1)
         pf.ops.object.set_material(plane, material=res)
-    elif room_count is None:
-        func(rng=np.random.default_rng(SEED))
     else:
-        func(rng=np.random.default_rng(SEED), room_count=room_count)
+        func(rng=np.random.default_rng(SEED))
 
 
 # Generators we cannot assert deterministic yet, with the blocking reason.
@@ -175,7 +173,9 @@ def _build_into_scene(pathspec: str, kind: str, room_count: int | None) -> None:
 _DETERMINISM_BLOCKED = {}
 
 
-_SKIP_TESTS = GENERATORS_MANIFEST.set_index("name")["skip_tests"].dropna().to_dict()
+_SKIP_UNIT_TEST = (
+    GENERATORS_MANIFEST.set_index("name")["skip_unit_test"].dropna().to_dict()
+)
 
 
 def _determinism_params():
@@ -189,17 +189,16 @@ def _determinism_params():
         )
         for name in df["name"].values:
             short = name.rsplit(".", 1)[-1]
-            reason = _SKIP_TESTS.get(name, _DETERMINISM_BLOCKED.get(short))
+            reason = _SKIP_UNIT_TEST.get(name, _DETERMINISM_BLOCKED.get(short))
             marks = () if reason is None else pytest.mark.skip(reason=reason)
-            room_count = 1 if short == "house_furnished_rand" else None
-            yield pytest.param(name, category, room_count, id=short, marks=marks)
+            yield pytest.param(name, category, id=short, marks=marks)
 
 
-@pytest.mark.parametrize("pathspec, kind, room_count", _determinism_params())
-def test_generator_determinism(pathspec, kind, room_count):
-    first = _build(pathspec, kind, room_count)
+@pytest.mark.parametrize("pathspec, kind", _determinism_params())
+def test_generator_determinism(pathspec, kind):
+    first = _build(pathspec, kind)
     assert first, f"{pathspec}: produced no mesh geometry"
-    second = _build(pathspec, kind, room_count)
+    second = _build(pathspec, kind)
     assert _signatures_match(first, second), (
         f"{pathspec}: geometry differs between two builds of seed {SEED} "
         f"(nondeterministic generation)"

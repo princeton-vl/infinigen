@@ -38,7 +38,9 @@ def _assert_render_valid(objects: list[pf.MeshObject]):
     assert_uv_coords_satisfied(objects)
 
 
-_SKIP_TESTS = GENERATORS_MANIFEST.set_index("name")["skip_tests"].dropna().to_dict()
+_SKIP_UNIT_TEST = (
+    GENERATORS_MANIFEST.set_index("name")["skip_unit_test"].dropna().to_dict()
+)
 
 
 def _manifest_params(df, defaults: dict):
@@ -49,7 +51,7 @@ def _manifest_params(df, defaults: dict):
         else:
             sub[col] = val
     for row in sub.itertuples(index=False):
-        reason = _SKIP_TESTS.get(row[0])
+        reason = _SKIP_UNIT_TEST.get(row[0])
         marks = () if reason is None else pytest.mark.skip(reason=reason)
         yield pytest.param(*row, id=row[0], marks=marks)
 
@@ -175,14 +177,8 @@ _PRIMITIVES_TRACE_EXCLUDES = {
     "infinigen2.objects.table.table_dining_rand",
     "infinigen2.objects.table.table_side_rand",
 }
-# curtain cloth is a thin open tube booleaned against its rod, non-manifold by design
-_DEGENERATE_GEOMETRY_EXCLUDES = {
-    "infinigen2.objects.window.curtain_rand",
-    "infinigen2.objects.window.window_composite_rand",
-    "infinigen2.objects.window.window_rectangular_composite_rand",
-}
 _PRIMITIVES_TRACE_FUNCS = _OBJECT_FUNCS[
-    ~_OBJECT_FUNCS["name"].isin(_PRIMITIVES_TRACE_EXCLUDES | set(_SKIP_TESTS))
+    ~_OBJECT_FUNCS["name"].isin(_PRIMITIVES_TRACE_EXCLUDES | set(_SKIP_UNIT_TEST))
 ]
 
 
@@ -222,9 +218,32 @@ def test_generators_object(rng, pathspec, min_parameters):
     defects = degenerate_geometry_defects([res.mesh])
 
     validate_trace_generator(func, rng, min_parameters=min_parameters)
+    assert defects == {}, f"{pathspec} produced degenerate geometry: {defects}"
 
-    if pathspec in _DEGENERATE_GEOMETRY_EXCLUDES:
+
+_SCENE_FUNCS = pf.util.manifest.filter_manifest(
+    GENERATORS_MANIFEST,
+    filter={"category": "Scene"},
+    exclude={"name": ["LATER", "DECLINE"]},
+    require_nonempty=["name"],
+    min_entries=1,
+)
+
+
+@pytest.mark.parametrize("pathspec", _manifest_params(_SCENE_FUNCS, {}))
+def test_generators_scene(rng: np.random.Generator, pathspec: str) -> None:
+    func = import_item(pathspec)
+    res = func(rng=rng)
+    if res is None:
         return
+    assert isinstance(res, tuple) and hasattr(res, "all_objects"), (
+        f"{pathspec} should return a NamedTuple with all_objects, got {type(res)}"
+    )
+    meshes = [obj for obj in res.all_objects if isinstance(obj, pf.MeshObject)]
+    assert meshes, f"{pathspec} returned no meshes in all_objects"
+
+    _assert_render_valid(meshes)
+    defects = degenerate_geometry_defects(meshes)
     assert defects == {}, f"{pathspec} produced degenerate geometry: {defects}"
 
 

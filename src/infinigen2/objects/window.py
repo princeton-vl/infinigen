@@ -464,18 +464,7 @@ def _curtain_geometry(
     curve_line_2 = pf.nodes.geo.curve_line(
         start=curve_line_2_start, end=curve_line_2_end
     )
-    curve_circle = pf.nodes.geo.curve_circle(resolution=12, radius=radius * 1.3)
-    curve_to_1 = pf.nodes.geo.curve_to_mesh(
-        curve=curve_line_2, profile_curve=curve_circle
-    )
-
     set_y = height * 0.47
-    set_position_1_offset = pf.nodes.math.combine_xyz(y=set_y + radius)
-    set_position_1 = pf.nodes.geo.set_position(
-        geometry=curve_to_1, offset=set_position_1_offset
-    )
-
-    boolean = pf.nodes.geo.mesh_boolean(a=set_material, b=set_position_1)
 
     finial_radius = radius * 2.0
     finial = pf.nodes.geo.mesh_uv_sphere(segments=32, rings=16, radius=finial_radius)
@@ -527,7 +516,7 @@ def _curtain_geometry(
         material=curtain_frame_material,
     )
 
-    join_3 = pf.nodes.geo.join_geometry([boolean.mesh, set_material_1])
+    join_3 = pf.nodes.geo.join_geometry([set_material, set_material_1])
 
     # rail circles tessellate at ~11 deg, so 60 catches only the hem's 90 deg corners
     creased = mesh_util.crease_sharp(join_3, threshold_degrees=60.0)
