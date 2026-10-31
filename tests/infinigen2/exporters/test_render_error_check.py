@@ -40,6 +40,7 @@ from infinigen2.exporters.render_error_check import (
     assert_transforms_nonsingular,
     assert_uv_coords_satisfied,
     check_material_uv_coords,
+    coincident_face_counts,
     configure_sample_count_output,
     count_material_nodes,
     degenerate_geometry_defects,
@@ -541,9 +542,10 @@ def _stacked_quads(gap: float, flip_top: bool, top_material: int) -> pf.MeshObje
 
 def test_coincident_faces_flagged():
     mo = _stacked_quads(gap=1e-5, flip_top=False, top_material=1)
-    defects = degenerate_geometry_defects([mo])[mo.item().name]
-    assert defects.coincident_faces > 0
-    assert defects.nonmanifold_edges == 0
+    assert coincident_face_counts([mo])[mo.item().name] > 0
+    assert degenerate_geometry_defects([mo]) == {}
+    with context.override_globals(error_mode_degenerate_geometry="error"):
+        assert_geometry_nondegenerate([mo])
 
 
 @pytest.mark.parametrize(
@@ -553,7 +555,7 @@ def test_coincident_faces_flagged():
 )
 def test_coincident_faces_allowed(gap: float, flip_top: bool, top_material: int):
     mo = _stacked_quads(gap=gap, flip_top=flip_top, top_material=top_material)
-    assert degenerate_geometry_defects([mo]) == {}
+    assert coincident_face_counts([mo]) == {}
 
 
 def test_singular_transform_flagged():

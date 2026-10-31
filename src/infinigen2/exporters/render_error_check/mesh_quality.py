@@ -35,7 +35,6 @@ class MeshDefects(NamedTuple):
     zero_length_edges: int
     nonmanifold_edges: int
     flipped_edges: int
-    coincident_faces: int
 
 
 def _foreach(
@@ -106,7 +105,6 @@ def mesh_defects(mesh: bpy.types.Mesh) -> MeshDefects:
         zero_length_edges=int(np.count_nonzero(edge_lengths < MIN_EDGE_LENGTH)),
         nonmanifold_edges=int(np.count_nonzero(faces_per_edge > 2)),
         flipped_edges=int(np.count_nonzero(flipped)),
-        coincident_faces=coincident_triangle_count(mesh),
     )
 
 
@@ -130,10 +128,22 @@ def assert_geometry_nondegenerate(objects: list[pf.MeshObject] | None = None) ->
     bad = degenerate_geometry_defects(objects)
     if bad:
         error = DegenerateGeometryError(
-            "meshes have degenerate faces/edges, broken topology or coincident "
-            "surfaces, which shade with undefined normals, z-fight, or crease and "
-            f"tear under subdivision: {bad}"
+            "meshes have degenerate faces/edges or broken topology, which shade "
+            f"with undefined normals or crease and tear under subdivision: {bad}"
         )
         context.raise_or_warn(
             context.globals.error_mode_degenerate_geometry, error, logger
         )
+
+
+def coincident_face_counts(
+    objects: list[pf.MeshObject] | None = None,
+) -> dict[str, int]:
+    found = {}
+    for obj in context_meshes(objects):
+        if obj.type != "MESH" or len(obj.data.polygons) == 0:
+            continue
+        count = coincident_triangle_count(obj.data)
+        if count:
+            found[obj.name] = count
+    return found
