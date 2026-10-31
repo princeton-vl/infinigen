@@ -38,6 +38,7 @@ __all__ = [
     "storage_composite_rand",
     "storage_dimensions_rand",
     "storage_drawer_door_rand",
+    "storage_drawers",
     "storage_legs_grid",
     "storage_legs_grid_rand",
     "storage_legs_stable_rand",
@@ -96,6 +97,24 @@ def storage_cell_bounds(
 
 
 @pf.tracer.primitive
+def storage_drawers(
+    drawers: pf.MeshObject,
+    slots: list[tuple[pf.Vector, pf.Vector]],
+) -> pf.MeshObject:
+    copies = [drawers.clone() for _ in slots[1:]]
+    location = slots[0][0]
+    uv = pf.ops.attr.uv_coords(drawers)
+    pf.ops.attr.write_uv_coords(drawers, uv + (location.y, location.z))
+    pf.ops.object.set_transform(drawers, location=location)
+    for index, copy in enumerate(copies, start=1):
+        location = slots[index][0]
+        uv = pf.ops.attr.uv_coords(copy)
+        pf.ops.attr.write_uv_coords(copy, uv + (location.y, location.z))
+        pf.ops.object.set_transform(copy, location=location)
+        pf.ops.object.join(drawers, copy)
+    return drawers
+
+
 def _storage_drawers_rand(
     rng: pf.RNG,
     slots: list[tuple[pf.Vector, pf.Vector]],
@@ -115,18 +134,7 @@ def _storage_drawers_rand(
         opening_fraction=0,
         handle=handle,
     ).mesh
-    copies = [drawers.clone() for _ in slots[1:]]
-    location = slots[0][0]
-    uv = pf.ops.attr.uv_coords(drawers)
-    pf.ops.attr.write_uv_coords(drawers, uv + (location.y, location.z))
-    pf.ops.object.set_transform(drawers, location=location)
-    for index, copy in enumerate(copies, start=1):
-        location = slots[index][0]
-        uv = pf.ops.attr.uv_coords(copy)
-        pf.ops.attr.write_uv_coords(copy, uv + (location.y, location.z))
-        pf.ops.object.set_transform(copy, location=location)
-        pf.ops.object.join(drawers, copy)
-    return drawers
+    return storage_drawers(drawers, slots)
 
 
 class _GridWithIndicesResult(NamedTuple):

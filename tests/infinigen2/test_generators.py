@@ -54,6 +54,21 @@ def _manifest_params(df, defaults: dict):
         yield pytest.param(*row, id=row[0], marks=marks)
 
 
+def _private_function_calls(graph: cg.ComputeGraph) -> list[str]:
+    nodes = [
+        node
+        for subgraph in cg.traverse_nested_graphs(graph)
+        for node in cg.traverse_depth_first(subgraph)
+        if isinstance(node, cg.FunctionCallNode)
+    ]
+    names = {
+        f"{node.func.__module__}.{node.func.__name__}"
+        for node in nodes
+        if node.func.__name__.startswith("_")
+    }
+    return sorted(names)
+
+
 def validate_trace_generator(
     generator_func: Callable[..., T],
     rng: np.random.Generator,
@@ -65,6 +80,11 @@ def validate_trace_generator(
         trace_level=TraceLevel.RANDOM_CONTROL,
         rng=rng,
         **generator_kwargs,
+    )
+    private_calls = _private_function_calls(graph)
+    assert not private_calls, (
+        f"Trace resolved to private functions {private_calls}; "
+        "decorate their public caller with @pf.tracer.generator"
     )
     _code = to_python(graph, toplevel_as_maincall=False)
     try:

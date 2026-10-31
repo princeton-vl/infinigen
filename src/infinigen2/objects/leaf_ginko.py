@@ -18,8 +18,9 @@ from infinigen2.shaders.base_materials.leaf import leaf_rand as leaf_material_ra
 
 __all__ = [
     "LeafGinkoResult",
-    "leaf_ginko",
     "leaf_ginkgo_rand",
+    "leaf_ginko",
+    "leaf_ginko_mesh",
 ]
 
 # Coarse boundary-solved topology. The old pipeline subdivided a dense plane and
@@ -483,7 +484,7 @@ def leaf_ginko(
     scale_margin: float = 6.5,
     material: pf.Material | None = None,
 ) -> LeafGinkoResult:
-    return _leaf_ginko_mesh(
+    return leaf_ginko_mesh(
         size=size,
         vein_length=vein_length,
         angle=math.radians(angle_deg),
@@ -496,7 +497,7 @@ def leaf_ginko(
 
 
 @pf.tracer.generator
-def _leaf_ginko_mesh(
+def leaf_ginko_mesh(
     size: float,
     vein_length: float,
     angle: float,
@@ -538,7 +539,7 @@ def leaf_ginkgo_rand(
         material = leaf_material_rand(rngs[0], vector=leaf_coord())
 
     rng_geo = rngs[1]
-    obj = _leaf_ginko_mesh(
+    obj = leaf_ginko_mesh(
         size=pf.random.uniform(rng_geo, 0.08, 0.2),
         vein_length=pf.random.uniform(rng_geo, 0.4, 0.5),
         angle=math.radians(pf.random.uniform(rng_geo, -110.0, -70.0)),

@@ -210,6 +210,7 @@ def _append_back_corner(
     return pf.nodes.geo.mesh_to_curve(welded)
 
 
+@pf.tracer.generator
 def skirting_profile(
     seed: int = 0,
     count: int = 2,
@@ -258,7 +259,7 @@ def skirting_profile_rand(
     if max_offset_pct is None:
         max_offset_pct = pf.random.uniform(rng, 0.01, 0.05)
 
-    res = _skirting_profile(
+    return skirting_profile(
         seed=pf.random.randint(rng, 0, 1000),
         count=count,
         width=width,
@@ -268,9 +269,9 @@ def skirting_profile_rand(
         fillet_probability=fillet_probability,
         max_offset_pct=max_offset_pct,
     )
-    return pf.nodes.to_curve_object(res)
 
 
+@pf.tracer.generator
 def trim_profile(
     seed: int = 0,
     count: int = 2,
@@ -326,7 +327,7 @@ def trim_profile_rand(
     if max_offset_pct is None:
         max_offset_pct = pf.random.uniform(rng, 0.01, 0.05)
 
-    res = _trim_profile(
+    return trim_profile(
         seed=pf.random.randint(rng, 0, 1000),
         count=count,
         width=width,
@@ -336,4 +337,3 @@ def trim_profile_rand(
         fillet_probability=fillet_probability,
         max_offset_pct=max_offset_pct,
     )
-    return pf.nodes.to_curve_object(res)

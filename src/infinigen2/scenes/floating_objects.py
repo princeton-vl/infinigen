@@ -50,15 +50,7 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
-@pf.tracer.primitive(mutates=["obj"])
-def _ensure_uv_map(obj: pf.MeshObject) -> None:
-    if len(obj.item().data.uv_layers) > 0:
-        return
-    pf.ops.uv.cube_project(obj, uv_name="UVMap")
-
-
 def _override_material(rng: pf.RNG, obj: pf.MeshObject) -> pf.MeshObject:
-    _ensure_uv_map(obj)
     vec = pf.nodes.shader.coord().uv
     mat_func = pf.control.choice(
         rng,

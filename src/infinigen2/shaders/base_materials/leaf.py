@@ -891,6 +891,7 @@ def leaf_velvet_preset(vector: t.SocketOrVal[pf.Vector]) -> pf.Material:
     )
 
 
+@pf.tracer.generator
 def leaf(
     vector: t.SocketOrVal[pf.Vector],
     color: t.SocketOrVal[pf.Color],

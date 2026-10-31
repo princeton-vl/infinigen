@@ -10,6 +10,7 @@ from procfunc.nodes import types as t
 from infinigen2.shaders.util import coord
 
 __all__ = [
+    "plastic",
     "plastic_black_rubberized_preset",
     "plastic_black_translucent_preset",
     "plastic_grayscale_color_rand",
@@ -48,7 +49,6 @@ def plastic_rand(
         base_color = pf.color.hsv_color(hue=hue, saturation=saturation, value=value)
 
     c2_scale = 1.0 + (pf.random.uniform(rng, 0.5, 1.5) - 1.0) * m_colorvar
-    color_2 = pf.nodes.color.hue_saturation(fac=1.0, color=base_color, value=c2_scale)
 
     roughness_variation = pf.random.uniform(rng, 0.0, 1.0)
     roughness_min = roughness_max * (0.5 + 0.5 * roughness_variation)
@@ -69,6 +69,46 @@ def plastic_rand(
     noise_distortion_size = pf.random.uniform(rng, 0.0, 1.0)
     noise_seed = pf.random.uniform(rng, -1000.0, 1000.0)
 
+    return plastic(
+        vector=vector,
+        base_color=base_color,
+        color_2_value=c2_scale,
+        roughness_min=roughness_min,
+        roughness_max=roughness_max,
+        specular_min=specular_min,
+        specular_max=specular,
+        ior=ior,
+        translucence=translucence,
+        noise_size=noise_size,
+        noise_detail=noise_detail,
+        noise_distortion_strength=noise_distortion_strength,
+        noise_distortion_size=noise_distortion_size,
+        noise_height=noise_height,
+        noise_seed=noise_seed,
+    )
+
+
+@pf.tracer.generator
+def plastic(
+    vector: pf.ProcNode[pf.Vector],
+    base_color: t.SocketOrVal[pf.Color],
+    color_2_value: float,
+    roughness_min: float,
+    roughness_max: float,
+    specular_min: float,
+    specular_max: float,
+    ior: float,
+    translucence: t.SocketOrVal[float],
+    noise_size: float,
+    noise_detail: float,
+    noise_distortion_strength: float,
+    noise_distortion_size: float,
+    noise_height: float,
+    noise_seed: float,
+) -> pf.Material:
+    color_2 = pf.nodes.color.hue_saturation(
+        fac=1.0, color=base_color, value=color_2_value
+    )
     return _plastic(
         vector=vector,
         surface_color_1=base_color,
@@ -76,7 +116,7 @@ def plastic_rand(
         surface_min_roughness=roughness_min,
         surface_max_roughness=roughness_max,
         surface_min_specular=specular_min,
-        surface_max_specular=specular,
+        surface_max_specular=specular_max,
         surface_ior=ior,
         surface_transmission=translucence,
         subsurface_weight=0.0,

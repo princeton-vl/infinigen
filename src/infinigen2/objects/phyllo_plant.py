@@ -21,6 +21,7 @@ __all__ = [
     "PhylloPlantResult",
     "phyllo_points",
     "phyllo_dist",
+    "phyllo_leaf_count",
     "phyllo_plant",
     "phyllo_plant_mesh",
     "plant_phyllo_basal_rand",
@@ -550,7 +551,7 @@ def phyllo_plant_mesh(
 
 
 @pf.tracer.primitive
-def _leaf_count(
+def phyllo_leaf_count(
     count: float,
     leaf_size: float,
     leaf_width: float,
@@ -559,11 +560,6 @@ def _leaf_count(
 ) -> int:
     maximum = int(128 - 123 * sparse)
     return max(3, min(maximum, round(count * density / (leaf_size**2 * leaf_width))))
-
-
-@pf.tracer.primitive
-def _large_leaf_weight(plant_height: float) -> float:
-    return float(plant_height >= 0.6)
 
 
 def _leaf_pattern_rand(
@@ -579,7 +575,7 @@ def _leaf_pattern_rand(
 ) -> tuple[float, float]:
     if plant_height is None:
         plant_height = height
-    large_leaves = _large_leaf_weight(plant_height)
+    large_leaves = (plant_height >= 0.6) * 1.0
     if sparse is None:
         sparse_value = pf.control.choice(rng_sparse, [(0.0, 4.0), (1.0, 1.0)])
         sparse_value = sparse_value * large_leaves
@@ -694,7 +690,7 @@ def _phyllo_rand(
     target_count = target_count * (1.0 - sparse) + sparse_target * sparse
     count_override = count is not None
     if count is None:
-        count = _leaf_count(target_count, leaf_size, leaf_width, density, sparse)
+        count = phyllo_leaf_count(target_count, leaf_size, leaf_width, density, sparse)
     if base_fraction is None:
         base_fraction = 0.15 * pf.random.uniform(rng_base, 0.0, 1.0) ** 3
     if stem_curve_x_degrees is None:

@@ -42,6 +42,9 @@ __all__ = [
     "primitive_with_effect_rand",
     "torus_rand",
     "uv_sphere_rand",
+    "warp_noise",
+    "warp_taper",
+    "warp_twist",
 ]
 
 
@@ -288,35 +291,67 @@ def effect_fractal_jitter(rng: pf.RNG, obj: pf.MeshObject) -> EffectResult:
     return EffectResult(mesh=obj, subsurf_levels=2)
 
 
-def effect_twist(rng: pf.RNG, obj: pf.MeshObject) -> EffectResult:
-    rng_rate, rng_choice = rng.spawn(2)
+@pf.tracer.generator(mutates=["obj"])
+def warp_twist(obj: pf.MeshObject, rate: float) -> EffectResult:
+    """Twist about z by rate radians per meter of height."""
     pf.ops.mesh.subdivide(obj, number_cuts=4)
-    sign = pf.control.choice(rng_choice, [(1.0, 1.0), (-1.0, 1.0)])
-    warped = _twist_warp(obj, rate=sign * pf.random.uniform(rng_rate, 0.4, 1.5))
+    warped = _twist_warp(obj, rate=rate)
     return EffectResult(mesh=pf.nodes.to_mesh_object(warped), subsurf_levels=3)
 
 
-def effect_taper(rng: pf.RNG, obj: pf.MeshObject) -> EffectResult:
+@pf.tracer.generator(mutates=["obj"])
+def warp_taper(
+    obj: pf.MeshObject,
+    z_min: float,
+    z_max: float,
+    scale_bottom: float,
+    scale_top: float,
+) -> EffectResult:
+    """Scale xy linearly from scale_bottom at z_min to scale_top at z_max."""
     pf.ops.mesh.subdivide(obj, number_cuts=4)
     warped = _taper_warp(
         obj,
-        z_min=-1.0,
-        z_max=1.0,
-        scale_bottom=pf.random.uniform(rng, 0.2, 1.5),
-        scale_top=pf.random.uniform(rng, 0.2, 1.5),
+        z_min=z_min,
+        z_max=z_max,
+        scale_bottom=scale_bottom,
+        scale_top=scale_top,
     )
     return EffectResult(mesh=pf.nodes.to_mesh_object(warped), subsurf_levels=3)
 
 
-def effect_noise_warp(rng: pf.RNG, obj: pf.MeshObject) -> EffectResult:
+@pf.tracer.generator(mutates=["obj"])
+def warp_noise(
+    obj: pf.MeshObject,
+    scale: float,
+    strength: float,
+    phase: float,
+) -> EffectResult:
+    """Offset vertices by a centered 4D noise field."""
     pf.ops.mesh.subdivide(obj, number_cuts=4)
-    warped = _noise_warp(
-        obj,
-        scale=pf.random.uniform(rng, 0.4, 1.5),
-        strength=pf.random.uniform(rng, 0.2, 0.8),
-        phase=pf.random.uniform(rng, 0.0, 100.0),
-    )
+    warped = _noise_warp(obj, scale=scale, strength=strength, phase=phase)
     return EffectResult(mesh=pf.nodes.to_mesh_object(warped), subsurf_levels=2)
+
+
+def effect_twist(rng: pf.RNG, obj: pf.MeshObject) -> EffectResult:
+    rng_rate, rng_choice = rng.spawn(2)
+    sign = pf.control.choice(rng_choice, [(1.0, 1.0), (-1.0, 1.0)])
+    rate = sign * pf.random.uniform(rng_rate, 0.4, 1.5)
+    return warp_twist(obj, rate=rate)
+
+
+def effect_taper(rng: pf.RNG, obj: pf.MeshObject) -> EffectResult:
+    scale_bottom = pf.random.uniform(rng, 0.2, 1.5)
+    scale_top = pf.random.uniform(rng, 0.2, 1.5)
+    return warp_taper(
+        obj, z_min=-1.0, z_max=1.0, scale_bottom=scale_bottom, scale_top=scale_top
+    )
+
+
+def effect_noise_warp(rng: pf.RNG, obj: pf.MeshObject) -> EffectResult:
+    scale = pf.random.uniform(rng, 0.4, 1.5)
+    strength = pf.random.uniform(rng, 0.2, 0.8)
+    phase = pf.random.uniform(rng, 0.0, 100.0)
+    return warp_noise(obj, scale=scale, strength=strength, phase=phase)
 
 
 class PrimitivesResult(NamedTuple):

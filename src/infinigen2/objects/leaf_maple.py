@@ -20,6 +20,7 @@ from infinigen2.shaders.base_materials.leaf import leaf_rand as leaf_material_ra
 __all__ = [
     "LeafMapleResult",
     "leaf_maple",
+    "leaf_maple_mesh",
     "leaf_maple_rand",
 ]
 
@@ -670,7 +671,7 @@ def leaf_maple(
     multiplier: float = 1.96,
     material: pf.Material | None = None,
 ) -> LeafMapleResult:
-    return _leaf_maple_mesh(
+    return leaf_maple_mesh(
         size=size,
         angle=math.radians(angle_deg),
         multiplier=multiplier,
@@ -679,7 +680,7 @@ def leaf_maple(
 
 
 @pf.tracer.generator
-def _leaf_maple_mesh(
+def leaf_maple_mesh(
     size: float,
     angle: float,
     multiplier: float,
@@ -713,7 +714,7 @@ def leaf_maple_rand(
         material = leaf_material_rand(rngs[0], vector=leaf_coord())
 
     rng_geo = rngs[1]
-    obj = _leaf_maple_mesh(
+    obj = leaf_maple_mesh(
         size=pf.random.uniform(rng_geo, 0.15, 0.35),
         angle=math.radians(pf.random.uniform(rng_geo, -15.0, 15.0)),
         multiplier=pf.random.uniform(rng_geo, 1.92, 2.0),

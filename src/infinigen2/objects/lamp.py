@@ -24,6 +24,7 @@ __all__ = [
     "LampResult",
     "LampshadeShape",
     "lamp",
+    "lamp_base_classic",
     "lamp_ceiling_shade_rand",
     "lamp_desk_rand",
     "lamp_floor_rand",
@@ -357,6 +358,21 @@ def _classic_lamp_base(
     return pf.nodes.geo.join_geometry([stand, disc])
 
 
+@pf.tracer.generator
+def lamp_base_classic(
+    stand_radius: float,
+    base_radius: float,
+    base_height: float,
+    height: float,
+) -> pf.ProcNode[pf.MeshObject]:
+    return _classic_lamp_base(
+        stand_radius=stand_radius,
+        base_radius=base_radius,
+        base_height=base_height,
+        height=height,
+    )
+
+
 def _lamp_vase_base_geometry_rand(
     rng: pf.RNG,
     base_radius: float,
@@ -468,7 +484,7 @@ def _lamp_cylinder_base_rand(
     stem_material: pf.Material,
     _vector: pf.ProcNode[pf.Vector],
 ) -> tuple[pf.ProcNode[pf.MeshObject], pf.Material]:
-    geometry = _classic_lamp_base(
+    geometry = lamp_base_classic(
         stand_radius=stand_radius,
         base_radius=base_radius,
         base_height=flat_base_height,

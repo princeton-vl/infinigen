@@ -25,7 +25,11 @@ from matplotlib.patches import (
 )
 from procfunc.nodes import types as t
 
-__all__ = ["art", "art_rand"]
+__all__ = [
+    "art",
+    "art_image_rand",
+    "art_rand",
+]
 
 _PATCH_TYPES = (
     "circle",
@@ -207,7 +211,7 @@ def _add_patch(
 
 
 @pf.tracer.primitive
-def _art_image_rand(rng: pf.RNG) -> pf.Image:
+def art_image_rand(rng: pf.RNG) -> pf.Image:
     palette = _palette(rng)
     figure = Figure(figsize=(4.0, 4.0), dpi=100)
     canvas = FigureCanvasAgg(figure)
@@ -235,6 +239,7 @@ def _art_image_rand(rng: pf.RNG) -> pf.Image:
     return pf.Image(image)
 
 
+@pf.tracer.generator
 def art(
     vector: t.SocketOrVal[pf.Vector],
     image: pf.Image,
@@ -297,6 +302,6 @@ def art_rand(
 ) -> pf.ProcNode[pf.Color]:
     r_image, r_mix = rng.spawn(2)
     if image is None:
-        image = _art_image_rand(r_image)
+        image = art_image_rand(r_image)
     noise_mix, uv_mix = _mix_factors_rand(r_mix)
     return art(vector, image, noise_mix, uv_mix)

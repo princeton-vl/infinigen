@@ -4,6 +4,8 @@
 # Authors:
 # - Alexander Raistrick, Karhan Kayan: refactor for Infinigen2
 
+from typing import NamedTuple
+
 import procfunc as pf
 from procfunc.nodes import types as t
 
@@ -19,11 +21,13 @@ from infinigen2.shaders.base_materials.wood_grain import (
 from infinigen2.shaders.masks.brick_cutter import brick_cutter
 
 __all__ = [
+    "WoodPlanksGrainColorsResult",
     "planks_cutter_rand",
     "wood_planks_blonde_preset",
     "wood_planks_brown_preset",
     "wood_planks_deck_preset",
     "wood_planks_flaky_preset",
+    "wood_planks_grain_colors",
     "wood_planks_rand",
     "wood_siding_rand",
 ]
@@ -33,30 +37,31 @@ def _grout_shader(color: t.SocketOrVal[pf.Color]) -> pf.ProcNode[pf.Shader]:
     return pf.nodes.shader.diffuse_bsdf(color=color)
 
 
-@pf.nodes.node_function
-def _grain_color_mix_x(
-    base_color: t.SocketOrVal[pf.Color],
-    random: t.SocketOrVal[pf.Color],
-) -> pf.ProcNode[pf.Color]:
-    return pf.nodes.color.mix_rgb(
-        factor=0.5,
-        blend_type="SOFT_LIGHT",
-        a=base_color,
-        b=random.astype(dtype=pf.Vector).x.astype(dtype=pf.Color),
-    )
+class WoodPlanksGrainColorsResult(NamedTuple):
+    color_1: pf.ProcNode[pf.Color]
+    color_2: pf.ProcNode[pf.Color]
 
 
 @pf.nodes.node_function
-def _grain_color_mix_y(
-    base_color: t.SocketOrVal[pf.Color],
-    random: t.SocketOrVal[pf.Color],
-) -> pf.ProcNode[pf.Color]:
-    return pf.nodes.color.mix_rgb(
+def wood_planks_grain_colors(
+    color_1: t.SocketOrVal[pf.Color],
+    color_2: t.SocketOrVal[pf.Color],
+    plank_random: t.SocketOrVal[pf.Color],
+) -> WoodPlanksGrainColorsResult:
+    random = plank_random.astype(dtype=pf.Vector)
+    mixed_1 = pf.nodes.color.mix_rgb(
         factor=0.5,
         blend_type="SOFT_LIGHT",
-        a=base_color,
-        b=random.astype(dtype=pf.Vector).y.astype(dtype=pf.Color),
+        a=color_1,
+        b=random.x.astype(dtype=pf.Color),
     )
+    mixed_2 = pf.nodes.color.mix_rgb(
+        factor=0.5,
+        blend_type="SOFT_LIGHT",
+        a=color_2,
+        b=random.y.astype(dtype=pf.Color),
+    )
+    return WoodPlanksGrainColorsResult(color_1=mixed_1, color_2=mixed_2)
 
 
 def wood_planks_deck_preset(
@@ -87,23 +92,22 @@ def wood_planks_deck_preset(
         grout_bevel_concavity=1.0,
     )
 
-    displacement_grains_color_1 = _grain_color_mix_x(
-        pf.Color((0.142, 0.119, 0.086)), brick_cutter_result.random
-    )
-    displacement_grains_color = _grain_color_mix_y(
-        pf.Color((0.387, 0.321, 0.229)), brick_cutter_result.random
+    grain_colors = wood_planks_grain_colors(
+        pf.Color((0.142, 0.119, 0.086)),
+        pf.Color((0.387, 0.321, 0.229)),
+        brick_cutter_result.random,
     )
 
     wood_shader_result = wood_grain_deck_preset(
         vector=brick_cutter_result.vector,
         additional_displacement=brick_cutter_result.height,
-        grains_color_1=displacement_grains_color_1,
-        grains_color_2=displacement_grains_color,
+        grains_color_1=grain_colors.color_1,
+        grains_color_2=grain_colors.color_2,
     )
 
     mix_shader = pf.nodes.shader.mix_shader(
         factor=brick_cutter_result.mask,
-        a=_grout_shader(displacement_grains_color_1),
+        a=_grout_shader(grain_colors.color_1),
         b=wood_shader_result.surface,
     )
     return pf.Material(
@@ -140,23 +144,22 @@ def wood_planks_brown_preset(
         grout_bevel_concavity=1.0,
     )
 
-    displacement_grains_color_1 = _grain_color_mix_x(
-        pf.Color((0.021, 0.014, 0.005)), brick_cutter_result.random
-    )
-    displacement_grains_color = _grain_color_mix_y(
-        pf.Color((0.249, 0.103, 0.035)), brick_cutter_result.random
+    grain_colors = wood_planks_grain_colors(
+        pf.Color((0.021, 0.014, 0.005)),
+        pf.Color((0.249, 0.103, 0.035)),
+        brick_cutter_result.random,
     )
 
     wood_shader_result = wood_grain_brown_preset(
         vector=brick_cutter_result.vector,
         additional_displacement=brick_cutter_result.height,
-        grains_color_1=displacement_grains_color_1,
-        grains_color_2=displacement_grains_color,
+        grains_color_1=grain_colors.color_1,
+        grains_color_2=grain_colors.color_2,
     )
 
     mix_shader = pf.nodes.shader.mix_shader(
         factor=brick_cutter_result.mask,
-        a=_grout_shader(displacement_grains_color_1),
+        a=_grout_shader(grain_colors.color_1),
         b=wood_shader_result.surface,
     )
     return pf.Material(
@@ -193,23 +196,22 @@ def wood_planks_blonde_preset(
         grout_bevel_concavity=1.0,
     )
 
-    surface_b_grains_color_1 = _grain_color_mix_x(
-        pf.Color((0.432, 0.254, 0.069)), brick_cutter_result.random
-    )
-    surface_b_grains_color = _grain_color_mix_y(
-        pf.Color((0.549, 0.359, 0.122)), brick_cutter_result.random
+    grain_colors = wood_planks_grain_colors(
+        pf.Color((0.432, 0.254, 0.069)),
+        pf.Color((0.549, 0.359, 0.122)),
+        brick_cutter_result.random,
     )
 
     wood_shader_result = wood_grain_blonde_preset(
         vector=brick_cutter_result.vector,
         additional_displacement=brick_cutter_result.height,
-        grains_color_1=surface_b_grains_color_1,
-        grains_color_2=surface_b_grains_color,
+        grains_color_1=grain_colors.color_1,
+        grains_color_2=grain_colors.color_2,
     )
 
     mix_shader = pf.nodes.shader.mix_shader(
         factor=brick_cutter_result.mask,
-        a=_grout_shader(surface_b_grains_color_1),
+        a=_grout_shader(grain_colors.color_1),
         b=wood_shader_result.surface,
     )
 
@@ -255,18 +257,17 @@ def wood_planks_flaky_preset(
         grout_bevel_concavity=1.0,
     )
 
-    wood_shader_grains_color_1 = _grain_color_mix_x(
-        pf.Color((0.142, 0.119, 0.086)), brick_cutter_result.random
-    )
-    wood_shader_grains_color = _grain_color_mix_y(
-        pf.Color((0.387, 0.321, 0.229)), brick_cutter_result.random
+    grain_colors = wood_planks_grain_colors(
+        pf.Color((0.142, 0.119, 0.086)),
+        pf.Color((0.387, 0.321, 0.229)),
+        brick_cutter_result.random,
     )
 
     wood_shader_result = wood_grain_flaky_preset(
         vector=brick_cutter_result.vector,
         additional_displacement=brick_cutter_result.height,
-        grains_color_1=wood_shader_grains_color_1,
-        grains_color_2=wood_shader_grains_color,
+        grains_color_1=grain_colors.color_1,
+        grains_color_2=grain_colors.color_2,
     )
 
     return pf.Material(
@@ -339,8 +340,9 @@ def wood_planks_rand(
 
     color_1, color_2, flake_color, fiber_color, knot_color = wood_color_rand(rng_color)
 
-    grains_color_1 = _grain_color_mix_x(color_1, brick_cutter_result.random)
-    grains_color_2 = _grain_color_mix_y(color_2, brick_cutter_result.random)
+    grain_colors = wood_planks_grain_colors(
+        color_1, color_2, brick_cutter_result.random
+    )
 
     generator_result = wood_grain_generator_rand(
         rng_generator, brick_cutter_result.vector
@@ -350,8 +352,8 @@ def wood_planks_rand(
         rng_shader,
         additional_displacement=brick_cutter_result.height,
         grains_grain_map=generator_result.grain_map,
-        grains_color_1=grains_color_1,
-        grains_color_2=grains_color_2,
+        grains_color_1=grain_colors.color_1,
+        grains_color_2=grain_colors.color_2,
         flake_flake_map=generator_result.flake_map,
         flake_flake_color=flake_color,
         fibers_fiber_map=generator_result.fiber_map,
@@ -362,7 +364,7 @@ def wood_planks_rand(
 
     mix_shader = pf.nodes.shader.mix_shader(
         factor=brick_cutter_result.mask,
-        a=_grout_shader(grains_color_1),
+        a=_grout_shader(grain_colors.color_1),
         b=shader_result.bsdf,
     )
 

@@ -42,6 +42,8 @@ __all__ = [
     "chair_bench_rand",
     "chair_dining_dimensions_rand",
     "chair_dining_rand",
+    "chair_dining_seat_slat_back",
+    "chair_dining_seat_solid_back",
     "chair_office_dimensions_rand",
     "chair_office_rand",
     "chair_rand",
@@ -1741,7 +1743,7 @@ def chair_dining_dimensions_rand(
 
 
 @pf.tracer.generator
-def _dining_seat_slat_back(
+def chair_dining_seat_slat_back(
     dimensions: pf.Vector,
     thickness: float,
     front_bow: float,
@@ -1834,7 +1836,7 @@ def _dining_slat_back_rand(
     crest_depth_r = pf.random.uniform(rng, 0.2, 0.49) * slat_depth
     slat_profile_resolution = pf.control.choice(rng, [(24, 2.0), (4, 1.0)])
     crest_align = pf.random.uniform(rng, 0.0, 1.0)
-    return _dining_seat_slat_back(
+    return chair_dining_seat_slat_back(
         dimensions=dimensions,
         thickness=thickness,
         front_bow=front_bow,
@@ -1860,7 +1862,7 @@ def _dining_slat_back_rand(
 
 
 @pf.tracer.generator
-def _dining_seat_solid_back(
+def chair_dining_seat_solid_back(
     dimensions: pf.Vector,
     thickness: float,
     front_bow: float,
@@ -1924,7 +1926,7 @@ def _dining_solid_back_rand(
     back_depth = pf.random.clip_gaussian(rng, 0.05, 0.015, 0.03, 0.10)
     top_rise = pf.random.clip_gaussian(rng, 0.03, 0.04, 0.0, 0.15)
     back_round = pf.random.uniform(rng, 0.1, 0.45) * back_depth
-    return _dining_seat_solid_back(
+    return chair_dining_seat_solid_back(
         dimensions=dimensions,
         thickness=thickness,
         front_bow=front_bow,

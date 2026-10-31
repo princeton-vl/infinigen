@@ -87,16 +87,6 @@ def room_edge_box(
     return RoomEdgeBoxResult(outline=line)
 
 
-def _corner_radius_rand(
-    rng: pf.RNG, rounded_probability: float, shared_radius: float, max_radius: float
-) -> float:
-    is_rounded = pf.random.uniform(rng, 0.0, 1.0) < rounded_probability
-    radius = shared_radius * pf.random.uniform(rng, 0.6, 1.4)
-    if not is_rounded:
-        return 0.0
-    return min(radius, max_radius)
-
-
 def room_edge_curve_rand(
     rng: pf.RNG,
     dimensions: pf.Vector | None = None,
@@ -113,19 +103,15 @@ def room_edge_curve_rand(
     shared_radius = pf.random.uniform(rng, 0.15, 1.5)
     if corner_radii is None:
         max_radius = 0.3 * min(width, depth)
-        corner_radii = (
-            _corner_radius_rand(rng, rounded_probability, shared_radius, max_radius),
-            _corner_radius_rand(rng, rounded_probability, shared_radius, max_radius),
-            _corner_radius_rand(rng, rounded_probability, shared_radius, max_radius),
-            _corner_radius_rand(rng, rounded_probability, shared_radius, max_radius),
+        rounded_draw = pf.random.uniform(rng, (0.0,) * 4, (1.0,) * 4)
+        radius = shared_radius * pf.random.uniform(rng, (0.6,) * 4, (1.4,) * 4)
+        radii = np.where(
+            rounded_draw < rounded_probability, np.minimum(radius, max_radius), 0.0
         )
+        corner_radii = tuple(radii.tolist())
     if corner_is_chamfer is None:
-        corner_is_chamfer = (
-            pf.random.uniform(rng, 0.0, 1.0) < chamfer_probability,
-            pf.random.uniform(rng, 0.0, 1.0) < chamfer_probability,
-            pf.random.uniform(rng, 0.0, 1.0) < chamfer_probability,
-            pf.random.uniform(rng, 0.0, 1.0) < chamfer_probability,
-        )
+        chamfer_draw = pf.random.uniform(rng, (0.0,) * 4, (1.0,) * 4)
+        corner_is_chamfer = tuple((chamfer_draw < chamfer_probability).tolist())
 
     box = room_edge_box(width, depth, corner_radii, corner_is_chamfer)
     return RoomEdgeCurveResult(
