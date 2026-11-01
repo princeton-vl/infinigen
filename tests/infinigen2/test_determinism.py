@@ -145,18 +145,37 @@ def _global_rng_state() -> tuple:
     return random.getstate(), np_state[1].tobytes(), np_state[2:]
 
 
-def _build(pathspec: str, kind: str) -> list[tuple]:
+_SNAKE_CASE = re.compile(r"[a-z][a-z0-9_]*")
+_PRIMITIVE_NAMES = {n for n in dir(pf.ops.primitives) if not n.startswith("_")}
+
+
+def _unnamed_scene_objects(result: object) -> list[str]:
+    objects = [*result.all_objects, *getattr(result, "lights", [])]
+    roots = [obj.item() for obj in objects]
+    items = {child for root in roots for child in (root, *root.children_recursive)}
+    names = [item.name for item in items if item.type in {"MESH", "LIGHT"}]
+    return sorted(
+        name
+        for name in names
+        if not _SNAKE_CASE.fullmatch(name.split(".")[0])
+        or name.split(".")[0] in _PRIMITIVE_NAMES
+        or "_rand" in name
+    )
+
+
+def _build(pathspec: str, kind: str) -> tuple[list[tuple], list[str]]:
     bpy.ops.wm.read_factory_settings(use_empty=True)
     before = _global_rng_state()
-    _build_into_scene(pathspec, kind)
+    result = _build_into_scene(pathspec, kind)
     assert _global_rng_state() == before, (
         f"{pathspec}: consumed the global random/np.random stream instead of the "
         f"seeded rng argument"
     )
-    return _scene_geometry_signature()
+    unnamed = _unnamed_scene_objects(result) if kind == "Scene" else []
+    return _scene_geometry_signature(), unnamed
 
 
-def _build_into_scene(pathspec: str, kind: str) -> None:
+def _build_into_scene(pathspec: str, kind: str) -> object:
     func = import_item(pathspec)
     if kind == "Material":
         res = func(
@@ -164,8 +183,8 @@ def _build_into_scene(pathspec: str, kind: str) -> None:
         )
         plane = pf.ops.primitives.mesh_plane(size=1)
         pf.ops.object.set_material(plane, material=res)
-    else:
-        func(rng=np.random.default_rng(SEED))
+        return res
+    return func(rng=np.random.default_rng(SEED))
 
 
 # Generators we cannot assert deterministic yet, with the blocking reason.
@@ -196,9 +215,10 @@ def _determinism_params():
 
 @pytest.mark.parametrize("pathspec, kind", _determinism_params())
 def test_generator_determinism(pathspec, kind):
-    first = _build(pathspec, kind)
+    first, unnamed = _build(pathspec, kind)
     assert first, f"{pathspec}: produced no mesh geometry"
-    second = _build(pathspec, kind)
+    assert not unnamed, f"{pathspec}: objects without a snake_case asset name"
+    second, _ = _build(pathspec, kind)
     assert _signatures_match(first, second), (
         f"{pathspec}: geometry differs between two builds of seed {SEED} "
         f"(nondeterministic generation)"

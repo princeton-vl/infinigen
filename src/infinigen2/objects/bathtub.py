@@ -339,6 +339,7 @@ def bathtub(
         hole_radius,
     )
     obj = pf.nodes.to_mesh_object(geometry)
+    obj.item().name = bathtub.__name__
     return BathtubResult(mesh=obj)
 
 
@@ -381,6 +382,7 @@ def sink_bathroom(
         surface_material=surface_material,
         metal_material=metal_material,
     ).mesh
+    obj.item().name = sink_bathroom.__name__
     pf.ops.modifier.subdivide_surface(obj, levels=2, _skip_apply=True)
     return SinkBathroomResult(mesh=obj)
 
@@ -732,4 +734,5 @@ def sink_pedestal(
     obj = pf.nodes.to_mesh_object(
         _pedestal_geometry(material, height, top_radius, bottom_radius, is_circular)
     )
+    obj.item().name = sink_pedestal.__name__
     return SinkPedestalResult(mesh=obj)

@@ -756,7 +756,6 @@ def _sample_surface_collection(
             ],
         )
         result = func(rng_asset)
-        result.mesh.item().name = func.__name__
         results.append(result)
     return results
 
@@ -776,7 +775,6 @@ def _sample_floor_collection(
             ],
         )
         result = func(rng_asset)
-        result.mesh.item().name = func.__name__
         results.append(result)
     return results
 

@@ -562,6 +562,7 @@ def flower(
     )
 
     obj = pf.nodes.to_mesh_object(res)
+    obj.item().name = flower.__name__
     pf.ops.uv.cube_project(obj, uv_name="UVMap")
     return FlowerResult(mesh=obj)
 

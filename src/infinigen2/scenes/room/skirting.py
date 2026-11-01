@@ -6,7 +6,6 @@
 import procfunc as pf
 
 from infinigen2.curves.skirting_board_profile import skirting_profile_rand
-from infinigen2.scenes.room.wall_base import name_objects
 from infinigen2.shaders.functionality_lists import skirt_material_rand
 from infinigen2.util.curve import curve_to_mesh_with_uv
 
@@ -124,6 +123,7 @@ def skirting_on_walls_rand(
     skirt = curve_to_mesh_with_uv(path_curves, profile_curve_geo, fill_caps=True).mesh
     skirt = pf.nodes.geo.flip_faces(skirt)
     skirt = pf.nodes.to_mesh_object(skirt)
+    skirt.item().name = "skirting"
 
     pf.ops.object.set_material(
         skirt,
@@ -151,4 +151,4 @@ def skirting_rand(
         walls=walls,
         material=skirt_mat,
     )
-    return name_objects(skirts, "room_skirting")
+    return skirts

@@ -206,7 +206,9 @@ def wall_art(
         panel_material=panel_material,
         panel_depth_pct=panel_depth_pct,
     )
-    return _finish(geo)
+    result = _finish(geo)
+    result.mesh.item().name = wall_art.__name__
+    return result
 
 
 @pf.tracer.generator
@@ -226,7 +228,9 @@ def wall_art_swept(
         panel_depth_pct=panel_depth_pct,
         frame_profile=pf.nodes.geo.object_info(frame_profile).geometry,
     )
-    return _finish(geo)
+    result = _finish(geo)
+    result.mesh.item().name = wall_art_swept.__name__
+    return result
 
 
 def mirror_surface_material_rand(

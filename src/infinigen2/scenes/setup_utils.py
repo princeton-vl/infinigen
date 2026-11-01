@@ -132,7 +132,6 @@ def side_table_object_rand(rng: pf.RNG) -> MeshResult:
         ],
     )
     result = func(rng_asset)
-    result.mesh.item().name = func.__name__
     return result
 
 
@@ -145,13 +144,13 @@ def sofa_object_rand(rng: pf.RNG) -> sofa.SofaResult:
             (sofa.sofa_with_base_rand, 1.0),
         ],
     )
-    return func(rng_asset)
+    result = func(rng_asset)
+    return result
 
 
 @pf.tracer.grammar
 def storage_object_rand(rng: pf.RNG) -> MeshResult:
     result = storage.storage_rand(rng)
-    result.mesh.item().name = storage.storage_rand.__name__
     return result
 
 
@@ -168,7 +167,7 @@ def standalone_wall_planes(
         position=pf.nodes.math.combine_xyz(y=u, z=v),
     )
     wall = pf.nodes.to_mesh_object(geometry)
-    wall.item().name = "standalone_wall"
+    wall.item().name = standalone_wall_planes.__name__
     return [wall]
 
 

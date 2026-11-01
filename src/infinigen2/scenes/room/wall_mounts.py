@@ -124,7 +124,7 @@ def wall_board_shelf_rand(
         )
 
     wall_thick = extrude_for_thickness(wall.obj, wall_thickness)
-    wall_thick.item().name = "room_wall_back"
+    wall_thick.item().name = "wall_board_shelf"
     finished = finish_wall_plane(wall.obj, wall_material)
     pf.ops.modifier.subdivide_surface(
         finished, levels=ROOM_SUBSURF_LEVELS, _skip_apply=True

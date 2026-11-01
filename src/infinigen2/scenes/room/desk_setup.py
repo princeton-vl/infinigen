@@ -86,7 +86,6 @@ def _desk_monitor_rand(
 ) -> list[pf.MeshObject]:
     rng_monitor, rng_params = rng.spawn(2)
     monitor_result = monitor.monitor_rand(rng_monitor)
-    monitor_result.mesh.item().name = "desk_monitor"
     pf.ops.object.set_transform(
         monitor_result.mesh,
         rotation_euler=pf.Vector((0.0, 0.0, desk.item().matrix_world.to_euler().z)),
@@ -139,7 +138,6 @@ def desk_setup_rand(
         [(chair.chair_office_rand, 2.0), (chair.chair_rand, 1.0)],
     )
     chair_result = chair_func(rng_chair_gen)
-    chair_result.mesh.item().name = "desk_chair"
 
     if wall_planes:
         wall_margin = pf.random.uniform(rng_desk_pose, 0.03, 0.10)

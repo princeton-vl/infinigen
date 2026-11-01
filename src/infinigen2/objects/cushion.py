@@ -202,6 +202,7 @@ def cushion_knife_edge(
         piping_radius=piping_radius,
     )
     obj = pf.nodes.to_mesh_object(geometry)
+    obj.item().name = cushion_knife_edge.__name__
     return CushionResult(mesh=obj)
 
 

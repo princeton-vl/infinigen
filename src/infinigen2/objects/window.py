@@ -597,7 +597,9 @@ def curtain(
         curtain_frame_material=curtain_frame_material,
         curtain_material=curtain_material,
     )
-    return CurtainResult(mesh=pf.nodes.to_mesh_object(curtain_geo))
+    obj = pf.nodes.to_mesh_object(curtain_geo)
+    obj.item().name = curtain.__name__
+    return CurtainResult(mesh=obj)
 
 
 def curtain_rand(
@@ -1037,6 +1039,7 @@ def window(
         frame_material=frame_material,
     )
     frame_obj = pf.nodes.to_mesh_object(res.geometry)
+    frame_obj.item().name = window.__name__
     pf.ops.uv.cube_project(frame_obj, uv_name="UVMap")
 
     if include_glass_pane:
@@ -1077,6 +1080,7 @@ def window(
             location=origin_offset,
             rotation_euler=tuple((reorient @ flip).to_euler()),
         )
+        portal_light.item().name = f"{window.__name__}_light"
     return WindowResult(mesh=frame_obj, light=portal_light, profile=profile)
 
 

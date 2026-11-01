@@ -455,6 +455,7 @@ def sofa(
         arm_slant=arm_slant,
     )
     obj = pf.nodes.to_mesh_object(res)
+    obj.item().name = sofa.__name__
     pf.ops.uv.cube_project(obj, uv_name="UVMap")
 
     seat_top = baseboard_height + seat_thickness

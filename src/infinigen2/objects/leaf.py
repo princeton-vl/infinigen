@@ -483,6 +483,7 @@ def leaf_simple(
     obj = pf.nodes.to_mesh_object_with_attributes(
         geo.geometry, attributes={"coordinate": geo.coordinate}
     )[0]
+    obj.item().name = leaf_simple.__name__
     normalize_leaf_coord(obj)
 
     pf.ops.object.set_material(obj, material=material)

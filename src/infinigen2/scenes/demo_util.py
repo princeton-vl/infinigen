@@ -40,6 +40,7 @@ def scale_reference(
         depth=height,
         location=location,
     )
+    res.item().name = scale_reference.__name__
     pf.ops.mesh.subdivide(res, number_cuts=1)
     return res
 
@@ -70,7 +71,7 @@ def hardcoded_camera(
 
 def grid_plane() -> pf.MeshObject:
     plane = pf.ops.primitives.mesh_plane(location=t.Vector((0, 0, 0)), size=8)
-    plane.item().name = "demo_grid_plane"
+    plane.item().name = grid_plane.__name__
     material = developer_grid(vector=pf.nodes.shader.coord().generated)
     pf.ops.object.set_material(plane, material=material)
     return plane
@@ -82,6 +83,7 @@ def demo_cube(size: float = 1.0) -> pf.MeshObject:
         location=t.Vector((0, 0, size / 2)),
         rotation=t.Euler((0, 0, np.pi * 0.15)),
     )
+    obj.item().name = demo_cube.__name__
     pf.ops.modifier.bevel(obj, width=0.06 * size, segments=2)
     pf.ops.modifier.subdivide_surface(obj, levels=6, _skip_apply=True)
     return obj

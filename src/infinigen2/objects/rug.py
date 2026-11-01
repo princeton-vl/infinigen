@@ -112,6 +112,7 @@ def rug(
         material=material,
     )
     obj = pf.nodes.to_mesh_object(geo)
+    obj.item().name = rug.__name__
     return RugResult(mesh=obj)
 
 

@@ -312,7 +312,7 @@ def tap_arc(
     spout = _arc_spout(
         base_height, spout_height, spout_reach, spout_drop, spout_radius, rotation_z
     )
-    return _finish(
+    result = _finish(
         material,
         base_width,
         base_length,
@@ -324,6 +324,8 @@ def tap_arc(
         hands_length_y,
         bar_handles,
     )
+    result.mesh.item().name = tap_arc.__name__
+    return result
 
 
 @pf.tracer.generator
@@ -345,7 +347,7 @@ def tap_curved(
     spout = _curved_spout(
         base_height, spout_height, spout_reach, spout_drop, spout_radius, rotation_z
     )
-    return _finish(
+    result = _finish(
         material,
         base_width,
         base_length,
@@ -357,6 +359,8 @@ def tap_curved(
         hands_length_y,
         bar_handles,
     )
+    result.mesh.item().name = tap_curved.__name__
+    return result
 
 
 @pf.tracer.generator
@@ -378,7 +382,7 @@ def tap_vessel(
     spout = _vessel_spout(
         base_height, spout_height, spout_reach, spout_drop, spout_radius, rotation_z
     )
-    return _finish(
+    result = _finish(
         material,
         base_width,
         base_length,
@@ -390,6 +394,8 @@ def tap_vessel(
         hands_length_y,
         bar_handles,
     )
+    result.mesh.item().name = tap_vessel.__name__
+    return result
 
 
 def _tap_material_rand(

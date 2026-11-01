@@ -175,7 +175,9 @@ def pot(
     )
     mesh = pf.nodes.geo.set_material(geo.mesh, material)
     obj = pf.nodes.to_mesh_object(mesh)
+    obj.item().name = pot.__name__
     inside_volume = pf.nodes.to_mesh_object(geo.inside_volume)
+    inside_volume.item().name = f"{pot.__name__}_inside_volume"
     mesh_util.metric_cylinder_uv(obj)
     pf.ops.modifier.solidify(obj, thickness=thickness, offset=-1.0)
     pf.ops.object.shade_smooth(obj)
@@ -217,6 +219,7 @@ def bowl(
         material=material,
     )
     mesh = _discard_inside_volume(result.mesh, result.inside_volume)
+    mesh.item().name = bowl.__name__
     return BowlResult(mesh=mesh)
 
 
@@ -267,5 +270,4 @@ def bowl_rand(rng: pf.RNG) -> BowlResult:
         thickness=thickness,
         material=material,
     )
-    result.mesh.item().name = bowl_rand.__name__
     return result

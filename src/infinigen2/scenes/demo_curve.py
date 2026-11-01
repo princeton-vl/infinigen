@@ -86,6 +86,7 @@ def curve_demo(
     swept = curve_to_mesh_with_uv(base_geo, profile_geo, fill_caps=True).mesh
     swept = pf.nodes.geo.flip_faces(swept)
     swept = pf.nodes.to_mesh_object(swept)
+    swept.item().name = curve_demo.__name__
 
     pf.ops.object.set_material(
         swept,

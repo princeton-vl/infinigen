@@ -21,7 +21,6 @@ __all__ = [
     "extrude_for_thickness",
     "finish_wall_plane",
     "fit_grid_margins",
-    "name_objects",
     "overlap_wall_plane_edges",
     "plain_wall",
     "plane_to_posed_canonical_mesh",
@@ -167,20 +166,6 @@ def finish_wall_plane(wall: pf.MeshObject, wall_material: pf.Material) -> pf.Mes
     return refined
 
 
-def _name_materials(obj: pf.MeshObject, base: str) -> None:
-    for j, slot in enumerate(obj.item().material_slots):
-        if slot.material is not None:
-            slot.material.name = f"{base}_{j}"
-
-
-def name_objects(objs: list[pf.MeshObject], name: str) -> list[pf.MeshObject]:
-    for i, obj in enumerate(objs):
-        object_name = f"{name}_{i:02d}"
-        obj.item().name = object_name
-        _name_materials(obj, object_name)
-    return objs
-
-
 @pf.tracer.primitive(mutates=["wall"])
 def shift_wall_ends(
     wall: pf.MeshObject,
@@ -236,7 +221,7 @@ def plain_wall(
 ) -> tuple[pf.MeshObject, pf.MeshObject]:
     """Materialise, thicken and canonicalise a bare wall (no cutouts)."""
     wall_thick = extrude_for_thickness(wall.obj, wall_thickness)
-    wall_thick.item().name = "room_wall_back"
+    wall_thick.item().name = plain_wall.__name__
     finished = finish_wall_plane(wall.obj, wall_material)
     pf.ops.modifier.subdivide_surface(
         finished, levels=ROOM_SUBSURF_LEVELS, _skip_apply=True

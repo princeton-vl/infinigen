@@ -179,7 +179,9 @@ def table_top_rectangular(
         size=(x, y, top_thickness),
         support_loop_offset=top_support_loop_offset,
     )
-    return _top_object(top, top_height, top_material)
+    result = _top_object(top, top_height, top_material)
+    result.mesh.item().name = table_top_rectangular.__name__
+    return result
 
 
 @pf.tracer.generator
@@ -190,7 +192,9 @@ def table_top_circular(
     top_material: pf.Material,
 ) -> TableResult:
     top = _table_top_circular(diameter=diameter, thickness=top_thickness)
-    return _top_object(top, top_height, top_material)
+    result = _top_object(top, top_height, top_material)
+    result.mesh.item().name = table_top_circular.__name__
+    return result
 
 
 def table_dining_rand(
@@ -245,7 +249,9 @@ def table_dining_rand(
     top = table_top_rectangular(
         x, y, top_thickness, top_height, top_support_loop_offset, top_material
     ).mesh
-    return _assemble_table(top, base, leg_material)
+    result = _assemble_table(top, base, leg_material)
+    result.mesh.item().name = "table_dining"
+    return result
 
 
 def table_dining_circular_rand(
@@ -289,7 +295,9 @@ def table_dining_circular_rand(
         )
         base = base_fn(rng_base, (diameter, diameter, top_height)).mesh
     top = table_top_circular(diameter, top_thickness, top_height, top_material).mesh
-    return _assemble_table(top, base, leg_material)
+    result = _assemble_table(top, base, leg_material)
+    result.mesh.item().name = "table_dining_circular"
+    return result
 
 
 def table_side_rand(rng: pf.RNG) -> TableResult:
@@ -347,9 +355,7 @@ def table_coffee_rand(rng: pf.RNG) -> TableResult:
             (table_coffee_storage_rand, 1.0),
         ],
     )
-    result = func(rng_table)
-    result.mesh.item().name = func.__name__
-    return result
+    return func(rng_table)
 
 
 def _table_cocktail_pedestal_rand(rng: pf.RNG, dimensions: pf.Vector) -> TableResult:

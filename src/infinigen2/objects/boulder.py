@@ -399,5 +399,4 @@ def rock_rand(rng: pf.RNG, material: pf.Material | None = None) -> BoulderResult
     # no-scaling exception: boulder presets' sizes are too hard to recalibrate small
     pf.ops.object.set_transform(result.mesh, scale=pf.Vector((scale, scale, scale)))
     pf.ops.mesh.transform_apply(result.mesh)
-    result.mesh.item().name = rock_rand.__name__
     return result

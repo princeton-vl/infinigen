@@ -20,7 +20,6 @@ from infinigen2.scenes.room.wall_base import (
     ROOM_SUBSURF_LEVELS,
     extrude_for_thickness,
     fit_grid_margins,
-    name_objects,
 )
 from infinigen2.scenes.room.wall_cutouts import (
     arrange_window_portals,
@@ -106,7 +105,6 @@ def ceiling_lamp_grid_rand(
         ],
     )
     lamp_template = template_fn(rng_template, energy=energy)
-    lamp_template.mesh.item().name = template_fn.__name__
     mesh_template = lamp_template.mesh
 
     light_offset = (0.0, 0.0, 0.0)
@@ -403,6 +401,7 @@ def ceiling_light_bar_lights_rand(
         emission = pf.nodes.shader.emission(color=blackbody, strength=1.0)
         pf.nodes.to_light(light, surface=emission)
         light.item().location = bar.item().location - pf.Vector((0.0, 0.0, 0.03))
+        light.item().name = "ceiling_light_bar_light"
         lights.append(light)
     return lights
 
@@ -478,7 +477,7 @@ def ceiling_feature_rand(
 
     def ceiling_plain_with_lights(rng: pf.RNG):
         ceiling_back = extrude_for_thickness(shape.ceiling, wall_thickness)
-        ceiling_back.item().name = "room_wall_back"
+        ceiling_back.item().name = "ceiling_feature"
         lamp_meshes, lamp_lights = ceiling_light_placement_rand(
             rng, shape.ceiling, dimensions=shape.dimensions
         )
@@ -507,11 +506,6 @@ def ceiling_feature_rand(
     )
     ceiling_geom, backs, sills, light_meshes, ceiling_lights = option(rng_feature)
 
-    name_objects([shape.floor], "room_floor")
-    name_objects([ceiling_geom], "room_ceiling")
-    name_objects(backs, "room_ceiling_back")
-    name_objects(sills, "room_ceiling_sill")
-    name_objects(light_meshes, "ceiling_light")
     return CeilingFeaturesResult(
         floor=shape.floor,
         ceiling=ceiling_geom,

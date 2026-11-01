@@ -67,6 +67,7 @@ def plant_pot(
     pf.ops.object.join(plant, pot.mesh)
     pf.ops.object.join(plant, pot.inside_volume)
     pf.ops.mesh.transform_apply(plant)
+    plant.item().name = plant_pot.__name__
     return PlantPotResult(mesh=plant)
 
 
@@ -321,12 +322,10 @@ def plant_pot_small_rand(
         (functools.partial(_arching_plant, min_ratio=0.9, max_ratio=1.8), 0.5),
     ]
     plant_fn = pf.control.choice(rng_form, forms)
-    result = _plant_pot_rand(
+    return _plant_pot_rand(
         rng_build,
         plant=plant_fn(rng_plant, pot_diameter, height=plant_height),
         diameter=pot_diameter,
         rim_ratio=pf.random.uniform(rng_rim, 1.05, 1.3),
         height=pot_height,
     )
-    result.mesh.item().name = plant_pot_small_rand.__name__
-    return result

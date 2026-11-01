@@ -240,6 +240,9 @@ def room_shape_rand(
     )
     camera = framing.camera_in_room_corner(floor, float(dimensions.z))
 
+    for obj in [walls_mesh, floor, ceiling] + [w.obj for w in flat_walls]:
+        obj.item().name = "room_shape"
+
     return RoomShapeResult(
         walls=walls_mesh,
         flat_walls=flat_walls,

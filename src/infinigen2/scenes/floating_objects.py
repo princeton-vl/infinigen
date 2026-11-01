@@ -100,7 +100,6 @@ def object_rand(rng: pf.RNG) -> ObjectResult:
     )
 
     obj = obj_func(rng_obj).mesh
-    obj.item().name = obj_func.__name__
 
     override_func = pf.control.choice(
         rng_override_choice,
@@ -273,9 +272,8 @@ def lights_with_shared_wattage_rand(
     watt_per_light = wattage * rng.dirichlet(np.ones(quantity))
 
     lights = []
-    for i, w in enumerate(watt_per_light):
+    for w in watt_per_light:
         light = lights_point_colored_rand(rng, energy=float(w))
-        light.item().name = f"floating_light_{i:02d}"
         lights.append(light)
 
     return lights

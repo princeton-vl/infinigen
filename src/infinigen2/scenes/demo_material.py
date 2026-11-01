@@ -86,6 +86,7 @@ def material_sphere(
         radius=radius,
         location=t.Vector((0, 0, radius)),
     )
+    sphere.item().name = material_sphere.__name__
     pf.ops.modifier.subdivide_surface(sphere, levels=subdivisions, _skip_apply=True)
 
     if material is None:
@@ -115,6 +116,7 @@ def material_torus_uv(
     minor_radius: float = 0.25,
 ) -> DevSceneResult:
     obj = metric_uv_torus(major_radius, minor_radius)
+    obj.item().name = material_torus_uv.__name__
     pf.ops.modifier.subdivide_surface(obj, levels=3, _skip_apply=True)
     obj.item().location.z = obj.item().dimensions.z / 2
 
@@ -144,6 +146,7 @@ def material_plane_uv(
     environment: pf.World | None = None,
 ) -> DevSceneResult:
     obj = metric_uv_plane(2.0, (0.0, 0.0, 1.0), (np.pi / 2, 0.0, 0.0), 100)
+    obj.item().name = material_plane_uv.__name__
     pf.ops.modifier.subdivide_surface(obj, levels=3, _skip_apply=True)
 
     if material is None:
@@ -177,6 +180,7 @@ def material_plane_horizontal_uv(
 ) -> DevSceneResult:
     surface_z = 0.12
     obj = metric_uv_plane(1.0, (0.0, 0.0, surface_z), (0.0, 0.0, 0.0), 100)
+    obj.item().name = material_plane_horizontal_uv.__name__
     pf.ops.modifier.subdivide_surface(obj, levels=3)
 
     if material is None:
@@ -216,6 +220,7 @@ def material_ground_plane(
     """Ground patch at terrain scale, where position-driven terrain materials are tuned to read."""
     surface_z = 0.12
     obj = metric_uv_plane(size, (0.0, 0.0, surface_z), (0.0, 0.0, 0.0), 200)
+    obj.item().name = material_ground_plane.__name__
     pf.ops.modifier.subdivide_surface(obj, levels=3)
 
     if material is None:
@@ -257,6 +262,7 @@ def material_monkey(
         location=t.Vector((0, 0, s / 2)),
         rotation=t.Euler((0, 0, np.pi * 0.1)),
     )
+    obj.item().name = material_monkey.__name__
     pf.ops.modifier.subdivide_surface(obj, levels=5, _skip_apply=True)
 
     if material is None:
@@ -271,6 +277,7 @@ def material_monkey(
     ref = pf.ops.primitives.mesh_cylinder(
         radius=0.1, depth=0.02, location=t.Vector((0.1, 0.1, 0.01)), vertices=128
     )
+    ref.item().name = "demo_scale_reference"
 
     return DevSceneResult(
         environment=environment, all_objects=[obj, plane, ref], cameras=[cam]
@@ -302,6 +309,7 @@ def material_plane_orthographic(
         location=t.Vector((0, 0, 0)),
         size=size,
     )
+    obj.item().name = material_plane_orthographic.__name__
 
     if material is None:
         logger.warning("No material provided; using a default material.")
@@ -347,6 +355,7 @@ def material_cube(
         location=t.Vector((corner_x, corner_y, 0.01)),
         vertices=128,
     )
+    ref.item().name = "demo_scale_reference"
 
     return DevSceneResult(
         environment=environment, all_objects=[obj, plane, ref], cameras=[cam]

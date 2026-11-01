@@ -277,6 +277,7 @@ def chair_seat_curvy(
         scale=(1, 1, 1),
     )
     obj = pf.nodes.to_mesh_object(geo)
+    obj.item().name = chair_seat_curvy.__name__
     _finish_part(obj, material)
     return ChairResult(mesh=obj)
 
@@ -577,6 +578,7 @@ def chair_seat_round(
         scale=(1, 1, 1),
     )
     obj = pf.nodes.to_mesh_object(geo)
+    obj.item().name = chair_seat_round.__name__
     _finish_part(obj, material)
     return ChairResult(mesh=obj)
 
@@ -1241,6 +1243,7 @@ def chair_base_wheeled(
     if crease_degrees is not None:
         geo = mesh.crease_sharp(geo, threshold_degrees=crease_degrees)
     obj = pf.nodes.to_mesh_object(geo)
+    obj.item().name = chair_base_wheeled.__name__
     return ChairResult(mesh=obj)
 
 
@@ -1503,6 +1506,7 @@ def chair_back(
         crest_align=crest_align,
     )
     obj = pf.nodes.to_mesh_object(geo)
+    obj.item().name = chair_back.__name__
     _finish_part(obj, material)
     return ChairResult(mesh=obj)
 
@@ -1809,6 +1813,7 @@ def chair_dining_seat_slat_back(
         back_bend=back_bend,
         seat_round=seat_round,
     )
+    seat.item().name = chair_dining_seat_slat_back.__name__
     return ChairResult(mesh=seat)
 
 
@@ -1908,6 +1913,7 @@ def chair_dining_seat_solid_back(
         back_bend=back_bend,
         seat_round=seat_round,
     )
+    seat.item().name = chair_dining_seat_solid_back.__name__
     return ChairResult(mesh=seat)
 
 
@@ -2192,6 +2198,7 @@ def chair_dining_rand(rng: pf.RNG, dimensions: pf.Vector | None = None) -> Chair
 
     pf.ops.object.join(seat, base)
     seat = pf.nodes.to_mesh_object(mesh.crease_sharp(seat, threshold_degrees=40.0))
+    seat.item().name = "chair_dining"
     pf.ops.modifier.subdivide_surface(seat, levels=_CHAIR_SUBDIV, _skip_apply=True)
     return ChairResult(mesh=seat)
 
@@ -2292,6 +2299,7 @@ def chair_bench_rand(rng: pf.RNG, dimensions: pf.Vector | None = None) -> ChairR
     ).mesh
 
     pf.ops.object.join(seat, base)
+    seat.item().name = "chair_bench"
     return ChairResult(mesh=seat)
 
 
@@ -2379,4 +2387,5 @@ def chair_office_rand(
 
     # join keeps only the target's stack, so the seat's _CHAIR_SUBDIV covers the base too
     pf.ops.object.join(top, base)
+    top.item().name = "chair_office"
     return ChairResult(mesh=top)

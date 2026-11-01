@@ -50,6 +50,7 @@ def bed_platform(
         support_loop_offset=(0.01, 0.01, 0.01),
     )
     platform = pf.nodes.to_mesh_object(platform)
+    platform.item().name = bed_platform.__name__
     pf.ops.object.set_transform(platform, location=(0, 0, frame_height - 0.05))
     pf.ops.object.set_material(
         platform,
@@ -86,6 +87,7 @@ def bed(
         )
         pf.ops.object.join(platform, footboard)
     pf.ops.uv.cube_project(platform, uv_name="UVMap")
+    platform.item().name = bed.__name__
     mattress_child.item().parent = platform.item()
     mattress_child.item().matrix_parent_inverse.identity()
     return BedResult(platform, mattress_child)
@@ -129,6 +131,7 @@ def bed_board_solid(
         domain="EDGE",
     )
     obj = pf.nodes.to_mesh_object(geo)
+    obj.item().name = bed_board_solid.__name__
     pf.ops.object.set_material(
         obj,
         surface=material.surface,
@@ -149,6 +152,7 @@ def bed_mattress(
         support_loop_offset=(0.12, 0.12, 0.07),
     )
     mattress = pf.nodes.to_mesh_object(mattress_geo)
+    mattress.item().name = bed_mattress.__name__
     pf.ops.object.set_transform(mattress, location=(0, 0, center_z))
     pf.ops.object.set_material(
         mattress,

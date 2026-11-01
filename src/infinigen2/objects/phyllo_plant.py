@@ -547,6 +547,7 @@ def phyllo_plant_mesh(
         seed=seed,
     )
     obj = pf.nodes.to_mesh_object(geometry)
+    obj.item().name = phyllo_plant_mesh.__name__
     return PhylloPlantResult(obj)
 
 

@@ -468,6 +468,7 @@ def storage_cell_shelf(
     geo = pf.nodes.geo.set_material(geometry=geo, material=frame_material)
     geo = mesh_util.crease_sharp(geo, threshold_degrees=30.0)
     result = pf.nodes.to_mesh_object(geo)
+    result.item().name = storage_cell_shelf.__name__
     pf.ops.modifier.bevel(result, width=bevel_width, segments=2)
     return StorageResult(mesh=result)
 
@@ -766,6 +767,7 @@ def storage_cabinet_with_base(
         rotation_euler=(0.0, 0.0, math.pi / 2),
     )
     pf.ops.object.join(carcass, base)
+    carcass.item().name = storage_cabinet_with_base.__name__
     return StorageResult(mesh=carcass)
 
 
@@ -880,7 +882,9 @@ def storage_legs_grid(
 ) -> StorageResult:
     geo = _grid_legs(depth, width, leg_height, margin_frac, spacing, diameter)
     geo = mesh_util.crease_sharp(geo, threshold_degrees=30.0)
-    return StorageResult(mesh=pf.nodes.to_mesh_object(geo))
+    obj = pf.nodes.to_mesh_object(geo)
+    obj.item().name = storage_legs_grid.__name__
+    return StorageResult(mesh=obj)
 
 
 def storage_legs_grid_rand(
@@ -1095,6 +1099,7 @@ def storage_cabinet_with_door(
         door_result.mesh, location=(dimensions.x - thickness, 0.0, 0.0)
     )
     pf.ops.object.join(carcass_result.mesh, door_result.mesh)
+    carcass_result.mesh.item().name = storage_cabinet_with_door.__name__
     return StorageResult(mesh=carcass_result.mesh)
 
 
@@ -1208,6 +1213,7 @@ def storage_open_top_carcass(
     carcass = pf.nodes.to_mesh_object(
         mesh_util.crease_sharp(geo, threshold_degrees=30.0)
     )
+    carcass.item().name = storage_open_top_carcass.__name__
     pf.ops.modifier.bevel(carcass, width=0.002, segments=2)
     return StorageResult(mesh=carcass)
 

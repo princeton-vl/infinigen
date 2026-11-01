@@ -58,7 +58,6 @@ from infinigen2.scenes.room.wall_base import (
     WallResult,
     WallSurface,
     extrude_for_thickness,
-    name_objects,
     shift_wall_ends,
     wall_plain_rand,
 )
@@ -311,7 +310,7 @@ def _door_affordance_collider(
         location=(*center_xy, height / 2),
         rotation_euler=(0.0, 0.0, angle),
     )
-    collider.item().name = f"house_door_affordance.{wall_index:02d}"
+    collider.item().name = "door_affordance_collider"
     collider.item().hide_render = True
     collider.item().display_type = "WIRE"
     return collider
@@ -744,6 +743,7 @@ def _house_ceiling_lamps_rand(
 ) -> CeilingFeaturesResult:
     rng_energy, rng_grid = rng.spawn(2)
     back = extrude_for_thickness(ceiling, thickness)
+    back.item().name = "house_ceiling"
     energy = polygon.area * pf.random.uniform(rng_energy, 300, 700) / 177
     grid = ceiling_lamp_grid_rand(rng_grid, _polygon_extent(polygon), energy)
     lamps = _place_on_ceiling(ceiling, grid, _grid_centers(polygon, grid))
@@ -1084,20 +1084,20 @@ def house_unfurnished_rand(
     storage_objects = _unique_objects([*walls.storage_containers, *walls.supports])
 
     all_objects = (
-        name_objects(floors, "house_floor")
-        + name_objects(ceilings, "house_ceiling")
-        + name_objects([o for s in surfaces for o in s.backs], "house_ceiling_back")
-        + name_objects([o for s in surfaces for o in s.sills], "house_ceiling_sill")
-        + name_objects(fixtures, "house_ceiling_feature")
-        + name_objects(walls.planes_interior, "house_wall_interior")
-        + name_objects(walls.planes_exterior, "house_wall_exterior")
-        + name_objects(walls.corners, "house_wall_corner")
-        + name_objects(walls.backs, "house_wall_back")
-        + name_objects(walls.sills, "house_wall_sill")
-        + name_objects(storage_objects, "house_wall_storage")
+        floors
+        + ceilings
+        + [o for s in surfaces for o in s.backs]
+        + [o for s in surfaces for o in s.sills]
+        + fixtures
+        + walls.planes_interior
+        + walls.planes_exterior
+        + walls.corners
+        + walls.backs
+        + walls.sills
+        + storage_objects
     )
-    for kind, objs in sorted(walls.decorations.items()):
-        all_objects += name_objects(objs, f"house_wall_{kind}")
+    for _, objs in sorted(walls.decorations.items()):
+        all_objects += objs
     door_rooms = {
         index: segment.room_indices
         for index, segment in enumerate(segments)

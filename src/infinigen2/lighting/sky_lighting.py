@@ -240,6 +240,7 @@ def sky_hosek_wilkie_with_sun_lamp_rand(
     sun_lamp.item().data.color = _sun_warmth_color(r_warmth, sun_elevation_deg)
     sun_lamp.item().rotation_euler = sun_direction.to_track_quat("Z", "Y").to_euler()
     sun_lamp.item().location.z = 25
+    sun_lamp.item().name = "sky_sun_lamp"
 
     return EnvironmentResult(environment=world, lights=[sun_lamp])
 
@@ -273,5 +274,6 @@ def sky_with_sun_lamp_rand(
         np.array([90 - sun_elevation_deg, 0, 180 - sun_rotation_deg])
     )
     sun_lamp.item().location.z = 25  # easier to see in blender UI
+    sun_lamp.item().name = "sky_sun_lamp"
 
     return EnvironmentResult(environment=sky.environment, lights=[sun_lamp])

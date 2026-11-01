@@ -187,6 +187,7 @@ def light_ceiling(
     )
 
     obj = pf.nodes.to_mesh_object(geo.geometry)
+    obj.item().name = light_ceiling.__name__
 
     light = None
     if turned_on:
@@ -196,6 +197,7 @@ def light_ceiling(
             shadow_soft_size=shadow_soft_size,
         )
         pf.ops.object.set_transform(light, location=(0.0, 0.0, -0.03))
+        light.item().name = f"{light_ceiling.__name__}_light"
 
     return CeilingLightResult(mesh=obj, light=light)
 

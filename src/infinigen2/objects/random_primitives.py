@@ -55,66 +55,83 @@ def end_fill_type_rand(rng: pf.RNG) -> str:
 
 def cone_rand(rng: pf.RNG) -> pf.MeshObject:
     rng, rng_fill = rng.spawn(2)
-    return pf.ops.primitives.mesh_cone(
+    obj = pf.ops.primitives.mesh_cone(
         vertices=pf.random.randint(rng, 3, 33),
         radius2=pf.random.uniform(rng, 0.0, 0.9),
         depth=pf.random.uniform(rng, 0.5, 1.0),
         end_fill_type=end_fill_type_rand(rng_fill),
     )
+    obj.item().name = "cone"
+    return obj
 
 
 def cylinder_rand(rng: pf.RNG) -> pf.MeshObject:
     rng, rng_fill = rng.spawn(2)
-    return pf.ops.primitives.mesh_cylinder(
+    obj = pf.ops.primitives.mesh_cylinder(
         vertices=pf.random.randint(rng, 3, 33),
         depth=pf.random.uniform(rng, 0.2, 4.0),
         end_fill_type=end_fill_type_rand(rng_fill),
     )
+    obj.item().name = "cylinder"
+    return obj
 
 
 def circle_rand(rng: pf.RNG) -> pf.MeshObject:
     rng, rng_fill = rng.spawn(2)
-    return pf.ops.primitives.mesh_circle(
+    obj = pf.ops.primitives.mesh_circle(
         vertices=pf.random.randint(rng, 3, 33),
         fill_type=pf.control.choice(rng_fill, [("NGON", 1.0), ("TRIFAN", 1.0)]),
     )
+    obj.item().name = "circle"
+    return obj
 
 
 def grid_rand(rng: pf.RNG) -> pf.MeshObject:
-    return pf.ops.primitives.mesh_grid(
+    obj = pf.ops.primitives.mesh_grid(
         x_subdivisions=pf.random.randint(rng, 2, 12),
         y_subdivisions=pf.random.randint(rng, 2, 12),
     )
+    obj.item().name = "grid"
+    return obj
 
 
 def icosphere_rand(rng: pf.RNG) -> pf.MeshObject:
-    return pf.ops.primitives.mesh_icosphere(
+    obj = pf.ops.primitives.mesh_icosphere(
         subdivisions=pf.random.randint(rng, 1, 4),
     )
+    obj.item().name = "icosphere"
+    return obj
 
 
 def torus_rand(rng: pf.RNG) -> pf.MeshObject:
-    return pf.ops.primitives.mesh_torus(
+    obj = pf.ops.primitives.mesh_torus(
         major_radius=pf.random.uniform(rng, 0.5, 1.5),
         minor_radius=pf.random.uniform(rng, 0.05, 0.45),
         major_segments=pf.random.randint(rng, 3, 49),
         minor_segments=pf.random.randint(rng, 3, 13),
     )
+    obj.item().name = "torus"
+    return obj
 
 
 def cube_rand(rng: pf.RNG) -> pf.MeshObject:
-    return pf.ops.primitives.mesh_cube()
+    obj = pf.ops.primitives.mesh_cube()
+    obj.item().name = "cube"
+    return obj
 
 
 def monkey_rand(rng: pf.RNG) -> pf.MeshObject:
     monkey = pf.ops.primitives.mesh_monkey()
+    monkey.item().name = "monkey"
     valence = np.bincount(pf.ops.attr.edge_indices(monkey).ravel())
     pf.ops.mesh.dissolve_verts(monkey, vertex_mask=valence == 2)
     return monkey
 
 
 def plane_rand(rng: pf.RNG) -> pf.MeshObject:
-    return pf.ops.primitives.mesh_plane()
+    obj = pf.ops.primitives.mesh_plane()
+    obj.item().name = "plane"
+    return obj
 
 
 def uv_sphere_rand(rng: pf.RNG) -> pf.MeshObject:
@@ -129,7 +146,9 @@ def uv_sphere_rand(rng: pf.RNG) -> pf.MeshObject:
         domain="CORNER",
         data_type="FLOAT2",
     )
-    return pf.nodes.to_mesh_object(mesh)
+    obj = pf.nodes.to_mesh_object(mesh)
+    obj.item().name = "uv_sphere"
+    return obj
 
 
 @pf.nodes.node_function
@@ -205,9 +224,7 @@ def primitive_rand(rng: pf.RNG) -> pf.MeshObject:
             (uv_sphere_rand, 1.0),
         ],
     )
-    obj = func(rng_func)
-    obj.item().name = func.__name__
-    return obj
+    return func(rng_func)
 
 
 class EffectResult(NamedTuple):
@@ -383,6 +400,7 @@ def primitive_with_effect(
             softness_degrees=crease_softness,
         )
     )
+    obj.item().name = primitive_with_effect.__name__
     s = 1.0
     if target_size is not None:
         dims = obj.item().dimensions

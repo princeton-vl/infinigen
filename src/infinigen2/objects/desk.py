@@ -227,6 +227,7 @@ def desk_tabletop_rand(rng: pf.RNG, dimensions: pf.Vector | None = None) -> Desk
     if dimensions is None:
         dimensions = desk_dimensions_rand(rng_dimensions)
     mesh = _tabletop_surface_rand(rng_surface, dimensions)
+    mesh.item().name = "desk_tabletop"
     return DeskResult(mesh)
 
 
@@ -237,6 +238,7 @@ def desk_integrated_storage_rand(
     if dimensions is None:
         dimensions = desk_dimensions_rand(rng_dimensions)
     mesh = _integrated_storage_surface_rand(rng_surface, dimensions)
+    mesh.item().name = "desk_integrated_storage"
     return DeskResult(mesh)
 
 
@@ -247,6 +249,7 @@ def desk_with_top_storage_rand(
     if dimensions is None:
         dimensions = desk_dimensions_rand(rng_dimensions)
     mesh = _tabletop_storage_surface_rand(rng_surface, dimensions)
+    mesh.item().name = "desk_with_top_storage"
     return DeskResult(mesh)
 
 
@@ -257,6 +260,7 @@ def desk_with_side_storage_rand(
     if dimensions is None:
         dimensions = desk_dimensions_rand(rng_dimensions)
     mesh = _side_storage_tabletop_surface_rand(rng_surface, dimensions)
+    mesh.item().name = "desk_with_side_storage"
     return DeskResult(mesh)
 
 

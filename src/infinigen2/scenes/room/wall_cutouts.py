@@ -276,7 +276,7 @@ def cutout_spaced_instances(
     pf.ops.object.set_transform(
         trim_edges, surface.item().location, surface.item().rotation_euler
     )
-    trim_edges.item().name = "cutout_trim_edges"
+    trim_edges.item().name = cutout_spaced_instances.__name__
 
     sill: pf.MeshObject | None = None
     lightblocker: pf.MeshObject | None = None
@@ -308,13 +308,13 @@ def cutout_spaced_instances(
             surface=surface_material.surface,
             displacement=surface_material.displacement,
         )
-        sill.item().name = "room_wall_sill"
+        sill.item().name = cutout_spaced_instances.__name__
 
         lightblocker = pf.nodes.to_mesh_object(split.lightblocker)
         pf.ops.object.set_transform(
             lightblocker, surface.item().location, surface.item().rotation_euler
         )
-        lightblocker.item().name = "room_wall_back"
+        lightblocker.item().name = cutout_spaced_instances.__name__
 
         geom = split.wall
     else:
@@ -387,6 +387,7 @@ def cutout_trim_rand(
     pf.ops.object.set_material(
         obj, surface=material.surface, displacement=material.displacement
     )
+    obj.item().name = "cutout_trim"
     return obj
 
 
@@ -1032,7 +1033,7 @@ def _door_affordance_collider(
         location=(center.x, center.y, height / 2),
         rotation_euler=(0.0, 0.0, angle),
     )
-    collider.item().name = f"door_affordance_{index:02d}"
+    collider.item().name = "door_affordance_collider"
     collider.item().hide_render = True
     collider.item().display_type = "WIRE"
     return collider
@@ -1114,7 +1115,7 @@ def wall_full_window_rand(
     pf.ops.object.set_transform(
         wall_back, geom.item().location, geom.item().rotation_euler
     )
-    wall_back.item().name = "room_wall_back"
+    wall_back.item().name = "wall_full_window"
 
     portals = []
     if win_result.light is not None and win_aliases:

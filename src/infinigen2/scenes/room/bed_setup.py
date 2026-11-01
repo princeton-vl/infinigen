@@ -188,8 +188,6 @@ def _bed_pillows_rand(
     pillows = instances_along_line(
         pillow.mesh, mattress, (x, -half_span, z), (x, half_span, z), count
     )
-    for p in pillows:
-        p.item().name = cushion.cushion_bed_pillow_rand.__name__
     return pillows
 
 
@@ -268,7 +266,6 @@ def bed_setup_rand(
     anchor_objects = list(objects)
     if any(collision.intersection_test(colliders, obj) for obj in anchor_objects):
         raise RejectedScene("Bed collides at its selected placement")
-    bed_mesh.item().name = "bed"
 
     side_table = table_bedside_composite_rand(r_table).mesh
     table_candidates = []
@@ -298,8 +295,6 @@ def bed_setup_rand(
         ],
     )
     objects += bedside_tables
-    for table_mesh in bedside_tables:
-        table_mesh.item().name = "bedside_table"
 
     tmin, tmax = pf.ops.attr.bbox_min_max(side_table, global_coords=False)
     table_size = pf.Vector(tmax) - pf.Vector(tmin)
@@ -345,7 +340,6 @@ def bed_setup_rand(
         light_matrix = light.item().matrix_world.copy()
         light.item().parent = None
         light.item().matrix_world = light_matrix
-        lamp_mesh.item().name = "bedside_lamp"
         lamps.append(lamp.LampResult(mesh=lamp_mesh, light=light))
 
     lamps, setup_colliders = keep_non_colliding(lamps, setup_colliders)

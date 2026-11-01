@@ -390,7 +390,9 @@ def handle_lever(
         turn_lock=turn_lock,
         has_lock=has_lock,
     )
-    return _finish(geo, _default_material(material))
+    result = _finish(geo, _default_material(material))
+    result.mesh.item().name = handle_lever.__name__
+    return result
 
 
 def handle_lever_rand(rng: pf.RNG, material: pf.Material | None = None) -> HandleResult:
@@ -443,7 +445,9 @@ def handle_knob(
         stem_length=stem_length,
         head_radius=head_radius,
     )
-    return _finish(geo, _default_material(material), crease_value=_KNOB_RIM_CREASE)
+    result = _finish(geo, _default_material(material), crease_value=_KNOB_RIM_CREASE)
+    result.mesh.item().name = handle_knob.__name__
+    return result
 
 
 def handle_knob_rand(rng: pf.RNG, material: pf.Material | None = None) -> HandleResult:
@@ -480,7 +484,9 @@ def handle_curved_pull(
         span_scale=span_scale,
         depth_scale=depth_scale,
     )
-    return _finish(geo, _default_material(material))
+    result = _finish(geo, _default_material(material))
+    result.mesh.item().name = handle_curved_pull.__name__
+    return result
 
 
 def handle_curved_pull_rand(
@@ -517,7 +523,9 @@ def handle_bar_pull(
         standoff_length=standoff_length,
         standoff_radius=standoff_radius,
     )
-    return _finish(geo, _default_material(material))
+    result = _finish(geo, _default_material(material))
+    result.mesh.item().name = handle_bar_pull.__name__
+    return result
 
 
 def handle_bar_pull_rand(

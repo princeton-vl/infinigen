@@ -145,6 +145,7 @@ def door_body(
     )
     geo = metric_box_uv(geo)
     obj = pf.nodes.to_mesh_object(geo)
+    obj.item().name = door_body.__name__
     pf.ops.modifier.bevel(obj, width=bevel_width, segments=6)
     pf.ops.attr.write_attribute(obj, 1.0, "crease_edge", domain="EDGE", overwrite=True)
     return DoorResult(mesh=obj)
@@ -213,6 +214,7 @@ def door_with_handle(
         location=(dimensions.x, dimensions.y - 0.06, dimensions.z * 0.46),
     )
     pf.ops.object.join(door, handle)
+    door.item().name = door_with_handle.__name__
     return DoorResult(mesh=door)
 
 
@@ -344,6 +346,7 @@ def door_composite_rand(
         ),
     )
     pf.ops.object.join(door, handle)
+    door.item().name = "door_composite"
     return DoorResult(mesh=door)
 
 
@@ -371,4 +374,5 @@ def door_glass_from_profile_rand(
         ),
     )
     pf.ops.object.join(door, handle)
+    door.item().name = "door_glass_from_profile"
     return DoorResult(mesh=door)

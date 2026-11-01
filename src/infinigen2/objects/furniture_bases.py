@@ -764,7 +764,9 @@ def base_straight(
         stretcher_relative_pos=stretcher_relative_pos,
         leg_placement_top_scale=leg_placement_top_scale,
     )
-    return _finish(geo, material)
+    result = _finish(geo, material)
+    result.mesh.item().name = base_straight.__name__
+    return result
 
 
 def base_straight_rand(
@@ -839,7 +841,9 @@ def base_pedestal(
         profile_resolution=profile_resolution,
         resolution=resolution,
     )
-    return _finish(geo, material)
+    result = _finish(geo, material)
+    result.mesh.item().name = base_pedestal.__name__
+    return result
 
 
 def base_pedestal_column_rand(
@@ -917,7 +921,9 @@ def base_square(
         leg_placement_bottom_scale=leg_placement_bottom_scale,
         has_bottom_connector=has_bottom_connector,
     )
-    return _finish(geo, material)
+    result = _finish(geo, material)
+    result.mesh.item().name = base_square.__name__
+    return result
 
 
 def base_square_rand(

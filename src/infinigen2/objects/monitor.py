@@ -244,6 +244,7 @@ def monitor(
         material=stand_material,
     )
     obj = pf.nodes.to_mesh_object(pf.nodes.geo.join_geometry([body, stand]))
+    obj.item().name = monitor.__name__
     return MonitorResult(mesh=obj)
 
 

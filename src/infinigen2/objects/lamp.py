@@ -56,6 +56,7 @@ def light_point_indoor(
     blackbody = pf.nodes.color.blackbody(temperature=temperature)
     emission = pf.nodes.shader.emission(color=blackbody, strength=1.0)
     pf.nodes.to_light(light, surface=emission)
+    light.item().name = light_point_indoor.__name__
 
     return light
 
@@ -846,6 +847,7 @@ def _assemble_lamp(
         selection=corner,
     )
     mesh = pf.nodes.to_mesh_object(geo)
+    mesh.item().name = lamp.__name__
 
     bulb_radius = 0.02
     point_light = light_point_indoor(
@@ -858,6 +860,7 @@ def _assemble_lamp(
         location=(0.0, 0.0, parameters.height + 1.05 * bulb_radius),
     )
     point_light.item().parent = mesh.item()
+    point_light.item().name = f"{lamp.__name__}_light"
     return LampResult(mesh=mesh, light=point_light)
 
 

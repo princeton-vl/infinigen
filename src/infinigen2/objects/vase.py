@@ -379,6 +379,7 @@ def vase(
     )
     geo = pf.nodes.geo.set_material(geo, material)
     obj = pf.nodes.to_mesh_object(geo)
+    obj.item().name = vase.__name__
     mesh_util.metric_cylinder_uv(obj)
     pf.ops.modifier.solidify(obj, thickness=thickness)
     return VaseResult(mesh=obj)
@@ -460,7 +461,6 @@ def vase_rand(rng: pf.RNG) -> VaseResult:
         material=mat_result,
         thickness=thickness,
     ).mesh
-    obj.item().name = vase_rand.__name__
     pf.ops.modifier.subdivide_surface(obj, levels=3, _skip_apply=True)
     return VaseResult(mesh=obj)
 
@@ -542,6 +542,5 @@ def cup_rand(rng: pf.RNG, material: pf.Material | None = None) -> VaseResult:
         thickness=thickness,
         twist=twist,
     ).mesh
-    obj.item().name = cup_rand.__name__
     pf.ops.modifier.subdivide_surface(obj, levels=1, _skip_apply=True)
     return VaseResult(mesh=obj)

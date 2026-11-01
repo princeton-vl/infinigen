@@ -108,6 +108,7 @@ def drawer(
     geo = mesh.crease_sharp(geo, threshold_degrees=30.0)
     geo = pf.nodes.geo.set_material(geo, material=material)
     obj = pf.nodes.to_mesh_object(geo)
+    obj.item().name = drawer.__name__
     pf.ops.modifier.bevel(obj, width=min(0.001, board * 0.1), segments=2)
     pf.ops.object.set_transform(obj, location=(tray_depth * opening_fraction, 0, 0))
     pf.ops.mesh.transform_apply(obj, location=True, rotation=False, scale=False)

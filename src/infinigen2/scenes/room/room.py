@@ -47,7 +47,6 @@ from infinigen2.scenes.room.wall_base import (
     WallResult,
     WallSurface,
     extrude_for_thickness,
-    name_objects,
     overlap_wall_plane_edges,
     resolve_wall_inputs,
     wall_plain_rand,
@@ -214,6 +213,7 @@ def room_walls_rand(
         shape.walls, levels=ROOM_SUBSURF_LEVELS, _skip_apply=True
     )
     corner_back = extrude_for_thickness(shape.walls, ROOM_WALL_THICKNESS)
+    corner_back.item().name = "room_walls"
 
     edge_gap_pct = 0.10
     edge_gap = edge_gap_pct * shape.dimensions.z
@@ -283,16 +283,11 @@ def room_walls_rand(
         for kind, objs in result.decorations.items():
             decorations.setdefault(kind, []).extend(objs)
     for kind, objs in sorted(decorations.items()):
-        name_objects(objs, kind)
         logger.info(f"Created {len(objs)} wall {kind} objects")
 
     wall_planes = [obj for result in results for obj in result.wall_planes]
     backs = [corner_back] + [obj for result in results for obj in result.backs]
     sills = [obj for result in results for obj in result.sills]
-    name_objects([shape.walls], "room_wall_corners")
-    name_objects(wall_planes, "room_wall")
-    name_objects(backs, "room_wall_back")
-    name_objects(sills, "room_wall_sill")
 
     return WallResult(
         all_objects=[shape.walls, corner_back]
@@ -615,7 +610,6 @@ def room_livingroom_rand(
         ],
     )
     sofa_setup = sofa_func(rng_sofa_setup)
-    name_objects([result.mesh for result in sofa_setup.sofas], "sofa")
     colliders = _with_objects(room.colliders, sofa_setup.all_objects)
     tv_setups = tv_setup_wall_rand(
         rng_tv, wall_planes=room.wall_planes, colliders=colliders
@@ -636,8 +630,6 @@ def room_livingroom_rand(
             colliders=colliders,
         )
         if desk_setup is not None:
-            name_objects([desk_setup.desk], "desk")
-            name_objects([desk_setup.chair], "desk_chair")
             desk_objects = desk_setup.all_objects
             desk_containers = desk_setup.storage_containers
             desk_supports = desk_setup.supports
@@ -744,8 +736,6 @@ def room_diningroom_rand(
         bbox_max=dimensions,
         colliders=room.colliders,
     )
-    name_objects([r.mesh for r in dining_setup.dining_tables], "dining_table")
-    name_objects(dining_setup.dining_chairs, "dining_chair")
     colliders = _with_objects(room.colliders, dining_setup.all_objects)
     storage_setup = wall_storage_setup_rand(
         rng_storage,
@@ -879,7 +869,6 @@ def room_bedroom_rand(
     sofa_supports = []
     sofa_storages = []
     if sofa_setup is not None:
-        name_objects([result.mesh for result in sofa_setup.sofas], "sofa")
         sofa_objects = sofa_setup.all_objects
         sofa_containers = sofa_setup.storage_containers
         sofa_supports = sofa_setup.supports
@@ -913,8 +902,6 @@ def room_bedroom_rand(
             colliders=colliders,
         )
         if desk_setup is not None:
-            name_objects([desk_setup.desk], "desk")
-            name_objects([desk_setup.chair], "desk_chair")
             desk_objects = desk_setup.all_objects
             desk_containers = desk_setup.storage_containers
             desk_supports = desk_setup.supports
@@ -1170,8 +1157,6 @@ def room_kitchen_rand(
     tables = table_fn(rng_table, room.wall_planes, dimensions, table_colliders)
     for keepout in keepouts:
         delete_object(keepout.item())
-    name_objects([r.mesh for r in tables.dining_tables], f"{label}_table")
-    name_objects(tables.dining_chairs, f"{label}_chair")
     storage_setup = wall_storage_setup_rand(
         rng_storage,
         wall_planes=room.wall_planes,
