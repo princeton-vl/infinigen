@@ -16,6 +16,7 @@ os.environ["OPENCV_IO_ENABLE_OPENEXR"] = "1"  # This must be done BEFORE import 
 
 import bpy
 import gin
+from packaging.version import Version
 
 import infinigen.assets.scatters
 from infinigen._optimized import optimizable
@@ -162,7 +163,8 @@ def save_meshes(
 def validate_version(scene_version):
     if (
         scene_version is None
-        or scene_version.split(".")[:-1] != infinigen.__version__.split(".")[:-1]
+        or Version(scene_version).release[:2]
+        != Version(infinigen.__version__).release[:2]
     ):
         raise ValueError(
             f"infinigen_examples/generate_nature.py {infinigen.__version__=} attempted to load a scene created by version {scene_version=}"

@@ -28,9 +28,9 @@ jobs:
       - name: Lint with ruff
         run: |
           # stop the build if there are Python syntax errors or undefined names
-          uvx ruff check --output-format=github --select=E9,F63,F7,F82 .
+          uvx ruff==0.14.5 check --output-format=github --select=E9,F63,F7,F82 .
           # default set of ruff rules with GitHub Annotations
-          uvx ruff check --output-format=github .
+          uvx ruff==0.14.5 check --output-format=github .
 
       #- name: Check for copyright statements
       #  run: |
@@ -47,9 +47,7 @@ jobs:
           persist-credentials: false
 
       - name: Install infinigen & dependencies
-        run: |
-          uv venv
-          uv pip install -e ".[dev,vis]"
+        run: uv sync --locked --extra dev --extra vis
 
       - name: Test with pytest (cpu)
         run: |

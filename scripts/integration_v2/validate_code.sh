@@ -3,25 +3,25 @@
 set -euo pipefail
 
 # Commits from dead/force-overwritten lineages that must never be merged.
-# One "<full-sha> <reason>" per line.
 BANNED=$(cat <<'EOF'
-a81a0eb9254e4d0125f72aa507ae6f8d19492a16 develop_materials (do not branch off; rebase onto develop2)
-d7bf1f6ccbf011b5b8590cec6b281ec55a9f29f9 pre-msg-rewrite develop2 (force-overwritten; rebase onto current develop2)
-7148e0bad3da2eddce21bda378bef73270f9a7a7 Claude co-author trailer on old main lineage (dropped; rebase onto current develop2)
-c0e2a0c1496cd753ca48d7b66609252d79fe3e7c stale integration-render gate (superseded by squashed 29facb4e4 on develop; rebase to drop)
-6601e9b7a4f31bccbf6c79db1c634f7be5288641 stale gate coverage-flush follow-up (superseded on develop; rebase to drop)
-63dee4d441fcbb8db9af12739a43a62a443e13c1 unapproved Blender add-on bindings pushed directly to develop (removed by history rewrite; rebase to drop)
-7b515778cdd359df63ead6a8f651d9af2bd73422 pre-a3 develop lineage (rewritten onto main to strip agent trailers; rebase onto current develop)
-cfab1c645c4eee31ddb26e808eeace8421fe8822 pre-a5 develop lineage (rebased onto main after the 2.0.0a4 hotfix; rebase onto current develop)
+a81a0eb9254e4d0125f72aa507ae6f8d19492a16
+d7bf1f6ccbf011b5b8590cec6b281ec55a9f29f9
+7148e0bad3da2eddce21bda378bef73270f9a7a7
+c0e2a0c1496cd753ca48d7b66609252d79fe3e7c
+6601e9b7a4f31bccbf6c79db1c634f7be5288641
+63dee4d441fcbb8db9af12739a43a62a443e13c1
+7b515778cdd359df63ead6a8f651d9af2bd73422
+cfab1c645c4eee31ddb26e808eeace8421fe8822
+ec9c1b1076366456de6894307a84d2df1cbf1522
 EOF
 )
 
 history=$(git rev-list HEAD)
 failed=0
-while read -r sha reason; do
+while read -r sha; do
   [ -n "$sha" ] || continue
   if grep -qx "$sha" <<< "$history"; then
-    echo "::error::Banned commit $sha is in this PR's history: $reason"
+    echo "::error::Banned commit $sha is in this PR's history"
     failed=1
   fi
 done <<< "$BANNED"

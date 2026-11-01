@@ -46,9 +46,7 @@ jobs:
           version: "0.8.3"
 
       - name: Install
-        run: |
-          uv venv
-          uv pip install -e .
+        run: uv sync --locked
 
       - name: Lint and Format (ruff)
         run: |
@@ -74,9 +72,7 @@ jobs:
           version: "0.8.3"
 
       - name: Install with docs dependencies
-        run: |
-          uv venv
-          uv pip install -e ".[dev,infinigen1]"
+        run: uv sync --locked --extra dev --extra infinigen1
 
       - name: Build docs (warnings as errors)
         run: uv run --no-sync python -m sphinx -b html docs/source docs/build
@@ -99,9 +95,7 @@ jobs:
           version: "0.8.3"
 
       - name: Install with dev dependencies
-        run: |
-          uv venv
-          uv pip install -e ".[dev]"
+        run: uv sync --locked --extra dev
 
       - name: Unit Tests (pytest)
         run: |

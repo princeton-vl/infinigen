@@ -6,6 +6,7 @@
 # Authors: Alexander Raistrick
 
 import logging
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 
 import bpy
@@ -13,7 +14,10 @@ from pandas import read_json as _read_json
 
 from .util.import_utils import module_path
 
-__version__ = "2.0.0a4"
+try:
+    __version__ = version("infinigen")
+except PackageNotFoundError:
+    __version__ = "0.0.0+unknown"
 
 GENERATORS_MANIFEST_PATH = Path(__file__).parent / "manifest.json"
 GENERATORS_MANIFEST = _read_json(GENERATORS_MANIFEST_PATH)

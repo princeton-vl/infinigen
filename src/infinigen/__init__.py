@@ -4,9 +4,13 @@
 # of this source tree.
 
 import logging
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 
-__version__ = "1.20.0"
+try:
+    __version__ = version("infinigen")
+except PackageNotFoundError:
+    __version__ = "0.0.0+unknown"
 
 # Optional optimized packages, off unless asked for; see _perf_selection.
 from infinigen import _perf_selection as _perf_selection  # noqa: E402

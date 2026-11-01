@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools", "numpy", "Cython"]
+requires = ["setuptools>=80", "setuptools-scm>=8", "numpy", "Cython"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -102,8 +102,15 @@ infinigen1 = [
 infinigen = "infinigen2.generate:main"
 infinigen2 = "infinigen2.generate:main"
 
-[tool.setuptools.dynamic]
-version = {attr = "infinigen2.__version__"}
+# Version comes from the latest release tag; pre2/* and other non-release tags are ignored
+[tool.setuptools_scm]
+tag_regex = '^v?(?P<version>\d+(\.\d+)*((a|b|rc)\d+)?)$'
+
+[tool.setuptools_scm.scm.git]
+describe_command = ["git", "describe", "--dirty", "--tags", "--long", "--abbrev=40", "--match", "[0-9]*", "--match", "v[0-9]*"]
+
+[tool.uv]
+cache-keys = [{ file = "pyproject.toml" }, { git = { commit = true, tags = true } }]
 
 [tool.setuptools.packages.find]
 where = ["src"]

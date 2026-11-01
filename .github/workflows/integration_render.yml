@@ -46,9 +46,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install infinigen & dependencies
-        run: |
-          uv venv
-          uv pip install -e ".[dev,vis]"
+        run: uv sync --locked --extra dev --extra vis
 
       # Resolve every path/label this run needs, once, so the render / archive /
       # report steps below are just simple consumers of these env vars.
