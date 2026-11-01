@@ -20,7 +20,11 @@ from infinigen2.shaders.functionality_lists import (
     glass_material_rand,
 )
 from infinigen2.util import mesh as mesh_util
-from infinigen2.util.curve import curve_to_mesh_with_uv
+from infinigen2.util.curve import (
+    corner_ring_edges,
+    curve_to_mesh_with_uv,
+    outline_corner,
+)
 
 # parts are built flat in XY; reorients them into the wall frame like door_body
 _WALL_REORIENT = (math.pi / 2, 0.0, math.pi / 2)
@@ -71,7 +75,7 @@ def _window_profile(
     height: t.SocketOrVal[float],
     top_profile_height: t.SocketOrVal[float],
     bottom_profile_height: t.SocketOrVal[float],
-    profile_resolution: t.SocketOrVal[int] = 5,
+    profile_resolution: t.SocketOrVal[int] = 16,
 ) -> pf.ProcNode[pf.CurveObject]:
     quarter = math.pi / 2
     bottom_right = _profile_quarter(
@@ -97,7 +101,10 @@ def _window_profile(
         geometry=pf.nodes.geo.join_geometry(points), distance=1e-5
     )
     outline = pf.nodes.geo.points_to_curves(points=unique)
-    return pf.nodes.geo.set_spline_cyclic(curve=outline, cyclic=True)
+    cyclic = pf.nodes.geo.set_spline_cyclic(curve=outline, cyclic=True)
+    # flat profiles bunch collinear points at the corners, which fold the miters
+    is_straight = pf.nodes.func.boolean_not(outline_corner(0.5))
+    return pf.nodes.geo.delete_geometry(cyclic, selection=is_straight, domain="POINT")
 
 
 @pf.nodes.node_function
@@ -234,12 +241,24 @@ def _profile_frame(
     incoming = pf.nodes.math.vector_normalize(position - previous_position)
     # miter radius keeps width exact at corners; it also scales depth, so reset z
     miter = 1.0 / pf.nodes.math.vector_dot_product(incoming, tangent)
-    mitered = pf.nodes.geo.set_curve_radius(curve=outline, radius=miter)
+    marked = pf.nodes.geo.capture_attribute(
+        geometry=outline,
+        ring=pf.nodes.geo.input_index().astype(dtype=float),
+        is_corner=outline_corner(60.0).astype(dtype=float),
+    )
+    mitered = pf.nodes.geo.set_curve_radius(curve=marked.geometry, radius=miter)
     profile = pf.nodes.geo.curve_quadrilateral(
         width=frame_width,
         height=frame_thickness,
     )
-    mesh = pf.nodes.geo.curve_to_mesh(curve=mitered, profile_curve=profile)
+    swept = pf.nodes.geo.curve_to_mesh(curve=mitered, profile_curve=profile)
+    # miter rings at outline corners can fold under 60deg on slanted faces
+    mesh = pf.nodes.geo.store_named_attribute(
+        geometry=swept,
+        name="crease_edge",
+        value=corner_ring_edges(ring=marked.ring, is_corner=marked.is_corner),
+        domain="EDGE",
+    )
     flat_depth = pf.nodes.math.combine_xyz(
         x=position.x,
         y=position.y,
@@ -708,14 +727,10 @@ def _window_shutter(
     )
 
     curve_quadrilateral = pf.nodes.geo.curve_quadrilateral(width=width, height=height)
-    curve_b = pf.nodes.math.sqrt(2.0)
-    curve_quadrilateral_1 = pf.nodes.geo.curve_quadrilateral(
-        width=frame_width * curve_b,
-        height=frame_thickness,
-    )
-    curve_to = pf.nodes.geo.curve_to_mesh(
-        curve=curve_quadrilateral,
-        profile_curve=curve_quadrilateral_1,
+    curve_to = _profile_frame(
+        outline=curve_quadrilateral,
+        frame_width=frame_width,
+        frame_thickness=frame_thickness,
     )
 
     join = pf.nodes.geo.join_geometry([set_position, rotate_instances_1, curve_to])
@@ -902,11 +917,16 @@ def _window_geometry(
         material=frame_material,
     )
 
+    ring_crease = pf.nodes.geo.input_named_attribute(
+        name="crease_edge", data_type=pf.nodes.NodeDataType.FLOAT
+    ).attribute
+    fold = pf.nodes.geo.input_mesh_edge_angle().unsigned_angle
+    is_sharp = fold > math.radians(60.0)
     creased = pf.nodes.geo.store_named_attribute(
         domain="EDGE",
         geometry=realized,
         name="crease_edge",
-        value=1.0,
+        value=pf.nodes.math.maximum(ring_crease, is_sharp.astype(dtype=float)),
     )
 
     # built in the XY plane (X=width, Y=height, Z=depth); reorient into the
@@ -927,13 +947,16 @@ def _glass_pane(
     height: t.SocketOrVal[float],
     top_profile_height: t.SocketOrVal[float],
     bottom_profile_height: t.SocketOrVal[float],
+    frame_width: t.SocketOrVal[float],
     material: t.SocketOrVal[pf.Material],
 ) -> pf.ProcNode[pf.MeshObject]:
+    # edge just past the frame's inner rim; subsurf pulls its outer rim inward on arches
+    inset = frame_width * 0.9
     outline = _window_profile(
-        width=width,
-        height=height,
-        top_profile_height=top_profile_height,
-        bottom_profile_height=bottom_profile_height,
+        width=width - inset * 2.0,
+        height=height - inset * 2.0,
+        top_profile_height=pf.nodes.math.maximum(top_profile_height - inset, 0.0),
+        bottom_profile_height=pf.nodes.math.maximum(bottom_profile_height - inset, 0.0),
     )
     mesh = pf.nodes.geo.fill_curve(curve=outline, mode="NGONS")
     position = pf.nodes.geo.input_position()
@@ -948,7 +971,7 @@ def _glass_pane(
         domain="CORNER",
         data_type=pf.nodes.NodeDataType.FLOAT_VECTOR_2D,
     )
-    # uncreased, the frame's boundary_smooth=ALL subsurf rounds the pane inwards
+    # uncreased, the frame's subsurf rounds the pane inwards
     creased = pf.nodes.geo.store_named_attribute(
         domain="EDGE",
         geometry=mesh,
@@ -1022,9 +1045,17 @@ def window(
             height=dimensions.z,
             top_profile_height=top_profile_height,
             bottom_profile_height=bottom_profile_height,
+            frame_width=frame_width,
             material=glass_material,
         )
         pf.ops.object.join(frame_obj, pf.nodes.to_mesh_object(pane))
+    pf.ops.modifier.subdivide_surface(
+        frame_obj,
+        levels=3,
+        boundary_smooth="PRESERVE_CORNERS",
+        uv_smooth="PRESERVE_CORNERS_AND_JUNCTIONS",
+        _skip_apply=True,
+    )
 
     origin_offset = dimensions * 0.5
     pf.ops.object.set_transform(frame_obj, location=origin_offset)
