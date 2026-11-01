@@ -105,15 +105,33 @@ def _normalize_stem(path_str: str) -> str:
     return stem
 
 
+ASSET_TYPE_RANK = {
+    "scene": 0,
+    "object": 1,
+    "material": 2,
+    "mask": 3,
+    "environment": 4,
+    "camera": 5,
+    "preset": 6,
+    "landing": 7,
+}
+
+
+def _asset_type_rank(asset_type: str) -> tuple:
+    return (ASSET_TYPE_RANK.get(asset_type, len(ASSET_TYPE_RANK)), asset_type)
+
+
 def _merge_asset(assets: dict[str, AssetData], new_asset: AssetData):
     if new_asset.asset_name not in assets:
         assets[new_asset.asset_name] = new_asset
         return
 
+    # Event files are uuid-named, so pick the type by rank, not read order
     existing = assets[new_asset.asset_name]
+    asset_type = min(existing.asset_type, new_asset.asset_type, key=_asset_type_rank)
     assets[new_asset.asset_name] = AssetData(
         asset_name=existing.asset_name,
-        asset_type=existing.asset_type,
+        asset_type=asset_type,
         version_name=existing.version_name,
         images=existing.images + new_asset.images,
         stats=existing.stats + new_asset.stats,
@@ -785,16 +803,7 @@ def _row_mse_sort_key(row: dict) -> tuple:
 
 
 def _row_type_sort_key(row: dict) -> tuple:
-    type_rank = {
-        "scene": 0,
-        "object": 1,
-        "material": 2,
-        "mask": 3,
-        "environment": 4,
-        "camera": 5,
-        "preset": 6,
-        "landing": 7,
-    }.get(row["asset_type"], 8)
+    type_rank = _asset_type_rank(row["asset_type"])
     new_rank = 0 if row["is_new"] else 1
     not_run_rank = 1 if row["not_run"] else 0
     mse = row["avg_mse"]
