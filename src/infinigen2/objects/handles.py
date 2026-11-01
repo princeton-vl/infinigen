@@ -394,7 +394,7 @@ def handle_lever(
 
 
 def handle_lever_rand(rng: pf.RNG, material: pf.Material | None = None) -> HandleResult:
-    rng, rng_mat = rng.spawn(2)
+    rng, rng_turn_lock, rng_has_lock, rng_mat = rng.spawn(4)
     rose_height = pf.random.uniform(rng, 0.05, 0.1)
     rose_depth = pf.random.uniform(rng, 0.008, 0.02)
     stub_height = pf.random.uniform(rng, 0.008, 0.016)
@@ -405,8 +405,8 @@ def handle_lever_rand(rng: pf.RNG, material: pf.Material | None = None) -> Handl
     lever_width = pf.random.uniform(rng, 0.01, 0.04)
     button_depth = pf.random.uniform(rng, 0.005, 0.01)
     mini_lock_depth = pf.random.uniform(rng, 0.005, 0.01)
-    turn_lock = pf.control.choice(rng, [(True, 1.0), (False, 1.0)])
-    has_lock = pf.control.choice(rng, [(True, 1.0), (False, 1.0)])
+    turn_lock = pf.control.choice(rng_turn_lock, [(True, 1.0), (False, 1.0)])
+    has_lock = pf.control.choice(rng_has_lock, [(True, 1.0), (False, 1.0)])
     if material is None:
         material = decorative_material_rand(rng_mat, pf.nodes.shader.coord().object)
     obj = handle_lever(

@@ -1256,12 +1256,12 @@ def brick_color_pattern_rand(
         return brick_concrete.brick_concrete_color_rand(rc)
 
     def tile_pattern_color_option(rt, brick_id, **_):
-        rt2, rt3, rt4 = rt.spawn(3)
+        rt, rt2, rt3, rt4 = rt.spawn(4)
         # x/y scales normalize brick_id to metric space for ~1.5m tile repeat
         tile_vector = pf.nodes.math.combine_xyz(
             x=brick_id.x * 0.667, y=brick_id.y * 0.233
         )
-        border = pf.random.uniform(rt2, 0.15, 0.25)
+        border = pf.random.uniform(rt, 0.15, 0.25)
         tile_mask = tile_mask_rand(rt2, vector=tile_vector, border=border)
         color_1 = brick_concrete.brick_concrete_color_rand(rt3)
         color_2 = brick_concrete.brick_concrete_color_rand(rt4)
@@ -1436,7 +1436,7 @@ def bricks_masonry_rand(
         brick_aspect_mean=0.5,
     )
     brick_cutter = brick_cutter_rand(
-        r1,
+        r1_2,
         vector,
         brick_dimensions=dimensions,
         gab=pf.random.uniform(rng, 0.025, 0.05),

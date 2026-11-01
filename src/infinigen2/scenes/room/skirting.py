@@ -43,8 +43,9 @@ def skirting_on_walls_rand(
     material: pf.Material,
     profile_curve: pf.CurveObject | None = None,
 ) -> list[pf.MeshObject]:
+    rng_profile, rng_placement = rng.spawn(2)
     if profile_curve is None:
-        profile_curve = skirting_profile_rand(rng)
+        profile_curve = skirting_profile_rand(rng_profile)
     profile_curve_geo = pf.nodes.geo.object_info(profile_curve).geometry
     profile_y = pf.nodes.geo.input_position().y
     profile_stat = pf.nodes.geo.attribute_statistic(
@@ -111,7 +112,7 @@ def skirting_on_walls_rand(
     )
 
     geoms = pf.control.choice(
-        rng,
+        rng_placement,
         [
             ([floor_curve_node], 3.0),
             ([ceiling_curve_node], 1.0),

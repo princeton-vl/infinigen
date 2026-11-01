@@ -209,22 +209,22 @@ def sky_hosek_wilkie_with_sun_lamp_rand(
     sun_intensity: float | None = None,
     sun_size_deg: float | None = None,
 ) -> EnvironmentResult:
-    r_default, r_sky, r_warmth = rng.spawn(3)
+    r_params, r_warmth = rng.spawn(2)
     if sun_elevation_deg is None:
-        sun_elevation_deg = pf.random.uniform(r_default, 10.0, 80.0)
+        sun_elevation_deg = pf.random.uniform(r_params, 10.0, 80.0)
     if sun_rotation_deg is None:
-        sun_rotation_deg = pf.random.uniform(r_default, 0.0, 360.0)
+        sun_rotation_deg = pf.random.uniform(r_params, 0.0, 360.0)
     if sun_intensity is None:
-        sun_intensity = pf.random.uniform(r_default, 0.8, 1.0)
+        sun_intensity = pf.random.uniform(r_params, 0.8, 1.0)
     if sun_size_deg is None:
-        sun_size_deg = pf.random.clip_gaussian(r_default, 0.5, 0.3, 0.25, 5)
+        sun_size_deg = pf.random.clip_gaussian(r_params, 0.5, 0.3, 0.25, 5)
 
-    sky_strength = pf.random.uniform(r_sky, 5.0, 7.0)
+    sky_strength = pf.random.uniform(r_params, 5.0, 7.0)
     world = _hosek_wilkie_sky(
         sun_elevation_deg=sun_elevation_deg,
         sun_rotation_deg=sun_rotation_deg,
-        turbidity=pf.random.uniform(r_sky, 2.0, 4.0),
-        ground_albedo=pf.random.uniform(r_sky, 0.2, 0.5),
+        turbidity=pf.random.uniform(r_params, 2.0, 4.0),
+        ground_albedo=pf.random.uniform(r_params, 0.2, 0.5),
         strength=sky_strength,
     )
 

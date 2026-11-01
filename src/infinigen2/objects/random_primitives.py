@@ -54,26 +54,29 @@ def end_fill_type_rand(rng: pf.RNG) -> str:
 
 
 def cone_rand(rng: pf.RNG) -> pf.MeshObject:
+    rng, rng_fill = rng.spawn(2)
     return pf.ops.primitives.mesh_cone(
         vertices=pf.random.randint(rng, 3, 33),
         radius2=pf.random.uniform(rng, 0.0, 0.9),
         depth=pf.random.uniform(rng, 0.5, 1.0),
-        end_fill_type=end_fill_type_rand(rng),
+        end_fill_type=end_fill_type_rand(rng_fill),
     )
 
 
 def cylinder_rand(rng: pf.RNG) -> pf.MeshObject:
+    rng, rng_fill = rng.spawn(2)
     return pf.ops.primitives.mesh_cylinder(
         vertices=pf.random.randint(rng, 3, 33),
         depth=pf.random.uniform(rng, 0.2, 4.0),
-        end_fill_type=end_fill_type_rand(rng),
+        end_fill_type=end_fill_type_rand(rng_fill),
     )
 
 
 def circle_rand(rng: pf.RNG) -> pf.MeshObject:
+    rng, rng_fill = rng.spawn(2)
     return pf.ops.primitives.mesh_circle(
         vertices=pf.random.randint(rng, 3, 33),
-        fill_type=pf.control.choice(rng, [("NGON", 1.0), ("TRIFAN", 1.0)]),
+        fill_type=pf.control.choice(rng_fill, [("NGON", 1.0), ("TRIFAN", 1.0)]),
     )
 
 
@@ -406,13 +409,10 @@ def primitive_with_effect_rand(
         rng_base,
         rng_effect_choice,
         rng_effect,
-        rng_crease,
-        rng_aspect,
-        rng_rot,
-        rng_scale,
+        rng_params,
         rng_mat_choice,
         rng_mat,
-    ) = rng.spawn(9)
+    ) = rng.spawn(6)
 
     effect_func = pf.control.choice(
         rng_effect_choice,
@@ -435,29 +435,29 @@ def primitive_with_effect_rand(
     primitive_name = primitive.item().name.split(".")[0]
     result = effect_func(rng_effect, primitive)
 
-    crease_threshold = pf.random.clip_gaussian(rng_crease, 40.0, 40.0, 0.0, 180.0)
-    crease_softness = pf.random.clip_gaussian(rng_crease, 0.0, 20.0, 1.0, 60.0)
+    crease_threshold = pf.random.clip_gaussian(rng_params, 40.0, 40.0, 0.0, 180.0)
+    crease_softness = pf.random.clip_gaussian(rng_params, 0.0, 20.0, 1.0, 60.0)
 
     subsurf_levels = result.subsurf_levels
     if max_subsurf_levels is not None:
         subsurf_levels = min(subsurf_levels, max_subsurf_levels)
 
-    aspect_x = pf.random.uniform(rng_aspect, 0.6, 1.6)
-    aspect_y = pf.random.uniform(rng_aspect, 0.6, 1.6)
-    aspect_z = pf.random.uniform(rng_aspect, 0.6, 1.6)
+    aspect_x = pf.random.uniform(rng_params, 0.6, 1.6)
+    aspect_y = pf.random.uniform(rng_params, 0.6, 1.6)
+    aspect_z = pf.random.uniform(rng_params, 0.6, 1.6)
 
     rotation = pf.Vector(
         (
-            pf.random.uniform(rng_rot, 0, 2 * math.pi),
-            pf.random.uniform(rng_rot, 0, 2 * math.pi),
-            pf.random.uniform(rng_rot, 0, 2 * math.pi),
+            pf.random.uniform(rng_params, 0, 2 * math.pi),
+            pf.random.uniform(rng_params, 0, 2 * math.pi),
+            pf.random.uniform(rng_params, 0, 2 * math.pi),
         )
     )
     scale = pf.Vector(
         (
-            pf.random.clip_gaussian(rng_scale, 1.0, 0.1, 0.3, 3.0),
-            pf.random.clip_gaussian(rng_scale, 1.0, 0.1, 0.3, 3.0),
-            pf.random.clip_gaussian(rng_scale, 1.0, 0.1, 0.3, 3.0),
+            pf.random.clip_gaussian(rng_params, 1.0, 0.1, 0.3, 3.0),
+            pf.random.clip_gaussian(rng_params, 1.0, 0.1, 0.3, 3.0),
+            pf.random.clip_gaussian(rng_params, 1.0, 0.1, 0.3, 3.0),
         )
     )
 

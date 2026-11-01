@@ -899,10 +899,11 @@ def uv_gradient_rand(
     gradient_start: t.SocketOrVal[float] | None = None,
     gradient_end: t.SocketOrVal[float] | None = None,
 ) -> pf.ProcNode[float]:
+    rng, rng_start = rng.spawn(2)
     if gradient_fac is None:
         gradient_fac = vector.y
     if gradient_start is None:
-        gradient_start = pf.control.choice(rng, [(0.0, 0.5), (1.0, 0.5)])
+        gradient_start = pf.control.choice(rng_start, [(0.0, 0.5), (1.0, 0.5)])
     if gradient_end is None:
         gradient_end = pf.random.uniform(rng, 0.0, 1.0)
 

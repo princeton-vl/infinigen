@@ -1250,9 +1250,8 @@ def chair_office_dimensions_rand(
     seat_elevation: float | None = None,
 ) -> pf.Vector:
     """Footprint and ordinary adjustable office-chair seat elevation."""
-    rng, rng_w = rng.spawn(2)
     if width is None:
-        width = pf.random.uniform(rng_w, 0.5, 0.6)
+        width = pf.random.uniform(rng, 0.5, 0.6)
     if seat_elevation is None:
         seat_elevation = pf.random.uniform(rng, 0.42, 0.55)
     return (width, width, seat_elevation)
@@ -1371,7 +1370,7 @@ def chair_base_wheeled_rand(
     wheel_width = pf.random.uniform(rng, 0.11, 0.15)
     wheel_rotation = pf.random.uniform(rng, 0.0, 360.0)
     pole_length = pf.random.uniform(rng, 1.6, 2.0)
-    leg_number = pf.control.choice(rng, [(4, 0.5), (5, 0.5)])
+    leg_number = pf.random.randint(rng, 4, 6)
     base = chair_base_wheeled(
         top_height=dimensions[2],
         joint_height=joint_height,
@@ -1508,16 +1507,25 @@ def chair_back(
     return ChairResult(mesh=obj)
 
 
+def _back_slats_spaced_rand(rng: pf.RNG) -> tuple[int, float]:
+    return pf.random.randint(rng, 4, 10), 1.0
+
+
+def _back_slats_two_stiles_rand(rng: pf.RNG) -> tuple[int, float]:
+    return 2, pf.random.clip_gaussian(rng, 0.85, 0.2, 0.4, 1.0)
+
+
 def chair_back_rand(
     rng: pf.RNG,
     dimensions: pf.Vector | None = None,
     material: pf.Material | None = None,
-    slat_count_rand: Callable[[pf.RNG, float, float], int] | None = None,
+    slat_width: float | None = None,
+    n_slats: int | None = None,
 ) -> ChairResult:
     """Slatted wooden back. `aspect` runs the slat cross-section from flat (wide
     in Y) to near-square; the support-loop offset then rounds it toward a spindle
     once the subdivision modifier is applied."""
-    rng, rng_dims, rng_mat = rng.spawn(3)
+    rng, rng_slats_choice, rng_slats, rng_profile_choice, rng_mat = rng.spawn(5)
     if dimensions is None:
         dimensions = (
             pf.random.uniform(rng, 0.02, 0.04),
@@ -1527,28 +1535,26 @@ def chair_back_rand(
     depth = dimensions[0]
 
     aspect = pf.random.clip_gaussian(rng, 0.9, 0.1, 0.5, 1.0)
-    slat_depth = depth * pf.random.uniform(rng, 0.5, 1.0)
-    slat_width = slat_depth / aspect
+    if slat_width is None:
+        slat_width = depth * pf.random.uniform(rng, 0.5, 1.0) / aspect
+    slat_depth = slat_width * aspect
 
     crest_height = pf.random.uniform(rng, 0.05, 0.1)
     corner_r = pf.random.uniform(rng, 0.0, 0.49) * crest_height
     depth_r = pf.random.uniform(rng, 0.2, 0.49) * depth
 
-    if slat_count_rand is None:
-        two_span = pf.random.clip_gaussian(rng, 0.85, 0.2, 0.4, 1.0)
-        slats_choice = pf.control.choice(
-            rng,
-            [
-                ((pf.random.randint(rng, 4, 10), 1.0), 3.0),
-                ((2, two_span), 1.0),
-            ],
+    slat_span = 1.0
+    if n_slats is None:
+        slats_fn = pf.control.choice(
+            rng_slats_choice,
+            [(_back_slats_spaced_rand, 3.0), (_back_slats_two_stiles_rand, 1.0)],
         )
-        n_slats = slats_choice[0]
-        slat_span = slats_choice[1]
-    else:
-        n_slats = slat_count_rand(rng, dimensions[1], slat_width)
-        slat_span = 1.0
-    slat_profile_resolution = pf.control.choice(rng, [(24, 2.0), (4, 1.0)])
+        slats = slats_fn(rng_slats)
+        n_slats = slats[0]
+        slat_span = slats[1]
+    slat_profile_resolution = pf.control.choice(
+        rng_profile_choice, [(24, 2.0), (4, 1.0)]
+    )
     crest_align = pf.random.uniform(rng, 0.0, 1.0)
     if material is None:
         material = furniture_material_rand(rng_mat, pf.nodes.shader.coord().uv)
@@ -1825,6 +1831,7 @@ def _dining_slat_back_rand(
     """Seat with a slatted back; slat count follows width so thin spindles and
     broad slats both space out. Slats take slat_material, the crest rail the
     backrest detail_material."""
+    rng, rng_profile = rng.spawn(2)
     width = dimensions[1]
     slat_width = pf.random.uniform(rng, 0.0225, 0.061875)
     aspect = pf.random.clip_gaussian(rng, 0.8, 0.15, 0.4, 1.0)
@@ -1834,7 +1841,7 @@ def _dining_slat_back_rand(
     # stays above the back's 1mm bevel, which otherwise collapses the support loops
     corner_r = pf.random.uniform(rng, 0.05, 0.49) * crest_height
     crest_depth_r = pf.random.uniform(rng, 0.2, 0.49) * slat_depth
-    slat_profile_resolution = pf.control.choice(rng, [(24, 2.0), (4, 1.0)])
+    slat_profile_resolution = pf.control.choice(rng_profile, [(24, 2.0), (4, 1.0)])
     crest_align = pf.random.uniform(rng, 0.0, 1.0)
     return chair_dining_seat_slat_back(
         dimensions=dimensions,
@@ -2063,15 +2070,16 @@ def chair_base_stable_rand(
     close_edges: bool = False,
 ) -> ChairResult:
     """Chair base without oversized pedestal or wheeled options."""
+    rng_base_choice, rng_base = rng.spawn(2)
     base_fn = pf.control.choice(
-        rng,
+        rng_base_choice,
         [
             (_grid_base_rand, 0.4),
             (base_straight_rand, 0.45),
             (base_square_rand, 0.15),
         ],
     )
-    return base_fn(rng, dimensions, material, close_edges=close_edges)
+    return base_fn(rng_base, dimensions, material, close_edges=close_edges)
 
 
 def chair_dining_rand(rng: pf.RNG, dimensions: pf.Vector | None = None) -> ChairResult:
@@ -2091,10 +2099,8 @@ def chair_dining_rand(rng: pf.RNG, dimensions: pf.Vector | None = None) -> Chair
         rng_backrest_sel,
         rng_leg_sel,
         rng_slat_sel,
-        rng_dip,
-        rng_back_bend,
         rng_seat,
-    ) = rng.spawn(16)
+    ) = rng.spawn(14)
     if dimensions is None:
         dimensions = chair_dining_dimensions_rand(rng_dims)
     vec = pf.nodes.shader.coord().uv
@@ -2120,7 +2126,7 @@ def chair_dining_rand(rng: pf.RNG, dimensions: pf.Vector | None = None) -> Chair
 
     front_bow = pf.random.clip_gaussian(rng, 0.08, 0.1, 0.0, 0.3) * dimensions[0]
     back_bow = pf.random.uniform(rng, 0.0, 0.25) * dimensions[0]
-    front_dip = 0.15 * pf.random.uniform(rng_dip, 0.0, 1.0) ** 2 * dimensions[0]
+    front_dip = 0.15 * pf.random.uniform(rng, 0.0, 1.0) ** 2 * dimensions[0]
     thickness = pf.random.clip_gaussian(rng, 0.06, 0.04, 0.02, 0.2)
 
     back_height = pf.random.uniform(rng, 0.35, 0.55)
@@ -2131,7 +2137,7 @@ def chair_dining_rand(rng: pf.RNG, dimensions: pf.Vector | None = None) -> Chair
     back_sink = thickness * 0.5
     back_built = back_height + back_sink
     slant = pf.random.clip_gaussian(rng, 0.23, 0.067, 0.0, 0.4)
-    bend_frac = pf.random.clip_gaussian(rng_back_bend, 0.15, 0.35, -0.4, 1.2)
+    bend_frac = pf.random.clip_gaussian(rng, 0.15, 0.35, -0.4, 1.2)
     seat_round = pf.random.uniform(rng_seat, 0.05, 0.49) * thickness
     seat = back_fn(
         rng_back,
@@ -2215,10 +2221,8 @@ def chair_bench_rand(rng: pf.RNG, dimensions: pf.Vector | None = None) -> ChairR
         rng_backrest_sel,
         rng_leg_sel,
         rng_slat_sel,
-        rng_dip,
-        rng_back_bend,
         rng_seat,
-    ) = rng.spawn(15)
+    ) = rng.spawn(13)
     if dimensions is None:
         dimensions = chair_bench_dimensions_rand(rng_dims)
     vec = pf.nodes.shader.coord().uv
@@ -2244,7 +2248,7 @@ def chair_bench_rand(rng: pf.RNG, dimensions: pf.Vector | None = None) -> ChairR
 
     front_bow = pf.random.clip_gaussian(rng, 0.08, 0.1, 0.0, 0.3) * dimensions[0]
     back_bow = pf.random.uniform(rng, 0.0, 0.25) * dimensions[0]
-    front_dip = 0.15 * pf.random.uniform(rng_dip, 0.0, 1.0) ** 2 * dimensions[0]
+    front_dip = 0.15 * pf.random.uniform(rng, 0.0, 1.0) ** 2 * dimensions[0]
     thickness = pf.random.clip_gaussian(rng, 0.06, 0.04, 0.02, 0.2)
 
     back_height = pf.random.uniform(rng, 0.35, 0.55)
@@ -2254,7 +2258,7 @@ def chair_bench_rand(rng: pf.RNG, dimensions: pf.Vector | None = None) -> ChairR
     back_sink = thickness * 0.5
     back_built = back_height + back_sink
     slant = pf.random.clip_gaussian(rng, 0.23, 0.067, 0.0, 0.4)
-    bend_frac = pf.random.clip_gaussian(rng_back_bend, 0.15, 0.35, -0.4, 1.2)
+    bend_frac = pf.random.clip_gaussian(rng, 0.15, 0.35, -0.4, 1.2)
     seat_round = pf.random.uniform(rng_seat, 0.05, 0.49) * thickness
     seat = back_fn(
         rng_back,

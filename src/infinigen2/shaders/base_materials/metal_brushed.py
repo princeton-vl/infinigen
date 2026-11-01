@@ -274,15 +274,15 @@ def metal_brushed_radial_rand(
     vector: pf.ProcNode[pf.Vector],
     base_color: pf.Color | None = None,
 ) -> pf.Material:
-    r1, _ = rng.spawn(2)
+    rng_color, rng_choice = rng.spawn(2)
 
     if base_color is None:
-        base_color = metal_any_color_rand(r1)
+        base_color = metal_any_color_rand(rng_color)
 
     color = base_color
 
     return pf.control.choice(
-        rng,
+        rng_choice,
         [
             (
                 metal_brushed(

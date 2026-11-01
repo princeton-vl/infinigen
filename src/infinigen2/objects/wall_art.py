@@ -259,24 +259,22 @@ def wall_art_rand(
     frame_material: pf.Material | None = None,
 ) -> WallArtResult:
     (
-        r_dims,
-        r_frame_w,
-        r_panel_d,
+        r_params,
         r_frame_mat,
         r_panel_choice,
         r_panel_mat,
         r_frame_style,
         r_profile,
-    ) = rng.spawn(8)
+    ) = rng.spawn(6)
     if dimensions is None:
-        height = np.exp(pf.random.uniform(r_dims, np.log(0.4), np.log(2.0)))
-        aspect = pf.random.uniform(r_dims, 0.7, 2.0)
-        depth = pf.random.uniform(r_dims, 0.02, 0.05)
+        height = np.exp(pf.random.uniform(r_params, np.log(0.4), np.log(2.0)))
+        aspect = pf.random.uniform(r_params, 0.7, 2.0)
+        depth = pf.random.uniform(r_params, 0.02, 0.05)
         width = height / aspect
         dimensions = pf.Vector((depth, width, height))
 
-    frame_width = pf.random.uniform(r_frame_w, 0.02, 0.1)
-    panel_depth_pct = pf.random.uniform(r_panel_d, 0.2, 1.2)
+    frame_width = pf.random.uniform(r_params, 0.02, 0.1)
+    panel_depth_pct = pf.random.uniform(r_params, 0.2, 1.2)
 
     if frame_material is None:
         vec = pf.nodes.shader.coord().uv

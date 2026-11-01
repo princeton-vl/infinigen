@@ -62,29 +62,37 @@ def fabric_patterned_rand(
     scale: float | None = None,
     translucency: float = 0.0,
 ) -> pf.Material:
-    rngs = rng.spawn(9)
+    (
+        rng_params,
+        rng_tile_coord,
+        rng_tile_mask,
+        rng_colors,
+        rng_pattern,
+        rng_displacement_choice,
+        rng_fabric,
+    ) = rng.spawn(7)
 
     if scale is None:
-        scale = pf.random.uniform(rngs[0], 10.0, 50.0)
+        scale = pf.random.uniform(rng_params, 10.0, 50.0)
     if tile_mask is None:
         tile_mask = tile_mask_rand(
-            rngs[0],
-            tile_coord_transform_rand(rngs[1], vector, scale=scale),
+            rng_tile_mask,
+            tile_coord_transform_rand(rng_tile_coord, vector, scale=scale),
         )
     mask = tile_mask.mask.astype(dtype=float) > 0.1
 
     if color1 is None:
-        rng_c1, rng_c2, rng_c3 = rngs[2].spawn(3)
+        rng_c1, rng_c2, rng_c3 = rng_colors.spawn(3)
         color1 = fabric_color_rand(rng_c1)
         color2 = fabric_color_rand(rng_c2)
         color3 = fabric_color_rand(rng_c3)
 
-    color = patterned_color_rand(rngs[5], color1, color2, color3, tile_mask)
+    color = patterned_color_rand(rng_pattern, color1, color2, color3, tile_mask)
 
-    small_indent = pf.random.uniform(rngs[6], 0.0, 0.0025)
+    small_indent = pf.random.uniform(rng_params, 0.0, 0.0025)
 
     displacement_offset = pf.control.choice(
-        rngs[7],
+        rng_displacement_choice,
         [
             (0, 2),
             (mask * small_indent, 1),
@@ -93,7 +101,7 @@ def fabric_patterned_rand(
     )
 
     res = fabric_rand(
-        rngs[8], vector=vector, base_color=color, translucency=translucency
+        rng_fabric, vector=vector, base_color=color, translucency=translucency
     )
 
     displacement = res.displacement + pf.nodes.shader.displacement(

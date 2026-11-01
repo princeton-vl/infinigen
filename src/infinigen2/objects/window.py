@@ -606,16 +606,16 @@ def curtain_rand(
     material: pf.Material | None = None,
     rail_material: pf.Material | None = None,
 ) -> CurtainResult:
+    rng, rng_fabric, rng_rail = rng.spawn(3)
     if dimensions is None:
         dimensions = window_dimensions_rand(rng)
     vec = pf.nodes.shader.coord().uv
-    rng, rng_fabric = rng.spawn(2)
     if material is None:
         translucency = pf.random.clip_gaussian(rng, 0.6, 0.2, 0.05, 0.8)
         material = fabric_general_rand(rng_fabric, vec, translucency=translucency)
 
     if rail_material is None:
-        rail_material = furniture_material_rand(rng, vec)
+        rail_material = furniture_material_rand(rng_rail, vec)
 
     frame_depth = pf.random.uniform(rng, 0.05, 0.1)
     depth = frame_depth * pf.random.uniform(rng, 0.3, 1.0)

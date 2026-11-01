@@ -223,12 +223,13 @@ def snap_to_wall(
     margin: float | None = None,
     child_side: str | None = None,
 ) -> None:
+    rng, rng_side = rng.spawn(2)
     if placement is None:
         placement = pf.random.uniform(rng, 0.1, 0.9)
     if margin is None:
         margin = pf.random.clip_gaussian(rng, 0.15, 0.1, 0.1, 0.4)
     if child_side is None:
-        child_side = pf.control.choice(rng, [("back", 1.0), ("left", 1.0)])
+        child_side = pf.control.choice(rng_side, [("back", 1.0), ("left", 1.0)])
     snap_to_plane(
         child=child.mesh,
         parent=rng.choice(parents),
@@ -330,7 +331,10 @@ def back_face_grounded(
 
 
 def snap_side_by_side(rng: pf.RNG, child: MR, parents: list[pf.MeshObject]) -> None:
-    sides = pf.control.choice(rng, [(("left", "right"), 0.5), (("right", "left"), 0.5)])
+    rng, rng_sides = rng.spawn(2)
+    sides = pf.control.choice(
+        rng_sides, [(("left", "right"), 0.5), (("right", "left"), 0.5)]
+    )
     snap_to_plane(
         child.mesh,
         parent=rng.choice(parents),

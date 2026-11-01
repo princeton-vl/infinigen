@@ -250,24 +250,24 @@ def tile_rand(
     Returns:
         pf.Material: The generated tile shader.
     """
-    rngs = rng.spawn(6)
+    rng_params, rng_coord, rng_mask, rng_shift, rng_tile, rng_grout = rng.spawn(6)
     if vector is None:
         vector = pf.nodes.shader.coord().uv
     if scale is None:
-        scale = pf.random.uniform(rngs[5], 15, 25)
+        scale = pf.random.uniform(rng_params, 15, 25)
     if tile_mask is None:
         tile_mask = tile_mask_rand(
-            rngs[0],
-            tile_coord_transform_rand(rngs[0], vector, scale=scale),
+            rng_mask,
+            tile_coord_transform_rand(rng_coord, vector, scale=scale),
         )
     if tile is None:
         tile = tile_material_rand(
-            rngs[3], shifted_vector_rand(rngs[3], vector, tile_mask)
+            rng_tile, shifted_vector_rand(rng_shift, vector, tile_mask)
         )
     if grout is None:
-        grout_displacement = pf.random.uniform(rngs[4], 0.005, 0.015)
+        grout_displacement = pf.random.uniform(rng_params, 0.005, 0.015)
         grout = brick_concrete.brick_concrete_grout_rand(
-            rngs[4], vector, displacement_additional_height=-grout_displacement
+            rng_grout, vector, displacement_additional_height=-grout_displacement
         )
     return tile_generate(
         vector,
@@ -324,24 +324,24 @@ def tile_indoor_wall_rand(
     Returns:
         pf.Material: The generated tile shader.
     """
-    rngs = rng.spawn(6)
+    rng_params, rng_coord, rng_mask, rng_shift, rng_tile, rng_grout = rng.spawn(6)
     if vector is None:
         vector = pf.nodes.shader.coord().uv
     if scale is None:
-        scale = 1.0 / pf.random.clip_gaussian(rngs[5], 0.2, 0.4, 0.04, 1.0)
+        scale = 1.0 / pf.random.clip_gaussian(rng_params, 0.2, 0.4, 0.04, 1.0)
     if tile_mask is None:
         tile_mask = tile_mask_rand(
-            rngs[0],
-            tile_coord_transform_rand(rngs[0], vector, scale=scale),
+            rng_mask,
+            tile_coord_transform_rand(rng_coord, vector, scale=scale),
         )
     if tile is None:
         tile = tile_indoor_wall_material_rand(
-            rngs[3], shifted_vector_rand(rngs[3], vector, tile_mask)
+            rng_tile, shifted_vector_rand(rng_shift, vector, tile_mask)
         )
     if grout is None:
-        grout_displacement = pf.random.uniform(rngs[4], 0.005, 0.015)
+        grout_displacement = pf.random.uniform(rng_params, 0.005, 0.015)
         grout = brick_concrete.brick_concrete_grout_rand(
-            rngs[4], vector, displacement_additional_height=-grout_displacement
+            rng_grout, vector, displacement_additional_height=-grout_displacement
         )
     return tile_generate(
         vector,
@@ -373,20 +373,20 @@ def tile_indoor_ground_rand(
     Returns:
         pf.Material: The generated tile shader.
     """
-    rngs = rng.spawn(6)
+    rng_params, rng_coord, rng_mask, rng_shift, rng_tile, rng_grout = rng.spawn(6)
     if vector is None:
         vector = pf.nodes.shader.coord().uv
     if scale is None:
-        scale = 1.0 / pf.random.clip_gaussian(rngs[5], 0.25, 0.7, 0.05, 1.5)
+        scale = 1.0 / pf.random.clip_gaussian(rng_params, 0.25, 0.7, 0.05, 1.5)
     if tile_mask is None:
-        mask_coord = tile_coord_transform_rand(rngs[0], vector, scale=scale)
-        tile_mask = tile_mask_rand(rngs[0], mask_coord)
+        mask_coord = tile_coord_transform_rand(rng_coord, vector, scale=scale)
+        tile_mask = tile_mask_rand(rng_mask, mask_coord)
     if tile is None:
-        tile_coord = shifted_vector_rand(rngs[3], vector, tile_mask)
-        tile = tile_indoor_ground_material_rand(rngs[3], tile_coord)
+        tile_coord = shifted_vector_rand(rng_shift, vector, tile_mask)
+        tile = tile_indoor_ground_material_rand(rng_tile, tile_coord)
     if grout is None:
         grout = brick_concrete.brick_concrete_grout_rand(
-            rngs[4], vector, displacement_additional_height=-0.02
+            rng_grout, vector, displacement_additional_height=-0.02
         )
     return tile_generate(
         vector,
@@ -418,23 +418,23 @@ def tile_outdoor_wall_rand(
     Returns:
         pf.Material: The generated tile shader.
     """
-    rngs = rng.spawn(6)
+    rng_params, rng_coord, rng_mask, rng_shift, rng_tile, rng_grout = rng.spawn(6)
     if vector is None:
         vector = pf.nodes.shader.coord().uv
     if scale is None:
-        scale = pf.random.uniform(rngs[5], 5, 10)
+        scale = pf.random.uniform(rng_params, 5, 10)
     if tile_mask is None:
         tile_mask = tile_mask_rand(
-            rngs[0],
-            tile_coord_transform_rand(rngs[0], vector, scale=scale),
+            rng_mask,
+            tile_coord_transform_rand(rng_coord, vector, scale=scale),
         )
     if tile is None:
         tile = tile_outdoor_wall_material_rand(
-            rngs[3], shifted_vector_rand(rngs[3], vector, tile_mask)
+            rng_tile, shifted_vector_rand(rng_shift, vector, tile_mask)
         )
     if grout is None:
         grout = brick_concrete.brick_concrete_grout_rand(
-            rngs[4], vector, displacement_additional_height=-0.02
+            rng_grout, vector, displacement_additional_height=-0.02
         )
     return tile_generate(
         vector,
@@ -466,23 +466,23 @@ def tile_outdoor_ground_rand(
     Returns:
         pf.Material: The generated tile shader.
     """
-    rngs = rng.spawn(6)
+    rng_params, rng_coord, rng_mask, rng_shift, rng_tile, rng_grout = rng.spawn(6)
     if vector is None:
         vector = pf.nodes.shader.coord().uv
     if scale is None:
-        scale = pf.random.uniform(rngs[5], 5, 10)
+        scale = pf.random.uniform(rng_params, 5, 10)
     if tile_mask is None:
         tile_mask = tile_mask_rand(
-            rngs[0],
-            tile_coord_transform_rand(rngs[0], vector, scale=scale),
+            rng_mask,
+            tile_coord_transform_rand(rng_coord, vector, scale=scale),
         )
     if tile is None:
         tile = tile_outdoor_ground_material_rand(
-            rngs[3], shifted_vector_rand(rngs[3], vector, tile_mask)
+            rng_tile, shifted_vector_rand(rng_shift, vector, tile_mask)
         )
     if grout is None:
         grout = brick_concrete.brick_concrete_grout_rand(
-            rngs[4], vector, displacement_additional_height=-0.02
+            rng_grout, vector, displacement_additional_height=-0.02
         )
     return tile_generate(
         vector,

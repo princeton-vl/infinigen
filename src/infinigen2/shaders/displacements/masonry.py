@@ -150,11 +150,12 @@ def masonry_displacement_rand(
     layer_2_mask: t.SocketOrVal[float] = 1.0,
     layer_2_height: t.SocketOrVal[float] = 0.01,
 ) -> pf.ProcNode[pf.Vector]:
+    rng, rng_layer_1 = rng.spawn(2)
     if layer_1_clamp_max is None:
         layer_1_clamp_max = pf.random.uniform(rng, 0.015, 9.715)
 
     masonry_func = pf.control.choice(
-        rng,
+        rng_layer_1,
         [(masonry_displacement_noise, 1.0), (masonry_displacement_chip, 1.0)],
     )
     layer_1_size = pf.random.uniform(rng, 0.09, 0.12)

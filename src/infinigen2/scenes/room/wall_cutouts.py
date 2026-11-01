@@ -738,6 +738,7 @@ def wall_storage_shelf_rand(
     wall_thickness: float = 0.05,
 ) -> WallResult:
     rng, wall, wall_material = resolve_wall_inputs(rng, wall, wall_material)
+    rng, rng_width, rng_cabinet = rng.spawn(3)
     wall_width = wall.width
     wall_height = wall.height
 
@@ -746,16 +747,9 @@ def wall_storage_shelf_rand(
     # half-depth edge margins keep corner cabinets clear
     min_margin = depth * 0.5
 
-    # bimodal cabinet height: short band vs tall band
-    def _short_band() -> float:
-        return wall_height * pf.random.uniform(rng, 0.20, 0.50)
+    height = wall_height * pf.random.uniform(rng, 0.20, 0.98)
 
-    def _tall_band() -> float:
-        return wall_height * pf.random.uniform(rng, 0.60, 0.98)
-
-    height = pf.control.choice(rng, [(_short_band, 1.0), (_tall_band, 1.0)])()
-
-    width = wall_storage_width_rand(rng, wall_width, min_margin)
+    width = wall_storage_width_rand(rng_width, wall_width, min_margin)
     spacing_x = pf.random.uniform(rng, 0.1, 0.5)
 
     margin_split = pf.random.uniform(rng, 0.375, 0.625)
@@ -766,7 +760,7 @@ def wall_storage_shelf_rand(
     hole_depth = max(0.02, recess_frac**0.5 * depth)
 
     cab = storage.storage_cell_shelf_rand(
-        rng,
+        rng_cabinet,
         dimensions=pf.Vector((depth, width, height)),
         back_width=0.0,
     ).mesh
@@ -821,12 +815,13 @@ def wall_cubby_rand(
     wall_thickness: float = 0.05,
 ) -> WallResult:
     rng, wall, wall_material = resolve_wall_inputs(rng, wall, wall_material)
+    rng, rng_keep_choice, rng_width, rng_cabinet = rng.spawn(4)
     wall_width = wall.width
     wall_height = wall.height
 
     depth = pf.random.uniform(rng, 0.3, 0.61)
     min_margin = depth * 0.5
-    width = wall_storage_width_rand(rng, wall_width, min_margin)
+    width = wall_storage_width_rand(rng_width, wall_width, min_margin)
 
     bottom = pf.random.uniform(rng, 0.25, 0.45) * wall_height
     top = (0.02 + 0.18 * pf.random.uniform(rng, 0.0, 1.0) ** 2) * wall_height
@@ -846,7 +841,7 @@ def wall_cubby_rand(
     hole_depth = depth
 
     cab = storage.storage_cell_shelf_rand(
-        rng,
+        rng_cabinet,
         dimensions=pf.Vector((depth, width, height)),
         back_width=0.0,
     ).mesh
@@ -909,7 +904,10 @@ def wall_cubby_rand(
             storages=sills,
         )
 
-    return pf.control.choice(rng, [(_keep_cabinets, 1.0), (_drop_cabinets, 2.0)])()
+    keep_func = pf.control.choice(
+        rng_keep_choice, [(_keep_cabinets, 1.0), (_drop_cabinets, 2.0)]
+    )
+    return keep_func()
 
 
 @pf.tracer.grammar
@@ -920,6 +918,7 @@ def wall_doors_rand(
     wall_thickness: float = 0.05,
 ) -> WallResult:
     rng, wall, wall_material = resolve_wall_inputs(rng, wall, wall_material)
+    rng, rng_door_choice, rng_shape_choice, rng_shape = rng.spawn(4)
     wall_width = wall.width
     wall_height = wall.height
 
@@ -927,7 +926,7 @@ def wall_doors_rand(
     door_height = min(pf.random.uniform(rng, 2.0, 2.2), wall_height * 0.9)
     door_thickness = pf.random.clip_gaussian(rng, 0.0318, 0.0127, 0.0254, 0.0762)
     door_func = pf.control.choice(
-        rng, [(door_composite_rand, 2.0), (door_double_rand, 1.0)]
+        rng_door_choice, [(door_composite_rand, 2.0), (door_double_rand, 1.0)]
     )
 
     spacing_x = pf.random.uniform(rng, 2.0, 6.0)
@@ -980,11 +979,10 @@ def wall_doors_rand(
         door = door_glass_from_profile_rand(rng_door, profile)
         return cut_door(door.mesh, profile.top_profile_height)
 
-    rng_shape_choice, _ = rng.spawn(2)
     door_shape_func = pf.control.choice(
         rng_shape_choice, [(rectangular_door, 0.9), (arched_door, 0.1)]
     )
-    geom, sill, lightblocker, door_aliases, _trim_edges = door_shape_func(rng)
+    geom, sill, lightblocker, door_aliases, _trim_edges = door_shape_func(rng_shape)
     if not door_aliases:
         logger.warning(
             "door: grid fit 0 doors on %.2fm wall (door %.2f, spacing %.2f, "

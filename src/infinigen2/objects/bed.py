@@ -339,17 +339,15 @@ def bed_rand(rng: pf.RNG, dimensions: pf.Vector | None = None) -> BedResult:
         ).mesh
 
     def slatted_board(r: pf.RNG, board_dimensions: pf.Vector) -> pf.MeshObject:
-        def slat_count_rand(
-            r_count: pf.RNG, board_width: float, slat_width: float
-        ) -> int:
-            max_slats = max(2, math.floor(board_width / (1.2 * slat_width)))
-            return pf.random.randint(r_count, 2, max_slats + 1)
-
+        r, r_back = r.spawn(2)
+        slat_width = board_dimensions[0] * pf.random.uniform(r, 0.5, 1.1)
+        max_slats = max(2, math.floor(board_dimensions[1] / (1.2 * slat_width)))
         return chair.chair_back_rand(
-            r,
+            r_back,
             dimensions=board_dimensions,
             material=material,
-            slat_count_rand=slat_count_rand,
+            slat_width=slat_width,
+            n_slats=pf.random.randint(r, 2, max_slats + 1),
         ).mesh
 
     # one style for the pair, so a footboard always matches its headboard

@@ -2363,17 +2363,17 @@ def _resolve_tile_params(
     border: t.SocketOrVal[float] | None,
     flatness: t.SocketOrVal[float] | None,
 ) -> dict:
-    rngs = rng.spawn(5)
+    rng_params, rng_choice = rng.spawn(2)
     if subtiles_number is None:
         subtiles_number = pf.control.choice(
-            rngs[1], [(1.0, 3.0), (2.0, 2.0), (3.0, 1.0), (4.0, 1.0)]
+            rng_choice, [(1.0, 3.0), (2.0, 2.0), (3.0, 1.0), (4.0, 1.0)]
         )
     if aspect_ratio is None:
-        aspect_ratio = pf.random.randint(rngs[2], 2, 7 + 1)
+        aspect_ratio = pf.random.randint(rng_params, 2, 7 + 1)
     if border is None:
-        border = pf.random.uniform(rngs[3], 0.03, 0.05)
+        border = pf.random.uniform(rng_params, 0.03, 0.05)
     if flatness is None:
-        flatness = pf.random.uniform(rngs[4], 0.9, 0.95)
+        flatness = pf.random.uniform(rng_params, 0.9, 0.95)
     return dict(
         subtiles_number=subtiles_number,
         aspect_ratio=aspect_ratio,
@@ -2596,13 +2596,12 @@ def _resolve_tile_coord_transform(
     scale: t.SocketOrVal[float] | None = None,
     flip: t.SocketOrVal[float] | None = None,
 ) -> tuple:
-    rngs = rng.spawn(3)
     if rotation_deg is None:
-        rotation_deg = pf.random.randint(rngs[0], 0, 8 + 1) * 45.0
+        rotation_deg = pf.random.randint(rng, 0, 8 + 1) * 45.0
     if scale is None:
-        scale = pf.random.uniform(rngs[1], 15, 25)
+        scale = pf.random.uniform(rng, 15, 25)
     if flip is None:
-        flip = pf.random.randint(rngs[2], 0, 2) * 2 - 1
+        flip = pf.random.randint(rng, 0, 2) * 2 - 1
     return rotation_deg, scale, flip
 
 

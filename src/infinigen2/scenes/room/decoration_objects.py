@@ -858,9 +858,10 @@ def _place_floor_beside_storage(
     floor: pf.MeshObject,
     storage: list[pf.MeshObject],
 ) -> None:
-    _place_on_floor(rng, child, floor)
+    rng, rng_floor, rng_sides = rng.spawn(3)
+    _place_on_floor(rng_floor, child, floor)
     child_side, parent_side = pf.control.choice(
-        rng,
+        rng_sides,
         [(("left", "right"), 1.0), (("right", "left"), 1.0)],
     )
     snap_to_plane(
@@ -883,8 +884,9 @@ def _place_floor_decoration(
     if not preferred_storage:
         _place_floor_against_wall(rng, child, floor, wall_planes)
         return
+    rng_place_choice, rng_place = rng.spawn(2)
     place_fn = pf.control.choice(
-        rng,
+        rng_place_choice,
         [
             (
                 functools.partial(
@@ -902,7 +904,7 @@ def _place_floor_decoration(
             ),
         ],
     )
-    place_fn(rng, child, floor)
+    place_fn(rng_place, child, floor)
 
 
 @pf.tracer.grammar

@@ -92,19 +92,20 @@ def ceiling_bar_housing(
 def ceiling_lamp_grid_rand(
     rng: pf.RNG, extent: tuple[float, float], energy: float
 ) -> CeilingGridResult:
+    rng, rng_template_choice, rng_template = rng.spawn(3)
     spacing_x = pf.random.uniform(rng, 1.5, 2.5)
     spacing_y = pf.random.uniform(rng, 1.5, 2.5)
     margin_x = min(pf.random.uniform(rng, 0.4, 1.5), 0.3 * extent[0])
     margin_y = min(pf.random.uniform(rng, 0.4, 1.5), 0.3 * extent[1])
 
     template_fn = pf.control.choice(
-        rng,
+        rng_template_choice,
         [
             (light_ceiling_rand, 2.5),
             (lamp.lamp_ceiling_shade_rand, 1.0),
         ],
     )
-    lamp_template = template_fn(rng, energy=energy)
+    lamp_template = template_fn(rng_template, energy=energy)
     lamp_template.mesh.item().name = template_fn.__name__
     mesh_template = lamp_template.mesh
 
@@ -218,6 +219,7 @@ def ceiling_light_placement_rand(
 def ceiling_skylight_grid_rand(
     rng: pf.RNG, extent: tuple[float, float]
 ) -> CeilingGridResult:
+    rng, rng_orientation, rng_window = rng.spawn(3)
     # each side must fit the smaller extent (either orientation), plus headroom
     floor_margin = 0.1
     max_side = max(0.45, min(extent) - 2 * floor_margin - 0.1)
@@ -227,7 +229,7 @@ def ceiling_skylight_grid_rand(
     skylight_aspect = pf.random.uniform(rng, 1.0, 10.0)
     skylight_long = min(skylight_short * skylight_aspect, 3.5, max_side)
     skylight_width, skylight_length = pf.control.choice(
-        rng,
+        rng_orientation,
         [
             ((skylight_short, skylight_long), 1.0),
             ((skylight_long, skylight_short), 1.0),
@@ -238,7 +240,7 @@ def ceiling_skylight_grid_rand(
     )
     # skylights never get curtains
     window_result = window.window_from_profile_rand(
-        rng, window.rectangular_profile(window_dimensions)
+        rng_window, window.rectangular_profile(window_dimensions)
     )
     win = window_result.mesh
 

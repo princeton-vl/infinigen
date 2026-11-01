@@ -51,15 +51,16 @@ logger = logging.getLogger(__name__)
 
 
 def _override_material(rng: pf.RNG, obj: pf.MeshObject) -> pf.MeshObject:
+    rng_mat_choice, rng_mat = rng.spawn(2)
     vec = pf.nodes.shader.coord().uv
     mat_func = pf.control.choice(
-        rng,
+        rng_mat_choice,
         [
             (bsdf_simple_rand, 1.0),
             (all_materials_rand, 1.0),
         ],
     )
-    mat = mat_func(rng, vec)
+    mat = mat_func(rng_mat, vec)
     pf.ops.object.set_material(obj, surface=mat.surface, displacement=mat.displacement)
     return obj
 
@@ -70,8 +71,9 @@ class ObjectResult(NamedTuple):
 
 @pf.tracer.grammar
 def object_rand(rng: pf.RNG) -> ObjectResult:
+    rng_obj_choice, rng_obj, rng_override_choice, rng_override = rng.spawn(4)
     obj_func = pf.control.choice(
-        rng,
+        rng_obj_choice,
         [
             (sofa.sofa_rand, 2.0),
             (chair.chair_rand, 4.0),
@@ -97,17 +99,17 @@ def object_rand(rng: pf.RNG) -> ObjectResult:
         ],
     )
 
-    obj = obj_func(rng).mesh
+    obj = obj_func(rng_obj).mesh
     obj.item().name = obj_func.__name__
 
     override_func = pf.control.choice(
-        rng,
+        rng_override_choice,
         [
             (_override_material, 2.0),
             (lambda rng, obj: obj, 3.0),
         ],
     )
-    return ObjectResult(mesh=override_func(rng, obj))
+    return ObjectResult(mesh=override_func(rng_override, obj))
 
 
 class ObjWithPostprocessingResult(NamedTuple):
@@ -116,20 +118,22 @@ class ObjWithPostprocessingResult(NamedTuple):
 
 @pf.tracer.grammar
 def obj_with_postprocessing(rng: pf.RNG) -> ObjWithPostprocessingResult:
-    obj = object_rand(rng).mesh
-    return ObjWithPostprocessingResult(mesh=_override_material(rng, obj))
+    rng_obj, rng_override = rng.spawn(2)
+    obj = object_rand(rng_obj).mesh
+    return ObjWithPostprocessingResult(mesh=_override_material(rng_override, obj))
 
 
 @pf.tracer.grammar
 def floating_object_asset_rand(rng: pf.RNG) -> pf.MeshObject:
+    rng_asset_choice, rng_asset = rng.spawn(2)
     asset_func = pf.control.choice(
-        rng,
+        rng_asset_choice,
         [
             (random_primitives.primitive_with_effect_rand, 1.0),
             (object_rand, 1.5),
         ],
     )
-    return asset_func(rng).mesh
+    return asset_func(rng_asset).mesh
 
 
 def _apply_object_scale(obj: pf.MeshObject) -> None:

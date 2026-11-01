@@ -52,11 +52,12 @@ def splats_overlay_rand(
     gradient_start: t.SocketOrVal[float] | None = None,
     gradient_end: t.SocketOrVal[float] | None = None,
 ) -> pf.Material:
+    rng_overlay, rng_mask = rng.spawn(2)
     if overlay_material is None:
-        overlay_material = splats_base_material_rand(rng=rng, vector=vector)
+        overlay_material = splats_base_material_rand(rng=rng_overlay, vector=vector)
 
     mask = splats.splats_mask_rand(
-        rng=rng,
+        rng=rng_mask,
         vector=vector,
         size=size,
         allow_gradient=allow_gradient,
@@ -122,7 +123,8 @@ def glass_no_refraction_splats_rand(
     rng: pf.RNG,
     vector: t.SocketOrVal[pf.Vector],
 ) -> pf.Material:
-    glass = glass_no_refraction.glass_no_refraction_rand(rng=rng, vector=vector)
+    rng_glass, rng_overlay = rng.spawn(2)
+    glass = glass_no_refraction.glass_no_refraction_rand(rng=rng_glass, vector=vector)
     return splats_overlay_rand(
-        rng=rng, vector=vector, material=glass, overlay_material=glass
+        rng=rng_overlay, vector=vector, material=glass, overlay_material=glass
     )

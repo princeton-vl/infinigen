@@ -338,15 +338,16 @@ def table_side_circular_rand(rng: pf.RNG) -> TableResult:
 
 def table_coffee_rand(rng: pf.RNG) -> TableResult:
     """Rectangular, round or storage coffee table."""
+    rng_table_choice, rng_table = rng.spawn(2)
     func = pf.control.choice(
-        rng,
+        rng_table_choice,
         [
             (_table_coffee_legged_rand, 2.0),
             (table_coffee_circular_rand, 1.0),
             (table_coffee_storage_rand, 1.0),
         ],
     )
-    result = func(rng)
+    result = func(rng_table)
     result.mesh.item().name = func.__name__
     return result
 

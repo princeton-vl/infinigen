@@ -207,6 +207,7 @@ def light_ceiling_rand(
     temperature: float | None = None,
     turned_on: bool = True,
 ) -> CeilingLightResult:
+    rng, rng_frame_shader = rng.spawn(2)
     radius = pf.random.clip_gaussian(rng, 0.12, 0.04, 0.1, 0.25)
     thickness = pf.random.uniform(rng, 0.005, 0.05)
     inner_radius = radius * pf.random.uniform(rng, 0.4, 0.9)
@@ -215,7 +216,7 @@ def light_ceiling_rand(
     curvature = pf.random.uniform(rng, 0.1, 0.5)
 
     vec = pf.nodes.shader.coord().uv
-    frame_shader = furniture_material_rand(rng, vec)
+    frame_shader = furniture_material_rand(rng_frame_shader, vec)
     frame_shader = black_for_reflections(frame_shader.surface)
     frame_material = frame_shader
 

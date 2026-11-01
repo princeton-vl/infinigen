@@ -781,6 +781,7 @@ def plant_phyllo_basal_rand(
     min_angle: float | None = None,
     max_angle: float | None = None,
 ) -> PhylloPlantResult:
+    rng, rng_plant = rng.spawn(2)
     if stem_height is None:
         stem_height = pf.random.uniform(rng, 0.008, 0.04)
     if stem_radius is None:
@@ -793,7 +794,7 @@ def plant_phyllo_basal_rand(
     if max_angle is None:
         max_angle = pf.random.uniform(rng, 0.85, 1.35)
     return _phyllo_rand(
-        rng,
+        rng_plant,
         target_count=target_count,
         height=stem_height,
         radius=stem_radius,
@@ -846,6 +847,7 @@ def plant_phyllo_ascending_rand(
     min_angle: float | None = None,
     max_angle: float | None = None,
 ) -> PhylloPlantResult:
+    rng, rng_plant = rng.spawn(2)
     if stem_height is None:
         stem_height = pf.random.log_uniform(rng, 0.08, 0.85)
     if stem_radius is None:
@@ -858,7 +860,7 @@ def plant_phyllo_ascending_rand(
     if max_angle is None:
         max_angle = pf.random.uniform(rng, 0.55, 1.1)
     return _phyllo_rand(
-        rng,
+        rng_plant,
         target_count=target_count,
         height=stem_height,
         radius=stem_radius,

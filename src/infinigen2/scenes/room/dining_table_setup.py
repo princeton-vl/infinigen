@@ -284,7 +284,7 @@ def table_dining_with_chairs_rand(
     table_dimensions = table_max - table_min
 
     def attempt(rng: pf.RNG) -> tuple[list[pf.MeshObject], float] | None:
-        rng_params, rng_chair_dims, rng_chair, rng_disorder = rng.spawn(4)
+        rng_params, rng_chair_dims, rng_chair, rng_disorder, rng_ends = rng.spawn(5)
         spacing = chair_spacing
         if spacing is None:
             spacing = pf.random.uniform(rng_params, 0.0625, 0.1875)
@@ -296,7 +296,7 @@ def table_dining_with_chairs_rand(
             margin = pf.random.uniform(rng_params, 0.08, 0.20)
         ends = include_ends
         if ends is None:
-            ends = pf.control.choice(rng_params, [(True, 1.0), (False, 1.0)])
+            ends = pf.control.choice(rng_ends, [(True, 1.0), (False, 1.0)])
 
         seat_clearance = pf.random.uniform(rng_chair_dims, 0.27, 0.30)
         chair_dims = chair.chair_dining_dimensions_rand(

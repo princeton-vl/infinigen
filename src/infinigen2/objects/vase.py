@@ -386,12 +386,12 @@ def vase(
 
 def vase_material_rand(rng: pf.RNG, vec) -> pf.Material:
     def vase_tile(rng, vector: pf.Vector) -> pf.Material:
-        rng_grout_disp, rng_grout, rng_scale, rng_tile = rng.spawn(4)
-        grout_displacement = pf.random.uniform(rng_grout_disp, 0, 0.002)
+        rng_params, rng_grout, rng_tile = rng.spawn(3)
+        grout_displacement = pf.random.uniform(rng_params, 0, 0.002)
         grout = brick_concrete.brick_concrete_grout_rand(
             rng_grout, vector, displacement_additional_height=-grout_displacement
         )
-        scale = pf.random.uniform(rng_scale, 15, 25)
+        scale = pf.random.uniform(rng_params, 15, 25)
         return tiles.tile_indoor_wall_rand(rng_tile, vector, grout=grout, scale=scale)
 
     def vase_hammered(rng, _vector: pf.Vector) -> pf.Material:
@@ -417,14 +417,14 @@ def vase_material_rand(rng: pf.RNG, vec) -> pf.Material:
 
 
 def vase_rand(rng: pf.RNG) -> VaseResult:
-    rng, rng_radius, rng_mat = rng.spawn(3)
+    rng, rng_mat = rng.spawn(2)
     z = pf.random.uniform(rng, 0.17, 0.5)
     x = z * pf.random.uniform(rng, 0.3, 0.6)
 
     v_resolution = 24
     neck_scale = pf.random.uniform(rng, 0.2, 0.8)
 
-    profile_inner_radius = 1.0 - 0.2 * pf.random.uniform(rng_radius, 0.0, 1.0) ** 2
+    profile_inner_radius = 1.0 - 0.2 * pf.random.uniform(rng, 0.0, 1.0) ** 2
     profile_star_points = pf.random.randint(rng, 16, 33)
 
     # two cage samples per flute is the coarsest ring that still resolves the star

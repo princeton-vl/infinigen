@@ -845,14 +845,13 @@ def base_pedestal(
 def base_pedestal_column_rand(
     rng: pf.RNG, height: float, top_radius: float, bottom_radius: float
 ) -> pf.ProcNode[pf.MeshObject]:
-    rng_flare, rng_concavity, rng_neck = rng.spawn(3)
     return base_pedestal_column(
         height=height,
         top_radius=top_radius,
         bottom_radius=bottom_radius,
-        flare=pf.random.uniform(rng_flare, 0.5, 0.85),
-        concavity=pf.random.uniform(rng_concavity, 0.0, 1.0),
-        neck_scale=pf.random.uniform(rng_neck, 0.5, 2.0),
+        flare=pf.random.uniform(rng, 0.5, 0.85),
+        concavity=pf.random.uniform(rng, 0.0, 1.0),
+        neck_scale=pf.random.uniform(rng, 0.5, 2.0),
     )
 
 

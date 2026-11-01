@@ -506,12 +506,11 @@ def storage_cell_counts(
 
 def storage_dimensions_rand(rng: pf.RNG) -> pf.Vector:
     """Carcass footprint and height in meters, ordered as depth, width, height."""
-    rng_depth, rng_width, rng_height = rng.spawn(3)
     return pf.Vector(
         (
-            pf.random.uniform(rng_depth, 0.25, 0.45),
-            pf.random.uniform(rng_width, 0.7, 2.5),
-            pf.random.clip_gaussian(rng_height, 0.9, 0.4, 0.55, 2.2),
+            pf.random.uniform(rng, 0.25, 0.45),
+            pf.random.uniform(rng, 0.7, 2.5),
+            pf.random.clip_gaussian(rng, 0.9, 0.4, 0.55, 2.2),
         )
     )
 
@@ -529,47 +528,42 @@ def storage_params_rand(
     desired_slot_aspect: float | None = None,
 ) -> StorageParams:
     """Resolve every carcass parameter the caller left unspecified."""
-    (
-        rng_size,
-        rng_frame,
-        rng_row,
-        rng_col,
-        rng_aspect,
-        rng_cell,
-        rng_back,
-        rng_mat,
-    ) = rng.spawn(8)
+    rng_params, rng_size, rng_back_choice, rng_mat = rng.spawn(4)
     if dimensions is None:
         dimensions = storage_dimensions_rand(rng_size)
     if frame_thickness is None:
         upper = min(0.06, min(dimensions[1], dimensions[2]) * 0.25)
-        frame_thickness = pf.random.uniform(rng_frame, min(0.02, upper * 0.5), upper)
+        frame_thickness = pf.random.uniform(rng_params, min(0.02, upper * 0.5), upper)
     rows = 1 if n_spaces_z is None else n_spaces_z
     cols = 1 if n_spaces_y is None else n_spaces_y
     if row_divider_width is None:
         upper = min(0.05, (dimensions[2] - 2 * frame_thickness) / rows * 0.25)
-        row_divider_width = pf.random.uniform(rng_row, min(0.015, upper * 0.5), upper)
+        row_divider_width = pf.random.uniform(
+            rng_params, min(0.015, upper * 0.5), upper
+        )
     if col_divider_width is None:
         upper = min(0.04, (dimensions[1] - 2 * frame_thickness) / cols * 0.25)
-        col_divider_width = pf.random.uniform(rng_col, min(0.01, upper * 0.5), upper)
+        col_divider_width = pf.random.uniform(rng_params, min(0.01, upper * 0.5), upper)
     if desired_slot_aspect is None:
-        desired_slot_aspect = pf.random.uniform(rng_aspect, 2 / 3, 4.0)
+        desired_slot_aspect = pf.random.uniform(rng_params, 2 / 3, 4.0)
     fitted = storage_cell_counts(
         dimensions,
         desired_slot_aspect,
-        pf.random.uniform(rng_cell, 0.20, 0.40),
+        pf.random.uniform(rng_params, 0.20, 0.40),
         frame_thickness,
         row_divider_width,
         col_divider_width,
     )
     if back_width is None:
-        rng_choice, rng_depth = rng_back.spawn(2)
         upper = min(0.04, dimensions[0] * 0.25)
         back_width = pf.control.choice(
-            rng_choice,
+            rng_back_choice,
             [
                 (0.0, 0.5),
-                (pf.random.uniform(rng_depth, min(0.01, upper * 0.5), upper), 0.5),
+                (
+                    pf.random.uniform(rng_params, min(0.01, upper * 0.5), upper),
+                    0.5,
+                ),
             ],
         )
     if material is None:

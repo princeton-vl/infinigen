@@ -153,21 +153,16 @@ def wall_storage_flush_rand(
     colliders: ccol.CollisionSet | None = None,
 ) -> WallResult:
     rng, wall, wall_material = resolve_wall_inputs(rng, wall, wall_material)
+    rng, rng_width, rng_cabinet = rng.spawn(3)
     wall_width = wall.width
     wall_height = wall.height
 
     depth = pf.random.uniform(rng, 0.3, 0.61)
     min_margin = depth * 0.5
 
-    def _short_band() -> float:
-        return wall_height * pf.random.uniform(rng, 0.20, 0.50)
+    height = wall_height * pf.random.uniform(rng, 0.20, 0.98)
 
-    def _tall_band() -> float:
-        return wall_height * pf.random.uniform(rng, 0.60, 0.98)
-
-    height = pf.control.choice(rng, [(_short_band, 1.0), (_tall_band, 1.0)])()
-
-    width = wall_storage_width_rand(rng, wall_width, min_margin)
+    width = wall_storage_width_rand(rng_width, wall_width, min_margin)
     spacing_x = pf.random.uniform(rng, 0.1, 0.5)
 
     margin_split = pf.random.uniform(rng, 0.375, 0.625)
@@ -176,7 +171,7 @@ def wall_storage_flush_rand(
     )
 
     cab = storage.storage_cell_shelf_rand(
-        rng,
+        rng_cabinet,
         dimensions=pf.Vector((depth, width, height)),
     ).mesh
     cab = seat_upright_cabinet(cab, width, height, back_depth=0.0)

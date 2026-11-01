@@ -953,91 +953,87 @@ def carpet_rand(
     rng: pf.RNG,
     vector: t.SocketOrVal[pf.Vector],
 ) -> pf.Material:
-    r_cw0, r_cw1, r_cw2, r_sat, r_hue, r_wsat, r_wval, r_weftval, r_pv1, r_pv2 = (
-        rng.spawn(10)
-    )
-    r_weaver, r_streak, r_squish, r_stretch, r_shared, r_pass_a, r_pass_b = rng.spawn(7)
-    r_thread, r_overlay, r_rough, r_sheenw, r_sheenr = rng.spawn(5)
+    rng_params, rng_weaver = rng.spawn(2)
     coord_warp_result = coord_warp(
         vector=vector,
         size=0.0014,
-        strength=pf.random.uniform(r_cw0, 0.0, 3.0),
+        strength=pf.random.uniform(rng_params, 0.0, 3.0),
         detail=2.0,
         phase=0.0,
     )
     coord_warp_result = coord_warp(
         vector=coord_warp_result.vector,
         size=0.005,
-        strength=pf.random.uniform(r_cw1, 0.0, 3.0),
+        strength=pf.random.uniform(rng_params, 0.0, 3.0),
         detail=4.0,
         phase=0.0,
     )
     coord_warp_result = coord_warp(
         vector=coord_warp_result.vector,
         size=0.04,
-        strength=pf.random.uniform(r_cw2, 0.0, 0.3),
+        strength=pf.random.uniform(rng_params, 0.0, 0.3),
         detail=2.0,
         phase=0.0,
     )
 
-    sat_base = pf.random.clip_gaussian(r_sat, 0.0, 0.25, 0.02, 0.95)
-    hue = pf.random.clip_gaussian(r_hue, 40.0 / 360.0, 25.0 / 360.0, 0.0, 1.0)
-    warp_sat = pf.random.uniform(r_wsat, 0.0, 0.4)
-    warp_val = pf.random.uniform(r_wval, 0.02, 0.15)
+    sat_base = pf.random.clip_gaussian(rng_params, 0.0, 0.25, 0.02, 0.95)
+    hue = pf.random.clip_gaussian(rng_params, 40.0 / 360.0, 25.0 / 360.0, 0.0, 1.0)
+    warp_sat = pf.random.uniform(rng_params, 0.0, 0.4)
+    warp_val = pf.random.uniform(rng_params, 0.02, 0.15)
     warp_color = pf.color.hsv_color(hue=hue, saturation=warp_sat, value=warp_val)
-    weft_val = pf.random.uniform(r_weftval, 0.02, 0.08)
+    weft_val = pf.random.uniform(rng_params, 0.02, 0.08)
     weft_color = pf.color.hsv_color(hue=hue, saturation=warp_sat, value=weft_val)
     pattern_sat = 0.4 + 0.5 * sat_base
-    pattern_val_1 = (1 - 0.6 * sat_base) * pf.random.uniform(r_pv1, 0.35, 0.85)
-    pattern_val_2 = pf.random.uniform(r_pv2, 0.02, 0.12)
+    pattern_val_1 = (1 - 0.6 * sat_base) * pf.random.uniform(rng_params, 0.35, 0.85)
+    pattern_val_2 = pf.random.uniform(rng_params, 0.02, 0.12)
     color_1 = pf.color.hsv_color(hue=hue, saturation=pattern_sat, value=pattern_val_1)
     color_2 = pf.color.hsv_color(hue=hue, saturation=pattern_sat, value=pattern_val_2)
 
     weaver_result = _carpet_weaver_rand(
-        r_weaver,
+        rng_weaver,
         vector=coord_warp_result.vector,
         warp_warp_color=warp_color,
         weft_weft_color=weft_color,
     )
 
     # streak 0 = noisy cells, 1 = long streaks; it couples every pattern parameter
-    streak = pf.random.uniform(r_streak, 0.0, 1.0)
-    cell_squish_exponent = streak * pf.random.uniform(r_squish, 0.5, 1.0)
-    stretch_exponent = streak * pf.random.uniform(r_stretch, 0.5, 1.0)
-    size_noisy = pf.random.uniform(r_shared, 0.001, 0.00625)
-    size_streak = pf.random.uniform(r_shared, 0.008, 0.03)
-    detail_noisy = pf.random.uniform(r_shared, 1.5, 2.0)
-    detail_streak = pf.random.uniform(r_shared, 0.0, 1.5)
-    blending_noisy = pf.random.uniform(r_shared, 0.05, 0.2)
-    blending_streak = pf.random.uniform(r_shared, 0.0001, 0.5)
-    coverage_noisy = pf.random.uniform(r_shared, 0.45, 0.55)
-    coverage_streak = pf.random.uniform(r_shared, 0.28, 0.40)
-    spread_noisy = pf.random.uniform(r_shared, 0.3, 0.5)
-    spread_streak = pf.random.uniform(r_shared, 0.13, 0.3)
-    noise_type = pf.random.uniform(r_shared, 1.0, 3.0)
-    noise_seed = pf.random.uniform(r_shared, 0.0, 5.3)
-    invert_noisy = pf.random.uniform(r_shared, 0.0, 1.0)
-    alpha_warp_noisy = pf.random.uniform(r_pass_a, 0.85, 1.0)
-    alpha_warp_streak = pf.random.uniform(r_pass_a, 0.3, 0.9)
-    alpha_weft_noisy = pf.random.uniform(r_pass_a, 0.85, 1.0)
-    alpha_weft_streak = pf.random.uniform(r_pass_a, 0.0, 0.3)
-    cross_alpha_weft = streak * pf.random.uniform(r_pass_b, 0.0, 0.9)
+    streak = pf.random.uniform(rng_params, 0.0, 1.0)
+    cell_squish_exponent = streak * pf.random.uniform(rng_params, 0.5, 1.0)
+    stretch_exponent = streak * pf.random.uniform(rng_params, 0.5, 1.0)
+    size_noisy = pf.random.uniform(rng_params, 0.001, 0.00625)
+    size_streak = pf.random.uniform(rng_params, 0.008, 0.03)
+    detail_noisy = pf.random.uniform(rng_params, 1.5, 2.0)
+    detail_streak = pf.random.uniform(rng_params, 0.0, 1.5)
+    blending_noisy = pf.random.uniform(rng_params, 0.05, 0.2)
+    blending_streak = pf.random.uniform(rng_params, 0.0001, 0.5)
+    coverage_noisy = pf.random.uniform(rng_params, 0.45, 0.55)
+    coverage_streak = pf.random.uniform(rng_params, 0.28, 0.40)
+    spread_noisy = pf.random.uniform(rng_params, 0.3, 0.5)
+    spread_streak = pf.random.uniform(rng_params, 0.13, 0.3)
+    noise_type = pf.random.uniform(rng_params, 1.0, 3.0)
+    noise_seed = pf.random.uniform(rng_params, 0.0, 5.3)
+    invert_noisy = pf.random.uniform(rng_params, 0.0, 1.0)
+    alpha_warp_noisy = pf.random.uniform(rng_params, 0.85, 1.0)
+    alpha_warp_streak = pf.random.uniform(rng_params, 0.3, 0.9)
+    alpha_weft_noisy = pf.random.uniform(rng_params, 0.85, 1.0)
+    alpha_weft_streak = pf.random.uniform(rng_params, 0.0, 0.3)
+    cross_alpha_weft = streak * pf.random.uniform(rng_params, 0.0, 0.9)
 
-    thread_alpha_warp = streak * pf.random.uniform(r_thread, 0.0, 0.5)
-    thread_alpha_weft = streak * pf.random.uniform(r_thread, 0.0, 0.5)
-    thread_coverage = pf.random.uniform(r_thread, 0.2, 0.5)
-    thread_spread = pf.random.uniform(r_thread, 0.3, 0.7)
-    thread_blending = pf.random.uniform(r_thread, 0.01, 0.1)
-    thread_noise_type = pf.random.uniform(r_thread, 1.0, 2.0)
-    thread_noise_seed = pf.random.uniform(r_thread, 0.0, 10.0)
-    thread_noise_size = pf.random.uniform(r_thread, 0.02, 0.1)
-    thread_noise_detail = pf.random.uniform(r_thread, 1.0, 4.0)
-    overlay_strength = streak * pf.random.uniform(r_overlay, 0.0, 0.84)
-    overlay_scale = pf.random.uniform(r_overlay, 200.0, 600.0)
+    thread_alpha_warp = streak * pf.random.uniform(rng_params, 0.0, 0.5)
+    thread_alpha_weft = streak * pf.random.uniform(rng_params, 0.0, 0.5)
+    thread_coverage = pf.random.uniform(rng_params, 0.2, 0.5)
+    thread_spread = pf.random.uniform(rng_params, 0.3, 0.7)
+    thread_blending = pf.random.uniform(rng_params, 0.01, 0.1)
+    thread_noise_type = pf.random.uniform(rng_params, 1.0, 2.0)
+    thread_noise_seed = pf.random.uniform(rng_params, 0.0, 10.0)
+    thread_noise_size = pf.random.uniform(rng_params, 0.02, 0.1)
+    thread_noise_detail = pf.random.uniform(rng_params, 1.0, 4.0)
+    overlay_strength = streak * pf.random.uniform(rng_params, 0.0, 0.84)
+    overlay_scale = pf.random.uniform(rng_params, 200.0, 600.0)
 
-    roughness = pf.random.clip_gaussian(r_rough, 0.868182, 0.1, 0.0, 1.0)
-    sheen_weight = pf.random.clip_gaussian(r_sheenw, 0.168182, 0.1, 0.0, 1.0)
-    sheen_roughness = pf.random.clip_gaussian(r_sheenr, 0.640909, 0.1, 0.0, 1.0)
+    roughness = pf.random.clip_gaussian(rng_params, 0.868182, 0.1, 0.0, 1.0)
+    sheen_weight = pf.random.clip_gaussian(rng_params, 0.168182, 0.1, 0.0, 1.0)
+    sheen_roughness = pf.random.clip_gaussian(rng_params, 0.640909, 0.1, 0.0, 1.0)
 
     return carpet(
         weaver_color=weaver_result.color,

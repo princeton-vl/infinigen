@@ -58,13 +58,13 @@ def _petal_material(
 
 
 def _petal_material_rand(rng: pf.RNG) -> pf.Material:
-    rngs = rng.spawn(4)
+    rng_params, rng_color = rng.spawn(2)
 
-    petal_color = _flower_color_rand(rngs[0])
+    petal_color = _flower_color_rand(rng_color)
 
-    specular = pf.random.clip_gaussian(rngs[1], 0.6, 0.1, 0.3, 0.9)
-    roughness = pf.random.clip_gaussian(rngs[2], 0.4, 0.05, 0.2, 0.6)
-    translucent_amt = pf.random.clip_gaussian(rngs[3], 0.3, 0.05, 0.1, 0.5)
+    specular = pf.random.clip_gaussian(rng_params, 0.6, 0.1, 0.3, 0.9)
+    roughness = pf.random.clip_gaussian(rng_params, 0.4, 0.05, 0.2, 0.6)
+    translucent_amt = pf.random.clip_gaussian(rng_params, 0.3, 0.05, 0.1, 0.5)
 
     return _petal_material(
         color=petal_color,
@@ -92,9 +92,7 @@ def center_material() -> pf.Material:
 
 
 def _flower_material_rand(rng: pf.RNG) -> FlowerMaterials:
-    rngs = rng.spawn(2)
-
-    petal_mat = _petal_material_rand(rngs[0])
+    petal_mat = _petal_material_rand(rng)
     center_mat = center_material()
 
     return FlowerMaterials(petal=petal_mat, center=center_mat)

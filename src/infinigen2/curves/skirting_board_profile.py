@@ -93,7 +93,7 @@ def _staircase_profile(
     input_index = pf.nodes.geo.input_index()
 
     set_index = pf.nodes.math.floor(input_index.astype(dtype=float) / 2.0)
-    set_vertices = count.astype(dtype=float) / 2.0
+    set_vertices = pf.nodes.math.floor(count.astype(dtype=float) / 2.0)
 
     offset_spacing_result = offset_spacing(
         seed=seed,
@@ -244,6 +244,7 @@ def skirting_profile_rand(
     fillet_probability: float | None = None,
     max_offset_pct: float | None = None,
 ) -> pf.CurveObject:
+    rng, rng_fillet = rng.spawn(2)
     if count is None:
         count = pf.random.randint(rng, 1, 4)
     if height is None:
@@ -251,7 +252,7 @@ def skirting_profile_rand(
     if width is None:
         width = height * pf.random.uniform(rng, 0.15, 0.3)
     if fillet_vertices is None:
-        fillet_vertices = pf.control.choice(rng, [(1, 0.3), (4, 0.7)])
+        fillet_vertices = pf.control.choice(rng_fillet, [(1, 0.3), (4, 0.7)])
     if fillet_radius is None:
         fillet_radius = pf.random.uniform(rng, 0.01, 0.05)
     if fillet_probability is None:
@@ -312,6 +313,7 @@ def trim_profile_rand(
     fillet_probability: float | None = None,
     max_offset_pct: float | None = None,
 ) -> pf.CurveObject:
+    rng, rng_fillet = rng.spawn(2)
     if count is None:
         count = pf.random.randint(rng, 2, 6)
     if height is None:
@@ -319,7 +321,7 @@ def trim_profile_rand(
     if width is None:
         width = height * pf.random.uniform(rng, 0.25, 0.5)
     if fillet_vertices is None:
-        fillet_vertices = pf.control.choice(rng, [(1, 0.3), (4, 0.7)])
+        fillet_vertices = pf.control.choice(rng_fillet, [(1, 0.3), (4, 0.7)])
     if fillet_radius is None:
         fillet_radius = height / count * pf.random.uniform(rng, 0.05, 0.2)
     if fillet_probability is None:
