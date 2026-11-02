@@ -8,6 +8,8 @@ import bpy
 import numpy as np
 from mathutils import Vector
 
+from infinigen._optimized import optimizable
+
 from . import helper
 
 __all__ = [
@@ -24,6 +26,7 @@ C = bpy.context
 D = bpy.data
 
 
+@optimizable("TREES", "infinigen.perf.assets.objects.trees.utils.mesh")
 def init_mesh(name, verts=[], edges=[], faces=[], coll=None):
     mesh = D.meshes.new(name)
     obj = D.objects.new(mesh.name, mesh)
@@ -87,6 +90,7 @@ def vtx2cds(vtxs, world_mat):
     return all_cds
 
 
+@optimizable("TREES", "infinigen.perf.assets.objects.trees.utils.mesh")
 def sample_vtxs(obj, emit_from="VOLUME", n=1000, seed=1):
     # Make object current active object
     bpy.ops.object.mode_set(mode="OBJECT")
@@ -116,6 +120,45 @@ def sample_vtxs(obj, emit_from="VOLUME", n=1000, seed=1):
     return all_cds.reshape(-1, 3)
 
 
+# Primitives whose particle sampling differs between processes: BMesh builds the
+# UV sphere's faces in a per-process order and the sampler picks faces by index,
+# and the cone's n-gon base does not sample reproducibly. Their vertices are
+# stable.
+_UNSTABLE_SAMPLING = {"MESH_OT_primitive_uv_sphere_add", "MESH_OT_primitive_cone_add"}
+
+
+def stabilize_for_sampling(mesh):
+    """Rebuild `mesh` so sampling it is reproducible, keeping its vertices.
+
+    N-gons become loop triangles and faces go in a fixed order, each keeping its
+    winding but starting at its lowest vertex index. Only geometry and smooth
+    shading are kept.
+    """
+    mesh.calc_loop_triangles()
+    triangles = {}
+    for triangle in mesh.loop_triangles:
+        triangles.setdefault(triangle.polygon_index, []).append(
+            tuple(triangle.vertices)
+        )
+    faces = []
+    for polygon in mesh.polygons:
+        if polygon.loop_total <= 4:
+            loops = [tuple(polygon.vertices)]
+        else:
+            loops = triangles[polygon.index]
+        for loop in loops:
+            start = loop.index(min(loop))
+            faces.append((loop[start:] + loop[:start], polygon.use_smooth))
+    faces.sort()
+    verts = np.empty(len(mesh.vertices) * 3)
+    mesh.vertices.foreach_get("co", verts)
+    mesh.clear_geometry()
+    mesh.from_pydata(verts.reshape(-1, 3), [], [f for f, _ in faces])
+    mesh.polygons.foreach_set("use_smooth", [s for _, s in faces])
+    mesh.update()
+
+
+@optimizable("TREES", "infinigen.perf.assets.objects.trees.utils.mesh")
 def get_pts_from_shape(
     shape_fn, n=10, emit_from="VOLUME", loc=(0, 0, 0), scaling=1, pt_offset=0
 ):
@@ -125,6 +168,9 @@ def get_pts_from_shape(
         scaling = Vector(scaling)
     shape_fn(location=loc)
     obj = C.active_object
+    idname = getattr(shape_fn, "idname", None)
+    if idname is not None and idname() in _UNSTABLE_SAMPLING:
+        stabilize_for_sampling(obj.data)
     obj.scale *= scaling
     pts = sample_vtxs(obj, n=n, emit_from=emit_from, seed=np.random.randint(100))
     pts += pt_offset

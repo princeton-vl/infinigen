@@ -10,6 +10,7 @@ import gin
 import numpy as np
 from numpy.random import normal, randint, uniform
 
+from infinigen._optimized import optimizable
 from infinigen.assets.materials.plant import simple_greenery
 from infinigen.assets.objects.small_plants import leaf_general as Leaf
 from infinigen.core import surface
@@ -34,6 +35,11 @@ def random_pinnae_level2_curvature():
     return x_curvature, y_curvature, z_curvature
 
 
+@optimizable(
+    "SMALL_PLANTS",
+    "infinigen.perf.assets.objects.small_plants.fern",
+    qualname="nodegroup_pinnae_level1_yaxis_rotation",
+)
 @node_utils.to_nodegroup(
     "nodegroup_pinnae_level1_yaxis_rotation", singleton=False, type="GeometryNodeTree"
 )
@@ -77,6 +83,11 @@ def nodegroup_pinnae_level1_yaxis_rotation(nw: NodeWrangler):
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Value": multiply})
 
 
+@optimizable(
+    "SMALL_PLANTS",
+    "infinigen.perf.assets.objects.small_plants.fern",
+    qualname="nodegroup_pinnae_level1_zaxis_rotation",
+)
 @node_utils.to_nodegroup(
     "nodegroup_pinnae_level1_zaxis_rotation", singleton=False, type="GeometryNodeTree"
 )
@@ -120,6 +131,11 @@ def nodegroup_pinnae_level1_zaxis_rotation(nw: NodeWrangler):
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Value": multiply})
 
 
+@optimizable(
+    "SMALL_PLANTS",
+    "infinigen.perf.assets.objects.small_plants.fern",
+    qualname="nodegroup_pinnae_level1_gravity_rotation",
+)
 @node_utils.to_nodegroup(
     "nodegroup_pinnae_level1_gravity_rotation", singleton=False, type="GeometryNodeTree"
 )
@@ -262,6 +278,11 @@ def nodegroup_pinnae_level1_stein(nw: NodeWrangler):
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Mesh": curve_to_mesh})
 
 
+@optimizable(
+    "SMALL_PLANTS",
+    "infinigen.perf.assets.objects.small_plants.fern",
+    qualname="nodegroup_pinnae_level1_scale",
+)
 @node_utils.to_nodegroup(
     "nodegroup_pinnae_level1_scale", singleton=False, type="GeometryNodeTree"
 )
@@ -336,6 +357,11 @@ def nodegroup_pinnae_level1_instance_rotation(nw: NodeWrangler):
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Vector": combine_xyz})
 
 
+@optimizable(
+    "SMALL_PLANTS",
+    "infinigen.perf.assets.objects.small_plants.fern",
+    qualname="nodegroup_pinnae_level1_rotation",
+)
 @node_utils.to_nodegroup(
     "nodegroup_pinnae_level1_rotation", singleton=False, type="GeometryNodeTree"
 )
@@ -427,6 +453,11 @@ def nodegroup_pinnae_level1_rotation(nw: NodeWrangler, gravity_rotation=1):
     )
 
 
+@optimizable(
+    "SMALL_PLANTS",
+    "infinigen.perf.assets.objects.small_plants.fern",
+    qualname="nodegroup_pinnae_level1_instance_position",
+)
 @node_utils.to_nodegroup(
     "nodegroup_pinnae_level1_instance_position",
     singleton=False,
@@ -491,6 +522,11 @@ def nodegroup_pinnae_level1_instance_position(nw: NodeWrangler, pinnae_contour):
     )
 
 
+@optimizable(
+    "SMALL_PLANTS",
+    "infinigen.perf.assets.objects.small_plants.fern",
+    qualname="nodegroup_pinnae_level2_rotation",
+)
 @node_utils.to_nodegroup(
     "nodegroup_pinnae_level2_rotation", singleton=False, type="GeometryNodeTree"
 )
@@ -605,6 +641,11 @@ def nodegroup_pinnae_level2_rotation(
     )
 
 
+@optimizable(
+    "SMALL_PLANTS",
+    "infinigen.perf.assets.objects.small_plants.fern",
+    qualname="nodegroup_pinnae_level2_set_point",
+)
 @node_utils.to_nodegroup(
     "nodegroup_pinnae_level2_set_point", singleton=False, type="GeometryNodeTree"
 )
@@ -668,6 +709,11 @@ def nodegroup_pinnae_level2_set_point(nw: NodeWrangler, pinna_contour):
     )
 
 
+@optimizable(
+    "SMALL_PLANTS",
+    "infinigen.perf.assets.objects.small_plants.fern",
+    qualname="nodegroup_pinnae_level2_instance_on_points",
+)
 @node_utils.to_nodegroup(
     "nodegroup_pinnae_level2_instance_on_points",
     singleton=False,
@@ -794,6 +840,11 @@ def nodegroup_pinnae_level2_stein(nw: NodeWrangler):
     )
 
 
+@optimizable(
+    "SMALL_PLANTS",
+    "infinigen.perf.assets.objects.small_plants.fern",
+    qualname="geometry_pinnae_nodes",
+)
 @node_utils.to_nodegroup("nodegroup_pinnae", singleton=False, type="GeometryNodeTree")
 def geometry_pinnae_nodes(
     nw: NodeWrangler,
@@ -1368,6 +1419,7 @@ class FernFactory(AssetFactory):
         super(FernFactory, self).__init__(factory_seed, coarse=coarse)
         self.leaf_material = simple_greenery.SimpleGreenery()
 
+    @optimizable("SMALL_PLANTS", "infinigen.perf.assets.objects.small_plants.fern")
     def create_asset(self, **params):
         bpy.ops.mesh.primitive_plane_add(
             size=1,
@@ -1414,6 +1466,7 @@ class FernFactory(AssetFactory):
 
         return obj
 
+    @optimizable("SMALL_PLANTS", "infinigen.perf.assets.objects.small_plants.fern")
     def debug_asset(self, **params):
         bpy.ops.mesh.primitive_plane_add(
             size=1,

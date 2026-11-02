@@ -1,0 +1,56 @@
+{
+ "kind": "assets",
+ "optimized": null,
+ "rows": [
+  {
+   "target": "TreeFactory",
+   "seed": 0,
+   "triangles": 8641444
+  },
+  {
+   "target": "TreeFactory",
+   "seed": 1,
+   "triangles": 3214736
+  },
+  {
+   "target": "TreeFactory",
+   "seed": 2,
+   "triangles": 8560960
+  },
+  {
+   "target": "TreeFactory",
+   "seed": 3,
+   "triangles": 5944572
+  },
+  {
+   "target": "TreeFactory",
+   "seed": 4,
+   "triangles": 37605252
+  },
+  {
+   "target": "TreeFactory",
+   "seed": 5,
+   "triangles": 3023356
+  },
+  {
+   "target": "TreeFactory",
+   "seed": 6,
+   "triangles": 20522128
+  },
+  {
+   "target": "TreeFactory",
+   "seed": 7,
+   "triangles": 3254152
+  },
+  {
+   "target": "TreeFactory",
+   "seed": 8,
+   "triangles": 41104420
+  },
+  {
+   "target": "TreeFactory",
+   "seed": 9,
+   "triangles": 1853976
+  }
+ ]
+}

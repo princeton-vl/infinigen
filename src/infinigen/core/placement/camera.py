@@ -24,6 +24,7 @@ from mathutils.bvhtree import BVHTree
 from numpy.random import uniform as U
 from tqdm import tqdm
 
+from infinigen._optimized import optimizable
 from infinigen.core.nodes import node_utils
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.rendering.post_render import colorize_depth
@@ -43,6 +44,7 @@ logger = logging.getLogger(__name__)
 
 
 @gin.configurable
+@optimizable("PLACEMENT", "infinigen.perf.core.placement.camera")
 def get_sensor_coords(cam, H, W, sparse=False):
     camd = cam.data
     f_in_m = camd.lens / 1000
@@ -190,6 +192,7 @@ def set_active_camera(camera: bpy.types.Object):
     return bpy.context.scene.camera
 
 
+@optimizable("PLACEMENT", "infinigen.perf.core.placement.camera")
 def terrain_camera_query(
     cam: bpy.types.Object,
     scene_bvh: BVHTree,
@@ -317,6 +320,7 @@ def camera_pose_proposal(
 
 
 @gin.configurable
+@optimizable("PLACEMENT", "infinigen.perf.core.placement.camera")
 def keep_cam_pose_proposal(
     cam: bpy.types.Object,
     terrain: Terrain,
@@ -429,6 +433,7 @@ class AnimPolicyGoToProposals:
 
 
 @gin.configurable
+@optimizable("PLACEMENT", "infinigen.perf.core.placement.camera")
 def compute_base_views(
     camera_rig: bpy.types.Object,
     n_views: int,

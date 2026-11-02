@@ -9,6 +9,7 @@ import numpy as np
 from numpy.random import uniform
 
 import infinigen.core.util.blender as butil
+from infinigen._optimized import optimizable
 from infinigen.assets.objects.monocot.growth import MonocotGrowthFactory
 from infinigen.assets.utils.decorate import displace_vertices, distance2boundary
 from infinigen.assets.utils.draw import cut_plane, leaf
@@ -46,6 +47,7 @@ class AgaveMonocotFactory(MonocotGrowthFactory):
     def build_base_hue():
         return uniform(0.12, 0.32)
 
+    @optimizable("MONOCOT", "infinigen.perf.assets.objects.monocot.agave")
     def build_leaf(self, face_size):
         x_anchors = 0, 0.2 * np.cos(self.bud_angle), uniform(1.0, 1.4), 1.5
         y_anchors = 0, 0.2 * np.sin(self.bud_angle), uniform(0.1, 0.15), 0

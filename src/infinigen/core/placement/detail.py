@@ -11,6 +11,7 @@ import gin
 import mathutils
 import numpy as np
 
+from infinigen._optimized import optimizable
 from infinigen.core.nodes.nodegroups import transfer_attributes
 from infinigen.core.util import blender as butil
 from infinigen.core.util.blender import deep_clone_obj
@@ -169,6 +170,7 @@ def merged_by_distance_col(col, face_size, inplace=False):
     return col
 
 
+@optimizable("PLACEMENT", "infinigen.perf.core.placement.detail")
 def min_max_edgelen(mesh):
     verts = np.array([v.co for v in mesh.vertices])
     edges = np.array([e.vertices for e in mesh.edges])
@@ -180,6 +182,7 @@ def min_max_edgelen(mesh):
         return lens[len(lens) // 4], lens[-len(lens) // 4]
 
 
+@optimizable("PLACEMENT", "infinigen.perf.core.placement.detail")
 def adapt_mesh_resolution(obj, face_size, method, approx=0.2, **kwargs):
     assert obj.type == "MESH"
     assert 0 <= approx and approx <= 0.5

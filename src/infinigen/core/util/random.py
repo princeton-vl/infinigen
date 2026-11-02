@@ -13,6 +13,7 @@ from matplotlib import colors
 from numpy.random import uniform
 
 import infinigen
+from infinigen._optimized import optimizable
 from infinigen.core.util.math import clip_gaussian
 
 
@@ -56,6 +57,7 @@ def sample_json_palette(pallette_name, n_sample=1):
     return color_samples
 
 
+@optimizable("CORE", "infinigen.perf.core.util.random")
 def random_general(var):
     if not (isinstance(var, tuple) or isinstance(var, list)):
         return var

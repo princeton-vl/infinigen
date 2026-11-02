@@ -1,0 +1,56 @@
+{
+ "kind": "assets",
+ "optimized": null,
+ "rows": [
+  {
+   "target": "FernFactory",
+   "seed": 0,
+   "triangles": 1666198
+  },
+  {
+   "target": "FernFactory",
+   "seed": 1,
+   "triangles": 1309542
+  },
+  {
+   "target": "FernFactory",
+   "seed": 2,
+   "triangles": 2318628
+  },
+  {
+   "target": "FernFactory",
+   "seed": 3,
+   "triangles": 2354494
+  },
+  {
+   "target": "FernFactory",
+   "seed": 4,
+   "triangles": 1593586
+  },
+  {
+   "target": "FernFactory",
+   "seed": 5,
+   "triangles": 1302944
+  },
+  {
+   "target": "FernFactory",
+   "seed": 6,
+   "triangles": 1670940
+  },
+  {
+   "target": "FernFactory",
+   "seed": 7,
+   "triangles": 1722726
+  },
+  {
+   "target": "FernFactory",
+   "seed": 8,
+   "triangles": 1766788
+  },
+  {
+   "target": "FernFactory",
+   "seed": 9,
+   "triangles": 2126664
+  }
+ ]
+}

@@ -14,6 +14,7 @@ import numpy as np
 from numpy.random import uniform
 from trimesh.points import remove_close
 
+from infinigen._optimized import optimizable
 from infinigen.core import surface
 from infinigen.core.nodes.node_info import Nodes
 from infinigen.core.nodes.node_wrangler import NodeWrangler
@@ -113,6 +114,7 @@ def subsurface2face_size(obj, face_size):
         butil.modify_mesh(obj, "SUBSURF", levels=levels, render_levels=levels)
 
 
+@optimizable("CORE", "infinigen.perf.assets.utils.decorate")
 def read_selected(obj, domain="VERT"):
     match domain:
         case "VERT":
@@ -127,12 +129,14 @@ def read_selected(obj, domain="VERT"):
     return arr.ravel()
 
 
+@optimizable("CORE", "infinigen.perf.assets.utils.decorate")
 def read_co(obj):
     arr = np.zeros(len(obj.data.vertices) * 3)
     obj.data.vertices.foreach_get("co", arr)
     return arr.reshape(-1, 3)
 
 
+@optimizable("CORE", "infinigen.perf.assets.utils.decorate")
 def read_edges(obj):
     arr = np.zeros(len(obj.data.edges) * 2, dtype=int)
     obj.data.edges.foreach_get("vertices", arr)
@@ -153,46 +157,54 @@ def read_edge_length(obj):
     return np.linalg.norm(cos[:, 1] - cos[:, 0], axis=-1)
 
 
+@optimizable("CORE", "infinigen.perf.assets.utils.decorate")
 def read_center(obj):
     arr = np.zeros(len(obj.data.polygons) * 3)
     obj.data.polygons.foreach_get("center", arr)
     return arr.reshape(-1, 3)
 
 
+@optimizable("CORE", "infinigen.perf.assets.utils.decorate")
 def read_normal(obj):
     arr = np.zeros(len(obj.data.polygons) * 3)
     obj.data.polygons.foreach_get("normal", arr)
     return arr.reshape(-1, 3)
 
 
+@optimizable("CORE", "infinigen.perf.assets.utils.decorate")
 def read_area(obj):
     arr = np.zeros(len(obj.data.polygons))
     obj.data.polygons.foreach_get("area", arr)
     return arr.reshape(-1)
 
 
+@optimizable("CORE", "infinigen.perf.assets.utils.decorate")
 def read_loop_vertices(obj):
     arr = np.zeros(len(obj.data.loops), dtype=int)
     obj.data.loops.foreach_get("vertex_index", arr)
     return arr.reshape(-1)
 
 
+@optimizable("CORE", "infinigen.perf.assets.utils.decorate")
 def read_loop_edges(obj):
     arr = np.zeros(len(obj.data.loops), dtype=int)
     obj.data.loops.foreach_get("edge_index", arr)
     return arr.reshape(-1)
 
 
+@optimizable("CORE", "infinigen.perf.assets.utils.decorate")
 def read_uv(obj):
     arr = np.zeros(len(obj.data.loops) * 2)
     obj.data.uv_layers.active.data.foreach_get("uv", arr)
     return arr.reshape(-1, 2)
 
 
+@optimizable("CORE", "infinigen.perf.assets.utils.decorate")
 def write_uv(obj, arr):
     obj.data.uv_layers.active.data.foreach_set("uv", arr.reshape(-1))
 
 
+@optimizable("CORE", "infinigen.perf.assets.utils.decorate")
 def read_base_co(obj):
     dg = bpy.context.evaluated_depsgraph_get()
     obj = obj.evaluated_get(dg)
@@ -202,6 +214,7 @@ def read_base_co(obj):
     return arr.reshape(-1, 3)
 
 
+@optimizable("CORE", "infinigen.perf.assets.utils.decorate")
 def write_co(obj, arr):
     try:
         obj.data.vertices.foreach_set("co", arr.reshape(-1))
@@ -212,24 +225,28 @@ def write_co(obj, arr):
         ) from e
 
 
+@optimizable("CORE", "infinigen.perf.assets.utils.decorate")
 def read_material_index(obj):
     arr = np.zeros(len(obj.data.polygons), dtype=int)
     obj.data.polygons.foreach_get("material_index", arr)
     return arr
 
 
+@optimizable("CORE", "infinigen.perf.assets.utils.decorate")
 def read_loop_starts(obj):
     arr = np.zeros(len(obj.data.polygons), dtype=int)
     obj.data.polygons.foreach_get("loop_start", arr)
     return arr
 
 
+@optimizable("CORE", "infinigen.perf.assets.utils.decorate")
 def read_loop_totals(obj):
     arr = np.zeros(len(obj.data.polygons), dtype=int)
     obj.data.polygons.foreach_get("loop_total", arr)
     return arr
 
 
+@optimizable("CORE", "infinigen.perf.assets.utils.decorate")
 def write_material_index(obj, arr):
     obj.data.polygons.foreach_set("material_index", arr.reshape(-1))
 
@@ -252,6 +269,7 @@ def displace_vertices(obj, fn):
     write_co(obj, co)
 
 
+@optimizable("CORE", "infinigen.perf.assets.utils.decorate")
 def remove_vertices(obj, to_delete):
     if not isinstance(to_delete, Iterable):
         x, y, z = read_co(obj).T
@@ -266,6 +284,7 @@ def remove_vertices(obj, to_delete):
     return obj
 
 
+@optimizable("CORE", "infinigen.perf.assets.utils.decorate")
 def remove_edges(obj, to_delete):
     if not isinstance(to_delete, Iterable):
         x, y, z = read_edge_center(obj).T
@@ -365,6 +384,7 @@ def write_attribute(obj, fn, name, domain="POINT", data_type="FLOAT"):
     surface.add_geomod(obj, geo_attribute, apply=True)
 
 
+@optimizable("CORE", "infinigen.perf.assets.utils.decorate")
 def distance2boundary(obj):
     with butil.ViewportMode(obj, "EDIT"):
         bpy.ops.mesh.select_all(action="SELECT")

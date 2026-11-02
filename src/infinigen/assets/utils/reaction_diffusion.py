@@ -10,9 +10,12 @@ import bmesh
 import numpy as np
 from numpy.random import normal, uniform
 
+from infinigen._optimized import optimizable
+
 __all__ = ["reaction_diffusion", "feed2kill", "make_periodic_weight_fn"]
 
 
+@optimizable("CORALS", "infinigen.perf.assets.utils.reaction_diffusion")
 def reaction_diffusion(
     obj,
     weight_fn,

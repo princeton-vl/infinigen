@@ -21,6 +21,7 @@ except ImportError as e:
     _landlab_import_error = e
     landlab = None
 
+from infinigen._optimized import optimizable
 from infinigen.core.util.organization import AssetFile, Process
 from infinigen.core.util.random import random_general as rg
 from infinigen.terrain.utils import get_normal, read, smooth
@@ -44,6 +45,7 @@ def snowfall_params(
 
 
 @gin.configurable
+@optimizable("TERRAIN", "infinigen.perf.terrain.land_process.snowfall")
 def run_snowfall(
     folder,
     blending_params=[0, 0.5],

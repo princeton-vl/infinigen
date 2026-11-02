@@ -8,6 +8,7 @@ import colorsys
 
 from numpy.random import uniform
 
+from infinigen._optimized import optimizable_class
 from infinigen.assets.utils.object import join_objects, origin2lowest
 from infinigen.core import surface
 from infinigen.core.nodes.node_info import Nodes
@@ -23,6 +24,7 @@ from .stem import MushroomStemFactory
 __all__ = ["MushroomGrowthFactory"]
 
 
+@optimizable_class("MUSHROOM", "infinigen.perf.assets.objects.mushroom.factories")
 class MushroomGrowthFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False):
         super().__init__(factory_seed, coarse)

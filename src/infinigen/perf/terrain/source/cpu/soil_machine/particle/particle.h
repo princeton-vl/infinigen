@@ -1,0 +1,122 @@
+/*
+COPYRIGHT
+
+
+Original files authored by Nick McDonald: https://github.com/weigert/SoilMachine/tree/master
+
+
+All other contributions:
+Copyright (C) 2023, Princeton University.
+Licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
+Authors: Zeyu Ma
+
+*/
+
+/*
+================================================================================
+        Particle Base Class for Geomorphological Transport Simulation
+================================================================================
+*/
+
+#ifndef LAYEREDEROSION_PARTICLE
+#define LAYEREDEROSION_PARTICLE
+
+#include "../include/distribution.h"
+
+using namespace glm;
+
+struct Particle {
+
+  vec2 pos;
+  vec2 speed = vec2(0);
+  bool isalive = true;
+
+  bool move(Layermap& map);
+  bool interact(Layermap& map, Vertexpool<Vertex>& vertexpool);
+
+  // because I can't solve the bug, I'm not familiar with static in c++, so I make SCALE an arg --- Zeyu
+  //This is applied to multiple types of erosion, so I put it in here!
+  static void cascade(float c_eq_factor, float SCALE, vec2 pos, Layermap& map, Vertexpool<Vertex>& vertexpool, int transferloop = 0){
+
+    ivec2 ipos = round(pos);
+
+    // All Possible Neighbors
+
+    // Fixed neighbour table and stack buffers: no heap allocation per call.
+    static const ivec2 n[8] = {
+      ivec2(-1, -1),
+      ivec2(-1,  0),
+      ivec2(-1,  1),
+      ivec2( 0, -1),
+      ivec2( 0,  1),
+      ivec2( 1, -1),
+      ivec2( 1,  0),
+      ivec2( 1,  1)
+    };
+
+    //No Out-Of-Bounds
+
+    // Heights are read once as sort keys; std::sort on the same keys gives the
+    // same order as the default's comparator that reads them from the map.
+    struct Neighbour { double h; ivec2 p; } sn[8];
+    int sn_count = 0;
+    for(int k = 0; k < 8; k++){
+      ivec2 npos = ipos + n[k];
+      if(npos.x >= map.dim.x || npos.y >= map.dim.y
+         || npos.x < 0 || npos.y < 0) continue;
+      sn[sn_count].h = map.height(npos);
+      sn[sn_count].p = npos;
+      sn_count++;
+    }
+
+    // Sort by Highest First (Soil is Moved Down After All)
+
+    sort(sn, sn + sn_count, [](const Neighbour& a, const Neighbour& b){
+      return a.h > b.h;
+    });
+
+    for(int k = 0; k < sn_count; k++){
+      const ivec2& npos = sn[k].p;
+
+      //Full Height-Different Between Positions!
+      float diff = (map.height(ipos) - map.height(npos))*(float)SCALE * c_eq_factor;
+
+      if(diff == 0)   //No Height Difference
+        continue;
+
+      ivec2 tpos = (diff > 0) ? ipos : npos;
+      ivec2 bpos = (diff > 0) ? npos : ipos;
+
+      SurfType type = map.surface(tpos);
+      const SurfParam& param = soils[type];
+
+      //The Amount of Excess Difference!
+      float excess = abs(diff) - param.maxdiff;
+      if(excess <= 0)  //No Excess
+        continue;
+
+      //Actual Amount Transferred
+      float transfer = param.settling * excess / 2.0f;
+
+      bool recascade = false;
+
+      if(transfer > map.top(tpos)->size)
+        transfer = map.top(tpos)->size;
+
+      if(map.remove(tpos, transfer) != 0)
+        recascade = true;
+      sec *addition = map.pool.get(transfer, param.cascades);
+      map.add(bpos, addition);
+      // map.update(tpos, vertexpool);
+      // map.update(bpos, vertexpool);
+
+      if(recascade && transferloop > 0)
+        cascade(c_eq_factor, SCALE, npos, map, vertexpool, --transferloop);
+
+    }
+
+  }
+
+};
+
+#endif

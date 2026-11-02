@@ -124,7 +124,11 @@ where = ["src"]
 [tool.pytest.ini_options]
 testpaths = "tests"
 junit_family = "xunit2"
-markers = ["skip_for_ci", "render_gpu", "slow"]
+markers = [
+    "skip_for_ci",
+    "render_gpu",
+    "slow",
+]
 timeout = 480
 
 filterwarnings = [
@@ -191,6 +195,9 @@ ignore = [
     "CPY001", # runs during PRs, but no need for copyright on boilerplate/often-empty __init__.py
 ]
 "src/infinigen/assets/*" = ["F841"] #transpiler currently creates lots of unused variables
+
+# importorskip of an optional compiled kernel has to precede the module imports
+"tests/infinigen/performance_v1/*" = ["E402"]
 
 [tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "parents"

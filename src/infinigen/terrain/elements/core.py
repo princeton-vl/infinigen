@@ -27,6 +27,7 @@ class Element:
             lib_name_X = lib_name
             Element.called_time[lib_name] = 1
         dll = load_cdll(f"terrain/lib/{self.device}/elements/{lib_name_X}.so")
+        self.dll = dll
         call_param_type = [c_size_t, POINTER(c_float), POINTER(c_float)]
         self.attributes = [material]
 

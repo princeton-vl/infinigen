@@ -12,6 +12,7 @@ import numpy as np
 from numpy import ascontiguousarray as AC
 from tqdm import tqdm
 
+from infinigen._optimized import optimizable
 from infinigen.core.util.organization import Tags
 from infinigen.terrain.utils import (
     ASDOUBLE,
@@ -167,6 +168,7 @@ class CubeSphericalMesher:
             [POINTER(c_double), POINTER(c_int32), POINTER(c_int32)],
         )
 
+    @optimizable("TERRAIN", "infinigen.perf.terrain.mesher.cube_spherical_mesher")
     def __call__(self, kernels):
         H = self.L - 2 * self.N0
         W = self.L - 2 * self.N1

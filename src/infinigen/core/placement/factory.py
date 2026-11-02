@@ -14,6 +14,7 @@ import bpy
 import numpy as np
 from tqdm import trange
 
+from infinigen._optimized import optimizable
 from infinigen.assets.utils.object import center
 from infinigen.core.util import blender as butil
 from infinigen.core.util.math import FixedSeed, int_hash
@@ -67,6 +68,7 @@ class AssetFactory:
         # eg any cleanup / grouping
         pass
 
+    @optimizable("PLACEMENT", "infinigen.perf.core.placement.factory")
     def spawn_placeholder(self, i, loc, rot):
         # Not intended to be overridden - override create_placeholder instead
 
@@ -96,6 +98,7 @@ class AssetFactory:
 
         return obj
 
+    @optimizable("PLACEMENT", "infinigen.perf.core.placement.factory")
     def spawn_asset(
         self,
         i,
@@ -172,6 +175,7 @@ class AssetFactory:
         pass
 
 
+@optimizable("PLACEMENT", "infinigen.perf.core.placement.factory")
 def make_asset_collection(
     spawn_fns,
     n,

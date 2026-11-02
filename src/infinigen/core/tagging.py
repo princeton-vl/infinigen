@@ -14,6 +14,7 @@ import numpy as np
 from mathutils import Vector
 
 import infinigen.core.util.blender as butil
+from infinigen._optimized import optimizable
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 from infinigen.core.util.logging import lazydebug
@@ -24,6 +25,16 @@ logger = logging.getLogger(__name__)
 
 PREFIX = "TAG_"
 COMBINED_ATTR_NAME = "MaskTag"
+
+
+@optimizable("CORE", "infinigen.perf.core.tagging")
+def _unique_tagints(values):
+    return np.unique(values)
+
+
+@optimizable("CORE", "infinigen.perf.core.tagging")
+def _write_mask_tag(obj, attr, tagint):
+    attr.data.foreach_set("value", tagint)
 
 
 class AutoTag:
@@ -124,7 +135,7 @@ class AutoTag:
         assert tagint.dtype == np.int64, tagint.dtype
 
         for name, new_mask in new_attrs.items():
-            affected_tagints = np.unique(tagint[new_mask])
+            affected_tagints = _unique_tagints(tagint[new_mask])
 
             for vi in affected_tagints:
                 affected_mask = new_mask * (tagint == vi)
@@ -156,7 +167,7 @@ class AutoTag:
         else:
             mask_tag_attr = obj.data.attributes[COMBINED_ATTR_NAME]
 
-        mask_tag_attr.data.foreach_set("value", tagint)
+        _write_mask_tag(obj, mask_tag_attr, tagint)
 
     def relabel_obj(self, root_obj):
         tag_name_lookup = [None] * len(self.tag_dict)

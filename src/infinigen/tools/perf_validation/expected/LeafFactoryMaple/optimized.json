@@ -1,0 +1,56 @@
+{
+ "kind": "assets",
+ "optimized": "all",
+ "rows": [
+  {
+   "target": "LeafFactoryMaple",
+   "seed": 0,
+   "triangles": 17183
+  },
+  {
+   "target": "LeafFactoryMaple",
+   "seed": 1,
+   "triangles": 16107
+  },
+  {
+   "target": "LeafFactoryMaple",
+   "seed": 2,
+   "triangles": 16236
+  },
+  {
+   "target": "LeafFactoryMaple",
+   "seed": 3,
+   "triangles": 16787
+  },
+  {
+   "target": "LeafFactoryMaple",
+   "seed": 4,
+   "triangles": 16456
+  },
+  {
+   "target": "LeafFactoryMaple",
+   "seed": 5,
+   "triangles": 16821
+  },
+  {
+   "target": "LeafFactoryMaple",
+   "seed": 6,
+   "triangles": 16398
+  },
+  {
+   "target": "LeafFactoryMaple",
+   "seed": 7,
+   "triangles": 16755
+  },
+  {
+   "target": "LeafFactoryMaple",
+   "seed": 8,
+   "triangles": 17160
+  },
+  {
+   "target": "LeafFactoryMaple",
+   "seed": 9,
+   "triangles": 17035
+  }
+ ]
+}

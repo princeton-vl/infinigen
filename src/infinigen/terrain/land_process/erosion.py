@@ -14,6 +14,7 @@ from numpy import ascontiguousarray as AC
 from tqdm import trange
 
 import infinigen
+from infinigen._optimized import optimizable
 from infinigen.core.util.organization import AssetFile, Process
 from infinigen.terrain.utils import ASFLOAT, load_cdll, read, smooth
 
@@ -21,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 @gin.configurable
+@optimizable("TERRAIN", "infinigen.perf.terrain.land_process.erosion")
 def run_erosion(
     folder,
     Ns=[512, 2048],

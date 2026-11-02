@@ -13,6 +13,7 @@ import numpy as np
 from numpy.random import uniform
 from scipy.interpolate import interp1d
 
+from infinigen._optimized import optimizable
 from infinigen.assets.utils.decorate import (
     read_co,
     remove_vertices,
@@ -117,6 +118,7 @@ def bezier_curve(anchors, vector_locations=(), resolution=None, to_mesh=True):
     return curve2mesh(obj)
 
 
+@optimizable("CORE", "infinigen.perf.assets.utils.draw")
 def curve2mesh(obj):
     points = obj.data.splines[0].bezier_points
     cos = np.array([p.co for p in points])
@@ -183,6 +185,7 @@ def align_bezier(
     return curve2mesh(obj)
 
 
+@optimizable("CORE", "infinigen.perf.assets.utils.draw")
 def remesh_fill(obj, resolution=0.005):
     n = len(obj.data.vertices)
     butil.modify_mesh(obj, "SOLIDIFY", thickness=0.1)
@@ -232,6 +235,7 @@ def spin(
     return obj
 
 
+@optimizable("MONOCOT", "infinigen.perf.assets.utils.draw")
 def leaf(x_anchors, y_anchors, vector_locations=(), subdivision=64, face_size=None):
     curves = []
     for i in [-1, 1]:

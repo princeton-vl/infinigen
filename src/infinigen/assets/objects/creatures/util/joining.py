@@ -115,6 +115,15 @@ def get_parts(root: bpy.types.Object, main_body=True, filter_name=None):
     return parts
 
 
+def postprocess_inputs(root: bpy.types.Object):
+    """Mesh children of `root` (the joined body) and every other object under it."""
+    body_parts = [o for o in root.children if o.type == "MESH"]
+    extras = [
+        o for o in butil.iter_object_tree(root) if o not in body_parts and o is not root
+    ]
+    return body_parts, extras
+
+
 def join_and_rig_parts(
     root: bpy.types.Object,
     parts: genome.Tree,  # TODO: remove redundant param, access via genome.parts

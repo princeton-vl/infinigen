@@ -11,6 +11,7 @@ import bpy
 import numpy as np
 from scipy.interpolate import interp1d
 
+from infinigen._optimized import optimizable, optimizable_class
 from infinigen.assets.utils.object import data2mesh, mesh2obj
 from infinigen.core.nodes.node_wrangler import Nodes
 from infinigen.core.util import blender as butil
@@ -32,6 +33,7 @@ C = bpy.context
 D = bpy.data
 
 
+@optimizable_class("TREES", "infinigen.perf.assets.objects.trees.tree")
 class TreeVertices:
     def __init__(self, vtxs=None, parent=None, level=None):
         """Define vertices and edges to outline tree geometry."""
@@ -90,6 +92,7 @@ def dfs(idx, edges, parents, depth, rev_depth, n_leaves, child_idx):
             dfs(c, edges, parents, depth, rev_depth, n_leaves, child_idx)
 
 
+@optimizable("TREES", "infinigen.perf.assets.objects.trees.tree")
 def parse_tree_attributes(vtx):
     # Strong assumption, root is vertex 0
     n = len(vtx.vtxs)
@@ -203,6 +206,7 @@ def parse_tree_attributes(vtx):
     }
 
 
+@optimizable("TREES", "infinigen.perf.assets.objects.trees.tree")
 def rand_path(
     n_pts,
     sz=1,
@@ -281,6 +285,7 @@ def get_spawn_pt(
     return rnd_idx, path[rnd_idx], init_vec
 
 
+@optimizable("TREES", "infinigen.perf.assets.objects.trees.tree")
 def recursive_path(
     tree,
     parent_idxs,
@@ -345,6 +350,7 @@ def remove_matched_atts(
     return atts, deltas, curr_min, curr_match
 
 
+@optimizable("TREES", "infinigen.perf.assets.objects.trees.tree")
 def space_colonization(
     tree,
     atts,
@@ -421,6 +427,7 @@ class TreeParams:
     skinning: dict
 
 
+@optimizable("TREES", "infinigen.perf.assets.objects.trees.tree")
 def tree_skeleton(
     skeleton_params: dict, trunk_spacecol: dict, roots_spacecol: dict, init_pos, scale
 ):
@@ -502,6 +509,7 @@ def add_tree_children(nw, child_col, params, merge_dist=None, realize=False):
     group_output = nw.new_node(Nodes.GroupOutput, input_kwargs={"Geometry": children})
 
 
+@optimizable_class("TREES", "infinigen.perf.assets.objects.trees.tree")
 class FineTreeVertices(TreeVertices):
     def __init__(
         self, vtxs=None, parent=None, level=None, radius_fn=None, resolution=1

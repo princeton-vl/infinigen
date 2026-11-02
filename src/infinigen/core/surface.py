@@ -15,6 +15,7 @@ import numpy as np
 from mathutils import Vector
 from tqdm import trange
 
+from infinigen._optimized import optimizable
 from infinigen.core import tags as t
 from infinigen.core.nodes import node_info
 from infinigen.core.nodes.node_wrangler import (
@@ -69,6 +70,7 @@ def write_attribute(objs, node_func, name=None, data_type=None, apply=False):
     return name
 
 
+@optimizable("CORE", "infinigen.perf.core.surface")
 def read_attr_data(obj, attr, domain="POINT", result_dtype=None) -> np.array:
     if isinstance(attr, str):
         attr = obj.data.attributes[attr]
@@ -106,6 +108,7 @@ def set_active(obj, name):
     attributes.active = attributes[attributes.active_index]
 
 
+@optimizable("CORE", "infinigen.perf.core.surface")
 def write_attr_data(obj, attr, data: np.array, type="FLOAT", domain="POINT"):
     if isinstance(attr, str):
         if attr in obj.data.attributes:
@@ -117,6 +120,7 @@ def write_attr_data(obj, attr, data: np.array, type="FLOAT", domain="POINT"):
     attr.data.foreach_set(field, data.reshape(-1))
 
 
+@optimizable("CORE", "infinigen.perf.core.surface")
 def new_attr_data(obj, attr, type, domain, data: np.array):
     assert isinstance(attr, str)
     assert attr not in obj.data.attributes
@@ -393,6 +397,7 @@ def assign_material(
         )
 
 
+@optimizable("CORE", "infinigen.perf.core.surface")
 def add_geomod(
     objs,
     geo_func,

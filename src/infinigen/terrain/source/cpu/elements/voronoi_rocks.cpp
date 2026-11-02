@@ -8,6 +8,11 @@
 
 extern "C" {
 
+    // Off by default; see vrock_attachment_cache in voronoi_rocks.h.
+    void set_attachment_cache(int on) {
+        vrock_attachment_cache::enabled() = on != 0;
+    }
+
     void call(
         size_t size,
         float3_nonbuiltin *positions,
@@ -17,6 +22,7 @@ extern "C" {
         using namespace data;
         int n_auxiliaries = 2;
         if (auxs == NULL) n_auxiliaries = 0;
+        vrock_attachment_cache::generation++;  // invalidate cached attachment SDFs
         #pragma omp parallel for
         for (size_t idx = 0; idx < size; idx++) {
             voronoi_rocks(

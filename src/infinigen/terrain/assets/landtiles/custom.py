@@ -11,6 +11,7 @@ import cv2
 import gin
 import numpy as np
 
+from infinigen._optimized import optimizable
 from infinigen.core.util.organization import AssetFile
 from infinigen.core.util.random import random_general as rg
 from infinigen.terrain.elements.core import Element
@@ -132,6 +133,7 @@ def coast_heightmapping(heightmap):
 
 
 @gin.configurable
+@optimizable("TERRAIN", "infinigen.perf.terrain.assets.landtiles.custom")
 def multi_mountains_asset(
     folder,
     tile_size,
@@ -171,6 +173,7 @@ def multi_mountains_asset(
 
 
 @gin.configurable
+@optimizable("TERRAIN", "infinigen.perf.terrain.assets.landtiles.custom")
 def coast_asset(
     folder,
     tile_size,

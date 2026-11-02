@@ -12,6 +12,7 @@ import mathutils
 import numpy as np
 from tqdm import tqdm
 
+from infinigen._optimized import optimizable
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import (
     Nodes,
@@ -32,6 +33,7 @@ def objects_to_grid(objects, spacing):
         o.location += spacing * mathutils.Vector((i % rowsize, i // rowsize, 0))
 
 
+@optimizable("PLACEMENT", "infinigen.perf.core.placement.placement")
 def placeholder_locs(
     terrain, overall_density, selection, distance_min=0, altitude=0.0, max_locs=None
 ):
@@ -116,6 +118,7 @@ def scatter_placeholders_mesh(
     return scatter_placeholders(locations, factory)
 
 
+@optimizable("PLACEMENT", "infinigen.perf.core.placement.placement")
 def scatter_placeholders(locations, factory: AssetFactory):
     logger.info(f"Placing {len(locations)} placeholders for {factory}")
     objs = []
@@ -148,6 +151,7 @@ def parse_asset_name(name):
     return list(match.groups())
 
 
+@optimizable("PLACEMENT", "infinigen.perf.core.placement.placement")
 def filter_populate_targets(
     placeholders: list[bpy.types.Object],
     cameras: list[bpy.types.Object],
@@ -188,6 +192,7 @@ def filter_populate_targets(
     return results
 
 
+@optimizable("PLACEMENT", "infinigen.perf.core.placement.placement")
 def populate_collection(
     factory: AssetFactory,
     placeholder_col: bpy.types.Collection,

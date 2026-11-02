@@ -1057,6 +1057,8 @@ _V1_APIDOC_EXCLUDE_RELPATHS = [
     ("infinigen", "OcMesher"),
     ("infinigen", "infinigen_gpl"),
     ("infinigen", "launch_blender.py"),
+    # raises ImportError unless the native kernels are built
+    ("infinigen", "perf", "assets", "objects", "mushroom", "factories.py"),
 ]
 
 

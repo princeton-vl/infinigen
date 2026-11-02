@@ -140,9 +140,9 @@ class RottenTreeFactory(BaseDeformedTreeFactory):
             bpy.ops.mesh.region_to_loop()
             bpy.ops.mesh.bridge_edge_loops(number_cuts=10, interpolation="LINEAR")
 
-        ring_material_index = list(obj.data.materials).index(
-            obj.data.materials["shader_rings"]
-        )
+        if self.material.name not in obj.data.materials:
+            obj.data.materials.append(self.material)
+        ring_material_index = list(obj.data.materials).index(self.material)
         material_indices = read_material_index(obj)
         null_indices = np.array(
             [i for i, m in enumerate(obj.data.materials) if not hasattr(m, "name")]

@@ -88,7 +88,7 @@ else
     fi
 fi
 
-alias gx1="${compiler} \$CXXFLAGS -O3 -c -fpic -fopenmp "
+alias gx1="${compiler} \$CXXFLAGS -O3 -c -fpic -fopenmp -fno-semantic-interposition "
 alias gx2="${compiler} \$LDFLAGS -O3 -shared -fopenmp "
 
 mkdir -p lib/cpu/utils
@@ -135,6 +135,14 @@ mkdir -p lib/cpu/soil_machine
 gx1 -I../datagen/customgt/dependencies/glm -o lib/cpu/soil_machine/SoilMachine.o source/cpu/soil_machine/SoilMachine.cpp
 gx2 -o lib/cpu/soil_machine/SoilMachine.so lib/cpu/soil_machine/SoilMachine.o
 echo "compiled lib/cpu/soil_machine/SoilMachine.so"
+
+# Optimized erosion for infinigen.perf: its modified sources come first on the
+# include path, ahead of the default ones.
+if [ -d ../perf/terrain/source/cpu/soil_machine ]; then
+    gx1 -I../perf/terrain/source/cpu/soil_machine -Isource/cpu/soil_machine -Isource/cpu/soil_machine/particle -I../datagen/customgt/dependencies/glm -o lib/cpu/soil_machine/SoilMachine_perf.o ../perf/terrain/source/cpu/soil_machine/SoilMachine.cpp
+    gx2 -o lib/cpu/soil_machine/SoilMachine_perf.so lib/cpu/soil_machine/SoilMachine_perf.o
+    echo "compiled lib/cpu/soil_machine/SoilMachine_perf.so (optimized)"
+fi
 
 cd -
 

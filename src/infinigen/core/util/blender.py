@@ -21,6 +21,7 @@ import trimesh
 from mathutils import Vector
 from tqdm import tqdm
 
+from infinigen._optimized import optimizable
 from infinigen.core.nodes.node_info import DATATYPE_DIMS, DATATYPE_FIELDS
 
 from . import math as mutil
@@ -105,6 +106,7 @@ class SelectObjects:
         self.saved_objs = None
         self.saved_active = None
 
+    @optimizable("PLACEMENT", "infinigen.perf.core.util.blender")
     def _check_selectable(self):
         unlinked = [o for o in self.objects if o.name not in bpy.context.scene.objects]
         if len(unlinked) > 0:
@@ -233,6 +235,7 @@ class TemporaryObject:
             delete(self.obj)
 
 
+@optimizable("CORE", "infinigen.perf.core.util.blender_gc")
 def garbage_collect(targets, keep_in_use=True, keep_names=None, verbose=False):
     if keep_names is None:
         keep_names = [[]] * len(targets)
@@ -277,6 +280,7 @@ def select_none():
             obj.select_set(False)
 
 
+@optimizable("PLACEMENT", "infinigen.perf.core.util.blender")
 def select(objs: bpy.types.Object | list[bpy.types.Object]):
     select_none()
     if not isinstance(objs, list):
@@ -304,10 +308,9 @@ def delete(objs: bpy.types.Object | list[bpy.types.Object]):
 
 def delete_collection(collection: bpy.types.Collection):
     if collection.name in bpy.data.collections:
-        objects = collection.objects
+        # Its objects are left in no scene. The collection's object list is
+        # freed with it, so it must not be read after the removal.
         bpy.data.collections.remove(collection)
-        for o in objects:
-            delete_collection(o)
     else:
         delete(collection)
 
@@ -333,6 +336,7 @@ def get_collection(name, reuse=True):
         return col
 
 
+@optimizable("CORE", "infinigen.perf.core.util.blender_gc")
 def unlink(obj):
     if not isinstance(obj, list):
         obj = [obj]
@@ -342,6 +346,7 @@ def unlink(obj):
                 c.objects.unlink(o)
 
 
+@optimizable("CORE", "infinigen.perf.core.util.blender_gc")
 def put_in_collection(objs, collection, exclusive=True):
     if isinstance(collection, str):
         collection = get_collection(collection)
@@ -356,6 +361,7 @@ def put_in_collection(objs, collection, exclusive=True):
     return collection
 
 
+@optimizable("CORE", "infinigen.perf.core.util.blender_gc")
 def group_in_collection(objs, name: str, reuse=True, **kwargs):
     """
     objs: List of (None | Blender Object | List[Blender Object])
@@ -535,6 +541,7 @@ def spawn_capsule(rad, height, us=32, vs=16):
     return obj
 
 
+@optimizable("PLACEMENT", "infinigen.perf.core.util.blender")
 def to_mesh(object, context=bpy.context):
     deg = context.evaluated_depsgraph_get()
     me = bpy.data.meshes.new_from_object(object.evaluated_get(deg), depsgraph=deg)
@@ -780,6 +787,7 @@ def recalc_normals(obj, inside=False):
         bpy.ops.mesh.normals_make_consistent(inside=inside)
 
 
+@optimizable("RUNTIME", "infinigen.perf.core.util.blender")
 def save_blend(path, autopack=False, verbose=False):
     if verbose:
         print(f"Saving .blend to {path} ({'with' if autopack else 'without'} textures)")
@@ -942,6 +950,7 @@ def avg_approx_vol(objects):
     return np.mean([prod(list(o.dimensions)) for o in objects])
 
 
+@optimizable("CORE", "infinigen.perf.core.util.blender_gc")
 def parent_to(
     a, b, type="OBJECT", keep_transform=False, no_inverse=False, no_transform=False
 ):
@@ -1003,6 +1012,7 @@ def count_objects():
     return count
 
 
+@optimizable("CORE", "infinigen.perf.core.util.blender_gc")
 def count_instance():
     depsgraph = bpy.context.evaluated_depsgraph_get()
     return len([inst for inst in depsgraph.object_instances if inst.is_instance])

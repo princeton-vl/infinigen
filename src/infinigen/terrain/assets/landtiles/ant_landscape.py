@@ -11,6 +11,7 @@ import cv2
 import gin
 import numpy as np
 
+from infinigen._optimized import optimizable
 from infinigen.core.init import require_blender_addon
 from infinigen.core.util.organization import AssetFile, LandTile
 from infinigen.terrain.land_process.erosion import run_erosion
@@ -419,6 +420,7 @@ def create(
 
 
 @gin.configurable
+@optimizable("TERRAIN", "infinigen.perf.terrain.assets.landtiles.ant_landscape")
 def ant_landscape_asset(
     folder,
     preset_name,

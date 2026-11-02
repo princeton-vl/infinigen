@@ -12,6 +12,7 @@ import numpy as np
 import trimesh
 from numpy import ascontiguousarray as AC
 
+from infinigen._optimized import optimizable
 from infinigen.core.nodes.node_wrangler import ng_inputs, ng_outputs
 from infinigen.core.util import blender as butil
 from infinigen.core.util.logging import Timer
@@ -86,6 +87,7 @@ def object_from_VF(name, vertices, faces):
     return new_object
 
 
+@optimizable("TERRAIN", "infinigen.perf.terrain.utils.mesh")
 def convert_face_array(face_array):
     l = face_array.shape[0]
     min_indices = np.argmin(face_array, axis=1)
@@ -96,6 +98,7 @@ def convert_face_array(face_array):
 
 
 class Mesh:
+    @optimizable("TERRAIN", "infinigen.perf.terrain.utils.mesh")
     def __init__(
         self,
         normal_mode=NormalMode.Mean,
@@ -203,6 +206,7 @@ class Mesh:
             ].astype(np.float32)
         self._trimesh.export(path)
 
+    @optimizable("TERRAIN", "infinigen.perf.terrain.utils.mesh")
     def make_unique(self):
         transposed_array = self.vertices.T
         sorted_indices = np.lexsort(transposed_array)
@@ -217,6 +221,7 @@ class Mesh:
         sorted_indices = np.lexsort(transposed_array)
         self.faces = self.faces[sorted_indices]
 
+    @optimizable("TERRAIN", "infinigen.perf.terrain.utils.mesh")
     def export_blender(self, name, collection="Collection", material=None):
         self.make_unique()
         new_object = object_from_VF(name, self.vertices, self.faces)
@@ -336,6 +341,7 @@ class Mesh:
         )
         return normals
 
+    @optimizable("TERRAIN", "infinigen.perf.terrain.utils.mesh")
     def cat(meshes):
         verts = np.zeros((0, 3))
         faces = np.zeros((0, 3), dtype=int)

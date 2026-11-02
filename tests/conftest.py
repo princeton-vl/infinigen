@@ -13,6 +13,10 @@ from procfunc.util.teardown import exit_skipping_teardown
 
 _session_exit_code = 0
 
+# The --optimized selection for the session, restored after a test changes it.
+_session_packages = False
+_session_selection = None
+
 
 def pytest_sessionfinish(session, exitstatus):
     global _session_exit_code
@@ -27,6 +31,21 @@ def pytest_unconfigure(config):
     exit_skipping_teardown(_session_exit_code)
 
 
+def pytest_addoption(parser):
+    parser.addoption(
+        "--optimized",
+        nargs="?",
+        const="all",
+        default=None,
+        metavar="NAMES",
+        help=(
+            "select optimized implementations for this run: --optimized for "
+            "every one, or --optimized=trees,leaves for those. Tests that "
+            "exercise one skip themselves when it is not selected."
+        ),
+    )
+
+
 def pytest_configure(config):
     logging.basicConfig(
         format="[%(asctime)s.%(msecs)03d] [%(module)s] [%(levelname)s] | %(message)s",
@@ -34,6 +53,18 @@ def pytest_configure(config):
         level=logging.INFO,
         force=True,  # Override any existing configuration
     )
+    names = config.getoption("--optimized")
+    if names is not None:
+        # before collection: some test modules check the selection on import
+        import infinigen  # keep-local: v1-only, absent in the v2 env
+
+        global _session_packages, _session_selection
+        _session_packages = (
+            True
+            if names == "all"
+            else [n.strip() for n in names.split(",") if n.strip()]
+        )
+        _session_selection = infinigen.use_optimized(_session_packages)
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -45,6 +76,19 @@ def cleanup():
         pass
     else:
         gin.clear_config()
+
+    # The selection is process-wide; undo any change a test made.
+    try:
+        import infinigen  # keep-local: v1-only, absent in the v2 env
+        from infinigen import _perf_selection
+    except ModuleNotFoundError:
+        pass
+    else:
+        if _perf_selection.optimized_packages() != (
+            _session_selection or dict.fromkeys(_perf_selection.NAMES, False)
+        ):
+            infinigen.use_optimized(_session_packages)
+
     bpy.ops.wm.read_factory_settings(use_empty=True)
 
 

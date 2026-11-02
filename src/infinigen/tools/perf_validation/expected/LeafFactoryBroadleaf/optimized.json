@@ -1,0 +1,56 @@
+{
+ "kind": "assets",
+ "optimized": "all",
+ "rows": [
+  {
+   "target": "LeafFactoryBroadleaf",
+   "seed": 0,
+   "triangles": 7238
+  },
+  {
+   "target": "LeafFactoryBroadleaf",
+   "seed": 1,
+   "triangles": 6511
+  },
+  {
+   "target": "LeafFactoryBroadleaf",
+   "seed": 2,
+   "triangles": 5335
+  },
+  {
+   "target": "LeafFactoryBroadleaf",
+   "seed": 3,
+   "triangles": 9022
+  },
+  {
+   "target": "LeafFactoryBroadleaf",
+   "seed": 4,
+   "triangles": 8913
+  },
+  {
+   "target": "LeafFactoryBroadleaf",
+   "seed": 5,
+   "triangles": 7976
+  },
+  {
+   "target": "LeafFactoryBroadleaf",
+   "seed": 6,
+   "triangles": 8774
+  },
+  {
+   "target": "LeafFactoryBroadleaf",
+   "seed": 7,
+   "triangles": 6066
+  },
+  {
+   "target": "LeafFactoryBroadleaf",
+   "seed": 8,
+   "triangles": 11031
+  },
+  {
+   "target": "LeafFactoryBroadleaf",
+   "seed": 9,
+   "triangles": 5677
+  }
+ ]
+}

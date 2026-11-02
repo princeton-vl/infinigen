@@ -6,7 +6,14 @@
 import logging
 from pathlib import Path
 
-__version__ = "1.19.1"
+__version__ = "1.20.0"
+
+# Optional optimized packages, off unless asked for; see _perf_selection.
+from infinigen import _perf_selection as _perf_selection  # noqa: E402
+from infinigen._perf_selection import (  # noqa: E402
+    optimized_packages as optimized_packages,
+)
+from infinigen._perf_selection import use_optimized as use_optimized
 
 
 def module_parent_path():

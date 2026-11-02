@@ -268,13 +268,15 @@ def geo_instance_scatter(
 
         # camera-based culling
         visible, distance = camera_cull_points(
-            nw, fov=nw.expose_input("FOV", val=fov), near_dist_margin=no_culling_dist
+            nw,
+            fov=nw.expose_input("FOV", val=180 if fov is None else fov),
+            near_dist_margin=no_culling_dist,
         )
         points = nw.new_node(
             Nodes.SeparateGeometry, [points, visible], attrs={"domain": "POINT"}
         )
         if dist_max is not None:
-            in_range = _less(distance, dist_max)
+            in_range = _less(distance, dist_max, nw)
             points = nw.new_node(
                 Nodes.SeparateGeometry, [points, in_range], attrs={"domain": "POINT"}
             )

@@ -8,6 +8,7 @@ import bpy
 import numpy as np
 from numpy.random import uniform
 
+from infinigen._optimized import optimizable_class
 from infinigen.assets.utils.decorate import geo_extension, subsurface2face_size
 from infinigen.assets.utils.draw import spin
 from infinigen.assets.utils.misc import assign_material
@@ -25,6 +26,7 @@ from infinigen.core.util.random import log_uniform
 __all__ = ["MushroomStemFactory"]
 
 
+@optimizable_class("MUSHROOM", "infinigen.perf.assets.objects.mushroom.factories")
 class MushroomStemFactory(AssetFactory):
     def __init__(self, factory_seed, inner_radius, material_func, coarse=False):
         super().__init__(factory_seed, coarse)
