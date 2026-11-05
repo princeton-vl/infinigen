@@ -276,8 +276,8 @@ DEVICE_FUNC void Voronoi2D(
     float *distances,
     int *hashes=0,
     int centerlinealign=0,
-    int *is_center_tile=NULL,
-    int *is_center_band=NULL
+    int *is_center_tile=nullptr,
+    int *is_center_band=nullptr
 )
 {
     CellularDistanceFunction mCellularDistanceFunction = CellularDistanceFunction_Euclidean;
@@ -286,13 +286,13 @@ DEVICE_FUNC void Voronoi2D(
     int xr = FastRound(x);
     int yr = FastRound(y);
 
-    assert(distances != NULL);
+    assert(distances != nullptr);
     for (int i = 0; i < n_neighbors; i++) distances[i] = 1e10f;
-    if (positions != NULL) {
+    if (positions != nullptr) {
         // 0 position is necessary because wild value will cause wild error if it's ever used
         for (int i = 0; i < n_neighbors * 2; i++) positions[i] = 0;
     }
-    if (hashes != NULL) for (int i = 0; i < n_neighbors; i++) hashes[i] = 0;
+    if (hashes != nullptr) for (int i = 0; i < n_neighbors; i++) hashes[i] = 0;
     float cellularJitter;
     float t;
     int intt;
@@ -323,15 +323,15 @@ DEVICE_FUNC void Voronoi2D(
 
                 if (newDistance < distances[0])
                 {
-                    if (is_center_tile != NULL) {
+                    if (is_center_tile != nullptr) {
                         is_center_tile[0] = (xi == 0 && yi == 0);
                     }
-                    if (is_center_band != NULL) {
+                    if (is_center_band != nullptr) {
                         is_center_band[0] = (xi == 0);
                     }
-                    if (hashes != NULL) hashes[0] = hash;
+                    if (hashes != nullptr) hashes[0] = hash;
                     distances[0] = newDistance;
-                    if (positions != NULL) {
+                    if (positions != nullptr) {
                         positions[0] = newPosition[0];
                         positions[1] = newPosition[1];
                     }
@@ -346,22 +346,22 @@ DEVICE_FUNC void Voronoi2D(
                         t = distances[index];
                         distances[index] = distances[m];
                         distances[m] = t;
-                        if (hashes != NULL) {
+                        if (hashes != nullptr) {
                             intt = hashes[index];
                             hashes[index] = hashes[m];
                             hashes[m] = intt;
                         }
-                        if (is_center_tile != NULL) {
+                        if (is_center_tile != nullptr) {
                             intt = is_center_tile[index];
                             is_center_tile[index] = is_center_tile[m];
                             is_center_tile[m] = intt;
                         }
-                        if (is_center_band != NULL) {
+                        if (is_center_band != nullptr) {
                             intt = is_center_band[index];
                             is_center_band[index] = is_center_band[m];
                             is_center_band[m] = intt;
                         }
-                        if (positions != NULL) {
+                        if (positions != nullptr) {
                             t = positions[index * 2];
                             positions[index * 2] = positions[m * 2];
                             positions[m * 2] = t;
@@ -396,7 +396,7 @@ DEVICE_FUNC void Voronoi2D(
     distances[0] = t;
     for (int i = 0; i < n_neighbors; i++)
         distances[i] /= mFrequency;
-    if (positions != NULL) {
+    if (positions != nullptr) {
         t = positions[min_dis_ind * 2];
         positions[min_dis_ind * 2] = positions[0 * 2];
         positions[0 * 2] = t;
@@ -406,17 +406,17 @@ DEVICE_FUNC void Voronoi2D(
         for (int i = 0; i < n_neighbors * 2; i++)
             positions[i] /= mFrequency;
     }
-    if (hashes != NULL) {
+    if (hashes != nullptr) {
         intt = hashes[0];
         hashes[0] = hashes[min_dis_ind];
         hashes[min_dis_ind] = intt;
     }
-    if (is_center_tile != NULL) {
+    if (is_center_tile != nullptr) {
         intt = is_center_tile[0];
         is_center_tile[0] = is_center_tile[min_dis_ind];
         is_center_tile[min_dis_ind] = intt;
     }
-    if (is_center_band != NULL) {
+    if (is_center_band != nullptr) {
         intt = is_center_band[0];
         is_center_band[0] = is_center_band[min_dis_ind];
         is_center_band[min_dis_ind] = intt;
@@ -433,7 +433,7 @@ DEVICE_FUNC void Voronoi(
     float *positions,
     float *distances,
     int *hashes,
-    int *is_center_tile=NULL
+    int *is_center_tile=nullptr
 )
 {
     CellularDistanceFunction mCellularDistanceFunction = CellularDistanceFunction_Euclidean;
@@ -444,12 +444,12 @@ DEVICE_FUNC void Voronoi(
     int yr = FastRound(y);
     int zr = FastRound(z);
 
-    assert(distances != NULL);
+    assert(distances != nullptr);
     for (int i = 0; i < n_neighbors; i++) distances[i] = 1e10f;
     // 0 position is necessary because wild value will cause wild error if it's ever used
-    if (positions != NULL) for (int i = 0; i < n_neighbors * 3; i++) positions[i] = 0;
-    if (hashes != NULL) for (int i = 0; i < n_neighbors; i++) hashes[i] = 0;
-    if (is_center_tile != NULL) for (int i = 0; i < n_neighbors; i++) is_center_tile[i] = 0;
+    if (positions != nullptr) for (int i = 0; i < n_neighbors * 3; i++) positions[i] = 0;
+    if (hashes != nullptr) for (int i = 0; i < n_neighbors; i++) hashes[i] = 0;
+    if (is_center_tile != nullptr) for (int i = 0; i < n_neighbors; i++) is_center_tile[i] = 0;
 
     int xPrimed = (xr - 1) * PrimeX;
     int yPrimedBase = (yr - 1) * PrimeY;
@@ -482,15 +482,15 @@ DEVICE_FUNC void Voronoi(
                     if (newDistance < distances[0])
                     {
                         distances[0] = newDistance;
-                        if (positions != NULL) {
+                        if (positions != nullptr) {
                             positions[0] = newPosition[0];
                             positions[1] = newPosition[1];
                             positions[2] = newPosition[2];
                         }
-                        if (is_center_tile != NULL) {
+                        if (is_center_tile != nullptr) {
                             is_center_tile[0] = (xi == 0 && yi == 0 && zi == 0);
                         }
-                        if (hashes != NULL) hashes[0] = hash;
+                        if (hashes != nullptr) hashes[0] = hash;
                         int index = 0;
                         // heap
                         while ((index + 1) * 2 <= n_neighbors) {
@@ -502,17 +502,17 @@ DEVICE_FUNC void Voronoi(
                             t = distances[index];
                             distances[index] = distances[m];
                             distances[m] = t;
-                            if (hashes != NULL) {
+                            if (hashes != nullptr) {
                                 intt = hashes[index];
                                 hashes[index] = hashes[m];
                                 hashes[m] = intt;
                             }
-                            if (is_center_tile != NULL) {
+                            if (is_center_tile != nullptr) {
                                 intt = is_center_tile[index];
                                 is_center_tile[index] = is_center_tile[m];
                                 is_center_tile[m] = intt;
                             }
-                            if (positions != NULL) {
+                            if (positions != nullptr) {
                                 t = positions[index * 3];
                                 positions[index * 3] = positions[m * 3];
                                 positions[m * 3] = t;
@@ -548,12 +548,12 @@ DEVICE_FUNC void Voronoi(
                 t = distances[j];
                 distances[j] = distances[j + 1];
                 distances[j + 1] = t;
-                if (hashes != NULL) {
+                if (hashes != nullptr) {
                     intt = hashes[j];
                     hashes[j] = hashes[j + 1];
                     hashes[j + 1] = intt;
                 }
-                if (positions != NULL) {
+                if (positions != nullptr) {
                     t = positions[j * 3];
                     positions[j * 3] = positions[(j + 1) * 3];
                     positions[(j + 1) * 3] = t;
@@ -564,7 +564,7 @@ DEVICE_FUNC void Voronoi(
                     positions[j * 3 + 2] = positions[(j + 1) * 3 + 2];
                     positions[(j + 1) * 3 + 2] = t;
                 }
-                if (is_center_tile != NULL) {
+                if (is_center_tile != nullptr) {
                     intt = is_center_tile[j];
                     is_center_tile[j] = is_center_tile[j + 1];
                     is_center_tile[j + 1] = intt;
@@ -575,7 +575,7 @@ DEVICE_FUNC void Voronoi(
     for (int i = 0; i < n_neighbors; i++)
         distances[i] /= mFrequency;
     
-    if (positions != NULL) {
+    if (positions != nullptr) {
         for (int i = 0; i < n_neighbors * 3; i++)
             positions[i] /= mFrequency;
     }
