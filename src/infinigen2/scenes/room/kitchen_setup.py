@@ -19,7 +19,7 @@ from infinigen2.scenes.placement.retry import repeat_attempts
 from infinigen2.scenes.placement.snap import snap_to_plane
 from infinigen2.scenes.room.dining_table_setup import chairs_on_edge
 from infinigen2.scenes.room.room_shape import room_shape_rand
-from infinigen2.scenes.room.wall_base import name_objects, plane_to_posed_canonical_mesh
+from infinigen2.scenes.room.wall_base import plane_to_posed_canonical_mesh
 from infinigen2.scenes.setup_utils import (
     back_face_grounded,
     center_inside,
@@ -489,7 +489,7 @@ def kitchen_module_array_rand(
         start,
         start + n_sinks,
     )
-    cabinets = name_objects(pf.nodes.to_aliases(row.cabinets), "kitchen_cabinet")
+    cabinets = pf.nodes.to_aliases(row.cabinets)
     plinth_obj = pf.nodes.to_mesh_object(row.plinth)
     sinks = [obj for node in top.sinks for obj in pf.nodes.to_aliases(node)]
     taps = [obj for node in top.taps for obj in pf.nodes.to_aliases(node)]
@@ -498,13 +498,14 @@ def kitchen_module_array_rand(
         pf.ops.modifier.subdivide_surface(obj, levels=2, _skip_apply=True)
     for obj in all_objects:
         obj.item().matrix_world = pose @ obj.item().matrix_world
+        obj.item().name = "kitchen_module_array"
     return KitchenModuleArrayResult(
-        mesh=name_objects([countertop], "kitchen_countertop")[0],
+        mesh=countertop,
         all_objects=all_objects,
         cabinets=cabinets,
-        plinths=name_objects([plinth_obj], "kitchen_plinth"),
-        sinks=name_objects(sinks, "kitchen_sink"),
-        taps=name_objects(taps, "kitchen_tap"),
+        plinths=[plinth_obj],
+        sinks=sinks,
+        taps=taps,
     )
 
 
@@ -554,14 +555,15 @@ def island_rand(
         0,
         0,
     )
-    cabinets = name_objects(pf.nodes.to_aliases(row.cabinets), "kitchen_cabinet")
-    plinths = name_objects([pf.nodes.to_mesh_object(row.plinth)], "kitchen_plinth")
+    cabinets = pf.nodes.to_aliases(row.cabinets)
+    plinths = [pf.nodes.to_mesh_object(row.plinth)]
     shift = pf.Matrix.Translation((0.0, count * module_width, 0.0))
     back_pose = pose @ shift @ pf.Matrix.Rotation(math.pi, 4, "Z")
     for obj in cabinets:
         pf.ops.modifier.subdivide_surface(obj, levels=2, _skip_apply=True)
     for obj in cabinets + plinths:
         obj.item().matrix_world = back_pose @ obj.item().matrix_world
+        obj.item().name = "kitchen_island"
     return front._replace(
         all_objects=front.all_objects + cabinets + plinths,
         cabinets=front.cabinets + cabinets,
@@ -658,9 +660,10 @@ def _upper_row_attempt_rand(
     for obj in uppers:
         pf.ops.modifier.subdivide_surface(obj, levels=2, _skip_apply=True)
         obj.item().matrix_world = pose @ obj.item().matrix_world
+        obj.item().name = "kitchen_setup"
     if not _all_clear(uppers, colliders):
         return None
-    return name_objects(uppers, "kitchen_upper_cabinet")
+    return uppers
 
 
 def _uppers_rand(
@@ -952,7 +955,6 @@ def island_setup_rand(
     )
     stools = stools_fn(rng_stools, box.mesh, length, counter_depth, height, colliders)
     delete_object(box.mesh.item())
-    name_objects(stools, "kitchen_stool")
     colliders = ccol.collision_set(
         colliders.objs + island.all_objects + stools, cache=colliders
     )
@@ -1010,7 +1012,7 @@ def _hardware_rand(
         )
         placed.append(attached)
     kept, _ = keep_non_colliding(placed, colliders)
-    return name_objects([h.mesh for h in kept], "kitchen_hardware")
+    return [h.mesh for h in kept]
 
 
 def _kitchen_setup_demo_rand(rng: pf.RNG) -> KitchenSetupResult:
@@ -1019,7 +1021,7 @@ def _kitchen_setup_demo_rand(rng: pf.RNG) -> KitchenSetupResult:
     shape = room_shape_rand(rng_shape, dimensions=room_dimensions)
     walls = [
         plane_to_posed_canonical_mesh(
-            pf.nodes.to_mesh_object(pf.nodes.geo.object_info(wall).geometry)
+            pf.nodes.to_mesh_object(pf.nodes.geo.object_info(wall.obj).geometry)
         )
         for wall in shape.flat_walls
     ]
@@ -1031,10 +1033,11 @@ def _kitchen_setup_demo_rand(rng: pf.RNG) -> KitchenSetupResult:
         bbox_max=room_dimensions,
         colliders=colliders,
     )
-    for obj in walls + shape.flat_walls + [shape.walls, shape.floor, shape.ceiling]:
+    flat_walls = [wall.obj for wall in shape.flat_walls]
+    for obj in walls + flat_walls + [shape.walls, shape.floor, shape.ceiling]:
         delete_object(obj.item())
     ground = pf.ops.primitives.mesh_single_vertex()
-    ground.item().name = "kitchen_setup_ground"
+    ground.item().name = "kitchen_setup"
     all_objects = setup.all_objects + [ground]
     return setup._replace(
         all_objects=all_objects,

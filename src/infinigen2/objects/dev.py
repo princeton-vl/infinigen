@@ -44,4 +44,6 @@ def banana() -> pf.MeshObject:
         fill_caps=True,
     )
     result = pf.nodes.geo.subdivision_surface(mesh=mesh, level=3, uv_smooth="NONE")
-    return pf.nodes.to_mesh_object(geometry=result)
+    obj = pf.nodes.to_mesh_object(geometry=result)
+    obj.item().name = banana.__name__
+    return obj

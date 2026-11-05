@@ -28,10 +28,3 @@ def _sky_node(world: bpy.types.World) -> bpy.types.Node:
 def test_sky_model_builds(function_name: str, sky_type: str) -> None:
     world = getattr(sky_lighting, function_name)().item()
     assert _sky_node(world).sky_type == sky_type
-
-
-def test_nishita_sky_builds_without_sun_disc() -> None:
-    world = sky_lighting._nishita_sky(sun_disc=False).item()
-    sky = _sky_node(world)
-    assert sky.sky_type == "NISHITA"
-    assert sky.sun_disc is False

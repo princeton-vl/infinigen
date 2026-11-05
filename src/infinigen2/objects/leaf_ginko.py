@@ -18,8 +18,9 @@ from infinigen2.shaders.base_materials.leaf import leaf_rand as leaf_material_ra
 
 __all__ = [
     "LeafGinkoResult",
-    "leaf_ginko",
     "leaf_ginkgo_rand",
+    "leaf_ginko",
+    "leaf_ginko_mesh",
 ]
 
 # Coarse boundary-solved topology. The old pipeline subdivided a dense plane and
@@ -99,7 +100,7 @@ def ginko_silhouette(
         coordinate=dir_r * 0.5, multiplier=multiplier, scale_margin=scale_margin
     )
     g = (s1 - s05) * 2.0
-    r_b = pf.nodes.math.maximum((g - s1) / g, 0.0)
+    r_b = pf.nodes.math.maximum((g - s1) / g, 0.02)
 
     return pf.nodes.geo.set_position(geometry=geometry, position=dir_u * (v * r_b))
 
@@ -423,12 +424,12 @@ def geo_leaf_ginko(
         size_x=1.0, size_y=1.0, vertices_x=_ANGULAR_VERTS, vertices_y=_RING_VERTS
     )
     silhouette = ginko_silhouette(
-        geometry=grid.mesh,
+        geometry=pf.nodes.geo.flip_faces(grid.mesh),
         angle=angle,
         multiplier=multiplier,
         scale_margin=scale_margin,
     )
-    welded = pf.nodes.geo.merge_by_distance(geometry=silhouette, distance=1e-4)
+    welded = pf.nodes.geo.merge_by_distance(geometry=silhouette, distance=1e-5)
 
     input_position = pf.nodes.geo.input_position()
 
@@ -472,6 +473,7 @@ class LeafGinkoResult(NamedTuple):
     mesh: pf.MeshObject
 
 
+@pf.tracer.generator
 def leaf_ginko(
     size: float = 0.15,
     vein_length: float = 0.45,
@@ -482,12 +484,35 @@ def leaf_ginko(
     scale_margin: float = 6.5,
     material: pf.Material | None = None,
 ) -> LeafGinkoResult:
+    return leaf_ginko_mesh(
+        size=size,
+        vein_length=vein_length,
+        angle=math.radians(angle_deg),
+        multiplier=multiplier,
+        scale_vein=scale_vein,
+        scale_wave=scale_wave,
+        scale_margin=scale_margin,
+        material=material,
+    )
+
+
+@pf.tracer.generator
+def leaf_ginko_mesh(
+    size: float,
+    vein_length: float,
+    angle: float,
+    multiplier: float,
+    scale_vein: float,
+    scale_wave: float,
+    scale_margin: float,
+    material: pf.Material | None,
+) -> LeafGinkoResult:
     if material is None:
         material = pf.Material(surface=pf.nodes.shader.principled_bsdf())
 
     geo = geo_leaf_ginko(
         vein_length=vein_length,
-        angle=math.radians(angle_deg),
+        angle=angle,
         multiplier=multiplier,
         scale_vein=scale_vein,
         scale_wave=scale_wave,
@@ -496,12 +521,12 @@ def leaf_ginko(
     obj = pf.nodes.to_mesh_object_with_attributes(
         geo.geometry, attributes={"coordinate": geo.coordinate}
     )[0]
+    obj.item().name = leaf_ginko_mesh.__name__
     normalize_leaf_coord(obj)
 
     pf.ops.object.set_material(obj, material=material)
     pf.ops.object.set_transform(obj, scale=(size, size, size))
     pf.ops.mesh.transform_apply(obj)
-    pf.ops.modifier.subdivide_surface(obj, levels=2, _skip_apply=True)
     return LeafGinkoResult(mesh=obj)
 
 
@@ -515,13 +540,15 @@ def leaf_ginkgo_rand(
         material = leaf_material_rand(rngs[0], vector=leaf_coord())
 
     rng_geo = rngs[1]
-    return leaf_ginko(
+    obj = leaf_ginko_mesh(
         size=pf.random.uniform(rng_geo, 0.08, 0.2),
         vein_length=pf.random.uniform(rng_geo, 0.4, 0.5),
-        angle_deg=pf.random.uniform(rng_geo, -110.0, -70.0),
+        angle=math.radians(pf.random.uniform(rng_geo, -110.0, -70.0)),
         multiplier=pf.random.uniform(rng_geo, 1.9, 1.98),
         scale_vein=pf.random.uniform(rng_geo, 70.0, 90.0),
         scale_wave=pf.random.uniform(rng_geo, 4.0, 6.0),
         scale_margin=pf.random.uniform(rng_geo, 5.5, 7.5),
         material=material,
-    )
+    ).mesh
+    pf.ops.modifier.subdivide_surface(obj, levels=2, _skip_apply=True)
+    return LeafGinkoResult(mesh=obj)

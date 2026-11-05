@@ -36,6 +36,38 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
+@pf.tracer.generator
+def metric_uv_torus(major_radius: float, minor_radius: float) -> pf.MeshObject:
+    obj = pf.ops.primitives.mesh_torus(
+        major_segments=256,
+        minor_segments=128,
+        minor_radius=minor_radius,
+        major_radius=major_radius,
+        rotation=np.deg2rad(np.array((-40, -25, 140))),
+    )
+    diameters = 2 * np.pi * np.array([major_radius, minor_radius])
+    uvs = pf.ops.attr.uv_coords(obj) * diameters.reshape(1, 2)
+    pf.ops.attr.write_uv_coords(obj, uvs)
+    pf.ops.mesh.transform_apply(obj)
+    return obj
+
+
+@pf.tracer.generator
+def metric_uv_plane(
+    size: float,
+    location: tuple[float, float, float],
+    rotation: tuple[float, float, float],
+    number_cuts: int,
+) -> pf.MeshObject:
+    obj = pf.ops.primitives.mesh_plane(
+        location=t.Vector(location), size=size, rotation=t.Euler(rotation)
+    )
+    uvs = pf.ops.attr.uv_coords(obj)
+    pf.ops.attr.write_uv_coords(obj, uvs * size)
+    pf.ops.mesh.subdivide(obj, number_cuts=number_cuts)
+    return obj
+
+
 def _demo_sky() -> pf.World:
     return sky_lighting.sky_nishita(
         sun_rotation_deg=260, sun_elevation_deg=30
@@ -54,6 +86,7 @@ def material_sphere(
         radius=radius,
         location=t.Vector((0, 0, radius)),
     )
+    sphere.item().name = material_sphere.__name__
     pf.ops.modifier.subdivide_surface(sphere, levels=subdivisions, _skip_apply=True)
 
     if material is None:
@@ -67,6 +100,7 @@ def material_sphere(
     cam = hardcoded_camera(base_location=sphere.item().location, dist_mult=0.7)
     plane = grid_plane()
     ref = scale_reference(location=t.Vector((0.38, 0.76, -0.05)))
+    pf.ops.modifier.subdivide_surface(ref, levels=3, _skip_apply=True)
 
     return DevSceneResult(
         environment=environment, all_objects=[sphere, plane, ref], cameras=[cam]
@@ -81,19 +115,8 @@ def material_torus_uv(
     major_radius: float = 0.5,
     minor_radius: float = 0.25,
 ) -> DevSceneResult:
-    obj = pf.ops.primitives.mesh_torus(
-        major_segments=256,
-        minor_segments=128,
-        minor_radius=minor_radius,
-        major_radius=major_radius,
-        rotation=np.deg2rad(np.array((-40, -25, 140))),
-    )
-
-    diameters = 2 * np.pi * np.array([major_radius, minor_radius])
-    uvs = pf.ops.attr.uv_coords(obj) * diameters.reshape(1, 2)
-    pf.ops.attr.write_uv_coords(obj, uvs)
-
-    pf.ops.mesh.transform_apply(obj)
+    obj = metric_uv_torus(major_radius, minor_radius)
+    obj.item().name = material_torus_uv.__name__
     pf.ops.modifier.subdivide_surface(obj, levels=3, _skip_apply=True)
     obj.item().location.z = obj.item().dimensions.z / 2
 
@@ -109,6 +132,7 @@ def material_torus_uv(
     cam = hardcoded_camera(base_location=obj.item().location, dist_mult=0.65)
     plane = grid_plane()
     ref = scale_reference(location=t.Vector((0.38, 0.76, -0.05)))
+    pf.ops.modifier.subdivide_surface(ref, levels=3, _skip_apply=True)
 
     return DevSceneResult(
         environment=environment, all_objects=[obj, plane, ref], cameras=[cam]
@@ -121,17 +145,8 @@ def material_plane_uv(
     material: pf.Material | None = None,
     environment: pf.World | None = None,
 ) -> DevSceneResult:
-    size = 2
-    obj = pf.ops.primitives.mesh_plane(
-        location=t.Vector((0, 0, 1)),
-        size=size,
-        rotation=t.Euler((np.pi / 2, 0, 0)),
-    )
-
-    uvs = pf.ops.attr.uv_coords(obj)
-    pf.ops.attr.write_uv_coords(obj, uvs * size)
-
-    pf.ops.mesh.subdivide(obj, number_cuts=100)
+    obj = metric_uv_plane(2.0, (0.0, 0.0, 1.0), (np.pi / 2, 0.0, 0.0), 100)
+    obj.item().name = material_plane_uv.__name__
     pf.ops.modifier.subdivide_surface(obj, levels=3, _skip_apply=True)
 
     if material is None:
@@ -150,6 +165,7 @@ def material_plane_uv(
     if environment is None:
         environment = _demo_sky()
     ref = scale_reference(location=t.Vector((0.38, 0.76, -0.05)))
+    pf.ops.modifier.subdivide_surface(ref, levels=3, _skip_apply=True)
 
     return DevSceneResult(
         environment=environment, all_objects=[obj, plane, ref], cameras=[cam]
@@ -162,18 +178,9 @@ def material_plane_horizontal_uv(
     material: pf.Material | None = None,
     environment: pf.World | None = None,
 ) -> DevSceneResult:
-    size = 1
     surface_z = 0.12
-    obj = pf.ops.primitives.mesh_plane(
-        location=t.Vector((0, 0, surface_z)),
-        size=size,
-        rotation=t.Euler((0, 0, 0)),
-    )
-
-    uvs = pf.ops.attr.uv_coords(obj)
-    pf.ops.attr.write_uv_coords(obj, uvs * size)
-
-    pf.ops.mesh.subdivide(obj, number_cuts=100)
+    obj = metric_uv_plane(1.0, (0.0, 0.0, surface_z), (0.0, 0.0, 0.0), 100)
+    obj.item().name = material_plane_horizontal_uv.__name__
     pf.ops.modifier.subdivide_surface(obj, levels=3)
 
     if material is None:
@@ -183,6 +190,7 @@ def material_plane_horizontal_uv(
     pf.ops.object.set_material(obj, material=material)
     plane = grid_plane()
     ref = scale_reference(location=t.Vector((0.65, 0.0, -0.05)))
+    pf.ops.modifier.subdivide_surface(ref, levels=3, _skip_apply=True)
 
     # Rests on the undisplaced surface, so displacement reads as burying or exposing it.
     datum = banana()
@@ -211,15 +219,8 @@ def material_ground_plane(
 ) -> DevSceneResult:
     """Ground patch at terrain scale, where position-driven terrain materials are tuned to read."""
     surface_z = 0.12
-    obj = pf.ops.primitives.mesh_plane(
-        location=t.Vector((0, 0, surface_z)),
-        size=size,
-    )
-
-    uvs = pf.ops.attr.uv_coords(obj)
-    pf.ops.attr.write_uv_coords(obj, uvs * size)
-
-    pf.ops.mesh.subdivide(obj, number_cuts=200)
+    obj = metric_uv_plane(size, (0.0, 0.0, surface_z), (0.0, 0.0, 0.0), 200)
+    obj.item().name = material_ground_plane.__name__
     pf.ops.modifier.subdivide_surface(obj, levels=3)
 
     if material is None:
@@ -229,6 +230,7 @@ def material_ground_plane(
     pf.ops.object.set_material(obj, material=material)
     plane = grid_plane()
     ref = scale_reference(location=t.Vector((size * 0.5 + 0.15, 0.0, -0.05)))
+    pf.ops.modifier.subdivide_surface(ref, levels=3, _skip_apply=True)
 
     # Rests on the undisplaced surface, so displacement reads as burying or exposing it.
     datum = banana()
@@ -260,6 +262,7 @@ def material_monkey(
         location=t.Vector((0, 0, s / 2)),
         rotation=t.Euler((0, 0, np.pi * 0.1)),
     )
+    obj.item().name = material_monkey.__name__
     pf.ops.modifier.subdivide_surface(obj, levels=5, _skip_apply=True)
 
     if material is None:
@@ -274,6 +277,7 @@ def material_monkey(
     ref = pf.ops.primitives.mesh_cylinder(
         radius=0.1, depth=0.02, location=t.Vector((0.1, 0.1, 0.01)), vertices=128
     )
+    ref.item().name = "demo_scale_reference"
 
     return DevSceneResult(
         environment=environment, all_objects=[obj, plane, ref], cameras=[cam]
@@ -305,6 +309,7 @@ def material_plane_orthographic(
         location=t.Vector((0, 0, 0)),
         size=size,
     )
+    obj.item().name = material_plane_orthographic.__name__
 
     if material is None:
         logger.warning("No material provided; using a default material.")
@@ -350,6 +355,7 @@ def material_cube(
         location=t.Vector((corner_x, corner_y, 0.01)),
         vertices=128,
     )
+    ref.item().name = "demo_scale_reference"
 
     return DevSceneResult(
         environment=environment, all_objects=[obj, plane, ref], cameras=[cam]
@@ -379,6 +385,7 @@ def material_banana(
     if environment is None:
         environment = _demo_sky()
     ref = scale_reference(location=t.Vector((0.38, 0.76, -0.05)))
+    pf.ops.modifier.subdivide_surface(ref, levels=3, _skip_apply=True)
     return DevSceneResult(
         environment=environment, all_objects=[obj, plane, ref], cameras=[cam]
     )

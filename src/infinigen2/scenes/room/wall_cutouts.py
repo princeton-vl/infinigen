@@ -26,7 +26,9 @@ from infinigen2.scenes.placement.distribute import (
 )
 from infinigen2.scenes.room.wall_base import (
     ROOM_SUBSURF_LEVELS,
+    SURFACE_UV_WINDING_SIGN,
     WallResult,
+    WallSurface,
     extrude_for_thickness,
     finish_wall_plane,
     fit_grid_margins,
@@ -37,11 +39,14 @@ from infinigen2.scenes.room.wall_base import (
     upright_cabinet_footprint,
     wall_plain_rand,
     wall_storage_width_rand,
-    wall_uv_dimensions,
 )
 from infinigen2.shaders.functionality_lists import skirt_material_rand
 from infinigen2.util import mesh as mesh_util
-from infinigen2.util.curve import curve_to_mesh_with_uv
+from infinigen2.util.curve import (
+    corner_ring_edges,
+    curve_to_mesh_with_uv,
+    outline_corner,
+)
 from infinigen2.uv_surface import grid_placement
 
 __all__ = [
@@ -82,23 +87,10 @@ def _subdivide_rounded_cutout(
         obj,
         levels=levels,
         boundary_smooth="PRESERVE_CORNERS",
+        uv_smooth="PRESERVE_CORNERS_AND_JUNCTIONS",
         _skip_apply=True,
     )
     return obj
-
-
-@pf.nodes.node_function
-def _outline_corner(corner_degrees: t.SocketOrVal[float]) -> pf.ProcNode[bool]:
-    position = pf.nodes.geo.input_position()
-    prev_index = pf.nodes.geo.offset_point_in_curve(offset=-1).point_index
-    next_index = pf.nodes.geo.offset_point_in_curve(offset=1).point_index
-    prev_position = pf.nodes.geo.field_at_index(value=position, index=prev_index)
-    next_position = pf.nodes.geo.field_at_index(value=position, index=next_index)
-    incoming = pf.nodes.math.vector_normalize(position - prev_position)
-    outgoing = pf.nodes.math.vector_normalize(next_position - position)
-    turn_cos = pf.nodes.math.vector_dot_product(a=incoming, b=outgoing)
-    corner_cos = pf.nodes.math.cos(pf.nodes.math.deg_to_rad(corner_degrees))
-    return pf.nodes.func.less_than(a=turn_cos, b=corner_cos)
 
 
 @pf.nodes.node_function
@@ -114,28 +106,13 @@ def _split_long_segments(
 
 
 @pf.nodes.node_function
-def _corner_ring_edges(
-    ring: t.SocketOrVal[float],
-    is_corner: t.SocketOrVal[float],
-) -> pf.ProcNode[bool]:
-    ends = pf.nodes.geo.input_mesh_edge_vertices()
-    ring_1 = pf.nodes.geo.field_at_index(value=ring, index=ends.vertex_index_1)
-    ring_2 = pf.nodes.geo.field_at_index(value=ring, index=ends.vertex_index_2)
-    corner_1 = pf.nodes.geo.field_at_index(value=is_corner, index=ends.vertex_index_1)
-    corner_2 = pf.nodes.geo.field_at_index(value=is_corner, index=ends.vertex_index_2)
-    same_ring = pf.nodes.math.absolute(ring_1 - ring_2) < 1e-4
-    both_corner = pf.nodes.math.minimum(corner_1, corner_2) > 0.999
-    return pf.nodes.func.boolean_and(same_ring, both_corner)
-
-
-@pf.nodes.node_function
 def _smooth_outline_curve(
     curve: pf.ProcNode[pf.CurveObject],
     corner_degrees: t.SocketOrVal[float],
 ) -> pf.ProcNode[pf.CurveObject]:
     """Bezier through the outline points, keeping turns above `corner_degrees` sharp."""
     marked = pf.nodes.geo.capture_attribute(
-        geometry=curve, is_corner=_outline_corner(corner_degrees)
+        geometry=curve, is_corner=outline_corner(corner_degrees)
     )
     bezier = pf.nodes.geo.curve_spline_type(marked.geometry, spline_type="BEZIER")
     smooth = pf.nodes.geo.curve_set_handles(bezier, handle_type="AUTO")
@@ -299,7 +276,7 @@ def cutout_spaced_instances(
     pf.ops.object.set_transform(
         trim_edges, surface.item().location, surface.item().rotation_euler
     )
-    trim_edges.item().name = "cutout_trim_edges"
+    trim_edges.item().name = cutout_spaced_instances.__name__
 
     sill: pf.MeshObject | None = None
     lightblocker: pf.MeshObject | None = None
@@ -310,7 +287,7 @@ def cutout_spaced_instances(
             selection=faces_res.is_instance_face,
             inset=faces_res.inset,
             thickness=wall_thickness,
-            uv_winding_sign=mesh_util.uv_winding_sign(surface),
+            uv_winding_sign=SURFACE_UV_WINDING_SIGN,
             delete_facecap=not keep_facecap,
             chamfer=cutout_chamfer,
         )
@@ -331,24 +308,25 @@ def cutout_spaced_instances(
             surface=surface_material.surface,
             displacement=surface_material.displacement,
         )
-        sill.item().name = "room_wall_sill"
+        sill.item().name = cutout_spaced_instances.__name__
 
         lightblocker = pf.nodes.to_mesh_object(split.lightblocker)
         pf.ops.object.set_transform(
             lightblocker, surface.item().location, surface.item().rotation_euler
         )
-        lightblocker.item().name = "room_wall_back"
+        lightblocker.item().name = cutout_spaced_instances.__name__
 
-        cut = split.wall
+        geom = split.wall
     else:
         # flat hole: drop the footprint faces, leaving a sharp-edged opening
-        cut = pf.nodes.geo.separate_geometry(
+        geom = pf.nodes.geo.separate_geometry(
             faces_res.mesh, selection=faces_res.is_instance_face, domain="FACE"
         ).inverted
-    # weld coincident verts so boundary slivers don't break canonicalization
-    geom = pf.nodes.geo.merge_by_distance(cut, distance=0.001)
     if is_rectangular:
         geom = finish_wall_plane(pf.nodes.to_mesh_object(geom), surface_material)
+        pf.ops.modifier.subdivide_surface(
+            geom, levels=ROOM_SUBSURF_LEVELS, _skip_apply=True
+        )
     else:
         geom = _subdivide_rounded_cutout(geom, threshold_degrees=35.0)
         pf.ops.object.set_material(
@@ -394,12 +372,12 @@ def cutout_trim_rand(
     marked = pf.nodes.geo.capture_attribute(
         geometry=curve_geo,
         ring=pf.nodes.geo.input_index().astype(dtype=float),
-        is_corner=_outline_corner(45.0).astype(dtype=float),
+        is_corner=outline_corner(45.0).astype(dtype=float),
     )
     profile_geo = pf.nodes.geo.object_info(profile_curve).geometry
     trim = curve_to_mesh_with_uv(marked.geometry, profile_geo).mesh
     trim = pf.nodes.geo.flip_faces(trim)
-    corner_edges = _corner_ring_edges(ring=marked.ring, is_corner=marked.is_corner)
+    corner_edges = corner_ring_edges(ring=marked.ring, is_corner=marked.is_corner)
     obj = _subdivide_rounded_cutout(
         trim, threshold_degrees=35.0, sharp_edges=corner_edges, levels=1
     )
@@ -409,6 +387,7 @@ def cutout_trim_rand(
     pf.ops.object.set_material(
         obj, surface=material.surface, displacement=material.displacement
     )
+    obj.item().name = "cutout_trim"
     return obj
 
 
@@ -440,7 +419,7 @@ def arrange_window_portals(
 
 def _resolve_window_inputs(
     rng: pf.RNG,
-    wall: pf.MeshObject,
+    wall: WallSurface,
     window_obj: pf.MeshObject | None,
     window_portal: pf.LightObject | None,
     top_profile_height: float,
@@ -472,7 +451,8 @@ def _resolve_window_inputs(
         )
 
     rng_defaults, rng_feature, rng_window = rng.spawn(3)
-    wall_width, wall_height = wall_uv_dimensions(wall)
+    wall_width = wall.width
+    wall_height = wall.height
     if window_obj is None:
         width = max(1.0, min(2.0, 0.5 * wall_width))
         height = max(1.0, min(2.0, 0.7 * wall_height))
@@ -515,7 +495,7 @@ def _resolve_window_inputs(
 @pf.tracer.grammar
 def window_spaced_rand(
     rng: pf.RNG,
-    wall: pf.MeshObject,
+    wall: WallSurface,
     window_obj: pf.MeshObject,
     wall_material: pf.Material,
     spacing: float,
@@ -528,7 +508,7 @@ def window_spaced_rand(
     width = window_obj.item().dimensions.y
     wmin, _ = pf.ops.attr.bbox_min_max(window_obj)
 
-    wall_uv_width, _ = wall_uv_dimensions(wall)
+    wall_uv_width = wall.width
 
     slack = max(0.0, wall_uv_width - width - 0.01)
     max_margin = min(0.3 * wall_uv_width, 2.0 * width, slack)
@@ -547,15 +527,15 @@ def window_spaced_rand(
             margin_low_x,
             margin_high_x,
         )
-        wall, wall_thick = plain_wall(wall, wall_material, wall_thickness)
-        return CutoutResult(wall, None, wall_thick, [], None)
+        finished, wall_thick = plain_wall(wall, wall_material, wall_thickness)
+        return CutoutResult(finished, None, wall_thick, [], None)
 
     if reveal_depth is None:
         reveal_depth = pf.random.uniform(rng, 0.1, 0.7)
     recess_pct = 0.9 + 0.1 * pf.random.uniform(rng, 0.0, 1.0)
 
     res = cutout_spaced_instances(
-        surface=wall,
+        surface=wall.obj,
         instance=window_obj,
         surface_material=wall_material,
         spacing=pf.Vector((spacing, 0, 0)),
@@ -581,7 +561,7 @@ def window_spaced_rand(
 @pf.tracer.grammar
 def wall_windows_rand(
     rng: pf.RNG,
-    wall: pf.MeshObject | None = None,
+    wall: WallSurface | None = None,
     wall_material: pf.Material | None = None,
     window_obj: pf.MeshObject | None = None,
     window_portal: pf.LightObject | None = None,
@@ -662,13 +642,14 @@ def wall_windows_rand(
 @pf.tracer.grammar
 def wall_painting_grid_rand(
     rng: pf.RNG,
-    wall: pf.MeshObject | None = None,
+    wall: WallSurface | None = None,
     wall_material: pf.Material | None = None,
     wall_thickness: float = 0.05,
     colliders: ccol.CollisionSet | None = None,
 ) -> WallResult:
     rng, wall, wall_material = resolve_wall_inputs(rng, wall, wall_material)
-    wall_width, wall_height = wall_uv_dimensions(wall)
+    wall_width = wall.width
+    wall_height = wall.height
 
     # margins first, then size each painting against the remaining wall region
     top_gap = max(0.12, 0.10 * wall_height)
@@ -703,7 +684,7 @@ def wall_painting_grid_rand(
         name="UVMap", data_type=pf.NodeDataType.FLOAT_VECTOR
     ).attribute
     grid_res = grid_placement.grid_from_spacing(
-        uv_surface=wall,
+        uv_surface=wall.obj,
         target_uv=uv_meters,
         instance=art,
         spacing=pf.Vector((spacing_x, spacing_y, 0)),
@@ -712,7 +693,7 @@ def wall_painting_grid_rand(
         y_instances_max=n_rows,
     )
     instances = grid_placement.place_instances_on_uv_grid(
-        surface=wall,
+        surface=wall.obj,
         uv_field=uv_meters,
         grid_mesh=grid_res.grid_mesh,
         query_uv=grid_res.query_uv,
@@ -737,10 +718,10 @@ def wall_painting_grid_rand(
             painting_aliases, colliders, key=lambda obj: obj
         )
 
-    wall, wall_thick = plain_wall(wall, wall_material, wall_thickness)
+    finished, wall_thick = plain_wall(wall, wall_material, wall_thickness)
     return WallResult(
-        all_objects=[wall, wall_thick, *painting_aliases],
-        wall_planes=[wall],
+        all_objects=[finished, wall_thick, *painting_aliases],
+        wall_planes=[finished],
         backs=[wall_thick],
         sills=[],
         storage_containers=[],
@@ -753,28 +734,23 @@ def wall_painting_grid_rand(
 @pf.tracer.grammar
 def wall_storage_shelf_rand(
     rng: pf.RNG,
-    wall: pf.MeshObject | None = None,
+    wall: WallSurface | None = None,
     wall_material: pf.Material | None = None,
     wall_thickness: float = 0.05,
 ) -> WallResult:
     rng, wall, wall_material = resolve_wall_inputs(rng, wall, wall_material)
-    wall_width, wall_height = wall_uv_dimensions(wall)
+    rng, rng_width, rng_cabinet = rng.spawn(3)
+    wall_width = wall.width
+    wall_height = wall.height
 
     depth = pf.random.uniform(rng, 0.3, 0.61)
 
     # half-depth edge margins keep corner cabinets clear
     min_margin = depth * 0.5
 
-    # bimodal cabinet height: short band vs tall band
-    def _short_band() -> float:
-        return wall_height * pf.random.uniform(rng, 0.20, 0.50)
+    height = wall_height * pf.random.uniform(rng, 0.20, 0.98)
 
-    def _tall_band() -> float:
-        return wall_height * pf.random.uniform(rng, 0.60, 0.98)
-
-    height = pf.control.choice(rng, [(_short_band, 1.0), (_tall_band, 1.0)])()
-
-    width = wall_storage_width_rand(rng, wall_width, min_margin)
+    width = wall_storage_width_rand(rng_width, wall_width, min_margin)
     spacing_x = pf.random.uniform(rng, 0.1, 0.5)
 
     margin_split = pf.random.uniform(rng, 0.375, 0.625)
@@ -785,7 +761,7 @@ def wall_storage_shelf_rand(
     hole_depth = max(0.02, recess_frac**0.5 * depth)
 
     cab = storage.storage_cell_shelf_rand(
-        rng,
+        rng_cabinet,
         dimensions=pf.Vector((depth, width, height)),
         back_width=0.0,
     ).mesh
@@ -793,7 +769,7 @@ def wall_storage_shelf_rand(
     footprint = upright_cabinet_footprint(width, height)
 
     geom, sill, lightblocker, cabinet_aliases, _trim_edges = cutout_spaced_instances(
-        surface=wall,
+        surface=wall.obj,
         instance=cab,
         surface_material=wall_material,
         spacing=pf.Vector((spacing_x, 0, 0)),
@@ -835,16 +811,18 @@ def wall_storage_shelf_rand(
 @pf.tracer.grammar
 def wall_cubby_rand(
     rng: pf.RNG,
-    wall: pf.MeshObject | None = None,
+    wall: WallSurface | None = None,
     wall_material: pf.Material | None = None,
     wall_thickness: float = 0.05,
 ) -> WallResult:
     rng, wall, wall_material = resolve_wall_inputs(rng, wall, wall_material)
-    wall_width, wall_height = wall_uv_dimensions(wall)
+    rng, rng_keep_choice, rng_width, rng_cabinet = rng.spawn(4)
+    wall_width = wall.width
+    wall_height = wall.height
 
     depth = pf.random.uniform(rng, 0.3, 0.61)
     min_margin = depth * 0.5
-    width = wall_storage_width_rand(rng, wall_width, min_margin)
+    width = wall_storage_width_rand(rng_width, wall_width, min_margin)
 
     bottom = pf.random.uniform(rng, 0.25, 0.45) * wall_height
     top = (0.02 + 0.18 * pf.random.uniform(rng, 0.0, 1.0) ** 2) * wall_height
@@ -864,7 +842,7 @@ def wall_cubby_rand(
     hole_depth = depth
 
     cab = storage.storage_cell_shelf_rand(
-        rng,
+        rng_cabinet,
         dimensions=pf.Vector((depth, width, height)),
         back_width=0.0,
     ).mesh
@@ -872,7 +850,7 @@ def wall_cubby_rand(
     footprint = upright_cabinet_footprint(width, height)
 
     geom, sill, lightblocker, cabinet_aliases, _trim_edges = cutout_spaced_instances(
-        surface=wall,
+        surface=wall.obj,
         instance=cab,
         surface_material=wall_material,
         spacing=pf.Vector((spacing_x, spacing_y, 0)),
@@ -927,24 +905,29 @@ def wall_cubby_rand(
             storages=sills,
         )
 
-    return pf.control.choice(rng, [(_keep_cabinets, 1.0), (_drop_cabinets, 2.0)])()
+    keep_func = pf.control.choice(
+        rng_keep_choice, [(_keep_cabinets, 1.0), (_drop_cabinets, 2.0)]
+    )
+    return keep_func()
 
 
 @pf.tracer.grammar
 def wall_doors_rand(
     rng: pf.RNG,
-    wall: pf.MeshObject | None = None,
+    wall: WallSurface | None = None,
     wall_material: pf.Material | None = None,
     wall_thickness: float = 0.05,
 ) -> WallResult:
     rng, wall, wall_material = resolve_wall_inputs(rng, wall, wall_material)
-    wall_width, wall_height = wall_uv_dimensions(wall)
+    rng, rng_door_choice, rng_shape_choice, rng_shape = rng.spawn(4)
+    wall_width = wall.width
+    wall_height = wall.height
 
     door_width = pf.random.uniform(rng, 0.85, 1.2)
     door_height = min(pf.random.uniform(rng, 2.0, 2.2), wall_height * 0.9)
     door_thickness = pf.random.clip_gaussian(rng, 0.0318, 0.0127, 0.0254, 0.0762)
     door_func = pf.control.choice(
-        rng, [(door_composite_rand, 2.0), (door_double_rand, 1.0)]
+        rng_door_choice, [(door_composite_rand, 2.0), (door_double_rand, 1.0)]
     )
 
     spacing_x = pf.random.uniform(rng, 2.0, 6.0)
@@ -976,7 +959,7 @@ def wall_doors_rand(
         # returns origin verts
         floor_lift = 0.01
         return cutout_spaced_instances(
-            surface=wall,
+            surface=wall.obj,
             instance=door,
             surface_material=wall_material,
             spacing=pf.Vector((spacing_x, 0, 0)),
@@ -997,11 +980,10 @@ def wall_doors_rand(
         door = door_glass_from_profile_rand(rng_door, profile)
         return cut_door(door.mesh, profile.top_profile_height)
 
-    rng_shape_choice, _ = rng.spawn(2)
     door_shape_func = pf.control.choice(
         rng_shape_choice, [(rectangular_door, 0.9), (arched_door, 0.1)]
     )
-    geom, sill, lightblocker, door_aliases, _trim_edges = door_shape_func(rng)
+    geom, sill, lightblocker, door_aliases, _trim_edges = door_shape_func(rng_shape)
     if not door_aliases:
         logger.warning(
             "door: grid fit 0 doors on %.2fm wall (door %.2f, spacing %.2f, "
@@ -1051,7 +1033,7 @@ def _door_affordance_collider(
         location=(center.x, center.y, height / 2),
         rotation_euler=(0.0, 0.0, angle),
     )
-    collider.item().name = f"door_affordance.{index:02d}"
+    collider.item().name = "door_affordance_collider"
     collider.item().hide_render = True
     collider.item().display_type = "WIRE"
     return collider
@@ -1060,12 +1042,13 @@ def _door_affordance_collider(
 @pf.tracer.grammar
 def wall_full_window_rand(
     rng: pf.RNG,
-    wall: pf.MeshObject | None = None,
+    wall: WallSurface | None = None,
     wall_material: pf.Material | None = None,
     wall_thickness: float = 0.05,
 ) -> WallResult:
     rng, wall, wall_material = resolve_wall_inputs(rng, wall, wall_material)
-    wall_width, wall_height = wall_uv_dimensions(wall)
+    wall_width = wall.width
+    wall_height = wall.height
 
     eps = 0.02
     gap_x = 0.10 * wall_width
@@ -1107,7 +1090,7 @@ def wall_full_window_rand(
     split_y = pf.random.uniform(rng, 0.0, 1.0)
 
     geom, _sill, _lightblocker, win_aliases, _trim_edges = cutout_spaced_instances(
-        surface=wall,
+        surface=wall.obj,
         instance=win_obj,
         surface_material=wall_material,
         spacing=pf.Vector((0, 0, 0)),
@@ -1132,7 +1115,7 @@ def wall_full_window_rand(
     pf.ops.object.set_transform(
         wall_back, geom.item().location, geom.item().rotation_euler
     )
-    wall_back.item().name = "room_wall_back"
+    wall_back.item().name = "wall_full_window"
 
     portals = []
     if win_result.light is not None and win_aliases:

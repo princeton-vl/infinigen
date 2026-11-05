@@ -108,12 +108,10 @@ def drawer(
     geo = mesh.crease_sharp(geo, threshold_degrees=30.0)
     geo = pf.nodes.geo.set_material(geo, material=material)
     obj = pf.nodes.to_mesh_object(geo)
+    obj.item().name = drawer.__name__
     pf.ops.modifier.bevel(obj, width=min(0.001, board * 0.1), segments=2)
     pf.ops.object.set_transform(obj, location=(tray_depth * opening_fraction, 0, 0))
     pf.ops.mesh.transform_apply(obj, location=True, rotation=False, scale=False)
-    obj.item().name = "drawer"
-    # left unapplied so a handle joined in afterwards renders at the same density
-    pf.ops.modifier.subdivide_surface(obj, levels=2, _skip_apply=True)
     return DrawerResult(obj)
 
 
@@ -199,7 +197,7 @@ def drawer_rand(
         r_bevel_choice,
         [(0.0, 1.0), (pf.random.uniform(r_bevel_body, 0.001, 0.004), 1.0)],
     )
-    result = drawer(
+    body = drawer(
         dimensions,
         material,
         front[0],
@@ -208,7 +206,8 @@ def drawer_rand(
         thickness=min(0.012, smallest * 0.08),
         front_bevel=front_bevel,
         opening_fraction=opening_fraction,
-    )
+    ).mesh
+    pf.ops.modifier.subdivide_surface(body, levels=2, _skip_apply=True)
     if handle is None:
         handle = drawer_handle_rand(r_handle, front[1])
     pf.ops.object.set_transform(
@@ -220,5 +219,5 @@ def drawer_rand(
         ),
         rotation_euler=(math.pi / 2, 0, 0),
     )
-    pf.ops.object.join(result.mesh, handle)
-    return result
+    pf.ops.object.join(body, handle)
+    return DrawerResult(body)

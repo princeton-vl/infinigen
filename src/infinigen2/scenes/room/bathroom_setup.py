@@ -170,7 +170,8 @@ def _toilet_against_wall_rand(
 
 
 def _bathtub_wall_hardware_rand(rng: pf.RNG) -> list[MeshResult]:
-    return [bathroom_hardware.hardware_bathroom_rand(rng)]
+    hardware = bathroom_hardware.hardware_bathroom_rand(rng)
+    return [hardware]
 
 
 def _place_bathtub_composite(
@@ -402,23 +403,6 @@ def _bathroom_hardware_objects_rand(
     return placed_hardware, colliders
 
 
-def _name_materials(obj: pf.MeshObject, base: str) -> None:
-    for i, slot in enumerate(obj.item().material_slots):
-        if slot.material is not None:
-            slot.material.name = f"{base}_{i}"
-
-
-def _name_objects(
-    objects: list[pf.MeshObject],
-    category: str,
-) -> list[pf.MeshObject]:
-    for i, obj in enumerate(objects):
-        name = f"{category}_{i:02d}"
-        obj.item().name = name
-        _name_materials(obj, name)
-    return objects
-
-
 def _fixture_result(
     sink_setup: BathroomSinkSetupResult,
     toilets: list[MeshResult],
@@ -432,24 +416,16 @@ def _fixture_result(
     toilet_objects = _mesh_objects(toilets)
     storages = _mesh_objects(sink_setup.storages)
     named_objects = {
-        "bathroom_sink": _name_objects(sinks, "bathroom_sink"),
-        "sink_tap": _name_objects(_mesh_objects(sink_setup.sink_taps), "sink_tap"),
-        "sink_support": _name_objects(
-            _mesh_objects(sink_setup.sink_supports), "sink_support"
-        ),
-        "mirror": _name_objects(_mesh_objects(sink_setup.mirrors), "mirror"),
-        "bathroom_wall_storage": _name_objects(
-            _mesh_objects(sink_setup.wall_storage), "bathroom_wall_storage"
-        ),
-        "toilet": _name_objects(toilet_objects, "toilet"),
-        "bathtub": _name_objects(bathtubs, "bathtub"),
-        "bathtub_tap": _name_objects(_mesh_objects(bathtub_setup.taps), "bathtub_tap"),
-        "bathtub_hardware": _name_objects(
-            _mesh_objects(bathtub_setup.hardware), "bathtub_hardware"
-        ),
-        "bathroom_hardware": _name_objects(
-            _mesh_objects(hardware), "bathroom_hardware"
-        ),
+        "bathroom_sink": sinks,
+        "sink_tap": _mesh_objects(sink_setup.sink_taps),
+        "sink_support": _mesh_objects(sink_setup.sink_supports),
+        "mirror": _mesh_objects(sink_setup.mirrors),
+        "bathroom_wall_storage": _mesh_objects(sink_setup.wall_storage),
+        "toilet": toilet_objects,
+        "bathtub": bathtubs,
+        "bathtub_tap": _mesh_objects(bathtub_setup.taps),
+        "bathtub_hardware": _mesh_objects(bathtub_setup.hardware),
+        "bathroom_hardware": _mesh_objects(hardware),
     }
     all_objects = [obj for objects in named_objects.values() for obj in objects]
     return BathroomSetupResult(
@@ -516,7 +492,7 @@ def _bathroom_setup_demo_rand(rng: pf.RNG) -> BathroomSetupResult:
     setup = _generated_sink_bathroom_rand(rng, [wall], 3.0, ccol.collision_set([wall]))
     delete_object(wall.item())
     ground = pf.ops.primitives.mesh_single_vertex()
-    ground.item().name = "bathroom_setup_ground"
+    ground.item().name = "bathroom_setup"
     named_objects = dict(setup.named_objects)
     named_objects["bathroom_setup_ground"] = [ground]
     all_objects = [obj for objects in named_objects.values() for obj in objects]
@@ -633,7 +609,8 @@ def _bathroom_storage_rand(
             (storage.storage_cabinet_with_door_rand, 1.0),
         ],
     )
-    return storage_func(rng_storage, dimensions=dimensions)
+    result = storage_func(rng_storage, dimensions=dimensions)
+    return result
 
 
 def _pedestal_sink_support_rand(
@@ -644,18 +621,16 @@ def _pedestal_sink_support_rand(
     surface_material: pf.Material | None,
 ) -> _SinkSupportResult:
     rng_dimensions, rng_shape = rng.spawn(2)
-    pedestal = bathtub.sink_pedestal(
+    obj = bathtub.sink_pedestal(
         height=support_height,
         top_radius=sink_width * pf.random.uniform(rng_dimensions, 0.075, 0.1),
         bottom_radius=sink_width * pf.random.uniform(rng_dimensions, 0.1, 0.3),
         is_circular=pf.control.choice(rng_shape, [(True, 1.0), (False, 1.0)]),
         material=surface_material,
-    )
-    pf.ops.object.set_transform(
-        pedestal.mesh,
-        location=(sink_depth / 2.0, 0.0, 0.001),
-    )
-    return _SinkSupportResult([pedestal], [])
+    ).mesh
+    pf.ops.modifier.subdivide_surface(obj, levels=2, _skip_apply=True)
+    pf.ops.object.set_transform(obj, location=(sink_depth / 2.0, 0.0, 0.001))
+    return _SinkSupportResult([bathtub.SinkPedestalResult(mesh=obj)], [])
 
 
 def _cabinet_sink_support_rand(
@@ -674,7 +649,6 @@ def _cabinet_sink_support_rand(
         rng_storage,
         pf.Vector((support_depth, support_width, support_height)),
     )
-    cabinet.mesh.item().name = "sink_cabinet"
     pf.ops.object.set_transform(
         cabinet.mesh,
         location=(0.0, -support_width / 2.0, 0.001),
@@ -830,7 +804,6 @@ def _mirror_wall_feature_rand(
         )
     )
     mirror = wall_art.mirror_rand(rng_mirror, dimensions=dimensions)
-    mirror.mesh.item().name = "mirror"
     _attach_above_sink(mirror.mesh, sink_result.mesh, gap)
     return _WallFeatureResult([mirror], [])
 
@@ -855,7 +828,6 @@ def _storage_wall_feature_rand(
         rng_storage,
         dimensions=pf.Vector((depth, sink_width, height)),
     )
-    cabinet.mesh.item().name = "bathroom_wall_storage"
     _attach_above_sink(cabinet.mesh, sink_result.mesh, gap)
     return _WallFeatureResult([], [cabinet])
 
@@ -1078,7 +1050,7 @@ def bathroom_fixture_clearance(
         scale=(probe_size, probe_size, probe_height),
     )
     clearance.item().matrix_world = pf.Matrix(transform)
-    clearance.item().name = "bathroom_fixture_clearance"
+    clearance.item().name = bathroom_fixture_clearance.__name__
     clearance.item().hide_render = True
     clearance.item().display_type = "WIRE"
     return clearance

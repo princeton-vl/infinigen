@@ -131,6 +131,11 @@ def _resolve_viewlayer_pass(
         )
 
     viewlayer_pass = BLENDER_VIEWLAYER_PASS_CONFIG[render_pass.type]
+    if viewlayer_pass is None:
+        raise ValueError(
+            f"{configure_compositor_viewlayer_output.__name__} has no view-layer pass "
+            f"wired up for {render_pass.type}"
+        )
     pass_name = viewlayer_pass.pass_name
 
     if hasattr(view_layer, pass_name):
@@ -284,6 +289,12 @@ def configure_object_index_table() -> list[bpy.types.Object | None]:
     exporter writing per-object rows must index them by this table so its rows line up
     with the object-index segmentation pass."""
     objects = list(bpy.data.objects)
+    # obj.pass_index is a signed 16-bit short; it clamps rather than raises past 32767.
+    if len(objects) > 32767:
+        raise ValueError(
+            f"{len(objects)} objects exceeds pass_index's range of 32767; "
+            "object-index segmentation would silently collide"
+        )
     for i, obj in enumerate(objects, start=1):
         obj.pass_index = i
     return [None, *objects]
@@ -294,6 +305,11 @@ def object_index_table_names(table: list[bpy.types.Object | None]) -> list[str]:
 
 
 def configure_material_index_table():
+    if len(bpy.data.materials) > 32767:
+        raise ValueError(
+            f"{len(bpy.data.materials)} materials exceeds pass_index's range of 32767; "
+            "material-index segmentation would silently collide"
+        )
     mat_order = ["none"]
     for i, mat in enumerate(bpy.data.materials):
         mat.pass_index = i + 1

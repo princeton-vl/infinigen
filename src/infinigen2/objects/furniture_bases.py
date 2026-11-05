@@ -724,6 +724,24 @@ def table_dimensions_rand(
     return (width, depth, height)
 
 
+def _finish(
+    geo: pf.ProcNode[pf.MeshObject], material: pf.Material | None
+) -> TableResult:
+    geo = mesh.crease_sharp(geo, threshold_degrees=40.0)
+    obj = pf.nodes.to_mesh_object(geo)
+    if material is not None:
+        pf.ops.object.set_material(
+            obj, surface=material.surface, displacement=material.displacement
+        )
+    return TableResult(mesh=obj)
+
+
+def _subdivided(obj: pf.MeshObject, levels: int) -> TableResult:
+    pf.ops.modifier.subdivide_surface(obj, levels=levels, _skip_apply=True)
+    return TableResult(mesh=obj)
+
+
+@pf.tracer.generator
 def base_straight(
     dimensions: pf.Vector | None = None,
     leg_diameter: float = 0.06,
@@ -731,6 +749,8 @@ def base_straight(
     leg_placement_bottom_scale: float = 1.0,
     stretcher_increment: int = 1,
     stretcher_relative_pos: float = 0.4,
+    leg_placement_top_scale: float = 1.0,
+    material: pf.Material | None = None,
 ) -> TableResult:
     """4-leg base with optional stretchers."""
     if dimensions is None:
@@ -742,11 +762,11 @@ def base_straight(
         leg_placement_bottom_scale=leg_placement_bottom_scale,
         stretcher_increment=stretcher_increment,
         stretcher_relative_pos=stretcher_relative_pos,
+        leg_placement_top_scale=leg_placement_top_scale,
     )
-    geo = mesh.crease_sharp(geo, threshold_degrees=40.0)
-    obj = pf.nodes.to_mesh_object(geo)
-    pf.ops.modifier.subdivide_surface(obj, levels=1, _skip_apply=True)
-    return TableResult(mesh=obj)
+    result = _finish(geo, material)
+    result.mesh.item().name = base_straight.__name__
+    return result
 
 
 def base_straight_rand(
@@ -779,26 +799,22 @@ def base_straight_rand(
         rng_stretcher, [(0, 1.0), (1, 1.0), (2, 1.0)]
     )
     stretcher_relative_pos = pf.random.uniform(rng_parameters, 0.2, 0.6)
-    geo = base_four_leg(
+    if material is None:
+        material = furniture_material_rand(rng_mat, pf.nodes.shader.coord().uv)
+    obj = base_straight(
         dimensions=dimensions,
         leg_diameter=leg_diameter,
         leg_inset=leg_inset,
-        leg_placement_top_scale=1.0 if close_edges else leg_placement_top_scale,
         leg_placement_bottom_scale=leg_placement_bottom_scale,
         stretcher_increment=stretcher_increment,
         stretcher_relative_pos=stretcher_relative_pos,
-    )
-    geo = mesh.crease_sharp(geo, threshold_degrees=40.0)
-    obj = pf.nodes.to_mesh_object(geo)
-    if material is None:
-        material = furniture_material_rand(rng_mat, pf.nodes.shader.coord().uv)
-    pf.ops.object.set_material(
-        obj, surface=material.surface, displacement=material.displacement
-    )
-    pf.ops.modifier.subdivide_surface(obj, levels=1, _skip_apply=True)
-    return TableResult(mesh=obj)
+        leg_placement_top_scale=1.0 if close_edges else leg_placement_top_scale,
+        material=material,
+    ).mesh
+    return _subdivided(obj, levels=1)
 
 
+@pf.tracer.generator
 def base_pedestal(
     height: float,
     top_radius: float = 0.03,
@@ -807,9 +823,14 @@ def base_pedestal(
     concavity: float = 0.0,
     neck_scale: float = 1.0,
     resolution: int = 16,
+    profile_resolution: int | None = None,
+    material: pf.Material | None = None,
 ) -> TableResult:
     """Rotationally symmetric pedestal: stays skinny then flares out low
-    (flare/concavity); neck_scale bulges or waists the upper column."""
+    (flare/concavity); neck_scale bulges or waists the upper column.
+    `profile_resolution` defaults to `resolution`."""
+    if profile_resolution is None:
+        profile_resolution = resolution
     geo = base_pedestal_column(
         height=height,
         top_radius=top_radius,
@@ -817,26 +838,24 @@ def base_pedestal(
         flare=flare,
         concavity=concavity,
         neck_scale=neck_scale,
-        profile_resolution=resolution,
+        profile_resolution=profile_resolution,
         resolution=resolution,
     )
-    geo = mesh.crease_sharp(geo, threshold_degrees=40.0)
-    obj = pf.nodes.to_mesh_object(geo)
-    pf.ops.modifier.subdivide_surface(obj, levels=3, _skip_apply=True)
-    return TableResult(mesh=obj)
+    result = _finish(geo, material)
+    result.mesh.item().name = base_pedestal.__name__
+    return result
 
 
 def base_pedestal_column_rand(
     rng: pf.RNG, height: float, top_radius: float, bottom_radius: float
 ) -> pf.ProcNode[pf.MeshObject]:
-    rng_flare, rng_concavity, rng_neck = rng.spawn(3)
     return base_pedestal_column(
         height=height,
         top_radius=top_radius,
         bottom_radius=bottom_radius,
-        flare=pf.random.uniform(rng_flare, 0.5, 0.85),
-        concavity=pf.random.uniform(rng_concavity, 0.0, 1.0),
-        neck_scale=pf.random.uniform(rng_neck, 0.5, 2.0),
+        flare=pf.random.uniform(rng, 0.5, 0.85),
+        concavity=pf.random.uniform(rng, 0.0, 1.0),
+        neck_scale=pf.random.uniform(rng, 0.5, 2.0),
     )
 
 
@@ -863,24 +882,34 @@ def base_pedestal_rand(
         bottom_radius_range = (0.30 * footprint, 0.55 * footprint)
     top_radius = pf.random.uniform(rng, *top_radius_range)
     bottom_radius = pf.random.uniform(rng, *bottom_radius_range)
-    geo = base_pedestal_column_rand(rng_profile, z, top_radius, bottom_radius)
-    geo = mesh.crease_sharp(geo, threshold_degrees=40.0)
-    obj = pf.nodes.to_mesh_object(geo)
+    rng_flare, rng_concavity, rng_neck = rng_profile.spawn(3)
+    flare = pf.random.uniform(rng_flare, 0.5, 0.85)
+    concavity = pf.random.uniform(rng_concavity, 0.0, 1.0)
+    neck_scale = pf.random.uniform(rng_neck, 0.5, 2.0)
     if material is None:
         material = furniture_material_rand(rng_mat, pf.nodes.shader.coord().uv)
-    pf.ops.object.set_material(
-        obj, surface=material.surface, displacement=material.displacement
-    )
-    pf.ops.modifier.subdivide_surface(obj, levels=3, _skip_apply=True)
-    return TableResult(mesh=obj)
+    obj = base_pedestal(
+        z,
+        top_radius=top_radius,
+        bottom_radius=bottom_radius,
+        flare=flare,
+        concavity=concavity,
+        neck_scale=neck_scale,
+        resolution=16,
+        profile_resolution=12,
+        material=material,
+    ).mesh
+    return _subdivided(obj, levels=3)
 
 
+@pf.tracer.generator
 def base_square(
     dimensions: pf.Vector | None = None,
     leg_diameter: float = 0.085,
     leg_placement_top_scale: float = 0.8,
     leg_placement_bottom_scale: float = 1.0,
     has_bottom_connector: bool = True,
+    material: pf.Material | None = None,
 ) -> TableResult:
     """2 box-frame legs."""
     if dimensions is None:
@@ -892,10 +921,9 @@ def base_square(
         leg_placement_bottom_scale=leg_placement_bottom_scale,
         has_bottom_connector=has_bottom_connector,
     )
-    geo = mesh.crease_sharp(geo, threshold_degrees=40.0)
-    obj = pf.nodes.to_mesh_object(geo)
-    pf.ops.modifier.subdivide_surface(obj, levels=1, _skip_apply=True)
-    return TableResult(mesh=obj)
+    result = _finish(geo, material)
+    result.mesh.item().name = base_square.__name__
+    return result
 
 
 def base_square_rand(
@@ -919,22 +947,17 @@ def base_square_rand(
     if leg_placement_bottom_scale is None:
         leg_placement_bottom_scale = 0.98 if close_edges else 1.0
     has_bottom_connector = pf.control.choice(rng_connector, [(True, 2.0), (False, 1.0)])
-    geo = base_box_leg(
+    if material is None:
+        material = furniture_material_rand(rng_mat, pf.nodes.shader.coord().uv)
+    obj = base_square(
         dimensions=dimensions,
         leg_diameter=leg_diameter,
         leg_placement_top_scale=0.94 if close_edges else leg_placement_top_scale,
         leg_placement_bottom_scale=leg_placement_bottom_scale,
         has_bottom_connector=has_bottom_connector,
-    )
-    geo = mesh.crease_sharp(geo, threshold_degrees=40.0)
-    obj = pf.nodes.to_mesh_object(geo)
-    if material is None:
-        material = furniture_material_rand(rng_mat, pf.nodes.shader.coord().uv)
-    pf.ops.object.set_material(
-        obj, surface=material.surface, displacement=material.displacement
-    )
-    pf.ops.modifier.subdivide_surface(obj, levels=1, _skip_apply=True)
-    return TableResult(mesh=obj)
+        material=material,
+    ).mesh
+    return _subdivided(obj, levels=1)
 
 
 def table_side_dimensions_rand(rng: pf.RNG) -> pf.Vector:

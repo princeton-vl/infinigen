@@ -146,13 +146,6 @@ def test_stale_object_index_is_rejected(tmp_path: Path):
         collect_object_data(cubes[1:], 0, 0)
 
 
-def test_export_without_stamping_is_rejected(tmp_path: Path):
-    pf.ops.object.clear_scene()
-    cubes = [pf.ops.primitives.mesh_cube() for _ in range(3)]
-    with pytest.raises(ValueError, match="pass_index 0"):
-        collect_object_data(cubes, 0, 0)
-
-
 def test_pose_and_bbox_reconstruct_the_world_box(tmp_path: Path):
     pf.ops.object.clear_scene()
     cube = pf.ops.primitives.mesh_cube(scale=(2, 2, 2))

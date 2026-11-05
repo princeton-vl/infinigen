@@ -12,6 +12,7 @@ migration; geometry/transforms are deterministic today.
 """
 
 import hashlib
+import random
 import re
 from pathlib import Path
 
@@ -56,6 +57,23 @@ _BANNED = [
         r"|choice|bytes|shuffle|permutation|permuted|integers|uniform|normal"
         r"|standard_normal|beta|binomial|gamma|poisson)\b",
         "numpy global RNG; thread the seeded np.random.Generator (rng) instead",
+    ),
+    (
+        r"\b(default_rng|RandomState|np\.random\.Generator)\s*\(",
+        "fresh rng stream; take a seeded rng argument and spawn from it",
+    ),
+    (
+        r"^\s*(from\s+numpy\.random\s+import|import\s+numpy\.random)",
+        "numpy.random import bypasses the rng scan; thread the seeded rng",
+    ),
+    (
+        r"(?<![\w.])id\s*\(",
+        "id() addresses are reused after free and vary run to run; key by the "
+        "object itself or by bpy session_uid",
+    ),
+    (
+        r"(?<![\w.])hash\s*\(",
+        "str hash() is randomized per process (PYTHONHASHSEED)",
     ),
     (
         r"\btime\.(time|perf_counter|monotonic|process_time)\s*\(",
@@ -106,19 +124,58 @@ def _scene_geometry_signature() -> list[tuple]:
         co = np.empty(len(mesh.vertices) * 3, dtype=np.float64)
         mesh.vertices.foreach_get("co", co)
         world = np.array(obj.matrix_world, dtype=np.float64)
-        sigs.append(
-            (
-                len(mesh.vertices),
-                len(mesh.polygons),
-                hashlib.sha256(np.round(co, _ROUND).tobytes()).hexdigest(),
-                hashlib.sha256(np.round(world, _ROUND).tobytes()).hexdigest(),
-            )
-        )
-    return sorted(sigs)
+        co_hash = hashlib.sha256(np.round(co, _ROUND).tobytes()).hexdigest()
+        sigs.append((len(mesh.vertices), len(mesh.polygons), co_hash, world))
+    return sorted(sigs, key=lambda sig: sig[:3])
 
 
-def _build(pathspec: str, kind: str, room_count: int | None) -> list[tuple]:
+def _signatures_match(first: list[tuple], second: list[tuple]) -> bool:
+    if len(first) != len(second):
+        return False
+    for a, b in zip(first, second):
+        if a[:3] != b[:3]:
+            return False
+        if not np.allclose(a[3], b[3], atol=10.0**-_ROUND):
+            return False
+    return True
+
+
+def _global_rng_state() -> tuple:
+    np_state = np.random.get_state()
+    return random.getstate(), np_state[1].tobytes(), np_state[2:]
+
+
+_SNAKE_CASE = re.compile(r"[a-z][a-z0-9_]*")
+_PRIMITIVE_NAMES = {n for n in dir(pf.ops.primitives) if not n.startswith("_")}
+
+
+def _unnamed_scene_objects(result: object) -> list[str]:
+    objects = [*result.all_objects, *getattr(result, "lights", [])]
+    roots = [obj.item() for obj in objects]
+    items = {child for root in roots for child in (root, *root.children_recursive)}
+    names = [item.name for item in items if item.type in {"MESH", "LIGHT"}]
+    return sorted(
+        name
+        for name in names
+        if not _SNAKE_CASE.fullmatch(name.split(".")[0])
+        or name.split(".")[0] in _PRIMITIVE_NAMES
+        or "_rand" in name
+    )
+
+
+def _build(pathspec: str, kind: str) -> tuple[list[tuple], list[str]]:
     bpy.ops.wm.read_factory_settings(use_empty=True)
+    before = _global_rng_state()
+    result = _build_into_scene(pathspec, kind)
+    assert _global_rng_state() == before, (
+        f"{pathspec}: consumed the global random/np.random stream instead of the "
+        f"seeded rng argument"
+    )
+    unnamed = _unnamed_scene_objects(result) if kind == "Scene" else []
+    return _scene_geometry_signature(), unnamed
+
+
+def _build_into_scene(pathspec: str, kind: str) -> object:
     func = import_item(pathspec)
     if kind == "Material":
         res = func(
@@ -126,16 +183,18 @@ def _build(pathspec: str, kind: str, room_count: int | None) -> list[tuple]:
         )
         plane = pf.ops.primitives.mesh_plane(size=1)
         pf.ops.object.set_material(plane, material=res)
-    elif room_count is None:
-        func(rng=np.random.default_rng(SEED))
-    else:
-        func(rng=np.random.default_rng(SEED), room_count=room_count)
-    return _scene_geometry_signature()
+        return res
+    return func(rng=np.random.default_rng(SEED))
 
 
 # Generators we cannot assert deterministic yet, with the blocking reason.
 # These flip to expected-pass once the dependency lands.
 _DETERMINISM_BLOCKED = {}
+
+
+_SKIP_UNIT_TEST = (
+    GENERATORS_MANIFEST.set_index("name")["skip_unit_test"].dropna().to_dict()
+)
 
 
 def _determinism_params():
@@ -149,19 +208,18 @@ def _determinism_params():
         )
         for name in df["name"].values:
             short = name.rsplit(".", 1)[-1]
-            marks = ()
-            if short in _DETERMINISM_BLOCKED:
-                marks = pytest.mark.skip(reason=_DETERMINISM_BLOCKED[short])
-            room_count = 1 if short == "house_furnished_rand" else None
-            yield pytest.param(name, category, room_count, id=short, marks=marks)
+            reason = _SKIP_UNIT_TEST.get(name, _DETERMINISM_BLOCKED.get(short))
+            marks = () if reason is None else pytest.mark.skip(reason=reason)
+            yield pytest.param(name, category, id=short, marks=marks)
 
 
-@pytest.mark.parametrize("pathspec, kind, room_count", _determinism_params())
-def test_generator_determinism(pathspec, kind, room_count):
-    first = _build(pathspec, kind, room_count)
+@pytest.mark.parametrize("pathspec, kind", _determinism_params())
+def test_generator_determinism(pathspec, kind):
+    first, unnamed = _build(pathspec, kind)
     assert first, f"{pathspec}: produced no mesh geometry"
-    second = _build(pathspec, kind, room_count)
-    assert first == second, (
+    assert not unnamed, f"{pathspec}: objects without a snake_case asset name"
+    second, _ = _build(pathspec, kind)
+    assert _signatures_match(first, second), (
         f"{pathspec}: geometry differs between two builds of seed {SEED} "
         f"(nondeterministic generation)"
     )

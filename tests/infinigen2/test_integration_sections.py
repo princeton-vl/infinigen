@@ -602,3 +602,53 @@ def test_freeze_shows_each_column_source_generator_name(tmp_path: Path) -> None:
     assert html.count('data-asset="table_circle_rand" data-not-run') == 1
     assert '<div class="source-asset-name">circle_table_rand</div>' in html
     assert '<div class="source-asset-name">table_circle_rand</div>' in html
+
+
+def test_traceback_paths_link_to_the_rendered_commit() -> None:
+    base = compare.source_base_url(
+        {"repo": "org/repo", "commit": "abc123", "source_ref": None}
+    )
+    trace = (
+        'File "/home/ci/work/repo/src/infinigen2/a.py", line 42, in f\n'
+        'File "/venv/lib/python3.11/site-packages/bpy/b.py", line 7\n'
+        "scripts/run.py:3 <x>"
+    )
+
+    html = str(compare.link_sources(trace, base))
+
+    assert (
+        'href="https://github.com/org/repo/blob/abc123/src/infinigen2/a.py#L42"' in html
+    )
+    assert 'href="https://github.com/org/repo/blob/abc123/scripts/run.py#L3"' in html
+    assert "bpy/b.py" in html and html.count("<a ") == 2
+    assert "&lt;x&gt;" in html
+    assert compare.link_sources("<x> src/a.py", None) == "&lt;x&gt; src/a.py"
+
+
+def test_freeze_links_sources_to_public_repo_at_version_tag(tmp_path: Path) -> None:
+    src = tmp_path / "run"
+    src.mkdir()
+    (src / "git_info.toml").write_text('commit = "abc123"\nrepo = "org/internal"\n')
+
+    freeze.alias_version(tmp_path / "v2.0.0a1", src, "v2.0.0a1", [])
+
+    git = compare.get_git_info(tmp_path / "v2.0.0a1")
+    assert git["tag"] == "v2.0.0a1"
+    assert compare.source_base_url(git) == (
+        "https://github.com/princeton-vl/infinigen/blob/v2.0.0a1"
+    )
+
+
+def test_freeze_replaces_unrendered_media_with_placeholder(tmp_path: Path) -> None:
+    before = _renamed_run(tmp_path, "before", "rock_rand")
+    after = _renamed_run(tmp_path, "after", "rock_rand")
+    (after / "after" / "rock_rand" / "Camera" / "0000.png").unlink()
+    pages = tmp_path / "pages"
+    pages.mkdir()
+
+    refs = freeze.render_pages(pages, [("before", before), ("after", after)], None)
+
+    html = (pages / "index.html").read_text()
+    assert all(ref.startswith("before/") for ref in refs) and refs
+    assert 'src="../after/' not in html
+    assert "Not generated in this run" in html

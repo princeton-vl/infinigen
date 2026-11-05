@@ -1,52 +1,29 @@
-name: Build & Release
+name: Release
 
 on:
   push:
     tags:
-      - '*'
+      - '[0-9]*'
+      - 'v[0-9]*'
 
 jobs:
-  build_sdist_purepy:
-    name: Build source/pure python wheels
+  pypi:
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: read
+      id-token: write
     if: github.repository == 'princeton-vl/infinigen'
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
     steps:
-    - uses: actions/checkout@v4
-      with:
-        submodules: 'recursive'
-
-    - name: Build source/pure python wheels
-      run: |
-        python -m pip install build
-        python -m build --outdir=wheelhouse
-      env:
-        INFINIGEN_MINIMAL_INSTALL: "True"
-
-    - name: Upload to github
-      uses: actions/upload-artifact@v4
-      with:
-        path: wheelhouse/*
-        if-no-files-found: error
-
-  publish_to_pypi:
-    name: Publish wheels to PyPi
-    # if branch main repo "infinigen"
-    if: github.repository == 'princeton-vl/infinigen' && startsWith(github.event.ref, 'refs/tags')
-    needs: [build_sdist_purepy]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download packages
-        uses: actions/download-artifact@v4
+      - uses: actions/checkout@v4
         with:
-          path: dist
-          merge-multiple: true
-
-      - name: Upload wheels to pypi
+          submodules: 'recursive'
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.8.3"
+      - run: uv build
         env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
-        run: |
-          python -m pip install --upgrade twine packaging
-          twine upload dist/*
+          INFINIGEN_MINIMAL_INSTALL: "True"
+      - run: uv publish --trusted-publishing always

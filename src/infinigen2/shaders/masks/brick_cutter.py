@@ -245,15 +245,7 @@ def brick_cutter(
 def brick_shift_rand(
     rng: pf.RNG,
 ) -> t.SocketOrVal[float]:
-    rng_choice, rng_val = rng.spawn(2)
-    shift = pf.control.choice(
-        rng_choice,
-        [
-            (0.5, 2.0),  # vast majority of realworld bricks are half-overlapping
-            (pf.random.uniform(rng_val, 0.0, 1.0), 0.5),
-        ],
-    )
-    return shift
+    return 0.5 + 0.5 * (2.0 * pf.random.uniform(rng, 0.0, 1.0) - 1.0) ** 3
 
 
 def brick_dimensions_rand(

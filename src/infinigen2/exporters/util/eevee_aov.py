@@ -10,6 +10,7 @@ from typing import Dict, List
 import bpy
 
 from infinigen2.exporters.util.format import ExportType, RenderPass
+from infinigen2.util.bpy_compat import attribute_factor_output
 
 __all__ = [
     "configure_materials_for_aovs",
@@ -181,7 +182,9 @@ def _configure_material_aov_outputs(
             )
 
             # Link attribute value to AOV value input
-            node_tree.links.new(attr_node.outputs["Fac"], aov_node.inputs["Value"])
+            node_tree.links.new(
+                attribute_factor_output(attr_node), aov_node.inputs["Value"]
+            )
 
             logger.debug(f"Added object index AOV to material {material.name}")
 

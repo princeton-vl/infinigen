@@ -1718,11 +1718,10 @@ def grain_to_shader_rand(
 
 
 def grain_layer_color_rand(rng: pf.RNG, base_color: pf.Color) -> pf.Color:
-    rng_h, rng_s, rng_v = rng.spawn(3)
-    hue_offset = pf.random.clip_gaussian(rng_h, 0, 0.04, -0.2, 0.2)
+    hue_offset = pf.random.clip_gaussian(rng, 0, 0.04, -0.2, 0.2)
     h = (base_color.h + hue_offset) % 1.0
-    s = pf.random.clip_gaussian(rng_s, base_color.s, 0.07, 0.0, 0.95)
-    v = pf.random.clip_gaussian(rng_v, base_color.v, 0.2, 0.0, 0.95)
+    s = pf.random.clip_gaussian(rng, base_color.s, 0.07, 0.0, 0.95)
+    v = pf.random.clip_gaussian(rng, base_color.v, 0.2, 0.0, 0.95)
     return pf.color.hsv_color(hue=h, saturation=s, value=v)
 
 
@@ -1790,6 +1789,7 @@ def marble_rand(
     rng: pf.RNG,
     vector: t.SocketOrVal[pf.Vector],
 ):
+    rng, rng_g1, rng_g2, rng_g3, rng_shader = rng.spawn(5)
     base_h_fac = pf.random.uniform(rng, 0.0, 1.0)
     base_h = 0.5882 * base_h_fac**2
 
@@ -1811,8 +1811,6 @@ def marble_rand(
             0.0,
         )
     )
-
-    rng_g1, rng_g2, rng_g3, rng_shader = rng.spawn(4)
 
     # 5 layers flattens to ~1168 Cycles nodes per material and overflows the
     # SVM stack on CUDA/OPTIX. 3 keeps us comfortably under the 1000-node ceiling.

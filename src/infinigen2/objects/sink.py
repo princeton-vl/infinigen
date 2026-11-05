@@ -180,12 +180,15 @@ def _finish(result: _SinkGeometryResult) -> SinkResult:
     )
     obj = pf.nodes.to_mesh_object(pf.nodes.geo.realize_instances(geometry))
     cutter_obj = pf.nodes.to_mesh_object(pf.nodes.geo.realize_instances(cutter))
+    obj.item().name = sink.__name__
+    cutter_obj.item().name = f"{sink.__name__}_cutter"
     pf.ops.uv.smart_project(obj, uv_name="UVMap", island_margin=0.01)
     cutter_obj.item().hide_viewport = True
     cutter_obj.item().hide_render = True
     return SinkResult(mesh=obj, cutter=cutter_obj)
 
 
+@pf.tracer.generator
 def sink(
     material: pf.Material | None = None,
     width: float = 0.6,

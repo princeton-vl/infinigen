@@ -63,106 +63,51 @@ def bathtub_shell(
     profile_roundness: t.SocketOrVal[float] = 0.5,
     hole_radius: t.SocketOrVal[float] = 0.02,
 ) -> t.ProcNode[pf.MeshObject]:
-    thickness = pf.nodes.math.maximum(
-        0.005,
-        pf.nodes.math.minimum(
-            thickness,
-            pf.nodes.math.minimum(
-                depth * 0.35,
-                pf.nodes.math.minimum(width * 0.2, size * 0.2),
-            ),
-        ),
-    )
-    floor_thickness = pf.nodes.math.maximum(
-        thickness,
-        pf.nodes.math.minimum(floor_thickness, depth * 0.35),
-    )
-    back_margin = pf.nodes.math.maximum(
-        thickness,
-        pf.nodes.math.minimum(back_margin, width - thickness * 2.0),
-    )
+    min_width_size = pf.nodes.math.minimum(width, size)
+    thickness_limit = pf.nodes.math.minimum(depth * 0.35, min_width_size * 0.2)
+    thickness = pf.nodes.math.clamp(thickness, 0.005, thickness_limit)
+    floor_thickness = pf.nodes.math.clamp(floor_thickness, thickness, depth * 0.35)
+    back_margin = pf.nodes.math.clamp(back_margin, thickness, width - thickness * 2.0)
     inner_width = width - back_margin - thickness
     inner_size = size - thickness * 2.0
-    top_bevel_radius = pf.nodes.math.maximum(
-        0.0,
-        pf.nodes.math.minimum(
-            top_bevel_radius,
-            pf.nodes.math.minimum(thickness * 0.95, depth * 0.35),
-        ),
+    min_inner = pf.nodes.math.minimum(inner_width, inner_size)
+    top_bevel_limit = pf.nodes.math.minimum(thickness * 0.95, depth * 0.35)
+    top_bevel_radius = pf.nodes.math.clamp(top_bevel_radius, 0.0, top_bevel_limit)
+    bottom_bevel_limit = pf.nodes.math.minimum(depth * 0.6, min_width_size * 0.2)
+    bottom_bevel_radius = pf.nodes.math.clamp(
+        bottom_bevel_radius, 0.0, bottom_bevel_limit
     )
-    bottom_bevel_radius = pf.nodes.math.maximum(
-        0.0,
-        pf.nodes.math.minimum(
-            bottom_bevel_radius,
-            pf.nodes.math.minimum(
-                depth * 0.6, pf.nodes.math.minimum(width, size) * 0.2
-            ),
-        ),
+    inner_top_bevel_limit = pf.nodes.math.minimum(depth * 0.35, min_inner * 0.2)
+    inner_top_bevel_radius = pf.nodes.math.clamp(
+        inner_top_bevel_radius, 0.0, inner_top_bevel_limit
     )
-    inner_top_bevel_radius = pf.nodes.math.maximum(
-        0.0,
-        pf.nodes.math.minimum(
-            inner_top_bevel_radius,
-            pf.nodes.math.minimum(
-                depth * 0.35,
-                pf.nodes.math.minimum(inner_width, inner_size) * 0.2,
-            ),
-        ),
+    minimum_floor_width = pf.nodes.math.clamp(
+        min_inner - inner_top_bevel_radius * 2.0 - 0.01, 0.05, 0.42
     )
-    minimum_floor_width = pf.nodes.math.maximum(
-        0.05,
-        pf.nodes.math.minimum(
-            0.42,
-            pf.nodes.math.minimum(inner_width, inner_size)
-            - inner_top_bevel_radius * 2.0
-            - 0.01,
-        ),
-    )
-    max_bowl_inset = pf.nodes.math.minimum(inner_width, inner_size) * 0.25
-    fit_bowl_inset = (
-        pf.nodes.math.minimum(inner_width, inner_size) - minimum_floor_width
-    ) * 0.5 - inner_top_bevel_radius
-    max_bowl_inset = pf.nodes.math.maximum(
-        0.0, pf.nodes.math.minimum(max_bowl_inset, fit_bowl_inset)
-    )
+    fit_bowl_inset = (min_inner - minimum_floor_width) * 0.5 - inner_top_bevel_radius
+    max_bowl_inset = pf.nodes.math.clamp(fit_bowl_inset, 0.0, min_inner * 0.25)
     bottom_reserve = pf.nodes.math.minimum(
         inner_bottom_bevel_radius, max_bowl_inset * 0.5
     )
     max_bowl_inset -= bottom_reserve
-    bowl_inset = pf.nodes.math.maximum(
-        0.0, pf.nodes.math.minimum(bowl_inset, max_bowl_inset)
-    )
-    max_outer_inset = pf.nodes.math.minimum(
-        pf.nodes.math.minimum(width, size) * 0.25,
-        bowl_inset,
-    )
-    outer_bottom_inset = pf.nodes.math.maximum(
-        0.0,
-        pf.nodes.math.minimum(
-            outer_bottom_inset,
-            max_outer_inset,
-        ),
-    )
+    bowl_inset = pf.nodes.math.clamp(bowl_inset, 0.0, max_bowl_inset)
+    max_outer_inset = pf.nodes.math.minimum(min_width_size * 0.25, bowl_inset)
+    outer_bottom_inset = pf.nodes.math.clamp(outer_bottom_inset, 0.0, max_outer_inset)
     inner_bottom_limit = pf.nodes.math.minimum(
         depth - floor_thickness - inner_top_bevel_radius - 0.02,
-        pf.nodes.math.minimum(inner_width, inner_size) * 0.5
+        min_inner * 0.5
         - inner_top_bevel_radius
         - bowl_inset
         - minimum_floor_width * 0.5,
     )
-    inner_bottom_bevel_radius = pf.nodes.math.maximum(
-        0.0,
-        pf.nodes.math.minimum(inner_bottom_bevel_radius, inner_bottom_limit),
+    inner_bottom_bevel_radius = pf.nodes.math.clamp(
+        inner_bottom_bevel_radius, 0.0, inner_bottom_limit
     )
-    bowl_corner_limit = pf.nodes.math.minimum(inner_width, inner_size) * 0.5
+    bowl_corner_limit = min_inner * 0.5
     bowl_corner_radius = pf.nodes.math.minimum(bowl_corner_radius, bowl_corner_limit)
-    corner_radius = pf.nodes.math.minimum(
-        corner_radius, pf.nodes.math.minimum(width, size) * 0.5
-    )
-    corner_radius = pf.nodes.math.maximum(corner_radius, bowl_corner_radius)
-    corner_radius = pf.nodes.math.minimum(
-        corner_radius,
-        bowl_corner_limit + thickness,
+    corner_radius = pf.nodes.math.minimum(corner_radius, min_width_size * 0.5)
+    corner_radius = pf.nodes.math.clamp(
+        corner_radius, bowl_corner_radius, bowl_corner_limit + thickness
     )
     bowl_corner_radius = pf.nodes.math.maximum(
         bowl_corner_radius, corner_radius - thickness
@@ -281,11 +226,8 @@ def bathtub_shell(
 
     half_width = profile_width * 0.5
     half_size = profile_size * 0.5
-    radius = pf.nodes.math.maximum(
-        0.0,
-        pf.nodes.math.minimum(
-            profile_radius, pf.nodes.math.minimum(half_width, half_size)
-        ),
+    radius = pf.nodes.math.clamp(
+        profile_radius, 0.0, pf.nodes.math.minimum(half_width, half_size)
     )
     abs_x = pf.nodes.math.absolute(square_x)
     abs_y = pf.nodes.math.absolute(square_y)
@@ -397,7 +339,7 @@ def bathtub(
         hole_radius,
     )
     obj = pf.nodes.to_mesh_object(geometry)
-    pf.ops.modifier.subdivide_surface(obj, levels=2, _skip_apply=True)
+    obj.item().name = bathtub.__name__
     return BathtubResult(mesh=obj)
 
 
@@ -420,7 +362,7 @@ def sink_bathroom(
     metal_material: pf.Material | None = None,
 ) -> SinkBathroomResult:
     floor_thickness = max(thickness, depth * 0.12, bottom_bevel_radius * 0.5)
-    result = bathtub(
+    obj = bathtub(
         width=size,
         size=width,
         depth=depth,
@@ -439,8 +381,10 @@ def sink_bathroom(
         hole_radius=hole_radius,
         surface_material=surface_material,
         metal_material=metal_material,
-    )
-    return SinkBathroomResult(mesh=result.mesh)
+    ).mesh
+    obj.item().name = sink_bathroom.__name__
+    pf.ops.modifier.subdivide_surface(obj, levels=2, _skip_apply=True)
+    return SinkBathroomResult(mesh=obj)
 
 
 def _surface_material_rand(rng: pf.RNG) -> pf.Material:
@@ -589,7 +533,7 @@ def bathtub_rand(
         )
     if metal_material is None:
         metal_material = _metal_material_rand(rng_metal)
-    return bathtub(
+    obj = bathtub(
         width=width,
         size=size,
         depth=depth,
@@ -607,7 +551,9 @@ def bathtub_rand(
         hole_radius=hole_radius,
         surface_material=surface_material,
         metal_material=metal_material,
-    )
+    ).mesh
+    pf.ops.modifier.subdivide_surface(obj, levels=2, _skip_apply=True)
+    return BathtubResult(mesh=obj)
 
 
 def _sink_dimensions_rand(
@@ -788,5 +734,5 @@ def sink_pedestal(
     obj = pf.nodes.to_mesh_object(
         _pedestal_geometry(material, height, top_radius, bottom_radius, is_circular)
     )
-    pf.ops.modifier.subdivide_surface(obj, levels=2, _skip_apply=True)
+    obj.item().name = sink_pedestal.__name__
     return SinkPedestalResult(mesh=obj)

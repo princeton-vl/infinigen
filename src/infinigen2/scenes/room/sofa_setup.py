@@ -86,8 +86,6 @@ def tv_setup_rand(rng: pf.RNG) -> TVSetupResult:
         margin=0.002,
         constraint_axis=None,
     )
-    storage_result.mesh.item().name = "tv_storage"
-    tv_result.mesh.item().name = "television"
     tv_result.mesh.item().parent = storage_result.mesh.item()
     tv_result.mesh.item().matrix_parent_inverse.identity()
     return TVSetupResult(
@@ -165,7 +163,6 @@ def _rug_rand(
     width = pf.random.uniform(rng_dims, 1.2, 2.4)
     thickness = pf.random.uniform(rng_dims, 0.01, 0.02)
     result = rug.rug_rand(rng_rug, dimensions=pf.Vector((length, width, thickness)))
-    result.mesh.item().name = rug.rug_rand.__name__
     clearance = pf.Vector((1.2, 1.2, 0.0))
 
     def inside(mesh: pf.MeshObject) -> bool:
@@ -243,8 +240,6 @@ def _throw_pillows_rand(rng: pf.RNG, sofa: SofaResult) -> list[pf.MeshObject]:
         count,
         (0.0, math.pi / 2 - lean, 0.0),
     )
-    for p in pillows:
-        p.item().name = cushion.cushion_throw_pillow_rand.__name__
     return pillows
 
 
@@ -517,7 +512,6 @@ def _facing_rug_rand(
     width = pf.random.uniform(rng_dims, 1.2, 2.4)
     thickness = pf.random.uniform(rng_dims, 0.01, 0.02)
     result = rug.rug_rand(rng_rug, dimensions=pf.Vector((length, width, thickness)))
-    result.mesh.item().name = rug.rug_rand.__name__
     result.mesh.item().location = (0.0, 0.0, floor_z + 0.001)
     placed = retry_place(
         rng_place,

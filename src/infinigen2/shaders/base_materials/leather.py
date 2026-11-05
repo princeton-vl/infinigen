@@ -959,11 +959,10 @@ def _leather_color_rand(
     value: t.SocketOrVal[float] | None = None,
 ) -> pf.Color:
     # Centered on the presets' deep red-brown; low saturation reads as light tan.
-    rng_hue, rng_sat, rng_val = rng.spawn(3)
-    hue = pf.random.uniform(rng_hue, 0.0, 0.075)
-    saturation = pf.random.clip_gaussian(rng_sat, 0.80, 0.13, 0.6, 0.97)
+    hue = pf.random.uniform(rng, 0.0, 0.075)
+    saturation = pf.random.clip_gaussian(rng, 0.80, 0.13, 0.6, 0.97)
     if value is None:
-        value = pf.random.uniform(rng_val, 0.05, 0.26)
+        value = pf.random.uniform(rng, 0.05, 0.26)
     return pf.color.hsv_color(hue=hue, saturation=saturation, value=value)
 
 
@@ -972,42 +971,25 @@ def _leather_grain_rand(
     vector: t.SocketOrVal[pf.Vector],
 ) -> LeatherCellResult:
     # Grain sampled over the range spanned by the non-animal presets.
-    rng_lines, rng_cell = rng.spawn(2)
-
     vector = pf.nodes.math.vector_scale(vector=vector, scale=1.0 / 3)
 
-    (
-        r_spacing,
-        r_angle,
-        r_spread,
-        r_angle_var,
-        r_crease_thickness,
-        r_crease_bevel,
-        r_seed,
-        r_dist_size,
-        r_dist_strength,
-        r_dist_detail,
-        r_break_spacing,
-        r_break_smooth,
-        r_nesting,
-    ) = rng_lines.spawn(13)
     # spread controls the angle between the three grain layers: near 0 the layers
     # stay parallel (streaky, patina-like), near 1 they cross-hatch (pebbled).
-    angle = pf.random.uniform(r_angle, 0.0, 3.14159265)
-    spread_raw = pf.random.uniform(r_spread, 0.0, 1.0)
+    angle = pf.random.uniform(rng, 0.0, 3.14159265)
+    spread_raw = pf.random.uniform(rng, 0.0, 1.0)
     spread = spread_raw * spread_raw
     lines_kwargs = dict(
-        nesting_cells=pf.random.randint(r_nesting, 0, 2),
-        spacing=pf.random.uniform(r_spacing, 0.002, 0.01),
-        angle_variation=pf.random.uniform(r_angle_var, 0.0, 0.55),
-        crease_thickness=pf.random.uniform(r_crease_thickness, 0.0, 0.0001),
-        crease_bevel=pf.random.uniform(r_crease_bevel, 0.00025, 0.001),
-        seed=pf.random.uniform(r_seed, 0.0, 7.0),
-        distortion_size=pf.random.uniform(r_dist_size, 0.05, 0.5),
-        distortion_strength=pf.random.uniform(r_dist_strength, 0.5, 1.0),
-        distortion_detail=pf.random.uniform(r_dist_detail, 6.0, 8.0),
-        break_up_spacing=pf.random.uniform(r_break_spacing, 0.0, 0.43),
-        break_up_smoothness=pf.random.uniform(r_break_smooth, 0.6167, 1.0),
+        nesting_cells=pf.random.randint(rng, 0, 2),
+        spacing=pf.random.uniform(rng, 0.002, 0.01),
+        angle_variation=pf.random.uniform(rng, 0.0, 0.55),
+        crease_thickness=pf.random.uniform(rng, 0.0, 0.0001),
+        crease_bevel=pf.random.uniform(rng, 0.00025, 0.001),
+        seed=pf.random.uniform(rng, 0.0, 7.0),
+        distortion_size=pf.random.uniform(rng, 0.05, 0.5),
+        distortion_strength=pf.random.uniform(rng, 0.5, 1.0),
+        distortion_detail=pf.random.uniform(rng, 6.0, 8.0),
+        break_up_spacing=pf.random.uniform(rng, 0.0, 0.43),
+        break_up_smoothness=pf.random.uniform(rng, 0.6167, 1.0),
     )
     lines0 = leather_lines(vector=vector, angle=angle, **lines_kwargs)
     lines1 = leather_lines(
@@ -1025,22 +1007,19 @@ def _leather_grain_rand(
         **lines_kwargs,
     )
 
-    r_cell_nesting, r_cell_size, r_cell_ct, r_cell_cb, r_cell_seed, r_cell_dstr = (
-        rng_cell.spawn(6)
-    )
     # Gentle cell distortion keeps the Voronoi cells crisp (2.0/4.0 is patina's absent secondary layer).
     cell = leather_cell(
         vector=lines2.vector,
         base_cells=lines2.cells,
         base_cell_id=lines2.cell_id,
-        nesting_cells=pf.random.uniform(r_cell_nesting, 0.0, 1.0),
-        cell_size=pf.random.uniform(r_cell_size, 0.001, 0.002),
+        nesting_cells=pf.random.uniform(rng, 0.0, 1.0),
+        cell_size=pf.random.uniform(rng, 0.001, 0.002),
         detail=1.0,
-        crease_thickness=pf.random.uniform(r_cell_ct, 0.0, 0.5833333),
-        crease_bevel=pf.random.uniform(r_cell_cb, 0.27878788, 1.0),
-        seed=pf.random.uniform(r_cell_seed, 0.0, 3.1),
+        crease_thickness=pf.random.uniform(rng, 0.0, 0.5833333),
+        crease_bevel=pf.random.uniform(rng, 0.27878788, 1.0),
+        seed=pf.random.uniform(rng, 0.0, 3.1),
         distortion_size=0.62,
-        distortion_strength=pf.random.uniform(r_cell_dstr, 0.5, 0.62),
+        distortion_strength=pf.random.uniform(rng, 0.5, 0.62),
         distortion_detail=1.0,
     )
     return cell
@@ -1054,10 +1033,9 @@ def _leather_shade_rand(
     crease_value: t.SocketOrVal[float],
     cell_height: t.SocketOrVal[float],
 ) -> LeatherShaderResult:
-    r_rough, r_spec, r_pcv, r_crease_hue = rng.spawn(4)
     crease = color_offset(
         base_color=base_color,
-        hue_offset=pf.random.uniform(r_crease_hue, 0.0, 0.038),
+        hue_offset=pf.random.uniform(rng, 0.0, 0.038),
         saturation=0.9,
         value=crease_value,
     )
@@ -1065,13 +1043,13 @@ def _leather_shade_rand(
         cells=cell.cells,
         contrast=contrast,
         base_color=base_color,
-        base_roughness=pf.random.uniform(r_rough, 0.29621214, 0.43448895),
-        base_specular=pf.random.uniform(r_spec, 0.17727272, 0.23560606),
+        base_roughness=pf.random.uniform(rng, 0.29621214, 0.43448895),
+        base_specular=pf.random.uniform(rng, 0.17727272, 0.23560606),
         crease_color=crease.offset_color,
         crease_roughness=0.0,
         crease_specular=0.0,
         cell_height=cell_height,
-        per_cell_variation=pf.random.uniform(r_pcv, 0.0, 0.1),
+        per_cell_variation=pf.random.uniform(rng, 0.0, 0.1),
         cell_id=cell.cell_id,
     )
 
@@ -1082,14 +1060,14 @@ def _leather_relief_rand(
     base_color: t.SocketOrVal[pf.Color],
 ) -> pf.Material:
     # Embossed grain: cells stand proud and their grooves read darker than the hide.
-    rng_grain, rng_shade, r_contrast, r_crease_val, r_height = rng.spawn(5)
+    rng_grain, rng_shade, rng_params = rng.spawn(3)
     shaded = _leather_shade_rand(
         rng_shade,
         cell=_leather_grain_rand(rng_grain, vector),
         base_color=base_color,
-        contrast=pf.random.uniform(r_contrast, -2.0, 0.0),
-        crease_value=pf.random.uniform(r_crease_val, 0.35, 0.8),
-        cell_height=pf.random.uniform(r_height, 0.001, 0.003),
+        contrast=pf.random.uniform(rng_params, -2.0, 0.0),
+        crease_value=pf.random.uniform(rng_params, 0.35, 0.8),
+        cell_height=pf.random.uniform(rng_params, 0.001, 0.003),
     )
     return pf.Material(
         surface=shaded.bsdf,
@@ -1104,13 +1082,13 @@ def _leather_patina_rand(
     base_color: t.SocketOrVal[pf.Color],
 ) -> pf.Material:
     # Worn smooth: no relief at all, and the polished creases catch light lighter.
-    rng_grain, rng_shade, r_contrast, r_crease_val = rng.spawn(4)
+    rng_grain, rng_shade, rng_params = rng.spawn(3)
     shaded = _leather_shade_rand(
         rng_shade,
         cell=_leather_grain_rand(rng_grain, vector),
         base_color=base_color,
-        contrast=pf.random.uniform(r_contrast, -3.0, -2.0),
-        crease_value=pf.random.uniform(r_crease_val, 1.6, 2.8),
+        contrast=pf.random.uniform(rng_params, -3.0, -2.0),
+        crease_value=pf.random.uniform(rng_params, 1.6, 2.8),
         cell_height=0.0,
     )
     return pf.Material(

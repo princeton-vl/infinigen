@@ -76,7 +76,7 @@ def _normalize_choice_probabilities(
 
 def _scan_option_tree(
     root: object,
-    reachable_ids: set[int],
+    node_index: dict[cg.Node, int],
     choice_ids: set[int],
     continuous_ids: set[int],
 ) -> set[int]:
@@ -85,8 +85,8 @@ def _scan_option_tree(
     visited: set[int] = set()
 
     def walk(node: cg.Node):
-        node_id = id(node)
-        if node_id in visited or node_id not in reachable_ids:
+        node_id = node_index.get(node)
+        if node_id is None or node_id in visited:
             return
         visited.add(node_id)
 
@@ -109,12 +109,12 @@ def _scan_option_tree(
 
 def build_model_from_compute_graph(graph: cg.ComputeGraph) -> dict:
     """Extract the compact branch-first model from a traced compute graph."""
-    reachable_nodes: dict[int, cg.Node] = {}
+    node_index: dict[cg.Node, int] = {}
     for subgraph in cg.traverse_nested_graphs(graph):
         for node in cg.traverse_depth_first(subgraph):
-            reachable_nodes[id(node)] = node
+            node_index.setdefault(node, len(node_index))
+    reachable_nodes = {index: node for node, index in node_index.items()}
 
-    reachable_ids = set(reachable_nodes)
     choice_ids = {
         node_id for node_id, node in reachable_nodes.items() if _is_choice_node(node)
     }
@@ -145,7 +145,7 @@ def build_model_from_compute_graph(graph: cg.ComputeGraph) -> dict:
         for option_result, _weight in raw_options:
             activated_vars = _scan_option_tree(
                 root=option_result,
-                reachable_ids=reachable_ids,
+                node_index=node_index,
                 choice_ids=choice_ids,
                 continuous_ids=continuous_ids,
             )

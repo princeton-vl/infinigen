@@ -252,7 +252,9 @@ def room_connect_rand(
             room = parent[room]
         return room
 
-    priorities = [pf.random.uniform(rng, 0.0, 1.0) for _ in candidates]
+    priorities = pf.random.uniform(
+        rng, (0.0,) * len(candidates), (1.0,) * len(candidates)
+    )
     selected = []
     for _priority, index in sorted(zip(priorities, candidates, strict=True)):
         first, second = (find(room) for room in walls[index].room_indices)
@@ -262,9 +264,8 @@ def room_connect_rand(
     if len(selected) != len(parent) - 1:
         raise ValueError("Room layout has no door-width connected spanning graph")
 
-    door_positions = {
-        index: pf.random.uniform(rng, 0.2, 0.8) for index in sorted(selected)
-    }
+    door_fracs = pf.random.uniform(rng, (0.2,) * len(selected), (0.8,) * len(selected))
+    door_positions = dict(zip(sorted(selected), door_fracs, strict=True))
     return tuple(
         WallSegment(
             start=wall.start,

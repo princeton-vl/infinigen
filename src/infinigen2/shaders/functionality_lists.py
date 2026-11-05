@@ -133,9 +133,9 @@ def boulder_material_rand(rng: pf.RNG, vector: pf.ProcNode[pf.Vector]) -> pf.Mat
 
 def uv_maybe_rotate(rng: pf.RNG, vector, rotation_z=None):
     if rotation_z is None:
-        (rng,) = rng.spawn(1)
+        rng, rng_rotation = rng.spawn(2)
         rotation_z = pf.control.choice(
-            rng,
+            rng_rotation,
             [
                 (0.0, 12),
                 (math.pi / 2, 1),
@@ -154,8 +154,9 @@ def uv_maybe_rotate(rng: pf.RNG, vector, rotation_z=None):
 
 
 def uv_maybe_rotate_90(rng: pf.RNG, vector):
-    rotation_z = pf.control.choice(rng, [(0.0, 1), (math.pi / 2, 1)])
-    return uv_maybe_rotate(rng, vector, rotation_z=rotation_z)
+    rng_rotation, rng_uv = rng.spawn(2)
+    rotation_z = pf.control.choice(rng_rotation, [(0.0, 1), (math.pi / 2, 1)])
+    return uv_maybe_rotate(rng_uv, vector, rotation_z=rotation_z)
 
 
 def table_top_material_rand(rng: pf.RNG, vec) -> pf.Material:
@@ -220,13 +221,13 @@ def kitchen_counter_rand(rng: pf.RNG, vec) -> pf.Material:
 
 
 def _glass_splats_gradient(rng: pf.RNG, vector, glass_height) -> pf.ProcNode[float]:
-    rng, rng_splat = rng.spawn(2)
+    rng, rng_splat, rng_side = rng.spawn(3)
     uv = pf.nodes.shader.coord().uv
     reach = pf.random.uniform(rng, 0.2, 0.6)
     top_start = glass_height - reach * glass_height
     other_start = reach * glass_height
     res = pf.control.choice(
-        rng, [((top_start, glass_height), 0.5), ((other_start, 0.0), 0.5)]
+        rng_side, [((top_start, glass_height), 0.5), ((other_start, 0.0), 0.5)]
     )
     return splats.splats_mask_rand(
         rng=rng_splat,
@@ -396,6 +397,7 @@ def castor_wheel_material_rand(
 
 
 def _dark_scratches_overlay(rng: pf.RNG, vector, material: pf.Material) -> pf.Material:
+    rng, rng_overlay = rng.spawn(2)
     color = pf.color.hsv_color(
         hue=pf.random.uniform(rng, 0.0, 0.12),
         saturation=pf.random.clip_gaussian(rng, 0.15, 0.25, 0.0, 0.9),
@@ -403,7 +405,7 @@ def _dark_scratches_overlay(rng: pf.RNG, vector, material: pf.Material) -> pf.Ma
     )
     scratch_shader = pf.nodes.shader.diffuse_bsdf(color=color)
     return scratches_overlay_rand(
-        rng, vector, material, scale=0.6, scratch_shader=scratch_shader
+        rng_overlay, vector, material, scale=0.6, scratch_shader=scratch_shader
     )
 
 
@@ -491,13 +493,13 @@ def paint_wall_rand(rng: pf.RNG, vector: pf.ProcNode[pf.Vector]) -> pf.Material:
 
 
 def paint_patterned_rand(rng: pf.RNG, vector: pf.ProcNode[pf.Vector]) -> pf.Material:
-    r_size, r_tile, r_mask, r_c1, r_c2, r_c3, r_mix, r_paint = rng.spawn(8)
+    r_size, r_tile, r_mask, r_c1, r_c2, r_c3, r_mix, r_paint, r_shrink = rng.spawn(9)
     tile_size = pf.random.uniform(r_size, 0.7, 2.0)
     # sometimes tighten the pattern up to 5x finer, occasionally another 4x on top
     pattern_shrink = pf.random.clip_gaussian(r_size, 1.0, 2.0, 1.0, 5.0)
     extra_shrink = pf.random.uniform(r_size, 1.5, 4.0)
     pattern_shrink = pattern_shrink * pf.control.choice(
-        r_size, [(extra_shrink, 0.15), (1.0, 0.85)]
+        r_shrink, [(extra_shrink, 0.15), (1.0, 0.85)]
     )
     tile_size = tile_size / pattern_shrink
     tile_vec = tile_coord_transform_rand(r_tile, vector, scale=1.0 / tile_size)
@@ -615,7 +617,9 @@ def all_materials_rand(rng: pf.RNG, vector: pf.ProcNode[pf.Vector]) -> pf.Materi
 
 @pf.tracer.grammar
 def wall_material_rand(rng: pf.RNG, vector: pf.ProcNode[pf.Vector]) -> pf.Material:
-    rng_uv, rng_nonbrick, rng_brick, rng_choice, rng_func, rng_layerable = rng.spawn(6)
+    rng_uv, rng_nonbrick, rng_brick, rng_choice, rng_func, rng_layerable, rng_rotate = (
+        rng.spawn(7)
+    )
     # walls: horizontal 60%, vertical 30% (split +/-), 45-deg snaps 10% (split +/-)
     rotation_z = pf.control.choice(
         rng_uv,
@@ -627,7 +631,7 @@ def wall_material_rand(rng: pf.RNG, vector: pf.ProcNode[pf.Vector]) -> pf.Materi
             (-math.pi / 4, 0.25),
         ],
     )
-    vector = uv_maybe_rotate(rng_uv, vector, rotation_z=rotation_z)
+    vector = uv_maybe_rotate(rng_rotate, vector, rotation_z=rotation_z)
     non_brick = pf.control.choice(
         rng_nonbrick,
         [
@@ -711,8 +715,8 @@ def floor_material_rand(rng: pf.RNG, vector: pf.ProcNode[pf.Vector]) -> pf.Mater
 
 
 def _paint_ceiling_rand(rng: pf.RNG, vector: pf.ProcNode[pf.Vector]) -> pf.Material:
-    r_color, r_paint = rng.spawn(2)
-    saturation = pf.random.clip_gaussian(r_color, 0.0, 0.1, 0.0, 0.3)
+    rng, r_color, r_paint = rng.spawn(3)
+    saturation = pf.random.clip_gaussian(rng, 0.0, 0.1, 0.0, 0.3)
     color = paint.paint_color_rand(r_color, saturation=saturation)
     return paint.paint_rand(r_paint, vector, base_color=color)
 

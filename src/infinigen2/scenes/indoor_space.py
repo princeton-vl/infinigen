@@ -328,7 +328,8 @@ def seat_wall_row_rand(
             (sofa_object_rand, 1.0),
         ],
     )
-    unit = SetupGridResult([seat_func(rng_seat).mesh], [], [], [])
+    seat = seat_func(rng_seat).mesh
+    unit = SetupGridResult([seat], [], [], [])
     return _wall_row_of_unit_rand(
         rng, unit, room_dimensions, colliders, wall_colliders, yaw
     )
@@ -593,7 +594,8 @@ def chair_banks_rand(
     seat_func = pf.control.choice(
         rng_choice, [(chair.chair_rand, 3.0), (chair.chair_bench_rand, 1.0)]
     )
-    unit = SetupGridResult([seat_func(rng_seat).mesh], [], [], [])
+    seat = seat_func(rng_seat).mesh
+    unit = SetupGridResult([seat], [], [], [])
     unit_size = _center_unit(unit.all_objects)
     gap = pf.Vector((pf.random.uniform(rng, 0.3, 0.6), 0.02, 0.0))
     aisle = pf.random.uniform(rng, 0.9, 1.3)

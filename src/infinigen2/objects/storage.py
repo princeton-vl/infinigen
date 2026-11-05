@@ -38,8 +38,11 @@ __all__ = [
     "storage_composite_rand",
     "storage_dimensions_rand",
     "storage_drawer_door_rand",
+    "storage_drawers",
+    "storage_legs_grid",
     "storage_legs_grid_rand",
     "storage_legs_stable_rand",
+    "storage_open_top_carcass",
     "storage_params_rand",
     "storage_rand",
     "storage_sink_base_rand",
@@ -94,6 +97,24 @@ def storage_cell_bounds(
 
 
 @pf.tracer.primitive
+def storage_drawers(
+    drawers: pf.MeshObject,
+    slots: list[tuple[pf.Vector, pf.Vector]],
+) -> pf.MeshObject:
+    copies = [drawers.clone() for _ in slots[1:]]
+    location = slots[0][0]
+    uv = pf.ops.attr.uv_coords(drawers)
+    pf.ops.attr.write_uv_coords(drawers, uv + (location.y, location.z))
+    pf.ops.object.set_transform(drawers, location=location)
+    for index, copy in enumerate(copies, start=1):
+        location = slots[index][0]
+        uv = pf.ops.attr.uv_coords(copy)
+        pf.ops.attr.write_uv_coords(copy, uv + (location.y, location.z))
+        pf.ops.object.set_transform(copy, location=location)
+        pf.ops.object.join(drawers, copy)
+    return drawers
+
+
 def _storage_drawers_rand(
     rng: pf.RNG,
     slots: list[tuple[pf.Vector, pf.Vector]],
@@ -113,12 +134,7 @@ def _storage_drawers_rand(
         opening_fraction=0,
         handle=handle,
     ).mesh
-    copies = [drawers.clone() for _ in slots[1:]]
-    pf.ops.object.set_transform(drawers, location=slots[0][0])
-    for index, copy in enumerate(copies, start=1):
-        pf.ops.object.set_transform(copy, location=slots[index][0])
-        pf.ops.object.join(drawers, copy)
-    return drawers
+    return storage_drawers(drawers, slots)
 
 
 class _GridWithIndicesResult(NamedTuple):
@@ -424,6 +440,7 @@ def _shelf_geometry(
     return realize_instances
 
 
+@pf.tracer.generator
 def storage_cell_shelf(
     dimensions: pf.Vector | None = None,
     n_spaces_y: int = 3,
@@ -433,6 +450,7 @@ def storage_cell_shelf(
     col_divider_width: float = 0.02,
     back_width: float = 0.02,
     frame_material: pf.Material | None = None,
+    bevel_width: float = 0.003,
 ) -> StorageResult:
     if dimensions is None:
         dimensions = pf.Vector((0.35, 1.2, 1.6))
@@ -450,8 +468,8 @@ def storage_cell_shelf(
     geo = pf.nodes.geo.set_material(geometry=geo, material=frame_material)
     geo = mesh_util.crease_sharp(geo, threshold_degrees=30.0)
     result = pf.nodes.to_mesh_object(geo)
-    pf.ops.modifier.bevel(result, width=0.003, segments=2)
-    pf.ops.modifier.subdivide_surface(result, levels=2, _skip_apply=True)
+    result.item().name = storage_cell_shelf.__name__
+    pf.ops.modifier.bevel(result, width=bevel_width, segments=2)
     return StorageResult(mesh=result)
 
 
@@ -489,12 +507,11 @@ def storage_cell_counts(
 
 def storage_dimensions_rand(rng: pf.RNG) -> pf.Vector:
     """Carcass footprint and height in meters, ordered as depth, width, height."""
-    rng_depth, rng_width, rng_height = rng.spawn(3)
     return pf.Vector(
         (
-            pf.random.uniform(rng_depth, 0.25, 0.45),
-            pf.random.uniform(rng_width, 0.7, 2.5),
-            pf.random.clip_gaussian(rng_height, 0.9, 0.4, 0.55, 2.2),
+            pf.random.uniform(rng, 0.25, 0.45),
+            pf.random.uniform(rng, 0.7, 2.5),
+            pf.random.clip_gaussian(rng, 0.9, 0.4, 0.55, 2.2),
         )
     )
 
@@ -512,47 +529,42 @@ def storage_params_rand(
     desired_slot_aspect: float | None = None,
 ) -> StorageParams:
     """Resolve every carcass parameter the caller left unspecified."""
-    (
-        rng_size,
-        rng_frame,
-        rng_row,
-        rng_col,
-        rng_aspect,
-        rng_cell,
-        rng_back,
-        rng_mat,
-    ) = rng.spawn(8)
+    rng_params, rng_size, rng_back_choice, rng_mat = rng.spawn(4)
     if dimensions is None:
         dimensions = storage_dimensions_rand(rng_size)
     if frame_thickness is None:
         upper = min(0.06, min(dimensions[1], dimensions[2]) * 0.25)
-        frame_thickness = pf.random.uniform(rng_frame, min(0.02, upper * 0.5), upper)
+        frame_thickness = pf.random.uniform(rng_params, min(0.02, upper * 0.5), upper)
     rows = 1 if n_spaces_z is None else n_spaces_z
     cols = 1 if n_spaces_y is None else n_spaces_y
     if row_divider_width is None:
         upper = min(0.05, (dimensions[2] - 2 * frame_thickness) / rows * 0.25)
-        row_divider_width = pf.random.uniform(rng_row, min(0.015, upper * 0.5), upper)
+        row_divider_width = pf.random.uniform(
+            rng_params, min(0.015, upper * 0.5), upper
+        )
     if col_divider_width is None:
         upper = min(0.04, (dimensions[1] - 2 * frame_thickness) / cols * 0.25)
-        col_divider_width = pf.random.uniform(rng_col, min(0.01, upper * 0.5), upper)
+        col_divider_width = pf.random.uniform(rng_params, min(0.01, upper * 0.5), upper)
     if desired_slot_aspect is None:
-        desired_slot_aspect = pf.random.uniform(rng_aspect, 2 / 3, 4.0)
+        desired_slot_aspect = pf.random.uniform(rng_params, 2 / 3, 4.0)
     fitted = storage_cell_counts(
         dimensions,
         desired_slot_aspect,
-        pf.random.uniform(rng_cell, 0.20, 0.40),
+        pf.random.uniform(rng_params, 0.20, 0.40),
         frame_thickness,
         row_divider_width,
         col_divider_width,
     )
     if back_width is None:
-        rng_choice, rng_depth = rng_back.spawn(2)
         upper = min(0.04, dimensions[0] * 0.25)
         back_width = pf.control.choice(
-            rng_choice,
+            rng_back_choice,
             [
                 (0.0, 0.5),
-                (pf.random.uniform(rng_depth, min(0.01, upper * 0.5), upper), 0.5),
+                (
+                    pf.random.uniform(rng_params, min(0.01, upper * 0.5), upper),
+                    0.5,
+                ),
             ],
         )
     if material is None:
@@ -595,25 +607,20 @@ def storage_cell_shelf_rand(
         col_divider_width,
         desired_slot_aspect,
     )
-    board = params.frame_thickness
-    geo = _shelf_geometry(
+    bevel_width = pf.random.uniform(rng_bevel, 0.001, 0.005)
+    shelf = storage_cell_shelf(
         dimensions=params.dimensions,
         n_spaces_y=params.n_spaces_y,
         n_spaces_z=params.n_spaces_z,
-        frame_board_dimensions=(board, board, board),
+        frame_thickness=params.frame_thickness,
         row_divider_width=params.row_divider_width,
         col_divider_width=params.col_divider_width,
         back_width=params.back_width,
-    )
-    geo = pf.nodes.geo.set_material(geometry=geo, material=params.material)
-    geo = mesh_util.crease_sharp(geo, threshold_degrees=30.0)
-    result = pf.nodes.to_mesh_object(geo)
-    pf.ops.modifier.bevel(
-        result, width=pf.random.uniform(rng_bevel, 0.001, 0.005), segments=2
-    )
-    # left unapplied so fronts and legs joined in afterwards share this density
-    pf.ops.modifier.subdivide_surface(result, levels=2, _skip_apply=True)
-    return StorageResult(mesh=result)
+        frame_material=params.material,
+        bevel_width=bevel_width,
+    ).mesh
+    pf.ops.modifier.subdivide_surface(shelf, levels=2, _skip_apply=True)
+    return StorageResult(mesh=shelf)
 
 
 def _storage_doors_rand(
@@ -746,14 +753,13 @@ def storage_cabinet_with_base(
         dimensions=pf.Vector((dimensions.x, dimensions.y, dimensions.z - base_height)),
         frame_material=frame_material,
     ).mesh
+    pf.ops.modifier.subdivide_surface(carcass, levels=2, _skip_apply=True)
     pf.ops.object.set_transform(carcass, location=(0.0, 0.0, base_height))
     base = furniture_bases.base_square(
         dimensions=pf.Vector((dimensions.y, dimensions.x, base_height)),
         leg_diameter=leg_diameter,
+        material=frame_material,
     ).mesh
-    pf.ops.object.set_material(
-        base, surface=frame_material.surface, displacement=frame_material.displacement
-    )
     # bases separate their frames along local x, so turn that across the width
     pf.ops.object.set_transform(
         base,
@@ -761,6 +767,7 @@ def storage_cabinet_with_base(
         rotation_euler=(0.0, 0.0, math.pi / 2),
     )
     pf.ops.object.join(carcass, base)
+    carcass.item().name = storage_cabinet_with_base.__name__
     return StorageResult(mesh=carcass)
 
 
@@ -864,6 +871,22 @@ def _grid_legs(
     )
 
 
+@pf.tracer.generator
+def storage_legs_grid(
+    depth: float,
+    width: float,
+    leg_height: float,
+    margin_frac: float,
+    spacing: float,
+    diameter: float,
+) -> StorageResult:
+    geo = _grid_legs(depth, width, leg_height, margin_frac, spacing, diameter)
+    geo = mesh_util.crease_sharp(geo, threshold_degrees=30.0)
+    obj = pf.nodes.to_mesh_object(geo)
+    obj.item().name = storage_legs_grid.__name__
+    return StorageResult(mesh=obj)
+
+
 def storage_legs_grid_rand(
     rng: pf.RNG,
     dimensions: pf.Vector,
@@ -886,9 +909,9 @@ def storage_legs_grid_rand(
     spacing = min(spacing, max_spacing)
     if diameter is None:
         diameter = pf.random.uniform(rng_diameter, 0.025, 0.14)
-    geo = _grid_legs(depth, width, leg_height, margin_frac, spacing, diameter)
-    geo = mesh_util.crease_sharp(geo, threshold_degrees=30.0)
-    return pf.nodes.to_mesh_object(geo)
+    return storage_legs_grid(
+        depth, width, leg_height, margin_frac, spacing, diameter
+    ).mesh
 
 
 def _table_base_rand(
@@ -907,17 +930,17 @@ def _table_base_rand(
             (furniture_bases.base_square_rand, 1.0),
         ],
     )
-    base_result = base_fn(
+    base = base_fn(
         rng_base,
         dimensions=(depth * 0.96, width * 0.96, leg_height),
         close_edges=close_edges,
-    )
-    base_min = pf.ops.attr.bbox_min_max(base_result.mesh, global_coords=False)[0]
+    ).mesh
+    base_min = pf.ops.attr.bbox_min_max(base, global_coords=False)[0]
     pf.ops.object.set_transform(
-        base_result.mesh,
+        base,
         location=(depth * 0.5, width * 0.5, base_min[2] * -1.0),
     )
-    return base_result.mesh
+    return base
 
 
 def storage_legs_stable_rand(
@@ -1067,6 +1090,7 @@ def storage_cabinet_with_door(
     carcass_result = storage_cell_shelf(
         dimensions=shelf_dimensions, frame_material=frame_material
     )
+    pf.ops.modifier.subdivide_surface(carcass_result.mesh, levels=2, _skip_apply=True)
     door_result = door_with_handle(
         dimensions=pf.Vector((thickness, dimensions.y, dimensions.z)),
         material=frame_material,
@@ -1075,6 +1099,7 @@ def storage_cabinet_with_door(
         door_result.mesh, location=(dimensions.x - thickness, 0.0, 0.0)
     )
     pf.ops.object.join(carcass_result.mesh, door_result.mesh)
+    carcass_result.mesh.item().name = storage_cabinet_with_door.__name__
     return StorageResult(mesh=carcass_result.mesh)
 
 
@@ -1179,6 +1204,20 @@ def _open_top_carcass_geometry(
     return pf.nodes.geo.join_geometry(parts)
 
 
+@pf.tracer.generator
+def storage_open_top_carcass(
+    dimensions: pf.Vector, board: float, material: pf.Material
+) -> StorageResult:
+    geo = _open_top_carcass_geometry(dimensions, board)
+    geo = pf.nodes.geo.set_material(geometry=geo, material=material)
+    carcass = pf.nodes.to_mesh_object(
+        mesh_util.crease_sharp(geo, threshold_degrees=30.0)
+    )
+    carcass.item().name = storage_open_top_carcass.__name__
+    pf.ops.modifier.bevel(carcass, width=0.002, segments=2)
+    return StorageResult(mesh=carcass)
+
+
 def storage_sink_base_rand(
     rng: pf.RNG,
     dimensions: pf.Vector | None = None,
@@ -1200,15 +1239,10 @@ def storage_sink_base_rand(
     if handle is None:
         handle = handles.handle_bar_pull_rand(rng_handle).mesh
     depth = dimensions.x - 0.018
-    geo = _open_top_carcass_geometry(
-        pf.Vector((depth, dimensions.y, dimensions.z)),
-        pf.random.uniform(rng_board, 0.016, 0.019),
-    )
-    geo = pf.nodes.geo.set_material(geometry=geo, material=frame_material)
-    carcass = pf.nodes.to_mesh_object(
-        mesh_util.crease_sharp(geo, threshold_degrees=30.0)
-    )
-    pf.ops.modifier.bevel(carcass, width=0.002, segments=2)
+    board = pf.random.uniform(rng_board, 0.016, 0.019)
+    carcass = storage_open_top_carcass(
+        pf.Vector((depth, dimensions.y, dimensions.z)), board, frame_material
+    ).mesh
     pf.ops.modifier.subdivide_surface(carcass, levels=2, _skip_apply=True)
     door = _storage_doors_rand(
         rng_door,

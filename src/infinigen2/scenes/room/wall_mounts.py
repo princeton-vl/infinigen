@@ -12,7 +12,9 @@ from infinigen2.scenes.placement import collision as ccol
 from infinigen2.scenes.placement.culling import keep_non_colliding
 from infinigen2.scenes.placement.distribute import propagate_modifiers_to_instances
 from infinigen2.scenes.room.wall_base import (
+    ROOM_SUBSURF_LEVELS,
     WallResult,
+    WallSurface,
     extrude_for_thickness,
     finish_wall_plane,
     fit_grid_margins,
@@ -22,7 +24,6 @@ from infinigen2.scenes.room.wall_base import (
     seat_upright_cabinet,
     upright_cabinet_footprint,
     wall_storage_width_rand,
-    wall_uv_dimensions,
 )
 from infinigen2.shaders.functionality_lists import furniture_material_rand
 from infinigen2.util import mesh as mesh_util
@@ -39,13 +40,14 @@ logger = logging.getLogger(__name__)
 @pf.tracer.grammar
 def wall_board_shelf_rand(
     rng: pf.RNG,
-    wall: pf.MeshObject | None = None,
+    wall: WallSurface | None = None,
     wall_material: pf.Material | None = None,
     wall_thickness: float = 0.05,
     colliders: ccol.CollisionSet | None = None,
 ) -> WallResult:
     rng, wall, wall_material = resolve_wall_inputs(rng, wall, wall_material)
-    wall_width, wall_height = wall_uv_dimensions(wall)
+    wall_width = wall.width
+    wall_height = wall.height
 
     shelf_depth = pf.random.uniform(rng, 0.162, 0.2835)
     shelf_thickness = pf.random.uniform(rng, 0.02, 0.05)
@@ -89,7 +91,7 @@ def wall_board_shelf_rand(
     ).attribute
 
     grid_res = grid_placement.grid_from_spacing(
-        uv_surface=wall,
+        uv_surface=wall.obj,
         target_uv=uv_meters,
         instance=footprint,
         spacing=pf.Vector((spacing_x, spacing_y, 0)),
@@ -98,7 +100,7 @@ def wall_board_shelf_rand(
         y_instances_max=pf.random.randint(rng, 4, 12),
     )
     instances = grid_placement.place_instances_on_uv_grid(
-        surface=wall,
+        surface=wall.obj,
         uv_field=uv_meters,
         grid_mesh=grid_res.grid_mesh,
         query_uv=grid_res.query_uv,
@@ -121,14 +123,17 @@ def wall_board_shelf_rand(
             shelf_aliases, colliders, key=lambda obj: obj
         )
 
-    wall_thick = extrude_for_thickness(wall, wall_thickness)
-    wall_thick.item().name = "room_wall_back"
-    wall = finish_wall_plane(wall, wall_material)
-    wall = plane_to_posed_canonical_mesh(wall)
+    wall_thick = extrude_for_thickness(wall.obj, wall_thickness)
+    wall_thick.item().name = "wall_board_shelf"
+    finished = finish_wall_plane(wall.obj, wall_material)
+    pf.ops.modifier.subdivide_surface(
+        finished, levels=ROOM_SUBSURF_LEVELS, _skip_apply=True
+    )
+    finished = plane_to_posed_canonical_mesh(finished)
 
     return WallResult(
-        all_objects=[wall, wall_thick, *shelf_aliases],
-        wall_planes=[wall],
+        all_objects=[finished, wall_thick, *shelf_aliases],
+        wall_planes=[finished],
         backs=[wall_thick],
         sills=[],
         storage_containers=[],
@@ -142,26 +147,22 @@ def wall_board_shelf_rand(
 @pf.tracer.grammar
 def wall_storage_flush_rand(
     rng: pf.RNG,
-    wall: pf.MeshObject | None = None,
+    wall: WallSurface | None = None,
     wall_material: pf.Material | None = None,
     wall_thickness: float = 0.05,
     colliders: ccol.CollisionSet | None = None,
 ) -> WallResult:
     rng, wall, wall_material = resolve_wall_inputs(rng, wall, wall_material)
-    wall_width, wall_height = wall_uv_dimensions(wall)
+    rng, rng_width, rng_cabinet = rng.spawn(3)
+    wall_width = wall.width
+    wall_height = wall.height
 
     depth = pf.random.uniform(rng, 0.3, 0.61)
     min_margin = depth * 0.5
 
-    def _short_band() -> float:
-        return wall_height * pf.random.uniform(rng, 0.20, 0.50)
+    height = wall_height * pf.random.uniform(rng, 0.20, 0.98)
 
-    def _tall_band() -> float:
-        return wall_height * pf.random.uniform(rng, 0.60, 0.98)
-
-    height = pf.control.choice(rng, [(_short_band, 1.0), (_tall_band, 1.0)])()
-
-    width = wall_storage_width_rand(rng, wall_width, min_margin)
+    width = wall_storage_width_rand(rng_width, wall_width, min_margin)
     spacing_x = pf.random.uniform(rng, 0.1, 0.5)
 
     margin_split = pf.random.uniform(rng, 0.375, 0.625)
@@ -170,7 +171,7 @@ def wall_storage_flush_rand(
     )
 
     cab = storage.storage_cell_shelf_rand(
-        rng,
+        rng_cabinet,
         dimensions=pf.Vector((depth, width, height)),
     ).mesh
     cab = seat_upright_cabinet(cab, width, height, back_depth=0.0)
@@ -180,7 +181,7 @@ def wall_storage_flush_rand(
         name="UVMap", data_type=pf.NodeDataType.FLOAT_VECTOR
     ).attribute
     grid_res = grid_placement.grid_from_spacing(
-        uv_surface=wall,
+        uv_surface=wall.obj,
         target_uv=uv_meters,
         instance=footprint,
         spacing=pf.Vector((spacing_x, 0, 0)),
@@ -189,7 +190,7 @@ def wall_storage_flush_rand(
         y_instances_max=1,
     )
     instances = grid_placement.place_instances_on_uv_grid(
-        surface=wall,
+        surface=wall.obj,
         uv_field=uv_meters,
         grid_mesh=grid_res.grid_mesh,
         query_uv=grid_res.query_uv,
@@ -211,10 +212,10 @@ def wall_storage_flush_rand(
     if colliders is not None:
         aliases, _ = keep_non_colliding(aliases, colliders, key=lambda obj: obj)
 
-    wall, wall_thick = plain_wall(wall, wall_material, wall_thickness)
+    finished, wall_thick = plain_wall(wall, wall_material, wall_thickness)
     return WallResult(
-        all_objects=[wall, wall_thick, *aliases],
-        wall_planes=[wall],
+        all_objects=[finished, wall_thick, *aliases],
+        wall_planes=[finished],
         backs=[wall_thick],
         sills=[],
         storage_containers=aliases,

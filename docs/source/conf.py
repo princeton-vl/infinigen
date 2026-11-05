@@ -23,6 +23,7 @@ from pathlib import Path
 from typing import TypeVar
 
 from docutils import nodes as docutils_nodes
+from packaging.version import Version
 from procfunc.util.teardown import exit_skipping_teardown
 from sphinx import addnodes
 from sphinx.domains.python import PythonDomain
@@ -325,7 +326,11 @@ def _version_slug() -> str:
         or os.environ.get("READTHEDOCS_VERSION")
         or os.environ.get("INFINIGEN_DOCS_VERSION")
     )
-    return env or f"v{infinigen2.__version__}"
+    if env:
+        return env
+    parsed = Version(infinigen2.__version__)
+    pre = "".join(str(p) for p in parsed.pre or ())
+    return f"v{parsed.base_version}{pre}"
 
 
 VERSION_SLUG = _version_slug()
@@ -345,7 +350,10 @@ def _manifest_entries() -> tuple[dict[str, int], dict[str, str]]:
         name = e.get("name")
         if not name:
             continue
-        if category in _VIDEO_CATEGORIES:
+        if e.get("skip_integration_test"):
+            # Integration never renders these, so a gallery would only link 404s.
+            count = 0
+        elif category in _VIDEO_CATEGORIES:
             count = e.get("num_seeds") or 0
         elif e.get("num_seeds") == 0:
             # Deterministic entrypoints (asset_demo base shapes) get no example gallery.

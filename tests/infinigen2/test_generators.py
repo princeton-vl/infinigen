@@ -24,6 +24,7 @@ from infinigen2.exporters.render_error_check import (
     assert_displacement_coords_safe,
     assert_shader_complexity_ok,
     assert_uv_coords_satisfied,
+    degenerate_geometry_defects,
 )
 from infinigen2.util.codestats.setup import build_model_from_compute_graph
 
@@ -37,6 +38,11 @@ def _assert_render_valid(objects: list[pf.MeshObject]):
     assert_uv_coords_satisfied(objects)
 
 
+_SKIP_UNIT_TEST = (
+    GENERATORS_MANIFEST.set_index("name")["skip_unit_test"].dropna().to_dict()
+)
+
+
 def _manifest_params(df, defaults: dict):
     sub = df[["name"]].copy()
     for col, val in defaults.items():
@@ -45,7 +51,24 @@ def _manifest_params(df, defaults: dict):
         else:
             sub[col] = val
     for row in sub.itertuples(index=False):
-        yield pytest.param(*row, id=row[0])
+        reason = _SKIP_UNIT_TEST.get(row[0])
+        marks = () if reason is None else pytest.mark.skip(reason=reason)
+        yield pytest.param(*row, id=row[0], marks=marks)
+
+
+def _private_function_calls(graph: cg.ComputeGraph) -> list[str]:
+    nodes = [
+        node
+        for subgraph in cg.traverse_nested_graphs(graph)
+        for node in cg.traverse_depth_first(subgraph)
+        if isinstance(node, cg.FunctionCallNode)
+    ]
+    names = {
+        f"{node.func.__module__}.{node.func.__name__}"
+        for node in nodes
+        if node.func.__name__.startswith("_")
+    }
+    return sorted(names)
 
 
 def validate_trace_generator(
@@ -59,6 +82,11 @@ def validate_trace_generator(
         trace_level=TraceLevel.RANDOM_CONTROL,
         rng=rng,
         **generator_kwargs,
+    )
+    private_calls = _private_function_calls(graph)
+    assert not private_calls, (
+        f"Trace resolved to private functions {private_calls}; "
+        "decorate their public caller with @pf.tracer.generator"
     )
     _code = to_python(graph, toplevel_as_maincall=False)
     try:
@@ -150,7 +178,7 @@ _PRIMITIVES_TRACE_EXCLUDES = {
     "infinigen2.objects.table.table_side_rand",
 }
 _PRIMITIVES_TRACE_FUNCS = _OBJECT_FUNCS[
-    ~_OBJECT_FUNCS["name"].isin(_PRIMITIVES_TRACE_EXCLUDES)
+    ~_OBJECT_FUNCS["name"].isin(_PRIMITIVES_TRACE_EXCLUDES | set(_SKIP_UNIT_TEST))
 ]
 
 
@@ -159,12 +187,14 @@ def _primitives_trace_params():
         pathspec = row[0]
         marks = []
         if pathspec == "infinigen2.objects.toilet.toilet_rand":
-            marks = pytest.mark.xfail(
-                reason=(
-                    "Linux CI and a local current-develop merge expose a direct/traced "
-                    "execution parity gap for toilet_rand (7367 vs 7655 evaluated faces)"
-                ),
-                strict=True,
+            marks.append(
+                pytest.mark.xfail(
+                    reason=(
+                        "Linux CI and a local current-develop merge expose a direct/traced "
+                        "execution parity gap for toilet_rand (7367 vs 7655 evaluated faces)"
+                    ),
+                    strict=True,
+                )
             )
         yield pytest.param(pathspec, id=pathspec, marks=marks)
 
@@ -185,8 +215,36 @@ def test_generators_object(rng, pathspec, min_parameters):
         f".mesh should be MeshObject, got {type(res.mesh)} from {pathspec}"
     )
     _assert_render_valid([res.mesh])
+    defects = degenerate_geometry_defects([res.mesh])
 
     validate_trace_generator(func, rng, min_parameters=min_parameters)
+    assert defects == {}, f"{pathspec} produced degenerate geometry: {defects}"
+
+
+_SCENE_FUNCS = pf.util.manifest.filter_manifest(
+    GENERATORS_MANIFEST,
+    filter={"category": "Scene"},
+    exclude={"name": ["LATER", "DECLINE"]},
+    require_nonempty=["name"],
+    min_entries=1,
+)
+
+
+@pytest.mark.parametrize("pathspec", _manifest_params(_SCENE_FUNCS, {}))
+def test_generators_scene(rng: np.random.Generator, pathspec: str) -> None:
+    func = import_item(pathspec)
+    res = func(rng=rng)
+    if res is None:
+        return
+    assert isinstance(res, tuple) and hasattr(res, "all_objects"), (
+        f"{pathspec} should return a NamedTuple with all_objects, got {type(res)}"
+    )
+    meshes = [obj for obj in res.all_objects if isinstance(obj, pf.MeshObject)]
+    assert meshes, f"{pathspec} returned no meshes in all_objects"
+
+    _assert_render_valid(meshes)
+    defects = degenerate_geometry_defects(meshes)
+    assert defects == {}, f"{pathspec} produced degenerate geometry: {defects}"
 
 
 def _evaluated_mesh_geometry(

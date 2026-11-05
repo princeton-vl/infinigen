@@ -27,6 +27,31 @@ class RugResult(NamedTuple):
     mesh: pf.MeshObject
 
 
+def _round_corners(
+    geometry: pf.ProcNode,
+    half_length: t.SocketOrVal[float],
+    half_width: t.SocketOrVal[float],
+    fillet_radius: t.SocketOrVal[float],
+) -> pf.ProcNode:
+    position = pf.nodes.math.separate_xyz(pf.nodes.geo.input_position())
+    du = pf.nodes.math.maximum(
+        pf.nodes.math.absolute(position.x) - (half_length - fillet_radius), 0.0
+    )
+    dv = pf.nodes.math.maximum(
+        pf.nodes.math.absolute(position.y) - (half_width - fillet_radius), 0.0
+    )
+    radial = pf.nodes.math.sqrt(du * du + dv * dv)
+    square_to_circle = pf.nodes.math.maximum(du, dv) / pf.nodes.math.maximum(
+        radial, 1e-9
+    )
+    shift_x = pf.nodes.math.sign(position.x) * du * (square_to_circle - 1.0)
+    shift_y = pf.nodes.math.sign(position.y) * dv * (square_to_circle - 1.0)
+    return pf.nodes.geo.set_position(
+        geometry=geometry,
+        offset=pf.nodes.math.combine_xyz(x=shift_x, y=shift_y),
+    )
+
+
 @pf.nodes.node_function
 def _rug_geometry(
     width: t.SocketOrVal[float],
@@ -35,10 +60,10 @@ def _rug_geometry(
     thickness: t.SocketOrVal[float],
     material: t.SocketOrVal[pf.Material],
 ) -> t.ProcNode[pf.MeshObject]:
-    support_z = pf.nodes.math.minimum(fillet_radius, thickness * 0.4)
     size = pf.nodes.math.combine_xyz(x=length, y=width, z=thickness)
+    edge_radius = thickness * 0.4
     support_loop_offset = pf.nodes.math.combine_xyz(
-        x=fillet_radius, y=fillet_radius, z=support_z
+        x=edge_radius, y=edge_radius, z=edge_radius
     )
     box = mesh.box_with_support_loops(
         size=size,
@@ -52,8 +77,15 @@ def _rug_geometry(
         selection=pf.nodes.geo.input_normal().z < -0.9,
         domain="FACE",
     )
+    rounded = _round_corners(
+        without_bottom,
+        half_length=length * 0.5,
+        half_width=width * 0.5,
+        fillet_radius=fillet_radius,
+    )
+    rounded = mesh.metric_box_uv(rounded)
     raised = pf.nodes.geo.transform(
-        geometry=without_bottom,
+        geometry=rounded,
         translation=pf.nodes.math.combine_xyz(z=thickness * 0.5),
     )
     geo = pf.nodes.geo.set_material(geometry=raised, material=material)
@@ -61,6 +93,7 @@ def _rug_geometry(
     return geo
 
 
+@pf.tracer.generator
 def rug(
     width: float = 2.5,
     length: float = 3.125,
@@ -79,7 +112,7 @@ def rug(
         material=material,
     )
     obj = pf.nodes.to_mesh_object(geo)
-    pf.ops.modifier.subdivide_surface(obj, levels=_RUG_SUBDIV_LEVELS, _skip_apply=True)
+    obj.item().name = rug.__name__
     return RugResult(mesh=obj)
 
 
@@ -102,14 +135,12 @@ def rug_rand(
         vec = pf.nodes.shader.geometry().position
         material = rug_material_rand(rng_material, vec)
 
-    geo = _rug_geometry(
+    obj = rug(
         width=dimensions[1],
         length=dimensions[0],
         fillet_radius=fillet_radius,
         thickness=dimensions[2],
         material=material,
-    )
-
-    obj = pf.nodes.to_mesh_object(geo)
+    ).mesh
     pf.ops.modifier.subdivide_surface(obj, levels=_RUG_SUBDIV_LEVELS, _skip_apply=True)
     return RugResult(mesh=obj)

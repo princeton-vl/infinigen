@@ -20,7 +20,7 @@ __all__ = [
     "CushionResult",
     "cushion_bed_pillow_rand",
     "cushion_box_geometry",
-    "cushion_knife_edge_geometry",
+    "cushion_knife_edge",
     "cushion_throw_pillow_rand",
     "optional_piping_radius_rand",
     "support_loop_offset",
@@ -42,77 +42,41 @@ def support_loop_offset(
 
 
 @pf.nodes.node_function
-def _anchored(
-    geometry: t.SocketOrVal[pf.MeshObject],
+def _piped_and_anchored(
+    body: t.SocketOrVal[pf.MeshObject],
+    seam: t.SocketOrVal[bool],
+    material: t.SocketOrVal[pf.Material],
+    piping_radius: t.SocketOrVal[float],
     size: t.SocketOrVal[pf.Vector],
-    location: t.SocketOrVal[pf.Vector],
     anchor: t.SocketOrVal[pf.Vector],
 ) -> pf.ProcNode[pf.MeshObject]:
-    center_factor = pf.nodes.math.map_range(
-        value=anchor,
-        from_min=(0.0, 0.0, 0.0),
-        from_max=(1.0, 1.0, 1.0),
-        to_min=(0.5, 0.5, 0.5),
-        to_max=(-0.5, -0.5, -0.5),
-    )
-    center = pf.nodes.math.vector_multiply_add(a=center_factor, b=size, addend=location)
-    return pf.nodes.geo.transform(
-        geometry=geometry, translation=center, rotation=(0, 0, 0), scale=(1, 1, 1)
-    )
-
-
-@pf.nodes.node_function
-def piping_along_seam(
-    mesh: t.SocketOrVal[pf.MeshObject],
-    seam: t.SocketOrVal[bool],
-    piping_radius: t.SocketOrVal[float],
-) -> pf.ProcNode[pf.MeshObject]:
-    """Welt cord tube along the fully-creased ``seam`` edge loops of ``mesh``.
-
-    A fully creased edge chain and a tube swept along the same poly chain both
-    subdivide to the cubic B-spline of its vertices, so the cord stays on the
-    seam. A hexagon ring subdivides to a circle of 5/6 its circumradius."""
-    loops = pf.nodes.geo.mesh_to_curve(mesh, selection=seam)
+    # a fully creased seam and a tube swept along it subdivide to the same B-spline
+    loops = pf.nodes.geo.mesh_to_curve(body, selection=seam)
     loops = pf.nodes.geo.remove_attribute(loops, name="crease_edge")
     profile = pf.nodes.geo.curve_circle(resolution=6, radius=piping_radius * 1.2)
-    tube = curve_to_mesh_with_uv(curve=loops, profile=profile).mesh
-    has_piping = pf.nodes.func.greater_than(a=piping_radius, b=1e-5)
-    return pf.nodes.func.switch(switch=has_piping, b=tube)
-
-
-@pf.nodes.node_function
-def _seam_edges(
-    half_size: t.SocketOrVal[pf.Vector],
-) -> pf.ProcNode[bool]:
-    edge = pf.nodes.geo.input_mesh_edge_vertices()
-    p1 = pf.nodes.math.vector_absolute(edge.position_1)
-    p2 = pf.nodes.math.vector_absolute(edge.position_2)
-    limit = half_size - (1e-5, 1e-5, 1e-5)
-    on_cap = pf.nodes.func.boolean_and(a=p1.z > limit.z, b=p2.z > limit.z)
-    along_x_side = pf.nodes.func.boolean_and(a=p1.x > limit.x, b=p2.x > limit.x)
-    along_y_side = pf.nodes.func.boolean_and(a=p1.y > limit.y, b=p2.y > limit.y)
-    on_rim = pf.nodes.func.boolean_or(a=along_x_side, b=along_y_side)
-    return pf.nodes.func.boolean_and(a=on_cap, b=on_rim)
+    piping = curve_to_mesh_with_uv(curve=loops, profile=profile).mesh
+    piping = pf.nodes.func.switch(switch=piping_radius > 1e-5, b=piping)
+    cushion = pf.nodes.geo.join_geometry([body, piping])
+    cushion = pf.nodes.geo.set_material(cushion, material)
+    return pf.nodes.geo.transform(
+        geometry=cushion,
+        translation=size * 0.5 - anchor * size,
+        rotation=(0, 0, 0),
+        scale=(1, 1, 1),
+    )
 
 
 @pf.nodes.node_function
 def cushion_box_geometry(
     size: t.SocketOrVal[pf.Vector],
     material: t.SocketOrVal[pf.Material],
-    piping_material: t.SocketOrVal[pf.Material],
-    location: t.SocketOrVal[pf.Vector] = (0, 0, 0),
-    anchor: t.SocketOrVal[pf.Vector] = (0.5, 0.5, 0.5),
-    edge_radius: t.SocketOrVal[float] = 0.03,
-    crown: t.SocketOrVal[float] = 0.0,
-    piping_radius: t.SocketOrVal[float] = 0.0,
-    seam_crease: t.SocketOrVal[float] = 0.0,
+    anchor: t.SocketOrVal[pf.Vector],
+    edge_radius: t.SocketOrVal[float],
+    crown: t.SocketOrVal[float],
+    piping_radius: t.SocketOrVal[float],
 ) -> pf.ProcNode[pf.MeshObject]:
-    """Boxed cushion within ``size``, placed like ``box_with_support_loops``.
-    Local z is thickness: boxing ``size.z - 2 * crown`` plus a domed panel on
-    each side. Piped seams are fully creased, unpiped ones get ``seam_crease``."""
     boxing = size.z - crown * 2.0
     body_size = pf.nodes.math.combine_xyz(x=size.x, y=size.y, z=boxing)
-    loop_offset = support_loop_offset(edge_radius, body_size)
     body = mesh_util.box_with_support_loops(
         size=body_size,
         location=(0, 0, 0),
@@ -120,13 +84,25 @@ def cushion_box_geometry(
         vertices_x=7,
         vertices_y=7,
         vertices_z=4,
-        support_loop_offset=loop_offset,
+        support_loop_offset=support_loop_offset(edge_radius, body_size),
     )
-    seam = _seam_edges(body_size * 0.5)
-    has_piping = pf.nodes.func.greater_than(a=piping_radius, b=1e-5)
-    crease = pf.nodes.func.switch(switch=has_piping, a=seam_crease, b=1.0)
+
+    edge = pf.nodes.geo.input_mesh_edge_vertices()
+    p1 = pf.nodes.math.vector_absolute(edge.position_1)
+    p2 = pf.nodes.math.vector_absolute(edge.position_2)
+    limit = body_size * 0.5 - (1e-5, 1e-5, 1e-5)
+    on_cap = pf.nodes.func.boolean_and(a=p1.z > limit.z, b=p2.z > limit.z)
+    along_x = pf.nodes.func.boolean_and(a=p1.x > limit.x, b=p2.x > limit.x)
+    along_y = pf.nodes.func.boolean_and(a=p1.y > limit.y, b=p2.y > limit.y)
+    seam = pf.nodes.func.boolean_and(
+        a=on_cap, b=pf.nodes.func.boolean_or(a=along_x, b=along_y)
+    )
     body = pf.nodes.geo.store_named_attribute(
-        geometry=body, domain="EDGE", name="crease_edge", selection=seam, value=crease
+        geometry=body,
+        domain="EDGE",
+        name="crease_edge",
+        selection=seam,
+        value=(piping_radius > 1e-5).astype(dtype=float),
     )
 
     position = pf.nodes.geo.input_position()
@@ -138,73 +114,47 @@ def cushion_box_geometry(
         geometry=body,
         offset=pf.nodes.math.combine_xyz(z=pf.nodes.math.sign(position.z) * lift),
     )
-
-    piping = piping_along_seam(body, seam, piping_radius)
-    body = pf.nodes.geo.set_material(body, material)
-    piping = pf.nodes.geo.set_material(piping, piping_material)
-    cushion = pf.nodes.geo.join_geometry([body, piping])
-    return _anchored(cushion, size, location, anchor)
-
-
-def knife_edge_fullness_rand(rng: pf.RNG) -> float:
-    return pf.random.uniform(rng, 1.4, 3.0)
+    return _piped_and_anchored(body, seam, material, piping_radius, size, anchor)
 
 
 @pf.nodes.node_function
-def _superellipse(
-    u: t.SocketOrVal[float], fullness: t.SocketOrVal[float]
-) -> pf.ProcNode[float]:
-    inside = 1.0 - pf.nodes.math.power(pf.nodes.math.absolute(u), fullness)
-    return pf.nodes.math.power(pf.nodes.math.maximum(inside, 0.0), 1.0 / fullness)
-
-
-@pf.nodes.node_function
-def _bunch_to_edges(s: t.SocketOrVal[float]) -> pf.ProcNode[float]:
-    toward_edge = pf.nodes.math.maximum(1.0 - pf.nodes.math.absolute(s), 0.0)
-    return pf.nodes.math.sign(s) * (1.0 - toward_edge * toward_edge * toward_edge)
-
-
-@pf.nodes.node_function
-def cushion_knife_edge_geometry(
+def _knife_edge_cushion_geometry(
     size: t.SocketOrVal[pf.Vector],
     material: t.SocketOrVal[pf.Material],
-    piping_material: t.SocketOrVal[pf.Material],
-    location: t.SocketOrVal[pf.Vector] = (0, 0, 0),
-    anchor: t.SocketOrVal[pf.Vector] = (0.5, 0.5, 0.5),
-    fullness: t.SocketOrVal[float] = 2.0,
-    corner_pinch: t.SocketOrVal[float] = 0.05,
-    piping_radius: t.SocketOrVal[float] = 0.0,
+    fullness: t.SocketOrVal[float],
+    corner_pinch: t.SocketOrVal[float],
+    piping_radius: t.SocketOrVal[float],
 ) -> pf.ProcNode[pf.MeshObject]:
-    """Throw pillow: two panels sewn along one creased seam, ``size.z`` thick at
-    the centre. Each panel follows the superellipse ``_superellipse`` so it
-    meets the seam convex; higher ``fullness`` is squarer. ``corner_pinch`` is
-    the fraction each side bows inward at its middle."""
+    # superellipse panels meet the seam convex; grid rows bunch toward the seam
     grid = pf.nodes.geo.mesh_grid(size_x=2.0, size_y=2.0, vertices_x=7, vertices_y=7)
     position = pf.nodes.geo.input_position()
-    u = _bunch_to_edges(position.x)
-    v = _bunch_to_edges(position.y)
-    falloff_u = 1.0 - u * u
-    falloff_v = 1.0 - v * v
-    bulge = _superellipse(u, fullness) * _superellipse(v, fullness)
-    panel_position = pf.nodes.math.combine_xyz(
-        x=u * size.x * 0.5 * (1.0 - corner_pinch * falloff_v),
-        y=v * size.y * 0.5 * (1.0 - corner_pinch * falloff_u),
-        z=bulge * size.z * 0.5,
+    edge_u = 1.0 - pf.nodes.math.absolute(position.x)
+    edge_v = 1.0 - pf.nodes.math.absolute(position.y)
+    u = pf.nodes.math.sign(position.x) * (1.0 - edge_u * edge_u * edge_u)
+    v = pf.nodes.math.sign(position.y) * (1.0 - edge_v * edge_v * edge_v)
+    bulge_u = 1.0 - pf.nodes.math.power(pf.nodes.math.absolute(u), fullness)
+    bulge_v = 1.0 - pf.nodes.math.power(pf.nodes.math.absolute(v), fullness)
+    bulge = pf.nodes.math.power(
+        pf.nodes.math.maximum(bulge_u * bulge_v, 0.0), 1.0 / fullness
     )
-    top = pf.nodes.geo.set_position(geometry=grid.mesh, position=panel_position)
-    panel_uv = pf.nodes.geo.input_position()
+    x = u * size.x * 0.5 * (1.0 - corner_pinch * (1.0 - v * v))
+    y = v * size.y * 0.5 * (1.0 - corner_pinch * (1.0 - u * u))
+    top = pf.nodes.geo.set_position(
+        geometry=grid.mesh,
+        position=pf.nodes.math.combine_xyz(x=x, y=y, z=bulge * size.z * 0.5),
+    )
     top = pf.nodes.geo.store_named_attribute(
         geometry=top,
         name="UVMap",
-        value=pf.nodes.math.combine_xyz(x=panel_uv.x, y=panel_uv.y),
+        # fields re-evaluate after set_position, so this reads the moved x/y
+        value=pf.nodes.math.combine_xyz(x=position.x, y=position.y),
         domain="CORNER",
         data_type="FLOAT2",
     )
     bottom = pf.nodes.geo.transform(
         geometry=top, translation=(0, 0, 0), rotation=(0, 0, 0), scale=(1, 1, -1)
     )
-    bottom = pf.nodes.geo.flip_faces(bottom)
-    body = pf.nodes.geo.join_geometry([top, bottom])
+    body = pf.nodes.geo.join_geometry([top, pf.nodes.geo.flip_faces(bottom)])
     body = pf.nodes.geo.merge_by_distance(body, distance=1e-5)
 
     edge = pf.nodes.geo.input_mesh_edge_vertices()
@@ -215,25 +165,16 @@ def cushion_knife_edge_geometry(
     body = pf.nodes.geo.store_named_attribute(
         geometry=body, domain="EDGE", name="crease_edge", selection=seam, value=1.0
     )
-    piping = piping_along_seam(body, seam, piping_radius)
-    body = pf.nodes.geo.set_material(body, material)
-    piping = pf.nodes.geo.set_material(piping, piping_material)
-    cushion = pf.nodes.geo.join_geometry([body, piping])
-    return _anchored(cushion, size, location, anchor)
-
-
-def _cushion_object(geometry: pf.ProcNode[pf.MeshObject]) -> CushionResult:
-    obj = pf.nodes.to_mesh_object(geometry)
-    pf.ops.modifier.subdivide_surface(obj, levels=6, _skip_apply=True)
-    return CushionResult(mesh=obj)
+    return _piped_and_anchored(
+        body, seam, material, piping_radius, size, (0.5, 0.5, 0.0)
+    )
 
 
 def _no_piping_rand(rng: pf.RNG) -> float:
     return 0.0
 
 
-def piping_radius_rand(rng: pf.RNG) -> float:
-    """Finished welt radius: 4/32-6/32 in cord (3.2-4.8 mm) wrapped in fabric."""
+def _piping_radius_rand(rng: pf.RNG) -> float:
     return pf.random.uniform(rng, 0.0025, 0.0055)
 
 
@@ -241,36 +182,29 @@ def optional_piping_radius_rand(rng: pf.RNG, piped_weight: float) -> float:
     rng_choice, rng_radius = rng.spawn(2)
     piping_fn = pf.control.choice(
         rng_choice,
-        [(piping_radius_rand, piped_weight), (_no_piping_rand, 1.0 - piped_weight)],
+        [(_piping_radius_rand, piped_weight), (_no_piping_rand, 1.0 - piped_weight)],
     )
     return piping_fn(rng_radius)
 
 
-def _knife_edge_pillow(
-    rng: pf.RNG,
+@pf.tracer.generator
+def cushion_knife_edge(
     size: pf.Vector,
-    piping_radius: float | None,
-    material: pf.Material | None,
-    fullness: float | None = None,
+    material: pf.Material,
+    fullness: float,
+    corner_pinch: float,
+    piping_radius: float,
 ) -> CushionResult:
-    rng, rng_piping, rng_fabric = rng.spawn(3)
-    if fullness is None:
-        fullness = knife_edge_fullness_rand(rng)
-    if piping_radius is None:
-        piping_radius = optional_piping_radius_rand(rng_piping, 0.4)
-    if material is None:
-        material = fabric_sturdy_rand(rng_fabric, pf.nodes.shader.coord().uv)
-    corner_pinch = pf.random.uniform(rng, 0.02, 0.07)
-    geometry = cushion_knife_edge_geometry(
+    geometry = _knife_edge_cushion_geometry(
         size=size,
         material=material,
-        piping_material=material,
-        anchor=(0.5, 0.5, 0.0),
         fullness=fullness,
         corner_pinch=corner_pinch,
         piping_radius=piping_radius,
     )
-    return _cushion_object(geometry)
+    obj = pf.nodes.to_mesh_object(geometry)
+    obj.item().name = cushion_knife_edge.__name__
+    return CushionResult(mesh=obj)
 
 
 def cushion_throw_pillow_rand(
@@ -281,13 +215,28 @@ def cushion_throw_pillow_rand(
     fullness: float | None = None,
 ) -> CushionResult:
     """Square throw pillow, 16-24 in (0.40-0.60 m) across."""
-    rng, rng_pillow = rng.spawn(2)
+    rng, rng_piping, rng_fabric = rng.spawn(3)
     if size is None:
         side = pf.random.uniform(rng, 0.4, 0.6)
         thickness = side * pf.random.uniform(rng, 0.25, 0.33)
         depth = side * pf.random.uniform(rng, 0.97, 1.03)
         size = pf.Vector((side, depth, thickness))
-    return _knife_edge_pillow(rng_pillow, size, piping_radius, material, fullness)
+    if fullness is None:
+        fullness = pf.random.uniform(rng, 1.4, 3.0)
+    corner_pinch = pf.random.uniform(rng, 0.02, 0.07)
+    if piping_radius is None:
+        piping_radius = optional_piping_radius_rand(rng_piping, 0.4)
+    if material is None:
+        material = fabric_sturdy_rand(rng_fabric, pf.nodes.shader.coord().uv)
+    pillow = cushion_knife_edge(
+        size=size,
+        material=material,
+        fullness=fullness,
+        corner_pinch=corner_pinch,
+        piping_radius=piping_radius,
+    ).mesh
+    pf.ops.modifier.subdivide_surface(pillow, levels=6, _skip_apply=True)
+    return CushionResult(mesh=pillow)
 
 
 def cushion_bed_pillow_rand(
@@ -297,12 +246,23 @@ def cushion_bed_pillow_rand(
     material: pf.Material | None = None,
 ) -> CushionResult:
     """Sleeping pillow, 19-21 in deep, 26-36 in long (standard to king), 6-9 in loft."""
-    rng, rng_fabric, rng_pillow = rng.spawn(3)
+    rng, rng_fabric = rng.spawn(2)
     if size is None:
         short_side = pf.random.uniform(rng, 0.48, 0.53)
         long_side = pf.random.uniform(rng, 0.66, 0.92)
         loft = pf.random.uniform(rng, 0.15, 0.22)
         size = pf.Vector((short_side, long_side, loft))
+    if fullness is None:
+        fullness = pf.random.uniform(rng, 1.4, 3.0)
+    corner_pinch = pf.random.uniform(rng, 0.02, 0.07)
     if material is None:
         material = fabric_general_rand(rng_fabric, pf.nodes.shader.coord().uv)
-    return _knife_edge_pillow(rng_pillow, size, 0.0, material, fullness)
+    pillow = cushion_knife_edge(
+        size=size,
+        material=material,
+        fullness=fullness,
+        corner_pinch=corner_pinch,
+        piping_radius=0.0,
+    ).mesh
+    pf.ops.modifier.subdivide_surface(pillow, levels=6, _skip_apply=True)
+    return CushionResult(mesh=pillow)

@@ -12,6 +12,7 @@ import numpy as np
 
 from infinigen2 import context
 from infinigen2.exporters.util.blender_render import load_single_channel
+from infinigen2.util.bpy_compat import scene_compositor_node_tree
 
 logger = logging.getLogger(__name__)
 
@@ -31,9 +32,7 @@ def configure_sample_count_output(
     view_layer: bpy.types.ViewLayer, folder: Path
 ) -> None:
     view_layer.cycles.pass_debug_sample_count = True
-    scene = bpy.context.scene
-    scene.use_nodes = True
-    tree = scene.node_tree
+    tree = scene_compositor_node_tree(bpy.context.scene)
     render_layers = next(
         (n for n in tree.nodes if n.bl_idname == "CompositorNodeRLayers"), None
     )

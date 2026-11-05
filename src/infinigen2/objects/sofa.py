@@ -248,8 +248,6 @@ def _sofa_geometry(
     back_cushion = cushion.cushion_box_geometry(
         size=back_cushion_dimensions,
         material=fabric_material,
-        piping_material=fabric_material,
-        location=(0.0, 0.0, 0.0),
         anchor=(0.1, 0.5, 1.0),
         edge_radius=back_cushion_radius,
         crown=back_cushion_crown,
@@ -278,8 +276,6 @@ def _sofa_geometry(
     seat_cushion = cushion.cushion_box_geometry(
         size=seat_cushion_dimensions * (1.0, 1.03, 1.0),
         material=fabric_material,
-        piping_material=fabric_material,
-        location=(0.0, 0.0, 0.0),
         anchor=(0.0, 0.5, 0.0),
         edge_radius=cushion_radius,
         crown=seat_cushion_crown,
@@ -305,19 +301,30 @@ def _sofa_geometry(
     )
     seat_cushions = pf.nodes.geo.realize_instances(seat_cushions)
 
-    base_board_location = back_dimensions * (1.0, 0.0, 0.0)
+    # boards tuck into their neighbours so merge_by_distance cannot weld touching faces
+    board_tuck = 0.001
+    base_board_location = pf.nodes.math.combine_xyz(x=back_dimensions.x - board_tuck)
+    tucked_base_board_dimensions = base_board_dimensions + pf.nodes.math.combine_xyz(
+        x=board_tuck
+    )
     base_board = mesh_util.box_with_support_loops(
         location=base_board_location,
         anchor=(0.0, 0.5, -1.0),
-        size=base_board_dimensions,
+        size=tucked_base_board_dimensions,
         support_loop_offset=cushion.support_loop_offset(
-            body_radius, base_board_dimensions
+            body_radius, tucked_base_board_dimensions
         ),
     )
 
+    left_tuck = pf.nodes.func.switch(switch=has_left_arm, a=0.0, b=board_tuck)
+    right_tuck = pf.nodes.func.switch(switch=has_right_arm, a=0.0, b=board_tuck)
     back_board_dimensions = pf.nodes.math.combine_xyz(
         x=back_dimensions.x,
-        y=dimensions.y - left_arm_thickness - right_arm_thickness,
+        y=dimensions.y
+        - left_arm_thickness
+        - right_arm_thickness
+        + left_tuck
+        + right_tuck,
         z=back_dimensions.z,
     )
     back_board = mesh_util.box_with_support_loops(
@@ -331,7 +338,7 @@ def _sofa_geometry(
     back_board = pf.nodes.geo.transform(
         geometry=back_board,
         translation=pf.nodes.math.combine_xyz(
-            y=(left_arm_thickness - right_arm_thickness) * 0.5
+            y=(left_arm_thickness - left_tuck - right_arm_thickness + right_tuck) * 0.5
         ),
         rotation=(0, 0, 0),
         scale=(1, 1, 1),
@@ -387,6 +394,7 @@ def _sofa_geometry(
     return geometry
 
 
+@pf.tracer.generator
 def sofa(
     dimensions: pf.Vector | None = None,
     arm_dimensions: pf.Vector = (1.0, 0.105, 0.625),
@@ -447,8 +455,8 @@ def sofa(
         arm_slant=arm_slant,
     )
     obj = pf.nodes.to_mesh_object(res)
+    obj.item().name = sofa.__name__
     pf.ops.uv.cube_project(obj, uv_name="UVMap")
-    pf.ops.modifier.subdivide_surface(obj, levels=5, _skip_apply=True)
 
     seat_top = baseboard_height + seat_thickness
     left_inset = _seat_inset(
@@ -567,7 +575,7 @@ def sofa_rand(
     inner_width = dimensions[1] - left_inset - right_inset
     seat_cushion_count = max(1, round(inner_width / cushion_target_width))
 
-    return sofa(
+    result = sofa(
         dimensions=(dimensions[0], dimensions[1], back_top),
         arm_dimensions=arm_dimensions,
         left_arm_thickness=left_arm_thickness,
@@ -591,6 +599,14 @@ def sofa_rand(
         piping_radius=piping_radius,
         body_radius=body_radius,
         arm_slant=arm_slant,
+    )
+    body = result.mesh
+    pf.ops.modifier.subdivide_surface(body, levels=5, _skip_apply=True)
+    return SofaResult(
+        mesh=body,
+        back_seat_line_start=result.back_seat_line_start,
+        back_seat_line_end=result.back_seat_line_end,
+        back_tilt=result.back_tilt,
     )
 
 

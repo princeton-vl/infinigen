@@ -50,24 +50,17 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
-@pf.tracer.primitive(mutates=["obj"])
-def _ensure_uv_map(obj: pf.MeshObject) -> None:
-    if len(obj.item().data.uv_layers) > 0:
-        return
-    pf.ops.uv.cube_project(obj, uv_name="UVMap")
-
-
 def _override_material(rng: pf.RNG, obj: pf.MeshObject) -> pf.MeshObject:
-    _ensure_uv_map(obj)
+    rng_mat_choice, rng_mat = rng.spawn(2)
     vec = pf.nodes.shader.coord().uv
     mat_func = pf.control.choice(
-        rng,
+        rng_mat_choice,
         [
             (bsdf_simple_rand, 1.0),
             (all_materials_rand, 1.0),
         ],
     )
-    mat = mat_func(rng, vec)
+    mat = mat_func(rng_mat, vec)
     pf.ops.object.set_material(obj, surface=mat.surface, displacement=mat.displacement)
     return obj
 
@@ -78,8 +71,9 @@ class ObjectResult(NamedTuple):
 
 @pf.tracer.grammar
 def object_rand(rng: pf.RNG) -> ObjectResult:
+    rng_obj_choice, rng_obj, rng_override_choice, rng_override = rng.spawn(4)
     obj_func = pf.control.choice(
-        rng,
+        rng_obj_choice,
         [
             (sofa.sofa_rand, 2.0),
             (chair.chair_rand, 4.0),
@@ -105,17 +99,16 @@ def object_rand(rng: pf.RNG) -> ObjectResult:
         ],
     )
 
-    obj = obj_func(rng).mesh
-    obj.item().name = obj_func.__name__
+    obj = obj_func(rng_obj).mesh
 
     override_func = pf.control.choice(
-        rng,
+        rng_override_choice,
         [
             (_override_material, 2.0),
             (lambda rng, obj: obj, 3.0),
         ],
     )
-    return ObjectResult(mesh=override_func(rng, obj))
+    return ObjectResult(mesh=override_func(rng_override, obj))
 
 
 class ObjWithPostprocessingResult(NamedTuple):
@@ -124,20 +117,22 @@ class ObjWithPostprocessingResult(NamedTuple):
 
 @pf.tracer.grammar
 def obj_with_postprocessing(rng: pf.RNG) -> ObjWithPostprocessingResult:
-    obj = object_rand(rng).mesh
-    return ObjWithPostprocessingResult(mesh=_override_material(rng, obj))
+    rng_obj, rng_override = rng.spawn(2)
+    obj = object_rand(rng_obj).mesh
+    return ObjWithPostprocessingResult(mesh=_override_material(rng_override, obj))
 
 
 @pf.tracer.grammar
 def floating_object_asset_rand(rng: pf.RNG) -> pf.MeshObject:
+    rng_asset_choice, rng_asset = rng.spawn(2)
     asset_func = pf.control.choice(
-        rng,
+        rng_asset_choice,
         [
             (random_primitives.primitive_with_effect_rand, 1.0),
             (object_rand, 1.5),
         ],
     )
-    return asset_func(rng).mesh
+    return asset_func(rng_asset).mesh
 
 
 def _apply_object_scale(obj: pf.MeshObject) -> None:
@@ -150,7 +145,7 @@ def _sample_object_transform(
 ) -> None:
     """Sample a random rotation and size for obj, set them, and bake the scale so the
     object presents a rigid transform for collision/placement."""
-    angles = [pf.random.uniform(rng, 0, 2 * math.pi) for _ in range(3)]
+    angles = pf.random.uniform(rng, (0.0,) * 3, (2 * math.pi,) * 3)
     axes = [pf.random.clip_gaussian(rng, 1.0, 0.1, 0.8, 1.2) for _ in range(3)]
     scale = pf.Vector(tuple(axes))
 
@@ -277,9 +272,8 @@ def lights_with_shared_wattage_rand(
     watt_per_light = wattage * rng.dirichlet(np.ones(quantity))
 
     lights = []
-    for i, w in enumerate(watt_per_light):
+    for w in watt_per_light:
         light = lights_point_colored_rand(rng, energy=float(w))
-        light.item().name = f"floating_light.{i:02d}"
         lights.append(light)
 
     return lights

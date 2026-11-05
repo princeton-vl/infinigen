@@ -34,7 +34,10 @@ from pathlib import Path
 from urllib.parse import quote
 
 import compare
+import tomllib
 from display import ROW_SORT_KEYS
+
+PUBLIC_REPO = "princeton-vl/infinigen"
 
 _IMAGE_REF = re.compile(r'/images/([^"\'\s>]+)')
 
@@ -55,6 +58,22 @@ def rewrite_html(html: str) -> str:
     return html.replace('href="/select-versions"', 'href="index.html"')
 
 
+def _ref_exists(ref: str, roots: dict[str, Path]) -> bool:
+    version, _, rel = ref.partition("/")
+    root = roots.get(version)
+    return root is not None and bool(rel) and (root / rel).is_file()
+
+
+def drop_missing_media(html: str, missing: set[str]) -> str:
+    # A frozen page has no server to 404 gracefully, so unrendered media becomes the placeholder.
+    placeholder = '<div class="missing-placeholder">Not generated in this run</div>'
+    for ref in missing:
+        src = re.escape(f'src="/images/{ref}"')
+        html = re.sub(rf"<video[^>]*{src}[^>]*></video>", placeholder, html)
+        html = re.sub(rf"<img[^>]*{src}[^>]*>", placeholder, html)
+    return html
+
+
 def render_pages(
     out_dir: Path, versions: list[tuple[str, Path]], sort_order: str | None
 ) -> set[str]:
@@ -69,8 +88,12 @@ def render_pages(
     if resp.status_code != 200:
         raise SystemExit(f"viewer returned {resp.status_code}")
     html = resp.get_data(as_text=True)
-    (out_dir / "index.html").write_text(rewrite_html(html))
+    roots = dict(versions)
     refs = set(_IMAGE_REF.findall(html))
+    missing = {ref for ref in refs if not _ref_exists(ref, roots)}
+    html = drop_missing_media(html, missing)
+    (out_dir / "index.html").write_text(rewrite_html(html))
+    refs -= missing
 
     help_html = client.get("/help").get_data(as_text=True)
     (out_dir / "help.html").write_text(
@@ -114,13 +137,15 @@ def _filter_events(dst_ri: Path, src_ri: Path, excludes: list[str]) -> None:
 
 
 def alias_version(link: Path, src: Path, tag: str, excludes: list[str]) -> None:
-    # Alias under the app's version name; label it with `tag` and drop excluded events.
+    # Alias as `tag`, link sources to the public repo at that tag, drop excluded events.
     skip = {"git_info.toml", "render_index"} if excludes else {"git_info.toml"}
     _symlink_children(link, src, skip)
-    original = (
-        (src / "git_info.toml").read_text() if (src / "git_info.toml").exists() else ""
-    )
-    (link / "git_info.toml").write_text(f'{original}\ntag = "{tag}"\n')
+    git_info = {}
+    if (src / "git_info.toml").exists():
+        git_info = tomllib.loads((src / "git_info.toml").read_text())
+    git_info.update(tag=tag, repo=PUBLIC_REPO, source_ref=tag)
+    lines = [f"{key} = {json.dumps(str(value))}" for key, value in git_info.items()]
+    (link / "git_info.toml").write_text("\n".join(lines) + "\n")
     if excludes:
         _filter_events(link / "render_index", src / "render_index", excludes)
 

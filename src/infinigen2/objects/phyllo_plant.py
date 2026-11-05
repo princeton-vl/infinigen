@@ -21,7 +21,9 @@ __all__ = [
     "PhylloPlantResult",
     "phyllo_points",
     "phyllo_dist",
+    "phyllo_leaf_count",
     "phyllo_plant",
+    "phyllo_plant_mesh",
     "plant_phyllo_basal_rand",
     "plant_phyllo_ascending_rand",
 ]
@@ -445,13 +447,76 @@ def phyllo_plant(
         leaf_mesh = leaf.leaf_simple_rand(rng_leaf).mesh
     if target_count is None:
         target_count = count
-    first = _normalize_leaf(leaf_mesh)
     if stem_material is None:
         stem_material = pf.Material(
             surface=pf.nodes.shader.principled_bsdf(
                 base_color=(0.04, 0.10, 0.01, 1.0), roughness=0.65
             )
         )
+    obj = phyllo_plant_mesh(
+        leaf_mesh=leaf_mesh,
+        stem_material=stem_material,
+        seed=pf.random.randint(rng_geometry, 0, 10000),
+        count=count,
+        height=height,
+        radius=radius,
+        leaf_length=leaf_length,
+        leaf_size=leaf_size,
+        leaf_width=leaf_width,
+        petiole_length_fraction=petiole_length_fraction,
+        petiole_diameter_ratio=petiole_diameter_ratio,
+        density=density,
+        target_count=target_count,
+        sparse=sparse,
+        count_override=count_override,
+        base_fraction=base_fraction,
+        min_angle=min_angle,
+        max_angle=max_angle,
+        stem_curve_x_degrees=stem_curve_x_degrees,
+        stem_curve_y_degrees=stem_curve_y_degrees,
+        stem_warble=stem_warble,
+        stem_handles=stem_handles,
+        leaf_bend=leaf_bend,
+        leaf_droop=leaf_droop,
+        leaf_twist_degrees=leaf_twist_degrees,
+        leaf_warble=leaf_warble,
+        phase=phase,
+    ).mesh
+    pf.ops.modifier.subdivide_surface(obj, levels=2, _skip_apply=True)
+    return PhylloPlantResult(obj)
+
+
+@pf.tracer.generator
+def phyllo_plant_mesh(
+    leaf_mesh: pf.MeshObject,
+    stem_material: pf.Material,
+    seed: int,
+    count: int = 24,
+    height: float = 0.3,
+    radius: float = 0.008,
+    leaf_length: float = 0.16,
+    min_angle: float = 0.2,
+    max_angle: float = 0.9,
+    phase: float = 0.0,
+    leaf_size: float = 1.0,
+    leaf_width: float = 1.0,
+    petiole_length_fraction: float = 0.0,
+    petiole_diameter_ratio: float = 0.03,
+    density: float = 1.0,
+    base_fraction: float = 0.0,
+    target_count: float = 24.0,
+    sparse: float = 0.0,
+    count_override: bool = False,
+    stem_curve_x_degrees: float = 0.0,
+    stem_curve_y_degrees: float = 0.0,
+    stem_warble: float = 0.0,
+    stem_handles: int = 8,
+    leaf_bend: float = 0.0,
+    leaf_droop: float = 0.0,
+    leaf_twist_degrees: float = 0.0,
+    leaf_warble: float = 0.0,
+) -> PhylloPlantResult:
+    first = _normalize_leaf(leaf_mesh)
     geometry = _plant_geometry_group(
         first=first,
         stem_material=stem_material,
@@ -479,15 +544,15 @@ def phyllo_plant(
         leaf_twist_degrees=leaf_twist_degrees,
         leaf_warble=leaf_warble,
         phase=phase,
-        seed=pf.random.randint(rng_geometry, 0, 10000),
+        seed=seed,
     )
     obj = pf.nodes.to_mesh_object(geometry)
-    pf.ops.modifier.subdivide_surface(obj, levels=2, _skip_apply=True)
+    obj.item().name = phyllo_plant_mesh.__name__
     return PhylloPlantResult(obj)
 
 
 @pf.tracer.primitive
-def _leaf_count(
+def phyllo_leaf_count(
     count: float,
     leaf_size: float,
     leaf_width: float,
@@ -496,11 +561,6 @@ def _leaf_count(
 ) -> int:
     maximum = int(128 - 123 * sparse)
     return max(3, min(maximum, round(count * density / (leaf_size**2 * leaf_width))))
-
-
-@pf.tracer.primitive
-def _large_leaf_weight(plant_height: float) -> float:
-    return float(plant_height >= 0.6)
 
 
 def _leaf_pattern_rand(
@@ -516,7 +576,7 @@ def _leaf_pattern_rand(
 ) -> tuple[float, float]:
     if plant_height is None:
         plant_height = height
-    large_leaves = _large_leaf_weight(plant_height)
+    large_leaves = (plant_height >= 0.6) * 1.0
     if sparse is None:
         sparse_value = pf.control.choice(rng_sparse, [(0.0, 4.0), (1.0, 1.0)])
         sparse_value = sparse_value * large_leaves
@@ -569,19 +629,16 @@ def _phyllo_rand(
     (
         rng_leaf_choice,
         rng_plant,
-        rng_petiole_choice,
+        rng_petiole,
         rng_sparse_choice,
         rng_normal_size,
         rng_large_size,
         rng_size_choice,
         rng_sparse_size,
-        rng_width_choice,
-        rng_width_normal,
+        rng_width,
         rng_density,
         rng_sparse_target,
-        rng_base_choice,
-        rng_base_low,
-        rng_base_high,
+        rng_base,
         rng_curve_x,
         rng_curve_y,
         rng_stem_warble,
@@ -594,11 +651,9 @@ def _phyllo_rand(
         rng_color,
         rng_material,
         rng_phase,
-    ) = rng.spawn(27)
+    ) = rng.spawn(24)
     if petiole_length_fraction is None:
-        petiole_length_fraction = pf.control.choice(
-            rng_petiole_choice, [(0.0, 1.0), (0.28, 1.0)]
-        )
+        petiole_length_fraction = pf.random.uniform(rng_petiole, 0.0, 0.28)
     leaf_generator = pf.control.choice(
         rng_leaf_choice,
         [(leaf.leaf_simple_rand, 1.0), (leaf_broadleaf.leaf_broadleaf_rand, 1.0)],
@@ -627,10 +682,7 @@ def _phyllo_rand(
         ** 0.5
     )
     if leaf_width is None:
-        leaf_width = pf.control.choice(
-            rng_width_choice,
-            [(pf.random.uniform(rng_width_normal, 0.8, 1.2), 3.0), (0.5, 1.0)],
-        )
+        leaf_width = pf.random.uniform(rng_width, 0.5, 1.2)
     if density is None:
         density = pf.random.log_uniform(rng_density, 0.6, 1.6)
     sparse_target = (
@@ -639,15 +691,9 @@ def _phyllo_rand(
     target_count = target_count * (1.0 - sparse) + sparse_target * sparse
     count_override = count is not None
     if count is None:
-        count = _leaf_count(target_count, leaf_size, leaf_width, density, sparse)
+        count = phyllo_leaf_count(target_count, leaf_size, leaf_width, density, sparse)
     if base_fraction is None:
-        base_fraction = pf.control.choice(
-            rng_base_choice,
-            [
-                (pf.random.uniform(rng_base_low, 0.0, 0.025), 3.0),
-                (pf.random.uniform(rng_base_high, 0.04, 0.15), 1.0),
-            ],
-        )
+        base_fraction = 0.15 * pf.random.uniform(rng_base, 0.0, 1.0) ** 3
     if stem_curve_x_degrees is None:
         stem_curve_x_degrees = pf.random.clip_gaussian(
             rng_curve_x, 0.0, 20.0, -55.0, 55.0
@@ -736,6 +782,7 @@ def plant_phyllo_basal_rand(
     min_angle: float | None = None,
     max_angle: float | None = None,
 ) -> PhylloPlantResult:
+    rng, rng_plant = rng.spawn(2)
     if stem_height is None:
         stem_height = pf.random.uniform(rng, 0.008, 0.04)
     if stem_radius is None:
@@ -748,7 +795,7 @@ def plant_phyllo_basal_rand(
     if max_angle is None:
         max_angle = pf.random.uniform(rng, 0.85, 1.35)
     return _phyllo_rand(
-        rng,
+        rng_plant,
         target_count=target_count,
         height=stem_height,
         radius=stem_radius,
@@ -801,6 +848,7 @@ def plant_phyllo_ascending_rand(
     min_angle: float | None = None,
     max_angle: float | None = None,
 ) -> PhylloPlantResult:
+    rng, rng_plant = rng.spawn(2)
     if stem_height is None:
         stem_height = pf.random.log_uniform(rng, 0.08, 0.85)
     if stem_radius is None:
@@ -813,7 +861,7 @@ def plant_phyllo_ascending_rand(
     if max_angle is None:
         max_angle = pf.random.uniform(rng, 0.55, 1.1)
     return _phyllo_rand(
-        rng,
+        rng_plant,
         target_count=target_count,
         height=stem_height,
         radius=stem_radius,

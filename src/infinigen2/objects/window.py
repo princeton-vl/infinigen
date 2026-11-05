@@ -20,7 +20,11 @@ from infinigen2.shaders.functionality_lists import (
     glass_material_rand,
 )
 from infinigen2.util import mesh as mesh_util
-from infinigen2.util.curve import curve_to_mesh_with_uv
+from infinigen2.util.curve import (
+    corner_ring_edges,
+    curve_to_mesh_with_uv,
+    outline_corner,
+)
 
 # parts are built flat in XY; reorients them into the wall frame like door_body
 _WALL_REORIENT = (math.pi / 2, 0.0, math.pi / 2)
@@ -71,7 +75,7 @@ def _window_profile(
     height: t.SocketOrVal[float],
     top_profile_height: t.SocketOrVal[float],
     bottom_profile_height: t.SocketOrVal[float],
-    profile_resolution: t.SocketOrVal[int] = 5,
+    profile_resolution: t.SocketOrVal[int] = 16,
 ) -> pf.ProcNode[pf.CurveObject]:
     quarter = math.pi / 2
     bottom_right = _profile_quarter(
@@ -97,7 +101,10 @@ def _window_profile(
         geometry=pf.nodes.geo.join_geometry(points), distance=1e-5
     )
     outline = pf.nodes.geo.points_to_curves(points=unique)
-    return pf.nodes.geo.set_spline_cyclic(curve=outline, cyclic=True)
+    cyclic = pf.nodes.geo.set_spline_cyclic(curve=outline, cyclic=True)
+    # flat profiles bunch collinear points at the corners, which fold the miters
+    is_straight = pf.nodes.func.boolean_not(outline_corner(0.5))
+    return pf.nodes.geo.delete_geometry(cyclic, selection=is_straight, domain="POINT")
 
 
 @pf.nodes.node_function
@@ -234,12 +241,24 @@ def _profile_frame(
     incoming = pf.nodes.math.vector_normalize(position - previous_position)
     # miter radius keeps width exact at corners; it also scales depth, so reset z
     miter = 1.0 / pf.nodes.math.vector_dot_product(incoming, tangent)
-    mitered = pf.nodes.geo.set_curve_radius(curve=outline, radius=miter)
+    marked = pf.nodes.geo.capture_attribute(
+        geometry=outline,
+        ring=pf.nodes.geo.input_index().astype(dtype=float),
+        is_corner=outline_corner(60.0).astype(dtype=float),
+    )
+    mitered = pf.nodes.geo.set_curve_radius(curve=marked.geometry, radius=miter)
     profile = pf.nodes.geo.curve_quadrilateral(
         width=frame_width,
         height=frame_thickness,
     )
-    mesh = pf.nodes.geo.curve_to_mesh(curve=mitered, profile_curve=profile)
+    swept = pf.nodes.geo.curve_to_mesh(curve=mitered, profile_curve=profile)
+    # miter rings at outline corners can fold under 60deg on slanted faces
+    mesh = pf.nodes.geo.store_named_attribute(
+        geometry=swept,
+        name="crease_edge",
+        value=corner_ring_edges(ring=marked.ring, is_corner=marked.is_corner),
+        domain="EDGE",
+    )
     flat_depth = pf.nodes.math.combine_xyz(
         x=position.x,
         y=position.y,
@@ -464,18 +483,7 @@ def _curtain_geometry(
     curve_line_2 = pf.nodes.geo.curve_line(
         start=curve_line_2_start, end=curve_line_2_end
     )
-    curve_circle = pf.nodes.geo.curve_circle(resolution=12, radius=radius * 1.3)
-    curve_to_1 = pf.nodes.geo.curve_to_mesh(
-        curve=curve_line_2, profile_curve=curve_circle
-    )
-
     set_y = height * 0.47
-    set_position_1_offset = pf.nodes.math.combine_xyz(y=set_y + radius)
-    set_position_1 = pf.nodes.geo.set_position(
-        geometry=curve_to_1, offset=set_position_1_offset
-    )
-
-    boolean = pf.nodes.geo.mesh_boolean(a=set_material, b=set_position_1)
 
     finial_radius = radius * 2.0
     finial = pf.nodes.geo.mesh_uv_sphere(segments=32, rings=16, radius=finial_radius)
@@ -527,7 +535,7 @@ def _curtain_geometry(
         material=curtain_frame_material,
     )
 
-    join_3 = pf.nodes.geo.join_geometry([boolean.mesh, set_material_1])
+    join_3 = pf.nodes.geo.join_geometry([set_material, set_material_1])
 
     # rail circles tessellate at ~11 deg, so 60 catches only the hem's 90 deg corners
     creased = mesh_util.crease_sharp(join_3, threshold_degrees=60.0)
@@ -555,6 +563,7 @@ class CurtainResult(NamedTuple):
     mesh: pf.MeshObject
 
 
+@pf.tracer.generator
 def curtain(
     width: float = 2.5,
     depth: float = 0.04875,
@@ -588,7 +597,9 @@ def curtain(
         curtain_frame_material=curtain_frame_material,
         curtain_material=curtain_material,
     )
-    return CurtainResult(mesh=pf.nodes.to_mesh_object(curtain_geo))
+    obj = pf.nodes.to_mesh_object(curtain_geo)
+    obj.item().name = curtain.__name__
+    return CurtainResult(mesh=obj)
 
 
 def curtain_rand(
@@ -597,16 +608,16 @@ def curtain_rand(
     material: pf.Material | None = None,
     rail_material: pf.Material | None = None,
 ) -> CurtainResult:
+    rng, rng_fabric, rng_rail = rng.spawn(3)
     if dimensions is None:
         dimensions = window_dimensions_rand(rng)
     vec = pf.nodes.shader.coord().uv
-    rng, rng_fabric = rng.spawn(2)
     if material is None:
         translucency = pf.random.clip_gaussian(rng, 0.6, 0.2, 0.05, 0.8)
         material = fabric_general_rand(rng_fabric, vec, translucency=translucency)
 
     if rail_material is None:
-        rail_material = furniture_material_rand(rng, vec)
+        rail_material = furniture_material_rand(rng_rail, vec)
 
     frame_depth = pf.random.uniform(rng, 0.05, 0.1)
     depth = frame_depth * pf.random.uniform(rng, 0.3, 1.0)
@@ -619,7 +630,7 @@ def curtain_rand(
     mid_r = (0.5 - base_coverage - var_r) * dimensions.y
 
     curtain_r2 = dimensions.y * 0.5
-    curtain_geo = _curtain_geometry(
+    return curtain(
         width=dimensions.y,
         depth=depth,
         height=dimensions.z,
@@ -633,8 +644,6 @@ def curtain_rand(
         curtain_frame_material=rail_material,
         curtain_material=material,
     )
-
-    return CurtainResult(mesh=pf.nodes.to_mesh_object(curtain_geo))
 
 
 @pf.nodes.node_function
@@ -720,14 +729,10 @@ def _window_shutter(
     )
 
     curve_quadrilateral = pf.nodes.geo.curve_quadrilateral(width=width, height=height)
-    curve_b = pf.nodes.math.sqrt(2.0)
-    curve_quadrilateral_1 = pf.nodes.geo.curve_quadrilateral(
-        width=frame_width * curve_b,
-        height=frame_thickness,
-    )
-    curve_to = pf.nodes.geo.curve_to_mesh(
-        curve=curve_quadrilateral,
-        profile_curve=curve_quadrilateral_1,
+    curve_to = _profile_frame(
+        outline=curve_quadrilateral,
+        frame_width=frame_width,
+        frame_thickness=frame_thickness,
     )
 
     join = pf.nodes.geo.join_geometry([set_position, rotate_instances_1, curve_to])
@@ -914,11 +919,16 @@ def _window_geometry(
         material=frame_material,
     )
 
+    ring_crease = pf.nodes.geo.input_named_attribute(
+        name="crease_edge", data_type=pf.nodes.NodeDataType.FLOAT
+    ).attribute
+    fold = pf.nodes.geo.input_mesh_edge_angle().unsigned_angle
+    is_sharp = fold > math.radians(60.0)
     creased = pf.nodes.geo.store_named_attribute(
         domain="EDGE",
         geometry=realized,
         name="crease_edge",
-        value=1.0,
+        value=pf.nodes.math.maximum(ring_crease, is_sharp.astype(dtype=float)),
     )
 
     # built in the XY plane (X=width, Y=height, Z=depth); reorient into the
@@ -939,13 +949,16 @@ def _glass_pane(
     height: t.SocketOrVal[float],
     top_profile_height: t.SocketOrVal[float],
     bottom_profile_height: t.SocketOrVal[float],
+    frame_width: t.SocketOrVal[float],
     material: t.SocketOrVal[pf.Material],
 ) -> pf.ProcNode[pf.MeshObject]:
+    # edge just past the frame's inner rim; subsurf pulls its outer rim inward on arches
+    inset = frame_width * 0.9
     outline = _window_profile(
-        width=width,
-        height=height,
-        top_profile_height=top_profile_height,
-        bottom_profile_height=bottom_profile_height,
+        width=width - inset * 2.0,
+        height=height - inset * 2.0,
+        top_profile_height=pf.nodes.math.maximum(top_profile_height - inset, 0.0),
+        bottom_profile_height=pf.nodes.math.maximum(bottom_profile_height - inset, 0.0),
     )
     mesh = pf.nodes.geo.fill_curve(curve=outline, mode="NGONS")
     position = pf.nodes.geo.input_position()
@@ -960,7 +973,7 @@ def _glass_pane(
         domain="CORNER",
         data_type=pf.nodes.NodeDataType.FLOAT_VECTOR_2D,
     )
-    # uncreased, the frame's boundary_smooth=ALL subsurf rounds the pane inwards
+    # uncreased, the frame's subsurf rounds the pane inwards
     creased = pf.nodes.geo.store_named_attribute(
         domain="EDGE",
         geometry=mesh,
@@ -973,89 +986,7 @@ def _glass_pane(
     return pf.nodes.geo.transform(geometry=glass, rotation=_WALL_REORIENT)
 
 
-def _window_build(
-    profile: WindowProfile,
-    frame_width: float,
-    panel_h_amount: int,
-    panel_v_amount: int,
-    sub_frame_width: float,
-    sub_frame_thickness: float,
-    sub_panel_h_amount: int,
-    sub_panel_v_amount: int,
-    shutter: bool,
-    shutter_panel_radius: float,
-    shutter_width: float,
-    shutter_thickness: float,
-    shutter_rotation: float,
-    shutter_interval: float,
-    frame_material: pf.Material | None,
-    glass_material: pf.Material | None,
-    include_glass_pane: bool,
-    include_portal: bool,
-) -> WindowResult:
-    if frame_material is None:
-        frame_material = pf.Material(surface=pf.nodes.shader.principled_bsdf())
-    if glass_material is None:
-        glass_material = pf.Material(surface=pf.nodes.shader.principled_bsdf())
-
-    dimensions = profile.dimensions
-    res = _window_geometry(
-        width=dimensions.y,
-        height=dimensions.z,
-        top_profile_height=profile.top_profile_height,
-        bottom_profile_height=profile.bottom_profile_height,
-        frame_width=frame_width,
-        frame_thickness=dimensions.x,
-        panel_h_amount=panel_h_amount,
-        panel_v_amount=panel_v_amount,
-        sub_frame_width=sub_frame_width,
-        sub_frame_thickness=sub_frame_thickness,
-        sub_panel_h_amount=sub_panel_h_amount,
-        sub_panel_v_amount=sub_panel_v_amount,
-        shutter=shutter,
-        shutter_panel_radius=shutter_panel_radius,
-        shutter_width=shutter_width,
-        shutter_thickness=shutter_thickness,
-        shutter_rotation=shutter_rotation,
-        shutter_interval=shutter_interval,
-        frame_material=frame_material,
-    )
-    frame_obj = pf.nodes.to_mesh_object(res.geometry)
-    pf.ops.uv.cube_project(frame_obj, uv_name="UVMap")
-
-    if include_glass_pane:
-        pane = _glass_pane(
-            width=dimensions.y,
-            height=dimensions.z,
-            top_profile_height=profile.top_profile_height,
-            bottom_profile_height=profile.bottom_profile_height,
-            material=glass_material,
-        )
-        pf.ops.object.join(frame_obj, pf.nodes.to_mesh_object(pane))
-
-    origin_offset = dimensions * 0.5
-    pf.ops.object.set_transform(frame_obj, location=origin_offset)
-    pf.ops.mesh.transform_apply(frame_obj)
-
-    portal_light = None
-    if include_portal:
-        portal_light = pf.ops.primitives.light.area_lamp(
-            shape="RECTANGLE",
-            size_x=dimensions.y,
-            size_y=dimensions.z,
-            energy=0.0,
-            portal=True,
-        )
-        reorient = Euler(_WALL_REORIENT).to_matrix()
-        flip = Euler((np.pi, 0.0, 0.0)).to_matrix()
-        pf.ops.object.set_transform(
-            portal_light,
-            location=origin_offset,
-            rotation_euler=tuple((reorient @ flip).to_euler()),
-        )
-    return WindowResult(mesh=frame_obj, light=portal_light, profile=profile)
-
-
+@pf.tracer.generator
 def window(
     dimensions: pf.Vector | None = None,
     frame_width: float = 0.035,
@@ -1081,9 +1012,18 @@ def window(
     if dimensions is None:
         dimensions = pf.Vector((0.085, 2.5, 2.5))
     profile = WindowProfile(dimensions, top_profile_height, bottom_profile_height)
-    return _window_build(
-        profile=profile,
+    if frame_material is None:
+        frame_material = pf.Material(surface=pf.nodes.shader.principled_bsdf())
+    if glass_material is None:
+        glass_material = pf.Material(surface=pf.nodes.shader.principled_bsdf())
+
+    res = _window_geometry(
+        width=dimensions.y,
+        height=dimensions.z,
+        top_profile_height=top_profile_height,
+        bottom_profile_height=bottom_profile_height,
         frame_width=frame_width,
+        frame_thickness=dimensions.x,
         panel_h_amount=panel_h_amount,
         panel_v_amount=panel_v_amount,
         sub_frame_width=sub_frame_width,
@@ -1097,10 +1037,51 @@ def window(
         shutter_rotation=shutter_rotation,
         shutter_interval=shutter_interval,
         frame_material=frame_material,
-        glass_material=glass_material,
-        include_glass_pane=include_glass_pane,
-        include_portal=include_portal,
     )
+    frame_obj = pf.nodes.to_mesh_object(res.geometry)
+    frame_obj.item().name = window.__name__
+    pf.ops.uv.cube_project(frame_obj, uv_name="UVMap")
+
+    if include_glass_pane:
+        pane = _glass_pane(
+            width=dimensions.y,
+            height=dimensions.z,
+            top_profile_height=top_profile_height,
+            bottom_profile_height=bottom_profile_height,
+            frame_width=frame_width,
+            material=glass_material,
+        )
+        pf.ops.object.join(frame_obj, pf.nodes.to_mesh_object(pane))
+    pf.ops.modifier.subdivide_surface(
+        frame_obj,
+        levels=3,
+        boundary_smooth="PRESERVE_CORNERS",
+        uv_smooth="PRESERVE_CORNERS_AND_JUNCTIONS",
+        _skip_apply=True,
+    )
+
+    origin_offset = dimensions * 0.5
+    pf.ops.object.set_transform(frame_obj, location=origin_offset)
+    pf.ops.mesh.transform_apply(frame_obj)
+
+    portal_light = None
+    if include_portal:
+        portal_light = pf.ops.primitives.light.area_lamp(
+            shape="RECTANGLE",
+            size_x=dimensions.y,
+            size_y=dimensions.z,
+            energy=0.0,
+            portal=True,
+        )
+        reorient = Euler(_WALL_REORIENT).to_matrix()
+        flip = Euler((np.pi, 0.0, 0.0)).to_matrix()
+        pf.ops.object.set_transform(
+            portal_light,
+            location=origin_offset,
+            rotation_euler=tuple((reorient @ flip).to_euler()),
+        )
+        portal_light.item().name = f"{window.__name__}_light"
+    return WindowResult(mesh=frame_obj, light=portal_light, profile=profile)
 
 
 def _window_build_rand(
@@ -1166,8 +1147,8 @@ def _window_build_rand(
     if glass_material is None:
         glass_material = glass_material_rand(rng_glass, vec, glass_height=dimensions.z)
 
-    return _window_build(
-        profile=profile,
+    return window(
+        dimensions=dimensions,
         frame_width=frame_width,
         panel_h_amount=panel_h_amount,
         panel_v_amount=panel_v_amount,
@@ -1185,6 +1166,8 @@ def _window_build_rand(
         glass_material=glass_material,
         include_glass_pane=include_glass_pane,
         include_portal=include_portal,
+        top_profile_height=profile.top_profile_height,
+        bottom_profile_height=profile.bottom_profile_height,
     )
 
 

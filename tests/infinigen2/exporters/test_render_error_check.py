@@ -18,6 +18,7 @@ from infinigen2.exporters.render_error_check import (
     SHADER_NODE_COUNT_FAIL,
     AdaptiveSamplingError,
     CyclesShaderError,
+    DegenerateGeometryError,
     DisplacementCoordError,
     FrameCheckError,
     HiddenRenderObjectError,
@@ -31,6 +32,7 @@ from infinigen2.exporters.render_error_check import (
     assert_displacement_coords_safe,
     assert_frames_not_black,
     assert_geometry_finite,
+    assert_geometry_nondegenerate,
     assert_material_attributes_present,
     assert_material_nodes_valid,
     assert_render_objects_visible,
@@ -40,6 +42,7 @@ from infinigen2.exporters.render_error_check import (
     check_material_uv_coords,
     configure_sample_count_output,
     count_material_nodes,
+    degenerate_geometry_defects,
     detect_cycles_errors,
     hidden_render_objects,
     missing_attribute_issues,
@@ -54,6 +57,7 @@ from infinigen2.exporters.render_error_check.adaptive_sampling import (
 )
 from infinigen2.shaders import functionality_lists
 from infinigen2.shaders.composites import bricks
+from infinigen2.util.bpy_compat import attribute_factor_output
 
 
 def _make_material(name, group_size=0):
@@ -419,6 +423,7 @@ def _adaptive_test_render(tmp_path, max_samples, threshold):
     return render_log["text"], tmp_path
 
 
+@pytest.mark.render_gpu
 def test_adaptive_sampling_unconverged_raises(tmp_path):
     log, folder = _adaptive_test_render(tmp_path, max_samples=8, threshold=0.0001)
     with (
@@ -430,6 +435,7 @@ def test_adaptive_sampling_unconverged_raises(tmp_path):
         )
 
 
+@pytest.mark.render_gpu
 def test_adaptive_sampling_converged_passes(tmp_path):
     log, folder = _adaptive_test_render(tmp_path, max_samples=4096, threshold=0.25)
     fractions = assert_adaptive_sampling_converged(
@@ -438,6 +444,7 @@ def test_adaptive_sampling_converged_passes(tmp_path):
     assert all(v <= 0.05 for v in fractions.values())
 
 
+@pytest.mark.render_gpu
 def test_adaptive_sampling_unconverged_warn_mode(tmp_path):
     log, folder = _adaptive_test_render(tmp_path, max_samples=8, threshold=0.0001)
     with context.override_globals(error_mode_unconverged_samples="warn"):
@@ -472,6 +479,57 @@ def test_finite_geometry_ok():
     assert_geometry_finite([mo])
 
 
+def _pydata_mesh(verts: list, faces: list) -> pf.MeshObject:
+    pf.ops.object.clear_scene()
+    mesh = bpy.data.meshes.new("pydata")
+    mesh.from_pydata(verts, [], faces)
+    obj = bpy.data.objects.new("pydata", mesh)
+    bpy.context.scene.collection.objects.link(obj)
+    bpy.context.view_layer.update()
+    return pf.MeshObject(obj)
+
+
+_GRID_VERTS = [(x, y, 0.0) for y in range(3) for x in range(3)]
+_GRID_FACES = [(0, 1, 4, 3), (1, 2, 5, 4), (3, 4, 7, 6), (4, 5, 8, 7)]
+
+
+def test_clean_geometry_ok():
+    mo = _pydata_mesh(_GRID_VERTS, _GRID_FACES)
+    assert degenerate_geometry_defects([mo]) == {}
+    assert_geometry_nondegenerate([mo])
+
+
+def test_collapsed_support_loop_flagged():
+    verts = [(x, y, 0.0) for y in range(2) for x in (0.0, 1.0, 1.0, 2.0)]
+    faces = [(0, 1, 5, 4), (1, 2, 6, 5), (2, 3, 7, 6)]
+    mo = _pydata_mesh(verts, faces)
+    defects = degenerate_geometry_defects([mo])[mo.item().name]
+    assert defects.zero_area_faces == 1
+    assert defects.zero_length_edges == 2
+    with (
+        context.override_globals(error_mode_degenerate_geometry="error"),
+        pytest.raises(DegenerateGeometryError),
+    ):
+        assert_geometry_nondegenerate([mo])
+
+
+def test_nonmanifold_fin_flagged():
+    verts = _GRID_VERTS + [(1.0, 0.0, 1.0), (1.0, 1.0, 1.0)]
+    faces = _GRID_FACES + [(1, 4, 10, 9)]
+    mo = _pydata_mesh(verts, faces)
+    defects = degenerate_geometry_defects([mo])[mo.item().name]
+    assert defects.nonmanifold_edges == 1
+    assert defects.flipped_edges == 0
+
+
+def test_flipped_face_flagged():
+    faces = [(0, 1, 4, 3), (4, 5, 2, 1)] + _GRID_FACES[2:]
+    mo = _pydata_mesh(_GRID_VERTS, faces)
+    defects = degenerate_geometry_defects([mo])[mo.item().name]
+    assert defects.flipped_edges == 2
+    assert defects.nonmanifold_edges == 0
+
+
 def test_singular_transform_flagged():
     mo = _plane()
     obj = mo.item()
@@ -503,6 +561,18 @@ def test_visible_camera_off_flagged():
     assert hidden_render_objects([mo]) == {mo.item().name: "visible_camera=False"}
 
 
+def test_default_point_lamp_not_flagged():
+    light = pf.ops.primitives.point_lamp(energy=2000)
+    assert not light.item().visible_camera
+    assert hidden_render_objects([light]) == {}
+
+
+def test_hidden_render_lamp_flagged():
+    light = pf.ops.primitives.point_lamp(energy=2000)
+    light.item().hide_render = True
+    assert hidden_render_objects([light]) == {light.item().name: "hide_render"}
+
+
 def test_holdout_object_not_flagged():
     mo = _plane()
     mo.item().is_holdout = True
@@ -523,7 +593,7 @@ def _attribute_material(name, attribute_name):
     bsdf = next(
         n for n in mat.node_tree.nodes if n.bl_idname == "ShaderNodeBsdfPrincipled"
     )
-    mat.node_tree.links.new(node.outputs["Fac"], bsdf.inputs["Metallic"])
+    mat.node_tree.links.new(attribute_factor_output(node), bsdf.inputs["Metallic"])
     return mat
 
 

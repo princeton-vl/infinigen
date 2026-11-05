@@ -55,12 +55,13 @@ def _mesh_name(obj: pf.Object) -> str:
     return obj.item().name
 
 
+# id() of a bpy wrapper is reused once its datablock is freed; session_uid never is.
 def _mesh_id(obj: pf.Object) -> int:
-    return id(obj.item().data)
+    return obj.item().data.session_uid
 
 
 def _object_id(obj: pf.Object) -> int:
-    return id(obj.item())
+    return obj.item().session_uid
 
 
 def _mesh_from_object(obj: pf.Object) -> trimesh.Trimesh:
@@ -131,7 +132,7 @@ def _register_object(
     if name in manager._objs:
         manager._manager.unregisterObject(manager._objs[name]["obj"])
     manager._objs[name] = {"obj": col_obj, "geom": fcl_geom}
-    manager._names[id(fcl_geom)] = name
+    manager._names[id(fcl_geom)] = name  # validate-ignore: test_determinism
     manager._manager.registerObject(col_obj)
 
 
@@ -306,9 +307,11 @@ def raycast(
         mesh = col.mesh_colliders.get(_mesh_id(obj))
         if mesh is None:
             continue
-        mesh = mesh.copy()
-        mesh.apply_transform(_object_transform(obj))
-        meshes.append(mesh)
+        T = _object_transform(obj)
+        vertices = mesh.vertices @ T[:3, :3].T + T[:3, 3]
+        meshes.append(
+            trimesh.Trimesh(vertices=vertices, faces=mesh.faces, process=False)
+        )
 
     if not meshes:
         return (

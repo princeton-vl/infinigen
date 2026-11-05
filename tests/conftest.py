@@ -9,9 +9,33 @@ import sys
 import bpy
 import numpy as np
 import pytest
+from bpy.app.handlers import persistent
 from procfunc.util.teardown import exit_skipping_teardown
 
 _session_exit_code = 0
+_render_calls = []
+
+
+@persistent
+def _record_render(*args: object) -> None:
+    _render_calls.append(args)
+
+
+@pytest.hookimpl(wrapper=True)
+def pytest_runtest_call(item: pytest.Item):
+    _render_calls.clear()
+    bpy.app.handlers.render_init.append(_record_render)
+    try:
+        result = yield
+    finally:
+        bpy.app.handlers.render_init.remove(_record_render)
+    if _render_calls and item.get_closest_marker("render_gpu") is None:
+        pytest.fail(
+            "test rendered without @pytest.mark.render_gpu; GitHub-hosted runners "
+            "cannot render, so mark it to run only on self-hosted CI"
+        )
+    return result
+
 
 # The --optimized selection for the session, restored after a test changes it.
 _session_packages = False

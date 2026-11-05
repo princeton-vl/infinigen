@@ -114,3 +114,53 @@ def test_export_imu_tum_and_camera(tmp_path, save_blend=False):
     if save_blend:
         blend_path = tmp_path / f"{inspect.currentframe().f_code.co_name}.blend"  # type: ignore
         pf.ops.file.save_blend(blend_path)
+
+
+def _imu_tum_rows_at_fps(tmp_path, fps, fps_base):
+    """Export a 2*fps-frame motion at the given frame rate and return (imu, tum) rows."""
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    scene = bpy.context.scene
+    scene.render.fps, scene.render.fps_base = fps, fps_base
+
+    obj = bpy.data.objects.new("probe", None)
+    scene.collection.objects.link(obj)
+    end = 2 * fps
+    # x eases 0 -> 2 m (bezier), z-rotation turns 0 -> 2 rad (linear), over frames 0..end
+    for frame, x, rz in [(0, 0.0, 0.0), (end, 2.0, 2.0)]:
+        obj.location = (x, 0, 0)
+        obj.rotation_euler = (0, 0, rz)
+        obj.keyframe_insert("location", frame=frame)
+        obj.keyframe_insert("rotation_euler", frame=frame)
+    for fc in obj.animation_data.action.fcurves:
+        for kp in fc.keyframe_points:
+            kp.interpolation = (
+                "LINEAR" if fc.data_path == "rotation_euler" else "BEZIER"
+            )
+
+    paths = imu.save_imu_tum_files(tmp_path, [obj], 0, end)
+
+    def read_rows(suffix):
+        path = next(p for p in paths if p.name.endswith(suffix))
+        return np.loadtxt(path, comments="#")
+
+    return read_rows("_imu.txt"), read_rows("_tum.txt")
+
+
+@pytest.mark.parametrize("fps, fps_base", [(24, 1.0), (8, 1.0), (30, 1.001)])
+def test_imu_tum_units_independent_of_fps(tmp_path, fps, fps_base):
+    """IMU/TUM timestamps are seconds and IMU values are per-second at any frame rate."""
+    imu_rows, tum_rows = _imu_tum_rows_at_fps(tmp_path, fps, fps_base)
+    seconds_per_frame = fps_base / fps
+    duration = 2 * fps * seconds_per_frame
+
+    # timestamps are seconds, not frame numbers
+    expected_t = np.arange(len(imu_rows)) * seconds_per_frame
+    assert np.allclose(imu_rows[:, 0], expected_t)
+    assert np.allclose(tum_rows[:, 0], expected_t)
+
+    # quarter of the way through the motion (s = 0.25)
+    row = fps // 2
+    # 2 rad linear over the duration -> constant 2 / duration rad/s
+    assert imu_rows[row, 3] == pytest.approx(2 / duration, abs=1e-4)
+    # bezier ease x(s) = 2(3s^2 - 2s^3), s = t / duration -> x'' = 2(6 - 12s) / duration^2
+    assert imu_rows[row, 4] == pytest.approx(6 / duration**2, abs=1e-3)

@@ -69,6 +69,8 @@ Validation
 
 .. autofunction:: infinigen2.exporters.render_error_check.detect_cycles_errors
 
+.. autofunction:: infinigen2.exporters.render_error_check.backfacing.check_backfacing
+
 Types
 -----
 

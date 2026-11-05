@@ -382,6 +382,7 @@ def _ensure_cameras_and_lights(data: dict):
     has_environment = data.get("environment") is not None
     if not isinstance(lights, cg.Proxy) and len(lights) == 0 and not has_environment:
         light = pf.ops.primitives.point_lamp(energy=1500)
+        light.item().name = "fallback_point_light"
         loc = cameras[0].item().matrix_world @ pf.Vector((0, 0.5, -1))
         pf.ops.object.set_transform(light, location=loc)
         data["lights"] = [light]

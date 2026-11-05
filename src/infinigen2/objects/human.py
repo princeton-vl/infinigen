@@ -147,6 +147,7 @@ def _human_body(
     rig.location.z -= services["ObjectService"].get_lowest_point(body)
 
     mesh = pf.MeshObject(body)
+    mesh.item().name = human.__name__
     if skin_material is not None:
         pf.ops.object.set_material(mesh, skin_material)
     pf.ops.modifier.subdivide_surface(mesh, levels=2, _skip_apply=True)

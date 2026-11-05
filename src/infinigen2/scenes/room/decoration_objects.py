@@ -23,7 +23,7 @@ import numpy as np
 import procfunc as pf
 from procfunc.nodes import types as t
 
-from infinigen2.objects import boulder, bowl, lamp, plant_pot, random_primitives, vase
+from infinigen2.objects import bowl, lamp, plant_pot, random_primitives, vase
 from infinigen2.scenes.placement import collision as ccol
 from infinigen2.scenes.placement.culling import keep_non_colliding
 from infinigen2.scenes.placement.distribute import propagate_modifiers_to_instances
@@ -529,7 +529,6 @@ def decoration_smallobj_rand(rng: pf.RNG) -> MeshResult:
             (plant_pot.plant_pot_small_rand, 0.5),
             (bowl.bowl_rand, 0.5),
             (vase.cup_rand, 0.5),
-            (boulder.rock_rand, 0.5),
         ],
     )
     return func(rng_object)
@@ -757,7 +756,6 @@ def _sample_surface_collection(
             ],
         )
         result = func(rng_asset)
-        result.mesh.item().name = func.__name__
         results.append(result)
     return results
 
@@ -777,7 +775,6 @@ def _sample_floor_collection(
             ],
         )
         result = func(rng_asset)
-        result.mesh.item().name = func.__name__
         results.append(result)
     return results
 
@@ -859,9 +856,10 @@ def _place_floor_beside_storage(
     floor: pf.MeshObject,
     storage: list[pf.MeshObject],
 ) -> None:
-    _place_on_floor(rng, child, floor)
+    rng, rng_floor, rng_sides = rng.spawn(3)
+    _place_on_floor(rng_floor, child, floor)
     child_side, parent_side = pf.control.choice(
-        rng,
+        rng_sides,
         [(("left", "right"), 1.0), (("right", "left"), 1.0)],
     )
     snap_to_plane(
@@ -884,8 +882,9 @@ def _place_floor_decoration(
     if not preferred_storage:
         _place_floor_against_wall(rng, child, floor, wall_planes)
         return
+    rng_place_choice, rng_place = rng.spawn(2)
     place_fn = pf.control.choice(
-        rng,
+        rng_place_choice,
         [
             (
                 functools.partial(
@@ -903,7 +902,7 @@ def _place_floor_decoration(
             ),
         ],
     )
-    place_fn(rng, child, floor)
+    place_fn(rng_place, child, floor)
 
 
 @pf.tracer.grammar

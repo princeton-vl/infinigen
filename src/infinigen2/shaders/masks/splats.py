@@ -820,14 +820,14 @@ def splat_dots_rand(
     if size is None:
         size = pf.random.uniform(rng, 0.05, 0.3)
 
-    detail = pf.control.choice(rng, [(0.0, 2.0), (1.0, 1.0), (2.0, 0.5)])
+    detail = 2.0 * pf.random.uniform(rng, 0.0, 1.0) ** 2
     smoothness = pf.random.uniform(rng, 0.262597, 0.41376)
     distortion_size = pf.random.uniform(rng, 2.0, 3.0)
     distortion_strength = pf.random.uniform(rng, 1.0, 3.0)
     distortion_detail = 4.0
     opacity_variation = pf.random.uniform(rng, 0.333333, 1.0)
     seed = pf.random.uniform(rng, 0.0, 100.0)
-    noise_settings_use_noise = pf.control.choice(rng, [(0.0, 1.0), (1.0, 1.0)])
+    noise_settings_use_noise = pf.random.uniform(rng, 0.0, 1.0)
     noise_settings_noise_size = 0.3
     noise_settings_noise_detail = 4.0
     border_settings_border_thickness = 0.636047
@@ -899,10 +899,11 @@ def uv_gradient_rand(
     gradient_start: t.SocketOrVal[float] | None = None,
     gradient_end: t.SocketOrVal[float] | None = None,
 ) -> pf.ProcNode[float]:
+    rng, rng_start = rng.spawn(2)
     if gradient_fac is None:
         gradient_fac = vector.y
     if gradient_start is None:
-        gradient_start = pf.control.choice(rng, [(0.0, 0.5), (1.0, 0.5)])
+        gradient_start = pf.control.choice(rng_start, [(0.0, 0.5), (1.0, 0.5)])
     if gradient_end is None:
         gradient_end = pf.random.uniform(rng, 0.0, 1.0)
 
@@ -933,16 +934,17 @@ def splats_mask_rand(
     mask = splat_dots_rand(rng=rng_dots_initial, vector=vector, size=initial_size)
     mask = mask + splat_dots_rand(rng=rng_dots_second, vector=vector)
 
-    for _i in range(3):
-        size = size * pf.random.uniform(rng, 0.5, 1.5)
+    size_mults = pf.random.uniform(rng, (0.5,) * 3, (1.5,) * 3)
+    for i in range(3):
+        size = size * size_mults[i]
         newmask = pf.control.choice(
-            rng_choices[_i],
+            rng_choices[i],
             [
                 (splat_dots_rand, 1.0),
                 (splats_streaks_rand, 1.0),
                 (lambda *_, **__: 0.0, 1.0),
             ],
-        )(rng_chosen[_i], vector, size=size)
+        )(rng_chosen[i], vector, size=size)
         mask = mask + newmask
 
     if allow_gradient:

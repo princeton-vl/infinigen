@@ -3,7 +3,6 @@
 
 # Authors: Alexander Raistrick
 
-from functools import partial
 from typing import NamedTuple
 
 import numpy as np
@@ -12,17 +11,23 @@ from procfunc.nodes import types as t
 from procfunc.nodes.util.bpy_node_info import NodeDataType
 
 __all__ = [
+    "wrinkles_carpet",
     "wrinkles_carpet_preset",
+    "wrinkles_crease",
+    "wrinkles_crease_dense",
     "wrinkles_crease_dense_preset",
     "wrinkles_crease_preset",
+    "wrinkles_crumpled",
     "wrinkles_crumpled_preset",
     "wrinkles_fabric_rand",
+    "wrinkles_paper_crumpled",
     "wrinkles_paper_crumpled_preset",
     "wrinkles_paper_rand",
+    "wrinkles_paper_soft",
     "wrinkles_paper_soft_preset",
+    "wrinkles_rug",
     "wrinkles_rug_preset",
     "wrinkles_rug_rand",
-    "wrinkles_displacement",
 ]
 
 
@@ -340,11 +345,12 @@ def _displacement(height: t.SocketOrVal[float]) -> pf.ProcNode[pf.Vector]:
     return pf.nodes.shader.displacement(height=height, midlevel=0.0)
 
 
-def _carpet(
+@pf.tracer.generator
+def wrinkles_carpet(
     vector: t.SocketOrVal[pf.Vector],
-    size_scale: t.SocketOrVal[float] = 1.0,
-    height_scale: t.SocketOrVal[float] = 1.0,
-    phase: t.SocketOrVal[float] = 0.0,
+    size_scale: t.SocketOrVal[float],
+    height_scale: t.SocketOrVal[float],
+    phase: t.SocketOrVal[float],
 ) -> pf.ProcNode[pf.Vector]:
     mask_noise = pf.nodes.texture.noise(
         vector=vector,
@@ -387,11 +393,12 @@ def _carpet(
     return _displacement(second.height)
 
 
-def _rug(
+@pf.tracer.generator
+def wrinkles_rug(
     vector: t.SocketOrVal[pf.Vector],
-    size_scale: t.SocketOrVal[float] = 1.0,
-    height_scale: t.SocketOrVal[float] = 1.0,
-    phase: t.SocketOrVal[float] = 0.0,
+    size_scale: t.SocketOrVal[float],
+    height_scale: t.SocketOrVal[float],
+    phase: t.SocketOrVal[float],
 ) -> pf.ProcNode[pf.Vector]:
     mask_noise = pf.nodes.texture.noise(
         vector=vector,
@@ -418,11 +425,12 @@ def _rug(
     return _displacement(result.height)
 
 
-def _paper_soft(
+@pf.tracer.generator
+def wrinkles_paper_soft(
     vector: t.SocketOrVal[pf.Vector],
-    size_scale: t.SocketOrVal[float] = 1.0,
-    height_scale: t.SocketOrVal[float] = 1.0,
-    phase: t.SocketOrVal[float] = 0.0,
+    size_scale: t.SocketOrVal[float],
+    height_scale: t.SocketOrVal[float],
+    phase: t.SocketOrVal[float],
 ) -> pf.ProcNode[pf.Vector]:
     first = _wrinkles_sharp(
         vector=vector,
@@ -452,11 +460,12 @@ def _paper_soft(
     return _displacement(second.height)
 
 
-def _paper_crumpled(
+@pf.tracer.generator
+def wrinkles_paper_crumpled(
     vector: t.SocketOrVal[pf.Vector],
-    size_scale: t.SocketOrVal[float] = 1.0,
-    height_scale: t.SocketOrVal[float] = 1.0,
-    phase: t.SocketOrVal[float] = 0.0,
+    size_scale: t.SocketOrVal[float],
+    height_scale: t.SocketOrVal[float],
+    phase: t.SocketOrVal[float],
 ) -> pf.ProcNode[pf.Vector]:
     first = _wrinkles_sharp(
         vector=vector,
@@ -495,11 +504,12 @@ def _paper_crumpled(
     return _displacement(second.height)
 
 
-def _crumpled(
+@pf.tracer.generator
+def wrinkles_crumpled(
     vector: t.SocketOrVal[pf.Vector],
-    size_scale: t.SocketOrVal[float] = 1.0,
-    height_scale: t.SocketOrVal[float] = 1.0,
-    phase: t.SocketOrVal[float] = 0.0,
+    size_scale: t.SocketOrVal[float],
+    height_scale: t.SocketOrVal[float],
+    phase: t.SocketOrVal[float],
 ) -> pf.ProcNode[pf.Vector]:
     first = _wrinkles_sharp(
         vector=vector,
@@ -564,11 +574,12 @@ def _crumpled(
     return _displacement(fifth.height)
 
 
-def _crease(
+@pf.tracer.generator
+def wrinkles_crease(
     vector: t.SocketOrVal[pf.Vector],
-    size_scale: t.SocketOrVal[float] = 1.0,
-    height_scale: t.SocketOrVal[float] = 1.0,
-    phase: t.SocketOrVal[float] = 0.0,
+    size_scale: t.SocketOrVal[float],
+    height_scale: t.SocketOrVal[float],
+    phase: t.SocketOrVal[float],
 ) -> pf.ProcNode[pf.Vector]:
     sharp = _wrinkles_sharp(
         vector=vector,
@@ -659,11 +670,12 @@ def _crease(
     return _displacement(soft.height)
 
 
-def _crease_dense(
+@pf.tracer.generator
+def wrinkles_crease_dense(
     vector: t.SocketOrVal[pf.Vector],
-    size_scale: t.SocketOrVal[float] = 1.0,
-    height_scale: t.SocketOrVal[float] = 1.0,
-    phase: t.SocketOrVal[float] = 0.0,
+    size_scale: t.SocketOrVal[float],
+    height_scale: t.SocketOrVal[float],
+    phase: t.SocketOrVal[float],
 ) -> pf.ProcNode[pf.Vector]:
     sharp_1 = _wrinkles_sharp(
         vector=vector,
@@ -761,173 +773,113 @@ def _crease_dense(
     return _displacement(line_4.height)
 
 
-def wrinkles_displacement(
-    vector: t.SocketOrVal[pf.Vector],
-    style: str = "carpet",
-    size_scale: t.SocketOrVal[float] = 1.0,
-    height_scale: t.SocketOrVal[float] = 1.0,
-    phase: t.SocketOrVal[float] = 0.0,
-) -> pf.ProcNode[pf.Vector]:
-    styles = {
-        "carpet": _carpet,
-        "crease": _crease,
-        "crease_dense": _crease_dense,
-        "crumpled": _crumpled,
-        "paper_crumpled": _paper_crumpled,
-        "paper_soft": _paper_soft,
-        "rug": _rug,
-    }
-    return styles[style](vector, size_scale, height_scale, phase)
-
-
 def wrinkles_carpet_preset(
     vector: t.SocketOrVal[pf.Vector],
 ) -> pf.ProcNode[pf.Vector]:
-    return _carpet(vector)
+    return wrinkles_carpet(vector, size_scale=1.0, height_scale=1.0, phase=0.0)
 
 
 def wrinkles_crease_preset(
     vector: t.SocketOrVal[pf.Vector],
 ) -> pf.ProcNode[pf.Vector]:
-    return _crease(vector)
+    return wrinkles_crease(vector, size_scale=1.0, height_scale=1.0, phase=0.0)
 
 
 def wrinkles_crease_dense_preset(
     vector: t.SocketOrVal[pf.Vector],
 ) -> pf.ProcNode[pf.Vector]:
-    return _crease_dense(vector)
+    return wrinkles_crease_dense(vector, size_scale=1.0, height_scale=1.0, phase=0.0)
 
 
 def wrinkles_crumpled_preset(
     vector: t.SocketOrVal[pf.Vector],
 ) -> pf.ProcNode[pf.Vector]:
-    return _crumpled(vector)
+    return wrinkles_crumpled(vector, size_scale=1.0, height_scale=1.0, phase=0.0)
 
 
 def wrinkles_paper_crumpled_preset(
     vector: t.SocketOrVal[pf.Vector],
 ) -> pf.ProcNode[pf.Vector]:
-    return _paper_crumpled(vector)
+    return wrinkles_paper_crumpled(vector, size_scale=1.0, height_scale=1.0, phase=0.0)
 
 
 def wrinkles_paper_soft_preset(
     vector: t.SocketOrVal[pf.Vector],
 ) -> pf.ProcNode[pf.Vector]:
-    return _paper_soft(vector)
+    return wrinkles_paper_soft(vector, size_scale=1.0, height_scale=1.0, phase=0.0)
 
 
 def wrinkles_rug_preset(
     vector: t.SocketOrVal[pf.Vector],
 ) -> pf.ProcNode[pf.Vector]:
-    return _rug(vector)
+    return wrinkles_rug(vector, size_scale=1.0, height_scale=1.0, phase=0.0)
 
 
 def wrinkles_fabric_rand(
     rng: pf.RNG,
     vector: t.SocketOrVal[pf.Vector],
 ) -> pf.ProcNode[pf.Vector]:
-    rng_style, rng_size, rng_height, rng_phase = rng.spawn(4)
+    rng_func, rng_size, rng_height, rng_phase = rng.spawn(4)
     size_scale = pf.random.uniform(rng_size, 0.85, 1.15)
     height_scale = pf.random.uniform(rng_height, 0.8, 1.2)
     phase = pf.random.uniform(rng_phase, -100.0, 100.0)
-    style = pf.control.choice(
-        rng_style,
+    wrinkles_func = pf.control.choice(
+        rng_func,
         [
-            (
-                partial(
-                    _crease,
-                    size_scale=size_scale,
-                    height_scale=height_scale,
-                    phase=phase,
-                ),
-                1.0,
-            ),
-            (
-                partial(
-                    _crease_dense,
-                    size_scale=size_scale,
-                    height_scale=height_scale,
-                    phase=phase,
-                ),
-                1.0,
-            ),
-            (
-                partial(
-                    _crumpled,
-                    size_scale=size_scale,
-                    height_scale=height_scale,
-                    phase=phase,
-                ),
-                1.0,
-            ),
+            (wrinkles_crease, 1.0),
+            (wrinkles_crease_dense, 1.0),
+            (wrinkles_crumpled, 1.0),
         ],
     )
-    return style(vector)
+    return wrinkles_func(
+        vector,
+        size_scale=size_scale,
+        height_scale=height_scale,
+        phase=phase,
+    )
 
 
 def wrinkles_rug_rand(
     rng: pf.RNG,
     vector: t.SocketOrVal[pf.Vector],
 ) -> pf.ProcNode[pf.Vector]:
-    rng_style, rng_size, rng_height, rng_phase = rng.spawn(4)
+    rng_func, rng_size, rng_height, rng_phase = rng.spawn(4)
     size_scale = pf.random.uniform(rng_size, 0.85, 1.15)
     height_scale = pf.random.uniform(rng_height, 0.75, 1.25)
     phase = pf.random.uniform(rng_phase, -100.0, 100.0)
-    style = pf.control.choice(
-        rng_style,
+    wrinkles_func = pf.control.choice(
+        rng_func,
         [
-            (
-                partial(
-                    _carpet,
-                    size_scale=size_scale,
-                    height_scale=height_scale,
-                    phase=phase,
-                ),
-                1.0,
-            ),
-            (
-                partial(
-                    _rug,
-                    size_scale=size_scale,
-                    height_scale=height_scale,
-                    phase=phase,
-                ),
-                1.0,
-            ),
+            (wrinkles_carpet, 1.0),
+            (wrinkles_rug, 1.0),
         ],
     )
-    return style(vector)
+    return wrinkles_func(
+        vector,
+        size_scale=size_scale,
+        height_scale=height_scale,
+        phase=phase,
+    )
 
 
 def wrinkles_paper_rand(
     rng: pf.RNG,
     vector: t.SocketOrVal[pf.Vector],
 ) -> pf.ProcNode[pf.Vector]:
-    rng_style, rng_size, rng_height, rng_phase = rng.spawn(4)
+    rng_func, rng_size, rng_height, rng_phase = rng.spawn(4)
     size_scale = pf.random.uniform(rng_size, 0.85, 1.15)
     height_scale = pf.random.uniform(rng_height, 0.8, 1.2)
     phase = pf.random.uniform(rng_phase, -100.0, 100.0)
-    style = pf.control.choice(
-        rng_style,
+    wrinkles_func = pf.control.choice(
+        rng_func,
         [
-            (
-                partial(
-                    _paper_crumpled,
-                    size_scale=size_scale,
-                    height_scale=height_scale,
-                    phase=phase,
-                ),
-                1.0,
-            ),
-            (
-                partial(
-                    _paper_soft,
-                    size_scale=size_scale,
-                    height_scale=height_scale,
-                    phase=phase,
-                ),
-                1.0,
-            ),
+            (wrinkles_paper_crumpled, 1.0),
+            (wrinkles_paper_soft, 1.0),
         ],
     )
-    return style(vector)
+    return wrinkles_func(
+        vector,
+        size_scale=size_scale,
+        height_scale=height_scale,
+        phase=phase,
+    )

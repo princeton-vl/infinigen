@@ -4,7 +4,6 @@
 import functools
 from typing import NamedTuple
 
-import numpy as np
 import procfunc as pf
 
 from infinigen2.objects import bowl, phyllo_plant, vase
@@ -27,26 +26,6 @@ __all__ = [
 
 class PlantPotResult(NamedTuple):
     mesh: pf.MeshObject
-
-
-@pf.tracer.primitive
-def _assemble(
-    pot: pf.MeshObject,
-    fill: pf.MeshObject,
-    plant: pf.MeshObject,
-    plant_z: float,
-) -> pf.MeshObject:
-    plant.item().location.z = plant_z
-    for obj, part in ((pot, 0), (plant, 1), (fill, 2)):
-        values = np.full(len(obj.item().data.vertices), part, dtype=np.int32)
-        pf.ops.attr.write_attribute(
-            obj, values, "plant_pot_part", "POINT", overwrite=True
-        )
-    pf.ops.object.join(plant, pot)
-    pf.ops.object.join(plant, fill)
-    pf.ops.mesh.transform_apply(plant)
-    plant.item().name = "plant_pot"
-    return plant
 
 
 def plant_pot(
@@ -84,8 +63,12 @@ def plant_pot(
             pf.nodes.shader.coord().object
         )
     pf.ops.object.set_material(pot.inside_volume, soil_material)
-    plant_z = fill_height - thickness
-    return PlantPotResult(_assemble(pot.mesh, pot.inside_volume, plant, plant_z))
+    pf.ops.object.set_transform(plant, location=(0.0, 0.0, fill_height - thickness))
+    pf.ops.object.join(plant, pot.mesh)
+    pf.ops.object.join(plant, pot.inside_volume)
+    pf.ops.mesh.transform_apply(plant)
+    plant.item().name = plant_pot.__name__
+    return PlantPotResult(mesh=plant)
 
 
 def _rosette_plant(
@@ -339,12 +322,10 @@ def plant_pot_small_rand(
         (functools.partial(_arching_plant, min_ratio=0.9, max_ratio=1.8), 0.5),
     ]
     plant_fn = pf.control.choice(rng_form, forms)
-    result = _plant_pot_rand(
+    return _plant_pot_rand(
         rng_build,
         plant=plant_fn(rng_plant, pot_diameter, height=plant_height),
         diameter=pot_diameter,
         rim_ratio=pf.random.uniform(rng_rim, 1.05, 1.3),
         height=pot_height,
     )
-    result.mesh.item().name = plant_pot_small_rand.__name__
-    return result

@@ -25,6 +25,7 @@ from infinigen2.lighting import sky_lighting
 from infinigen2.objects import window
 from infinigen2.objects.door import door_composite_rand
 from infinigen2.scenes.house.floor_mesh import (
+    WALL_STRIP_OVERHANG,
     HouseCeilingCutoutResult,
     WallPlane,
     house_ceiling_cutout,
@@ -55,8 +56,8 @@ from infinigen2.scenes.room.room import wall_arrangement_rand
 from infinigen2.scenes.room.wall_base import (
     ROOM_SUBSURF_LEVELS,
     WallResult,
+    WallSurface,
     extrude_for_thickness,
-    name_objects,
     shift_wall_ends,
     wall_plain_rand,
 )
@@ -160,10 +161,15 @@ def _plane_inward(plane: WallPlane) -> np.ndarray:
     return np.asarray((-direction[1], direction[0]))
 
 
+def _plane_surface(plane: WallPlane, height: float) -> WallSurface:
+    return WallSurface(plane.obj, plane.length, height + 2 * WALL_STRIP_OVERHANG)
+
+
 @pf.tracer.grammar
 def _exterior_wall_rand(
     rng: pf.RNG,
     plane: WallPlane,
+    wall: WallSurface,
     material: pf.Material,
     shared_window: window.WindowResult,
 ) -> WallResult:
@@ -197,7 +203,7 @@ def _exterior_wall_rand(
 
     rng_choice, rng_feature = rng.spawn(2)
     option = pf.control.choice(rng_choice, [(windows, 3.0), (mixed, 1.0)])
-    return option(rng_feature, plane.obj, material)
+    return option(rng_feature, wall, material)
 
 
 def _unique_objects(objects: list[ObjectT]) -> list[ObjectT]:
@@ -207,7 +213,7 @@ def _unique_objects(objects: list[ObjectT]) -> list[ObjectT]:
 @pf.tracer.grammar
 def interior_wall_arrangement_rand(
     rng: pf.RNG,
-    wall: pf.MeshObject,
+    wall: WallSurface,
     wall_material: pf.Material | None = None,
     wall_thickness: float = 0.05,
 ) -> WallResult:
@@ -304,7 +310,7 @@ def _door_affordance_collider(
         location=(*center_xy, height / 2),
         rotation_euler=(0.0, 0.0, angle),
     )
-    collider.item().name = f"house_door_affordance.{wall_index:02d}"
+    collider.item().name = "door_affordance_collider"
     collider.item().hide_render = True
     collider.item().display_type = "WIRE"
     return collider
@@ -529,6 +535,21 @@ def _filler_section(
     return np.asarray(orient(hull, 1.0).exterior.coords[:-1])
 
 
+@pf.tracer.generator
+def shell_filler(
+    section: tuple[tuple[float, float], ...], height: float, material: pf.Material
+) -> pf.MeshObject:
+    z_bounds = (-WALL_STRIP_OVERHANG, height + WALL_STRIP_OVERHANG)
+    obj = _prism(np.asarray(section), z_bounds, 0.8)
+    pf.ops.modifier.bevel(obj, width=0.006, segments=1)
+    pf.ops.object.set_material(
+        obj, surface=material.surface, displacement=material.displacement
+    )
+    pf.ops.uv.cube_project(obj, uv_name="UVMap")
+    mesh_util.crease_all_edges(obj)
+    return obj
+
+
 def _shell_fillers(
     planes_exterior: list[WallPlane],
     materials: list[pf.Material],
@@ -549,14 +570,8 @@ def _shell_fillers(
         section = _filler_section(vertex, group)
         if section is None:
             continue
-        obj = _prism(section, (-0.03, height + 0.03), 0.8)
-        pf.ops.modifier.bevel(obj, width=0.006, segments=1)
-        material = materials[group[0][0].room_index]
-        pf.ops.object.set_material(
-            obj, surface=material.surface, displacement=material.displacement
-        )
-        pf.ops.uv.cube_project(obj, uv_name="UVMap")
-        mesh_util.crease_all_edges(obj)
+        points = tuple((float(x), float(y)) for x, y in section)
+        obj = shell_filler(points, height, materials[group[0][0].room_index])
         pf.ops.modifier.subdivide_surface(
             obj, levels=ROOM_SUBSURF_LEVELS, _skip_apply=True
         )
@@ -638,7 +653,8 @@ def _join_room_corners(
         key = _plane_key(side.plane)
         low = _end_shift(turn_in.get(key, 0.0), side.plane.thickness, chamfer)
         high = _end_shift(turn_out.get(key, 0.0), side.plane.thickness, chamfer)
-        direction = np.array([*_plane_direction(side.plane), 0.0])
+        direction_xy = _plane_direction(side.plane)
+        direction = (float(direction_xy[0]), float(direction_xy[1]), 0.0)
         for obj in _unique_objects([*side.result.wall_planes, *side.result.backs]):
             shift_wall_ends(obj, direction, low, high)
     strips: dict[int, list[pf.MeshObject]] = defaultdict(list)
@@ -727,6 +743,7 @@ def _house_ceiling_lamps_rand(
 ) -> CeilingFeaturesResult:
     rng_energy, rng_grid = rng.spawn(2)
     back = extrude_for_thickness(ceiling, thickness)
+    back.item().name = "house_ceiling"
     energy = polygon.area * pf.random.uniform(rng_energy, 300, 700) / 177
     grid = ceiling_lamp_grid_rand(rng_grid, _polygon_extent(polygon), energy)
     lamps = _place_on_ceiling(ceiling, grid, _grid_centers(polygon, grid))
@@ -891,7 +908,7 @@ def house_walls_rand(
             arrangement = wall_plain_rand
         result = arrangement(
             plane_rng,
-            wall=plane.obj,
+            wall=_plane_surface(plane, height),
             wall_material=materials[plane.room_index],
             wall_thickness=plane.thickness / 2,
         )
@@ -904,12 +921,15 @@ def house_walls_rand(
         if plane.length < feature_min_width:
             result = wall_plain_rand(
                 plane_rng,
-                wall=plane.obj,
+                wall=_plane_surface(plane, height),
                 wall_material=material,
                 wall_thickness=plane.thickness,
             )
         else:
-            result = _exterior_wall_rand(plane_rng, plane, material, shared_window)
+            surface = _plane_surface(plane, height)
+            result = _exterior_wall_rand(
+                plane_rng, plane, surface, material, shared_window
+            )
         exterior.append(HouseWallSideResult(plane, result))
 
     sides = interior + exterior
@@ -1064,20 +1084,20 @@ def house_unfurnished_rand(
     storage_objects = _unique_objects([*walls.storage_containers, *walls.supports])
 
     all_objects = (
-        name_objects(floors, "house_floor")
-        + name_objects(ceilings, "house_ceiling")
-        + name_objects([o for s in surfaces for o in s.backs], "house_ceiling_back")
-        + name_objects([o for s in surfaces for o in s.sills], "house_ceiling_sill")
-        + name_objects(fixtures, "house_ceiling_feature")
-        + name_objects(walls.planes_interior, "house_wall_interior")
-        + name_objects(walls.planes_exterior, "house_wall_exterior")
-        + name_objects(walls.corners, "house_wall_corner")
-        + name_objects(walls.backs, "house_wall_back")
-        + name_objects(walls.sills, "house_wall_sill")
-        + name_objects(storage_objects, "house_wall_storage")
+        floors
+        + ceilings
+        + [o for s in surfaces for o in s.backs]
+        + [o for s in surfaces for o in s.sills]
+        + fixtures
+        + walls.planes_interior
+        + walls.planes_exterior
+        + walls.corners
+        + walls.backs
+        + walls.sills
+        + storage_objects
     )
-    for kind, objs in sorted(walls.decorations.items()):
-        all_objects += name_objects(objs, f"house_wall_{kind}")
+    for _, objs in sorted(walls.decorations.items()):
+        all_objects += objs
     door_rooms = {
         index: segment.room_indices
         for index, segment in enumerate(segments)

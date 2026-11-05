@@ -202,7 +202,9 @@ def hardware_hook(
     geometry = _hook_geometry(
         square, attachment_radius, attachment_depth, radius, depth, hook_length
     )
-    return _result(material, geometry)
+    result = _result(material, geometry)
+    result.mesh.item().name = hardware_hook.__name__
+    return result
 
 
 @pf.tracer.generator
@@ -225,7 +227,9 @@ def hardware_holder(
         holder_length,
         extension_length,
     )
-    return _result(material, geometry)
+    result = _result(material, geometry)
+    result.mesh.item().name = hardware_holder.__name__
+    return result
 
 
 @pf.tracer.generator
@@ -248,7 +252,9 @@ def hardware_bar(
         bar_length,
         extension_length,
     )
-    return _result(material, geometry)
+    result = _result(material, geometry)
+    result.mesh.item().name = hardware_bar.__name__
+    return result
 
 
 @pf.tracer.generator
@@ -271,7 +277,9 @@ def hardware_ring(
         ring_radius,
         ring_minor_scale,
     )
-    return _result(material, geometry)
+    result = _result(material, geometry)
+    result.mesh.item().name = hardware_ring.__name__
+    return result
 
 
 def _hardware_material_rand(rng: pf.RNG) -> pf.Material:

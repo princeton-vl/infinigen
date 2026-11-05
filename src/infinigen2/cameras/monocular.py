@@ -61,7 +61,7 @@ def camera_monocular_in_bbox_rand(
 
 def _uniform_in_box(r: pf.RNG, lo: pf.Vector, hi: pf.Vector) -> pf.Vector:
     """A point drawn uniformly inside the axis-aligned box [lo, hi]."""
-    return pf.Vector(tuple(float(pf.random.uniform(r, lo[i], hi[i])) for i in range(3)))
+    return pf.Vector(tuple(pf.random.uniform(r, tuple(lo), tuple(hi))))
 
 
 def _linear_pan_attempt(

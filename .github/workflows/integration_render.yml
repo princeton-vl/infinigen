@@ -20,6 +20,10 @@ on:
         default: false
         type: boolean
 
+permissions:
+  contents: read
+  pull-requests: write
+
 concurrency:
   # Per-PR group; develop pushes share one group, main pushes stay per-SHA.
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || (github.event_name == 'push' && github.ref_name == 'develop' && 'push-develop') || github.sha }}
@@ -38,21 +42,28 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: false
+          persist-credentials: false
           fetch-depth: 0
 
       - name: Install infinigen & dependencies
-        run: |
-          uv venv
-          uv pip install -e ".[dev,vis]"
+        run: uv sync --locked --extra dev --extra vis
 
       # Resolve every path/label this run needs, once, so the render / archive /
       # report steps below are just simple consumers of these env vars.
       - name: Resolve run metadata
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
+          BASE_REF: ${{ github.base_ref }}
+          REF_NAME: ${{ github.ref_name }}
+          VALIDATION: ${{ inputs.validation }}
         run: |
           set -e
           # On a PR this is the PR number; via workflow_dispatch it's the input;
           # on a branch push it's empty (RUN_LABEL stays "nopr").
-          PR_NUMBER="${{ github.event.pull_request.number || inputs.pr_number }}"
+          if [ -n "$PR_NUMBER" ] && ! [[ "$PR_NUMBER" =~ ^[0-9]+$ ]]; then
+            echo "pr_number must be numeric, got '$PR_NUMBER'"
+            exit 1
+          fi
           RUN_LABEL="nopr"
           [ -n "$PR_NUMBER" ] && RUN_LABEL="pr${PR_NUMBER}"
 
@@ -61,9 +72,9 @@ jobs:
           uv run python scripts/integration_v2/run_paths.py \
             --archive-root "$RENDER_ARCHIVE_ROOT" \
             --run-path "$RUN_PATH" \
-            --base-ref "${{ github.base_ref }}" \
-            --ref-name "${{ github.ref_name }}" \
-            --validation "${{ inputs.validation }}" >> "$GITHUB_ENV"
+            --base-ref "$BASE_REF" \
+            --ref-name "$REF_NAME" \
+            --validation "$VALIDATION" >> "$GITHUB_ENV"
 
       # Gating runs before any GPU work, so say what the render covers up front.
       - name: Announce planned renders
@@ -173,6 +184,10 @@ jobs:
 
       - name: Archive renders to permanent storage
         if: ${{ !cancelled() }}
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          RENDER_OUTCOME: ${{ steps.render.outcome }}
         run: |
           set -e
           # count real events; gating_report.json lands before any GPU work
@@ -189,10 +204,10 @@ jobs:
           rsync -a --exclude coverage_data "$OUTPUT_DIR"/ "$TARGET_DIR"/
 
           # only a clean push repoints the baseline every later PR diffs against
-          if [ "${{ github.event_name }}" = "push" ] && [ "${{ steps.render.outcome }}" = "success" ]; then
-            ln -sfn "$TARGET_DIR" "$ARCHIVE_ROOT/${{ github.ref_name }}_latest"
-          elif [ "${{ github.event_name }}" = "push" ]; then
-            echo "Render did not succeed — keeping the previous ${{ github.ref_name }}_latest."
+          if [ "$EVENT_NAME" = "push" ] && [ "$RENDER_OUTCOME" = "success" ]; then
+            ln -sfn "$TARGET_DIR" "$ARCHIVE_ROOT/${REF_NAME}_latest"
+          elif [ "$EVENT_NAME" = "push" ]; then
+            echo "Render did not succeed — keeping the previous ${REF_NAME}_latest."
           fi
 
       - name: Print viewer link
@@ -234,8 +249,10 @@ jobs:
 
       - name: Fail job if any render failed
         if: always()
+        env:
+          RENDER_OUTCOME: ${{ steps.render.outcome }}
         run: |
-          if [ "${{ steps.render.outcome }}" = "failure" ]; then
+          if [ "$RENDER_OUTCOME" = "failure" ]; then
             echo "One or more renders failed — marking job red."
             exit 1
           fi

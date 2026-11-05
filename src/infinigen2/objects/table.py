@@ -41,6 +41,8 @@ __all__ = [
     "table_side_dimensions_rand",
     "table_side_rand",
     "table_top",
+    "table_top_circular",
+    "table_top_rectangular",
 ]
 
 
@@ -142,24 +144,57 @@ def _table_circular_straight_base_rand(
     )
 
 
-def _assemble_table(
-    top: pf.ProcNode[pf.MeshObject],
-    base: pf.MeshObject,
-    top_height: float,
-    top_material: pf.Material,
-    leg_material: pf.Material,
+def _top_object(
+    top: pf.ProcNode[pf.MeshObject], top_height: float, top_material: pf.Material
 ) -> TableResult:
     top = pf.nodes.geo.transform(top, translation=(0, 0, top_height))
     top = pf.nodes.to_mesh_object(top)
     pf.ops.object.set_material(
         top, surface=top_material.surface, displacement=top_material.displacement
     )
+    return TableResult(mesh=top)
+
+
+def _assemble_table(
+    top: pf.MeshObject, base: pf.MeshObject, leg_material: pf.Material
+) -> TableResult:
     pf.ops.object.set_material(
         base, surface=leg_material.surface, displacement=leg_material.displacement
     )
     pf.ops.object.join(top, base)
     pf.ops.modifier.subdivide_surface(top, levels=3, _skip_apply=True)
     return TableResult(mesh=top)
+
+
+@pf.tracer.generator
+def table_top_rectangular(
+    x: float,
+    y: float,
+    top_thickness: float,
+    top_height: float,
+    top_support_loop_offset: pf.Vector,
+    top_material: pf.Material,
+) -> TableResult:
+    top = table_top(
+        size=(x, y, top_thickness),
+        support_loop_offset=top_support_loop_offset,
+    )
+    result = _top_object(top, top_height, top_material)
+    result.mesh.item().name = table_top_rectangular.__name__
+    return result
+
+
+@pf.tracer.generator
+def table_top_circular(
+    diameter: float,
+    top_thickness: float,
+    top_height: float,
+    top_material: pf.Material,
+) -> TableResult:
+    top = _table_top_circular(diameter=diameter, thickness=top_thickness)
+    result = _top_object(top, top_height, top_material)
+    result.mesh.item().name = table_top_circular.__name__
+    return result
 
 
 def table_dining_rand(
@@ -202,11 +237,6 @@ def table_dining_rand(
                 edge_frac * top_thickness * (1.0 - corner_shrink),
             )
         )
-    top = table_top(
-        size=(x, y, top_thickness),
-        support_loop_offset=top_support_loop_offset,
-    )
-
     if base is None:
         base_options = [
             (_table_straight_base_rand, 2.0),
@@ -216,7 +246,12 @@ def table_dining_rand(
         base_fn = pf.control.choice(rng_base_choice, base_options)
         res = base_fn(rng=rng_base, dimensions=(x, y, top_height))
         base = res.mesh
-    return _assemble_table(top, base, top_height, top_material, leg_material)
+    top = table_top_rectangular(
+        x, y, top_thickness, top_height, top_support_loop_offset, top_material
+    ).mesh
+    result = _assemble_table(top, base, leg_material)
+    result.mesh.item().name = "table_dining"
+    return result
 
 
 def table_dining_circular_rand(
@@ -259,8 +294,10 @@ def table_dining_circular_rand(
             ],
         )
         base = base_fn(rng_base, (diameter, diameter, top_height)).mesh
-    top = _table_top_circular(diameter=diameter, thickness=top_thickness)
-    return _assemble_table(top, base, top_height, top_material, leg_material)
+    top = table_top_circular(diameter, top_thickness, top_height, top_material).mesh
+    result = _assemble_table(top, base, leg_material)
+    result.mesh.item().name = "table_dining_circular"
+    return result
 
 
 def table_side_rand(rng: pf.RNG) -> TableResult:
@@ -309,17 +346,16 @@ def table_side_circular_rand(rng: pf.RNG) -> TableResult:
 
 def table_coffee_rand(rng: pf.RNG) -> TableResult:
     """Rectangular, round or storage coffee table."""
+    rng_table_choice, rng_table = rng.spawn(2)
     func = pf.control.choice(
-        rng,
+        rng_table_choice,
         [
             (_table_coffee_legged_rand, 2.0),
             (table_coffee_circular_rand, 1.0),
             (table_coffee_storage_rand, 1.0),
         ],
     )
-    result = func(rng)
-    result.mesh.item().name = func.__name__
-    return result
+    return func(rng_table)
 
 
 def _table_cocktail_pedestal_rand(rng: pf.RNG, dimensions: pf.Vector) -> TableResult:

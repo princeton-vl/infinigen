@@ -26,6 +26,7 @@ __all__ = [
     "WallPlane",
     "house_ceiling_cutout",
     "house_floor_profile_to_planes",
+    "WALL_STRIP_OVERHANG",
     "vertical_strip",
 ]
 
@@ -98,7 +99,9 @@ def _polygon_faces(
     quad_y = np.stack([y0, y0, y1, y1], axis=-1).reshape(-1, 4)[inside]
     quad_xy = np.stack([quad_x, quad_y], axis=-1).reshape(-1, 2)
 
-    pieces = shapely.get_parts(shapely.intersection(cells[rim], polygon))
+    # snap to the grid mesh_from_corners merges on, so no corner repeats after merging
+    clipped = shapely.intersection(cells[rim], polygon, grid_size=1e-6)
+    pieces = shapely.get_parts(clipped)
     is_area = (shapely.get_type_id(pieces) == 3) & (shapely.area(pieces) > 1e-6)
     pieces = shapely.normalize(pieces[is_area])
     if np.any(shapely.get_num_interior_rings(pieces) > 0):
@@ -232,6 +235,9 @@ def _polygon_edges(
     return [edge for ring in rings for edge in pairwise(ring.coords)]
 
 
+WALL_STRIP_OVERHANG = 0.03
+
+
 def vertical_strip(
     start: tuple[float, float], end: tuple[float, float], height: float, name: str
 ) -> pf.MeshObject:
@@ -239,7 +245,9 @@ def vertical_strip(
     # Square-room convention: first edge is vertical (V/up), second is U/along-wall.
     length = float(np.linalg.norm(np.asarray(end) - np.asarray(start)))
     along = mesh_util.split_gaps(np.array([0.0, length]), 0.8)
-    up = mesh_util.split_gaps(np.array([-0.03, height + 0.03]), 0.8)
+    up = mesh_util.split_gaps(
+        np.array([-WALL_STRIP_OVERHANG, height + WALL_STRIP_OVERHANG]), 0.8
+    )
     direction = (np.asarray(end) - np.asarray(start)) / length
     u0, v0 = np.meshgrid(along[:-1], up[:-1], indexing="ij")
     u1, v1 = np.meshgrid(along[1:], up[1:], indexing="ij")

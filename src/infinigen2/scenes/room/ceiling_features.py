@@ -20,7 +20,6 @@ from infinigen2.scenes.room.wall_base import (
     ROOM_SUBSURF_LEVELS,
     extrude_for_thickness,
     fit_grid_margins,
-    name_objects,
 )
 from infinigen2.scenes.room.wall_cutouts import (
     arrange_window_portals,
@@ -39,6 +38,7 @@ logger = logging.getLogger(__name__)
 __all__ = [
     "CeilingFeaturesResult",
     "CeilingGridResult",
+    "ceiling_bar_housing",
     "ceiling_feature_rand",
     "ceiling_lamp_grid_rand",
     "ceiling_lamp_lights",
@@ -75,31 +75,36 @@ class CeilingGridResult(NamedTuple):
     chamfer: float
 
 
-def _uv_extent(ceiling: pf.MeshObject) -> tuple[float, float]:
-    pf.ops.uv.cube_project(ceiling, uv_name="UVMap")
-    ceiling_uvs = pf.ops.attr.uv_coords(ceiling)
-    extent = ceiling_uvs.max(axis=0) - ceiling_uvs.min(axis=0)
-    return float(extent[0]), float(extent[1])
+@pf.tracer.generator
+def ceiling_bar_housing(
+    length: float, width: float, depth: float, material: pf.Material
+) -> pf.MeshObject:
+    housing = pf.nodes.to_mesh_object(mesh_util.box(size=(length, width, depth)))
+    pf.ops.uv.cube_project(housing, uv_name="UVMap")
+    pf.ops.object.set_material(
+        housing, surface=material.surface, displacement=material.displacement
+    )
+    return housing
 
 
 @pf.tracer.grammar
 def ceiling_lamp_grid_rand(
     rng: pf.RNG, extent: tuple[float, float], energy: float
 ) -> CeilingGridResult:
+    rng, rng_template_choice, rng_template = rng.spawn(3)
     spacing_x = pf.random.uniform(rng, 1.5, 2.5)
     spacing_y = pf.random.uniform(rng, 1.5, 2.5)
     margin_x = min(pf.random.uniform(rng, 0.4, 1.5), 0.3 * extent[0])
     margin_y = min(pf.random.uniform(rng, 0.4, 1.5), 0.3 * extent[1])
 
     template_fn = pf.control.choice(
-        rng,
+        rng_template_choice,
         [
             (light_ceiling_rand, 2.5),
             (lamp.lamp_ceiling_shade_rand, 1.0),
         ],
     )
-    lamp_template = template_fn(rng, energy=energy)
-    lamp_template.mesh.item().name = template_fn.__name__
+    lamp_template = template_fn(rng_template, energy=energy)
     mesh_template = lamp_template.mesh
 
     light_offset = (0.0, 0.0, 0.0)
@@ -166,7 +171,8 @@ def ceiling_light_placement_rand(
 ) -> tuple[list[pf.MeshObject], list[pf.LightObject]]:
     lumens = dimensions.x * dimensions.y * pf.random.uniform(rng, 300, 700)
     total_energy = lumens / 177
-    grid = ceiling_lamp_grid_rand(rng, _uv_extent(ceiling), total_energy)
+    extent = (float(dimensions.x), float(dimensions.y))
+    grid = ceiling_lamp_grid_rand(rng, extent, total_energy)
 
     uv_meters = pf.nodes.geo.input_named_attribute(
         name="UVMap", data_type=pf.NodeDataType.FLOAT_VECTOR
@@ -211,6 +217,7 @@ def ceiling_light_placement_rand(
 def ceiling_skylight_grid_rand(
     rng: pf.RNG, extent: tuple[float, float]
 ) -> CeilingGridResult:
+    rng, rng_orientation, rng_window = rng.spawn(3)
     # each side must fit the smaller extent (either orientation), plus headroom
     floor_margin = 0.1
     max_side = max(0.45, min(extent) - 2 * floor_margin - 0.1)
@@ -220,7 +227,7 @@ def ceiling_skylight_grid_rand(
     skylight_aspect = pf.random.uniform(rng, 1.0, 10.0)
     skylight_long = min(skylight_short * skylight_aspect, 3.5, max_side)
     skylight_width, skylight_length = pf.control.choice(
-        rng,
+        rng_orientation,
         [
             ((skylight_short, skylight_long), 1.0),
             ((skylight_long, skylight_short), 1.0),
@@ -231,7 +238,7 @@ def ceiling_skylight_grid_rand(
     )
     # skylights never get curtains
     window_result = window.window_from_profile_rand(
-        rng, window.rectangular_profile(window_dimensions)
+        rng_window, window.rectangular_profile(window_dimensions)
     )
     win = window_result.mesh
 
@@ -252,12 +259,12 @@ def ceiling_skylight_grid_rand(
     margin_frac = pf.random.uniform(rng, 0.0, 1.0)
 
     # fit per-axis counts; min_margin within [floor, (extent-win)/2]
+    splits = pf.random.uniform(rng, (0.4,) * 2, (0.6,) * 2)
     fits = []
-    for axis, n_cap in ((0, 4), (1, 3)):
+    for axis, n_cap, split in ((0, 4, splits[0]), (1, 3, splits[1])):
         size = win_dims[axis]
         max_margin = max(floor_margin, (extent[axis] - size) / 2)
         min_margin = floor_margin + (max_margin - floor_margin) * margin_frac
-        split = pf.random.uniform(rng, 0.4, 0.6)
         fit = fit_grid_margins(extent[axis], size, spacing, min_margin, split, n_cap)
         fits.append(fit)
 
@@ -285,6 +292,7 @@ def ceiling_skylights_rand(
     rng: pf.RNG,
     ceiling: pf.MeshObject,
     ceiling_material: pf.Material,
+    dimensions: pf.Vector,
 ) -> tuple[
     pf.MeshObject,
     list[pf.MeshObject],
@@ -292,7 +300,7 @@ def ceiling_skylights_rand(
     list[pf.MeshObject],
     list[pf.LightObject],
 ]:
-    grid = ceiling_skylight_grid_rand(rng, _uv_extent(ceiling))
+    grid = ceiling_skylight_grid_rand(rng, (float(dimensions.x), float(dimensions.y)))
     cutout = cutout_spaced_instances(
         surface=ceiling,
         instance=grid.instance,
@@ -330,14 +338,7 @@ def ceiling_light_bar_grid_rand(
     bar_depth = pf.random.uniform(rng, 0.03, 0.06)
 
     # thin box housing, x/y-centered (symmetric -> flip-invariant)
-    cube = mesh_util.box(size=(bar_length, bar_width, bar_depth))
-    housing = pf.nodes.to_mesh_object(cube)
-    pf.ops.uv.cube_project(housing, uv_name="UVMap")
-    pf.ops.object.set_material(
-        housing,
-        surface=ceiling_material.surface,
-        displacement=ceiling_material.displacement,
-    )
+    housing = ceiling_bar_housing(bar_length, bar_width, bar_depth, ceiling_material)
 
     spacing = pf.random.uniform(rng, 0.4, 2.4)
     min_margin_x = pf.random.uniform(rng, 0.1, 0.3)
@@ -387,8 +388,9 @@ def ceiling_light_bar_lights_rand(
 
     # one area lamp per bar, just below the ceiling, facing down
     lights: list[pf.LightObject] = []
-    for bar in bars:
-        lamp_energy = per_energy * pf.random.uniform(rng, 0.75, 1.25)
+    energy_mults = pf.random.uniform(rng, (0.75,) * len(bars), (1.25,) * len(bars))
+    for bar, energy_mult in zip(bars, energy_mults, strict=True):
+        lamp_energy = per_energy * energy_mult
         light = pf.ops.primitives.light.area_lamp(
             shape="RECTANGLE",
             size_x=footprint[0],
@@ -399,6 +401,7 @@ def ceiling_light_bar_lights_rand(
         emission = pf.nodes.shader.emission(color=blackbody, strength=1.0)
         pf.nodes.to_light(light, surface=emission)
         light.item().location = bar.item().location - pf.Vector((0.0, 0.0, 0.03))
+        light.item().name = "ceiling_light_bar_light"
         lights.append(light)
     return lights
 
@@ -416,7 +419,8 @@ def ceiling_light_bars_rand(
     list[pf.MeshObject],
     list[pf.LightObject],
 ]:
-    grid = ceiling_light_bar_grid_rand(rng, _uv_extent(ceiling), ceiling_material)
+    extent = (float(dimensions.x), float(dimensions.y))
+    grid = ceiling_light_bar_grid_rand(rng, extent, ceiling_material)
     cutout = cutout_spaced_instances(
         surface=ceiling,
         instance=grid.instance,
@@ -473,14 +477,16 @@ def ceiling_feature_rand(
 
     def ceiling_plain_with_lights(rng: pf.RNG):
         ceiling_back = extrude_for_thickness(shape.ceiling, wall_thickness)
-        ceiling_back.item().name = "room_wall_back"
+        ceiling_back.item().name = "ceiling_feature"
         lamp_meshes, lamp_lights = ceiling_light_placement_rand(
             rng, shape.ceiling, dimensions=shape.dimensions
         )
         return shape.ceiling, [ceiling_back], [], lamp_meshes, lamp_lights
 
     def ceiling_skylights(rng: pf.RNG):
-        return ceiling_skylights_rand(rng, shape.ceiling, ceiling_mat)
+        return ceiling_skylights_rand(
+            rng, shape.ceiling, ceiling_mat, dimensions=shape.dimensions
+        )
 
     def ceiling_light_bars(rng: pf.RNG):
         return ceiling_light_bars_rand(
@@ -500,11 +506,6 @@ def ceiling_feature_rand(
     )
     ceiling_geom, backs, sills, light_meshes, ceiling_lights = option(rng_feature)
 
-    name_objects([shape.floor], "room_floor")
-    name_objects([ceiling_geom], "room_ceiling")
-    name_objects(backs, "room_ceiling_back")
-    name_objects(sills, "room_ceiling_sill")
-    name_objects(light_meshes, "ceiling_light")
     return CeilingFeaturesResult(
         floor=shape.floor,
         ceiling=ceiling_geom,

@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools", "numpy", "Cython"]
+requires = ["setuptools>=80", "setuptools-scm>=8", "numpy", "Cython"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -37,15 +37,15 @@ dependencies = [
     "python-fcl>=0.7.0.11",
     "rtree>=1.4", # trimesh spatial index
     "cvdpack>=0.6.0", # v2 ground-truth tool
+    "typing_extensions>=4.5", # Unpack on Python 3.10
 ]
 
 [project.optional-dependencies]
 terrain = [
     "infinigen[infinigen1]", # terrain is a v1 feature
-    "landlab==2.6.0",
+    "landlab>=2.9",
     "pyrender<0.2.0",
-    # landlab needs pkg_resources, removed in setuptools>=81
-    "setuptools<81"
+    "setuptools>=84.1"
 ]
 vis = [
     "einops",
@@ -92,7 +92,7 @@ infinigen1 = [
     "coacd",
     "networkx",
     "psutil",
-    "scikit-learn<1.4.0",
+    "scikit-learn>=1.5",
     "shapely<=2.0.5",
     "tqdm",
     "submitit", # v1 datagen SLURM
@@ -102,8 +102,16 @@ infinigen1 = [
 infinigen = "infinigen2.generate:main"
 infinigen2 = "infinigen2.generate:main"
 
-[tool.setuptools.dynamic]
-version = {attr = "infinigen2.__version__"}
+# Version comes from the latest release tag; pre2/* and other non-release tags are ignored
+[tool.setuptools_scm]
+tag_regex = '^v?(?P<version>\d+(\.\d+)*((a|b|rc)\d+)?)$'
+fallback_version = "0.0.0"
+
+[tool.setuptools_scm.scm.git]
+describe_command = ["git", "describe", "--dirty", "--tags", "--long", "--abbrev=40", "--match", "[0-9]*", "--match", "v[0-9]*"]
+
+[tool.uv]
+cache-keys = [{ file = "pyproject.toml" }, { git = { commit = true, tags = true } }]
 
 [tool.setuptools.packages.find]
 where = ["src"]

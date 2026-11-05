@@ -23,6 +23,7 @@ from infinigen2.exporters.util.format import (
     RenderPass,
     ensure_path_placeholders,
 )
+from infinigen2.util.bpy_compat import set_displacement_method
 from infinigen2.util.camera_projection import adjust_camera_sensor
 
 __all__ = [
@@ -107,7 +108,7 @@ def render_workbench(
         DisplacementMode.REALIZE_MESH,
     ]:
         for material in bpy.data.materials:
-            material.displacement_method = displacement_mode.value
+            set_displacement_method(material, displacement_mode.value)
 
     result = {}
     output_folder = Path(output_folder)

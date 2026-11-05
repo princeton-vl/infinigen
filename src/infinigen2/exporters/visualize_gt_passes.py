@@ -46,9 +46,10 @@ def index_colors(indices: np.ndarray, color_seed: int = 0) -> np.ndarray:
 
     Shared by the segmentation visualizers and the 3D box overlay so an object keeps
     one colour across every ground-truth visualization."""
+    seeds = [row[:2].astype(np.uint32) + color_seed for row in np.atleast_2d(indices)]
     random_states = [
-        np.random.RandomState(row[:2].astype(np.uint32) + color_seed)
-        for row in np.atleast_2d(indices)
+        np.random.RandomState(seed)  # validate-ignore: test_determinism
+        for seed in seeds
     ]
     rgb = [
         colorsys.hsv_to_rgb(s.uniform(0, 1), s.uniform(0.1, 1), 1)

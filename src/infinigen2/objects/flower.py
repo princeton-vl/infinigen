@@ -58,13 +58,13 @@ def _petal_material(
 
 
 def _petal_material_rand(rng: pf.RNG) -> pf.Material:
-    rngs = rng.spawn(4)
+    rng_params, rng_color = rng.spawn(2)
 
-    petal_color = _flower_color_rand(rngs[0])
+    petal_color = _flower_color_rand(rng_color)
 
-    specular = pf.random.clip_gaussian(rngs[1], 0.6, 0.1, 0.3, 0.9)
-    roughness = pf.random.clip_gaussian(rngs[2], 0.4, 0.05, 0.2, 0.6)
-    translucent_amt = pf.random.clip_gaussian(rngs[3], 0.3, 0.05, 0.1, 0.5)
+    specular = pf.random.clip_gaussian(rng_params, 0.6, 0.1, 0.3, 0.9)
+    roughness = pf.random.clip_gaussian(rng_params, 0.4, 0.05, 0.2, 0.6)
+    translucent_amt = pf.random.clip_gaussian(rng_params, 0.3, 0.05, 0.1, 0.5)
 
     return _petal_material(
         color=petal_color,
@@ -92,9 +92,7 @@ def center_material() -> pf.Material:
 
 
 def _flower_material_rand(rng: pf.RNG) -> FlowerMaterials:
-    rngs = rng.spawn(2)
-
-    petal_mat = _petal_material_rand(rngs[0])
+    petal_mat = _petal_material_rand(rng)
     center_mat = center_material()
 
     return FlowerMaterials(petal=petal_mat, center=center_mat)
@@ -373,7 +371,7 @@ def _plant_seed(
 
     curve_value = pf.nodes.math.float_curve(
         value=norm_index_result,
-        curve=np.array([[0.0, 0.0], [0.3159, 0.4469], [1.0, 0.0156]]),
+        curve=np.array([[0.0, 0.03], [0.3159, 0.4469], [1.0, 0.0156]]),
         factor=1.0,
     )
     curve_to_curve_radius = pf.nodes.math.map_range(value=curve_value, to_max=3.0)
@@ -534,6 +532,7 @@ def _flower_geometry(
     return flower_smooth
 
 
+@pf.tracer.generator
 def flower(
     center_rad: float = 0.0156,
     petal_dims: pf.Vector = (0.109, 0.0049, 0.0875),
@@ -563,7 +562,8 @@ def flower(
     )
 
     obj = pf.nodes.to_mesh_object(res)
-    pf.ops.modifier.subdivide_surface(obj, levels=2, _skip_apply=True)
+    obj.item().name = flower.__name__
+    pf.ops.uv.cube_project(obj, uv_name="UVMap")
     return FlowerResult(mesh=obj)
 
 
@@ -605,7 +605,7 @@ def flower_rand(
     wrinkle = pf.random.uniform(rng_geo, 0.003, 0.02)
     curl = pf.random.normal(rng_geo, np.deg2rad(30), np.deg2rad(50))
 
-    res = _flower_geometry(
+    obj = flower(
         center_rad=center_rad,
         petal_dims=petal_dims,
         seed_size=seed_size,
@@ -615,8 +615,6 @@ def flower_rand(
         curl=curl,
         petal_material=petal_mat,
         center_material=center_mat,
-    )
-
-    obj = pf.nodes.to_mesh_object(res)
+    ).mesh
     pf.ops.modifier.subdivide_surface(obj, levels=2, _skip_apply=True)
     return FlowerResult(mesh=obj)

@@ -15,6 +15,8 @@ from infinigen2.shaders.displacements.chip_noise import (
 from infinigen2.shaders.util.coord import space_warp
 
 __all__ = [
+    "masonry_displacement_chip",
+    "masonry_displacement_noise",
     "masonry_displacement_rand",
     "noise_displacement_layer",
     "voronoi_displacement_layer",
@@ -148,47 +150,148 @@ def masonry_displacement_rand(
     layer_2_mask: t.SocketOrVal[float] = 1.0,
     layer_2_height: t.SocketOrVal[float] = 0.01,
 ) -> pf.ProcNode[pf.Vector]:
+    rng, rng_layer_1 = rng.spawn(2)
     if layer_1_clamp_max is None:
         layer_1_clamp_max = pf.random.uniform(rng, 0.015, 9.715)
 
-    layer_1_func = pf.control.choice(
-        rng,
-        [
-            (noise_displacement_layer, 1.0),
-            (_chip_displacement_layer, 1.0),
-        ],
+    masonry_func = pf.control.choice(
+        rng_layer_1,
+        [(masonry_displacement_noise, 1.0), (masonry_displacement_chip, 1.0)],
+    )
+    layer_1_size = pf.random.uniform(rng, 0.09, 0.12)
+    layer_1_detail = pf.random.uniform(rng, 0, 6)
+    layer_1_warp_strength = pf.random.uniform(rng, 1, 2)
+    layer_1_warp_size = pf.random.uniform(rng, 0.25, 1.0)
+    layer_1_warp_detail = pf.random.uniform(rng, 1, 4)
+    layer_2_size = pf.random.uniform(rng, 0.1, 0.2)
+    layer_2_detail = pf.random.uniform(rng, 4, 8)
+    layer_2_warp_size = pf.random.uniform(rng, 0.2, 1.0)
+    layer_2_warp_detail = pf.random.uniform(rng, 1, 4)
+
+    return masonry_func(
+        vector=vector,
+        layer_1_size=layer_1_size,
+        layer_1_detail=layer_1_detail,
+        layer_1_warp_strength=layer_1_warp_strength,
+        layer_1_warp_size=layer_1_warp_size,
+        layer_1_warp_detail=layer_1_warp_detail,
+        layer_1_height=layer_1_height,
+        layer_1_clamp_max=layer_1_clamp_max,
+        layer_2_mask=layer_2_mask,
+        layer_2_size=layer_2_size,
+        layer_2_detail=layer_2_detail,
+        layer_2_warp_size=layer_2_warp_size,
+        layer_2_warp_detail=layer_2_warp_detail,
+        layer_2_height=layer_2_height,
     )
 
-    layer_1_height = layer_1_func(
-        vector=vector,
-        mask=1.0,
-        w=0.0,
-        size=pf.random.uniform(rng, 0.09, 0.12),
-        detail=pf.random.uniform(rng, 0, 6),
-        warp_strength=pf.random.uniform(rng, 1, 2),
-        warp_size=pf.random.uniform(rng, 0.25, 1.0),
-        warp_detail=pf.random.uniform(rng, 1, 4),
-        height=layer_1_height,
-        clamp_min=0.0,
-        clamp_max=layer_1_clamp_max,
-    )
 
-    layer_2_height = noise_displacement_layer(
+def _masonry_layer_2(
+    vector: t.SocketOrVal[pf.Vector],
+    layer_1: pf.ProcNode[float],
+    layer_2_mask: t.SocketOrVal[float],
+    layer_2_size: float,
+    layer_2_detail: float,
+    layer_2_warp_size: float,
+    layer_2_warp_detail: float,
+    layer_2_height: t.SocketOrVal[float],
+) -> pf.ProcNode[pf.Vector]:
+    layer_2 = noise_displacement_layer(
         vector=vector,
-        previous_layer=layer_1_height,
+        previous_layer=layer_1,
         mask=layer_2_mask,
         w=0.0,
-        size=pf.random.uniform(rng, 0.1, 0.2),
-        detail=pf.random.uniform(rng, 4, 8),
+        size=layer_2_size,
+        detail=layer_2_detail,
         warp_strength=1.0,
-        warp_size=pf.random.uniform(rng, 0.2, 1.0),
-        warp_detail=pf.random.uniform(rng, 1, 4),
+        warp_size=layer_2_warp_size,
+        warp_detail=layer_2_warp_detail,
         height=layer_2_height,
         clamp_min=-12.0,
         clamp_max=999.0,
     )
+    return pf.nodes.shader.displacement(height=layer_2, midlevel=0.0)
 
-    return pf.nodes.shader.displacement(
-        height=layer_2_height,
-        midlevel=0.0,
+
+@pf.tracer.generator
+def masonry_displacement_noise(
+    vector: t.SocketOrVal[pf.Vector],
+    layer_1_size: float,
+    layer_1_detail: float,
+    layer_1_warp_strength: float,
+    layer_1_warp_size: float,
+    layer_1_warp_detail: float,
+    layer_1_height: t.SocketOrVal[float],
+    layer_1_clamp_max: t.SocketOrVal[float],
+    layer_2_mask: t.SocketOrVal[float],
+    layer_2_size: float,
+    layer_2_detail: float,
+    layer_2_warp_size: float,
+    layer_2_warp_detail: float,
+    layer_2_height: t.SocketOrVal[float],
+) -> pf.ProcNode[pf.Vector]:
+    layer_1 = noise_displacement_layer(
+        vector=vector,
+        mask=1.0,
+        w=0.0,
+        size=layer_1_size,
+        detail=layer_1_detail,
+        warp_strength=layer_1_warp_strength,
+        warp_size=layer_1_warp_size,
+        warp_detail=layer_1_warp_detail,
+        height=layer_1_height,
+        clamp_min=0.0,
+        clamp_max=layer_1_clamp_max,
+    )
+    return _masonry_layer_2(
+        vector=vector,
+        layer_1=layer_1,
+        layer_2_mask=layer_2_mask,
+        layer_2_size=layer_2_size,
+        layer_2_detail=layer_2_detail,
+        layer_2_warp_size=layer_2_warp_size,
+        layer_2_warp_detail=layer_2_warp_detail,
+        layer_2_height=layer_2_height,
+    )
+
+
+@pf.tracer.generator
+def masonry_displacement_chip(
+    vector: t.SocketOrVal[pf.Vector],
+    layer_1_size: float,
+    layer_1_detail: float,
+    layer_1_warp_strength: float,
+    layer_1_warp_size: float,
+    layer_1_warp_detail: float,
+    layer_1_height: t.SocketOrVal[float],
+    layer_1_clamp_max: t.SocketOrVal[float],
+    layer_2_mask: t.SocketOrVal[float],
+    layer_2_size: float,
+    layer_2_detail: float,
+    layer_2_warp_size: float,
+    layer_2_warp_detail: float,
+    layer_2_height: t.SocketOrVal[float],
+) -> pf.ProcNode[pf.Vector]:
+    layer_1 = _chip_displacement_layer(
+        vector=vector,
+        mask=1.0,
+        w=0.0,
+        size=layer_1_size,
+        detail=layer_1_detail,
+        warp_strength=layer_1_warp_strength,
+        warp_size=layer_1_warp_size,
+        warp_detail=layer_1_warp_detail,
+        height=layer_1_height,
+        clamp_min=0.0,
+        clamp_max=layer_1_clamp_max,
+    )
+    return _masonry_layer_2(
+        vector=vector,
+        layer_1=layer_1,
+        layer_2_mask=layer_2_mask,
+        layer_2_size=layer_2_size,
+        layer_2_detail=layer_2_detail,
+        layer_2_warp_size=layer_2_warp_size,
+        layer_2_warp_detail=layer_2_warp_detail,
+        layer_2_height=layer_2_height,
     )

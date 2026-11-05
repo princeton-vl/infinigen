@@ -15,7 +15,7 @@ from procfunc.nodes.util.bpy_node_info import NodeDataType
 from infinigen2.shaders.functionality_lists import decorative_material_rand
 from infinigen2.util import curve, mesh
 
-__all__ = ["TapResult", "tap_rand"]
+__all__ = ["TapResult", "tap_arc", "tap_curved", "tap_rand", "tap_vessel"]
 
 
 class TapResult(NamedTuple):
@@ -264,11 +264,138 @@ def _vessel_spout(
     return pf.nodes.geo.transform(spout, rotation=rotation)
 
 
-def _finish(geometry: pf.ProcNode[pf.MeshObject]) -> TapResult:
+def _finish(
+    material: pf.Material,
+    base_width: float,
+    base_length: float,
+    base_height: float,
+    base_radius: float,
+    spout_radius: float,
+    spout: pf.ProcNode[pf.MeshObject],
+    hands_length_x: float,
+    hands_length_y: float,
+    bar_handles: bool,
+) -> TapResult:
+    handle_func = _bar_handles if bar_handles else _lever_handles
+    handles = handle_func(hands_length_x, hands_length_y)
+    geometry = _tap_geometry(
+        material,
+        base_width,
+        base_length,
+        base_height,
+        base_radius,
+        spout_radius,
+        handles,
+        spout,
+    )
     geometry = mesh.metric_box_uv(geometry)
     obj = pf.nodes.to_mesh_object(pf.nodes.geo.realize_instances(geometry))
-    obj.item().name = "tap"
     return TapResult(mesh=obj)
+
+
+@pf.tracer.generator
+def tap_arc(
+    material: pf.Material,
+    base_width: float,
+    base_length: float,
+    base_height: float,
+    base_radius: float,
+    spout_height: float,
+    spout_reach: float,
+    spout_drop: float,
+    spout_radius: float,
+    rotation_z: float,
+    hands_length_x: float,
+    hands_length_y: float,
+    bar_handles: bool,
+) -> TapResult:
+    spout = _arc_spout(
+        base_height, spout_height, spout_reach, spout_drop, spout_radius, rotation_z
+    )
+    result = _finish(
+        material,
+        base_width,
+        base_length,
+        base_height,
+        base_radius,
+        spout_radius,
+        spout,
+        hands_length_x,
+        hands_length_y,
+        bar_handles,
+    )
+    result.mesh.item().name = tap_arc.__name__
+    return result
+
+
+@pf.tracer.generator
+def tap_curved(
+    material: pf.Material,
+    base_width: float,
+    base_length: float,
+    base_height: float,
+    base_radius: float,
+    spout_height: float,
+    spout_reach: float,
+    spout_drop: float,
+    spout_radius: float,
+    rotation_z: float,
+    hands_length_x: float,
+    hands_length_y: float,
+    bar_handles: bool,
+) -> TapResult:
+    spout = _curved_spout(
+        base_height, spout_height, spout_reach, spout_drop, spout_radius, rotation_z
+    )
+    result = _finish(
+        material,
+        base_width,
+        base_length,
+        base_height,
+        base_radius,
+        spout_radius,
+        spout,
+        hands_length_x,
+        hands_length_y,
+        bar_handles,
+    )
+    result.mesh.item().name = tap_curved.__name__
+    return result
+
+
+@pf.tracer.generator
+def tap_vessel(
+    material: pf.Material,
+    base_width: float,
+    base_length: float,
+    base_height: float,
+    base_radius: float,
+    spout_height: float,
+    spout_reach: float,
+    spout_drop: float,
+    spout_radius: float,
+    rotation_z: float,
+    hands_length_x: float,
+    hands_length_y: float,
+    bar_handles: bool,
+) -> TapResult:
+    spout = _vessel_spout(
+        base_height, spout_height, spout_reach, spout_drop, spout_radius, rotation_z
+    )
+    result = _finish(
+        material,
+        base_width,
+        base_length,
+        base_height,
+        base_radius,
+        spout_radius,
+        spout,
+        hands_length_x,
+        hands_length_y,
+        bar_handles,
+    )
+    result.mesh.item().name = tap_vessel.__name__
+    return result
 
 
 def _tap_material_rand(
@@ -297,13 +424,13 @@ def _standard_tap_rand(
     hands_length_y: float | None,
 ) -> TapResult:
     rng_spout, rng_handles, rng_dimensions, rng_material = rng.spawn(4)
-    spout_func = pf.control.choice(
+    tap_func = pf.control.choice(
         rng_spout,
-        [(_arc_spout, 1.0), (_curved_spout, 1.0)],
+        [(tap_arc, 1.0), (tap_curved, 1.0)],
     )
-    handle_func = pf.control.choice(
+    bar_handles_fn = pf.control.choice(
         rng_handles,
-        [(_lever_handles, 4.0), (_bar_handles, 1.0)],
+        [(lambda: False, 4.0), (lambda: True, 1.0)],
     )
     material = _tap_material_rand(rng_material, material)
     if base_width is None:
@@ -328,26 +455,22 @@ def _standard_tap_rand(
         hands_length_x = pf.random.uniform(rng_dimensions, 0.75, 1.25)
     if hands_length_y is None:
         hands_length_y = pf.random.uniform(rng_dimensions, 0.95, 1.55)
-    spout = spout_func(
-        base_height,
-        spout_height,
-        spout_reach,
-        spout_drop,
-        spout_radius,
-        rotation_z,
+    bar_handles = bar_handles_fn()
+    return tap_func(
+        material=material,
+        base_width=base_width,
+        base_length=base_length,
+        base_height=base_height,
+        base_radius=base_radius,
+        spout_height=spout_height,
+        spout_reach=spout_reach,
+        spout_drop=spout_drop,
+        spout_radius=spout_radius,
+        rotation_z=rotation_z,
+        hands_length_x=hands_length_x,
+        hands_length_y=hands_length_y,
+        bar_handles=bar_handles,
     )
-    handles = handle_func(hands_length_x, hands_length_y)
-    geometry = _tap_geometry(
-        material,
-        base_width,
-        base_length,
-        base_height,
-        base_radius,
-        spout_radius,
-        handles,
-        spout,
-    )
-    return _finish(geometry)
 
 
 def _vessel_tap_rand(
@@ -366,9 +489,9 @@ def _vessel_tap_rand(
     hands_length_y: float | None,
 ) -> TapResult:
     rng_handles, rng_dimensions, rng_material = rng.spawn(3)
-    handle_func = pf.control.choice(
+    bar_handles_fn = pf.control.choice(
         rng_handles,
-        [(_lever_handles, 4.0), (_bar_handles, 1.0)],
+        [(lambda: False, 4.0), (lambda: True, 1.0)],
     )
     material = _tap_material_rand(rng_material, material)
     if base_width is None:
@@ -393,26 +516,22 @@ def _vessel_tap_rand(
         hands_length_x = pf.random.uniform(rng_dimensions, 0.75, 1.25)
     if hands_length_y is None:
         hands_length_y = pf.random.uniform(rng_dimensions, 0.95, 1.55)
-    spout = _vessel_spout(
-        base_height,
-        spout_height,
-        spout_reach,
-        spout_drop,
-        spout_radius,
-        rotation_z,
+    bar_handles = bar_handles_fn()
+    return tap_vessel(
+        material=material,
+        base_width=base_width,
+        base_length=base_length,
+        base_height=base_height,
+        base_radius=base_radius,
+        spout_height=spout_height,
+        spout_reach=spout_reach,
+        spout_drop=spout_drop,
+        spout_radius=spout_radius,
+        rotation_z=rotation_z,
+        hands_length_x=hands_length_x,
+        hands_length_y=hands_length_y,
+        bar_handles=bar_handles,
     )
-    handles = handle_func(hands_length_x, hands_length_y)
-    geometry = _tap_geometry(
-        material,
-        base_width,
-        base_length,
-        base_height,
-        base_radius,
-        spout_radius,
-        handles,
-        spout,
-    )
-    return _finish(geometry)
 
 
 def tap_rand(

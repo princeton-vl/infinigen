@@ -11,10 +11,41 @@ from procfunc.nodes import types as t
 __all__ = [
     "CurveToMeshWithUvResult",
     "FilletMaskResult",
+    "corner_ring_edges",
     "curve_to_mesh_with_uv",
     "curve_to_noncyclic",
     "fillet_mask",
+    "outline_corner",
 ]
+
+
+@pf.nodes.node_function
+def outline_corner(corner_degrees: t.SocketOrVal[float]) -> pf.ProcNode[bool]:
+    position = pf.nodes.geo.input_position()
+    prev_index = pf.nodes.geo.offset_point_in_curve(offset=-1).point_index
+    next_index = pf.nodes.geo.offset_point_in_curve(offset=1).point_index
+    prev_position = pf.nodes.geo.field_at_index(value=position, index=prev_index)
+    next_position = pf.nodes.geo.field_at_index(value=position, index=next_index)
+    incoming = pf.nodes.math.vector_normalize(position - prev_position)
+    outgoing = pf.nodes.math.vector_normalize(next_position - position)
+    turn_cos = pf.nodes.math.vector_dot_product(a=incoming, b=outgoing)
+    corner_cos = pf.nodes.math.cos(pf.nodes.math.deg_to_rad(corner_degrees))
+    return pf.nodes.func.less_than(a=turn_cos, b=corner_cos)
+
+
+@pf.nodes.node_function
+def corner_ring_edges(
+    ring: t.SocketOrVal[float],
+    is_corner: t.SocketOrVal[float],
+) -> pf.ProcNode[bool]:
+    ends = pf.nodes.geo.input_mesh_edge_vertices()
+    ring_1 = pf.nodes.geo.field_at_index(value=ring, index=ends.vertex_index_1)
+    ring_2 = pf.nodes.geo.field_at_index(value=ring, index=ends.vertex_index_2)
+    corner_1 = pf.nodes.geo.field_at_index(value=is_corner, index=ends.vertex_index_1)
+    corner_2 = pf.nodes.geo.field_at_index(value=is_corner, index=ends.vertex_index_2)
+    same_ring = pf.nodes.math.absolute(ring_1 - ring_2) < 1e-4
+    both_corner = pf.nodes.math.minimum(corner_1, corner_2) > 0.999
+    return pf.nodes.func.boolean_and(same_ring, both_corner)
 
 
 class CurveToMeshWithUvResult(NamedTuple):

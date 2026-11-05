@@ -69,6 +69,10 @@ class InfinigenContext:
     error_mode_finite_geometry: ErrorMode
     """A mesh has non-finite (NaN/Inf) vertex coordinates."""
 
+    error_mode_degenerate_geometry: ErrorMode
+    """A mesh has zero-area faces, zero-length edges, non-manifold edges or
+    inconsistently wound faces."""
+
     error_mode_singular_transform: ErrorMode
     """An object has a singular (zero-scale) world transform, so it renders flat."""
 
@@ -94,6 +98,7 @@ globals = InfinigenContext(
     error_mode_material_normal_input=_mode("material_normal_input", "error"),
     error_mode_material_texture_vector=_mode("material_texture_vector", "error"),
     error_mode_finite_geometry=_mode("finite_geometry", "error"),
+    error_mode_degenerate_geometry=_mode("degenerate_geometry", "warn"),
     error_mode_singular_transform=_mode("singular_transform", "error"),
     error_mode_cycles_shader=_mode("cycles_shader", "error"),
 )

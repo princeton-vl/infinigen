@@ -37,6 +37,13 @@ from infinigen2.exporters.render_error_check.material_nodes import (
     normal_input_used,
     unlinked_texture_vector,
 )
+from infinigen2.exporters.render_error_check.mesh_quality import (
+    DegenerateGeometryError,
+    MeshDefects,
+    assert_geometry_nondegenerate,
+    degenerate_geometry_defects,
+    mesh_defects,
+)
 from infinigen2.exporters.render_error_check.object_transform import (
     SingularTransformError,
     assert_transforms_nonsingular,
@@ -66,9 +73,11 @@ from infinigen2.exporters.render_error_check.uv_coords import (
 __all__ = [
     "AdaptiveSamplingError",
     "CyclesShaderError",
+    "DegenerateGeometryError",
     "DisplacementCoordError",
     "FrameCheckError",
     "HiddenRenderObjectError",
+    "MeshDefects",
     "MaterialNodeError",
     "MissingAttributeError",
     "NonFiniteGeometryError",
@@ -77,8 +86,10 @@ __all__ = [
     "UVCoordError",
     "check_material_uv_coords",
     "count_material_nodes",
+    "degenerate_geometry_defects",
     "detect_cycles_errors",
     "hidden_render_objects",
+    "mesh_defects",
     "missing_attribute_issues",
     "nonfinite_vertex_counts",
     "normal_input_used",

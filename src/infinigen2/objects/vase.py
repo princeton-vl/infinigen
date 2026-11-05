@@ -337,6 +337,7 @@ def vase_body(
     return geo
 
 
+@pf.tracer.generator
 def vase(
     u_resolution: int = 48,
     v_resolution: int = 24,
@@ -354,6 +355,7 @@ def vase(
     foot_height: float = 0.05,
     material: pf.Material | None = None,
     thickness: float = 0.0075,
+    twist: float = 0.0,
 ) -> VaseResult:
     if material is None:
         material = pf.Material(surface=pf.nodes.shader.principled_bsdf())
@@ -373,23 +375,24 @@ def vase(
         shoulder_thickness=shoulder_thickness,
         foot_scale=foot_scale,
         foot_height=foot_height,
+        twist=twist,
     )
     geo = pf.nodes.geo.set_material(geo, material)
     obj = pf.nodes.to_mesh_object(geo)
+    obj.item().name = vase.__name__
     mesh_util.metric_cylinder_uv(obj)
     pf.ops.modifier.solidify(obj, thickness=thickness)
-    pf.ops.modifier.subdivide_surface(obj, levels=3, _skip_apply=True)
     return VaseResult(mesh=obj)
 
 
 def vase_material_rand(rng: pf.RNG, vec) -> pf.Material:
     def vase_tile(rng, vector: pf.Vector) -> pf.Material:
-        rng_grout_disp, rng_grout, rng_scale, rng_tile = rng.spawn(4)
-        grout_displacement = pf.random.uniform(rng_grout_disp, 0, 0.002)
+        rng_params, rng_grout, rng_tile = rng.spawn(3)
+        grout_displacement = pf.random.uniform(rng_params, 0, 0.002)
         grout = brick_concrete.brick_concrete_grout_rand(
             rng_grout, vector, displacement_additional_height=-grout_displacement
         )
-        scale = pf.random.uniform(rng_scale, 15, 25)
+        scale = pf.random.uniform(rng_params, 15, 25)
         return tiles.tile_indoor_wall_rand(rng_tile, vector, grout=grout, scale=scale)
 
     def vase_hammered(rng, _vector: pf.Vector) -> pf.Material:
@@ -415,17 +418,14 @@ def vase_material_rand(rng: pf.RNG, vec) -> pf.Material:
 
 
 def vase_rand(rng: pf.RNG) -> VaseResult:
-    rng, rng_radius_choice, rng_radius_val, rng_mat = rng.spawn(4)
+    rng, rng_mat = rng.spawn(2)
     z = pf.random.uniform(rng, 0.17, 0.5)
     x = z * pf.random.uniform(rng, 0.3, 0.6)
 
     v_resolution = 24
     neck_scale = pf.random.uniform(rng, 0.2, 0.8)
 
-    profile_inner_radius = pf.control.choice(
-        rng_radius_choice,
-        [(1.0, 0.5), (pf.random.uniform(rng_radius_val, 0.8, 1.0), 0.5)],
-    )
+    profile_inner_radius = 1.0 - 0.2 * pf.random.uniform(rng, 0.0, 1.0) ** 2
     profile_star_points = pf.random.randint(rng, 16, 33)
 
     # two cage samples per flute is the coarsest ring that still resolves the star
@@ -439,7 +439,11 @@ def vase_rand(rng: pf.RNG) -> VaseResult:
     foot_scale = pf.random.uniform(rng, 0.4, 0.6)
     foot_height = pf.random.uniform(rng, 0.01, 0.1)
 
-    geo = vase_body(
+    uv = pf.nodes.shader.coord().uv
+    mat_result = vase_material_rand(rng_mat, uv)
+    thickness = pf.random.uniform(rng, 0.005, 0.01)
+
+    obj = vase(
         u_resolution=u_resolution,
         v_resolution=v_resolution,
         height=z,
@@ -454,20 +458,10 @@ def vase_rand(rng: pf.RNG) -> VaseResult:
         shoulder_thickness=shoulder_thickness,
         foot_scale=foot_scale,
         foot_height=foot_height,
-    )
-
-    uv = pf.nodes.shader.coord().uv
-    mat_result = vase_material_rand(rng_mat, uv)
-    geo = pf.nodes.geo.set_material(geo, mat_result)
-
-    obj = pf.nodes.to_mesh_object(geo)
-    mesh_util.metric_cylinder_uv(obj)
-    obj.item().name = vase_rand.__name__
-
-    thickness = pf.random.uniform(rng, 0.005, 0.01)
-    pf.ops.modifier.solidify(obj, thickness=thickness)
+        material=mat_result,
+        thickness=thickness,
+    ).mesh
     pf.ops.modifier.subdivide_surface(obj, levels=3, _skip_apply=True)
-
     return VaseResult(mesh=obj)
 
 
@@ -523,7 +517,13 @@ def cup_rand(rng: pf.RNG, material: pf.Material | None = None) -> VaseResult:
     if material is None:
         material = cup_material_rand(rng_material, pf.nodes.shader.coord().uv)
 
-    geo = vase_body(
+    neck_position = pf.random.uniform(rng_neck_position, 0.85, 0.95)
+    shoulder_position = pf.random.uniform(rng_shoulder, 0.1, 0.3)
+    shoulder_thickness = pf.random.uniform(rng_shoulder_thickness, 0.05, 0.15)
+    foot_scale = pf.random.uniform(rng_foot, 0.6, 1.0)
+    foot_height = pf.random.uniform(rng_foot_height, 0.01, 0.08)
+    thickness = pf.random.uniform(rng_thickness, 0.002, 0.004)
+    obj = vase(
         u_resolution=4 * ridges,
         v_resolution=16,
         height=height,
@@ -532,19 +532,15 @@ def cup_rand(rng: pf.RNG, material: pf.Material | None = None) -> VaseResult:
         profile_star_points=ridges,
         top_scale=top_scale,
         neck_mid_position=0.5,
-        neck_position=pf.random.uniform(rng_neck_position, 0.85, 0.95),
+        neck_position=neck_position,
         neck_scale=top_scale,
-        shoulder_position=pf.random.uniform(rng_shoulder, 0.1, 0.3),
-        shoulder_thickness=pf.random.uniform(rng_shoulder_thickness, 0.05, 0.15),
-        foot_scale=pf.random.uniform(rng_foot, 0.6, 1.0),
-        foot_height=pf.random.uniform(rng_foot_height, 0.01, 0.08),
+        shoulder_position=shoulder_position,
+        shoulder_thickness=shoulder_thickness,
+        foot_scale=foot_scale,
+        foot_height=foot_height,
+        material=material,
+        thickness=thickness,
         twist=twist,
-    )
-    geo = pf.nodes.geo.set_material(geo, material)
-    obj = pf.nodes.to_mesh_object(geo)
-    mesh_util.metric_cylinder_uv(obj)
-    obj.item().name = cup_rand.__name__
-    thickness = pf.random.uniform(rng_thickness, 0.002, 0.004)
-    pf.ops.modifier.solidify(obj, thickness=thickness)
+    ).mesh
     pf.ops.modifier.subdivide_surface(obj, levels=1, _skip_apply=True)
     return VaseResult(mesh=obj)

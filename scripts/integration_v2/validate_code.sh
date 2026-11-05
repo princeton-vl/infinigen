@@ -3,27 +3,17 @@
 set -euo pipefail
 
 # Commits from dead/force-overwritten lineages that must never be merged.
-# One "<full-sha> <reason>" per line.
-BANNED=$(cat <<'EOF'
-a81a0eb9254e4d0125f72aa507ae6f8d19492a16 develop_materials (do not branch off; rebase onto develop2)
-d7bf1f6ccbf011b5b8590cec6b281ec55a9f29f9 pre-msg-rewrite develop2 (force-overwritten; rebase onto current develop2)
-7148e0bad3da2eddce21bda378bef73270f9a7a7 Claude co-author trailer on old main lineage (dropped; rebase onto current develop2)
-c0e2a0c1496cd753ca48d7b66609252d79fe3e7c stale integration-render gate (superseded by squashed 29facb4e4 on develop; rebase to drop)
-6601e9b7a4f31bccbf6c79db1c634f7be5288641 stale gate coverage-flush follow-up (superseded on develop; rebase to drop)
-63dee4d441fcbb8db9af12739a43a62a443e13c1 unapproved Blender add-on bindings pushed directly to develop (removed by history rewrite; rebase to drop)
-7b515778cdd359df63ead6a8f651d9af2bd73422 pre-a3 develop lineage (rewritten onto main to strip agent trailers; rebase onto current develop)
-EOF
-)
+BANNED_FILE="$(dirname "$0")/banned_commits.txt"
 
 history=$(git rev-list HEAD)
 failed=0
-while read -r sha reason; do
+while read -r sha; do
   [ -n "$sha" ] || continue
   if grep -qx "$sha" <<< "$history"; then
-    echo "::error::Banned commit $sha is in this PR's history: $reason"
+    echo "::error::Banned commit $sha is in this PR's history"
     failed=1
   fi
-done <<< "$BANNED"
+done < "$BANNED_FILE"
 
 if [ "$failed" -ne 0 ]; then
   echo "This branch contains a banned commit. Rebase it onto the current develop and drop the stale lineage."
