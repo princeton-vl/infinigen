@@ -40,7 +40,6 @@ from infinigen2.exporters.render_error_check import (
     assert_transforms_nonsingular,
     assert_uv_coords_satisfied,
     check_material_uv_coords,
-    coincident_face_counts,
     configure_sample_count_output,
     count_material_nodes,
     degenerate_geometry_defects,
@@ -529,33 +528,6 @@ def test_flipped_face_flagged():
     defects = degenerate_geometry_defects([mo])[mo.item().name]
     assert defects.flipped_edges == 2
     assert defects.nonmanifold_edges == 0
-
-
-def _stacked_quads(gap: float, flip_top: bool, top_material: int) -> pf.MeshObject:
-    verts = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
-    verts += [(x + 0.25, y, gap) for x, y, _ in verts]
-    top = (7, 6, 5, 4) if flip_top else (4, 5, 6, 7)
-    mo = _pydata_mesh(verts, [(0, 1, 2, 3), top])
-    mo.item().data.polygons[1].material_index = top_material
-    return mo
-
-
-def test_coincident_faces_flagged():
-    mo = _stacked_quads(gap=1e-5, flip_top=False, top_material=1)
-    assert coincident_face_counts([mo])[mo.item().name] > 0
-    assert degenerate_geometry_defects([mo]) == {}
-    with context.override_globals(error_mode_degenerate_geometry="error"):
-        assert_geometry_nondegenerate([mo])
-
-
-@pytest.mark.parametrize(
-    "gap, flip_top, top_material",
-    [(1e-5, True, 1), (0.002, False, 1), (0.0, False, 0)],
-    ids=["contact", "thin_gap", "same_material_flush"],
-)
-def test_coincident_faces_allowed(gap: float, flip_top: bool, top_material: int):
-    mo = _stacked_quads(gap=gap, flip_top=flip_top, top_material=top_material)
-    assert coincident_face_counts([mo]) == {}
 
 
 def test_singular_transform_flagged():

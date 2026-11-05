@@ -41,7 +41,6 @@ from infinigen2.exporters.render_error_check.mesh_quality import (
     DegenerateGeometryError,
     MeshDefects,
     assert_geometry_nondegenerate,
-    coincident_face_counts,
     degenerate_geometry_defects,
     mesh_defects,
 )
@@ -86,7 +85,6 @@ __all__ = [
     "SingularTransformError",
     "UVCoordError",
     "check_material_uv_coords",
-    "coincident_face_counts",
     "count_material_nodes",
     "degenerate_geometry_defects",
     "detect_cycles_errors",

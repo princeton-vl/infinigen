@@ -2145,21 +2145,22 @@ def chair_dining_rand(rng: pf.RNG, dimensions: pf.Vector | None = None) -> Chair
     slant = pf.random.clip_gaussian(rng, 0.23, 0.067, 0.0, 0.4)
     bend_frac = pf.random.clip_gaussian(rng, 0.15, 0.35, -0.4, 1.2)
     seat_round = pf.random.uniform(rng_seat, 0.05, 0.49) * thickness
+    back_bend = bend_frac * 0.15 * back_height * -1.0
     seat = back_fn(
         rng_back,
-        dimensions,
-        thickness,
-        front_bow,
-        back_bow,
-        front_dip,
-        seat_material,
-        back_built,
-        back_sink,
-        slant,
-        bend_frac * 0.15 * back_height * -1.0,
-        seat_round,
-        backrest_material,
-        slat_material,
+        dimensions=dimensions,
+        thickness=thickness,
+        front_bow=front_bow,
+        back_bow=back_bow,
+        front_dip=front_dip,
+        seat_material=seat_material,
+        back_height=back_built,
+        back_sink=back_sink,
+        slant=slant,
+        back_bend=back_bend,
+        seat_round=seat_round,
+        detail_material=backrest_material,
+        slat_material=slat_material,
     ).mesh
 
     leg_spread = pf.random.uniform(rng, 0.8, 0.95)
@@ -2267,21 +2268,22 @@ def chair_bench_rand(rng: pf.RNG, dimensions: pf.Vector | None = None) -> ChairR
     slant = pf.random.clip_gaussian(rng, 0.23, 0.067, 0.0, 0.4)
     bend_frac = pf.random.clip_gaussian(rng, 0.15, 0.35, -0.4, 1.2)
     seat_round = pf.random.uniform(rng_seat, 0.05, 0.49) * thickness
+    back_bend = bend_frac * 0.15 * back_height * -1.0
     seat = back_fn(
         rng_back,
-        dimensions,
-        thickness,
-        front_bow,
-        back_bow,
-        front_dip,
-        seat_material,
-        back_built,
-        back_sink,
-        slant,
-        bend_frac * 0.15 * back_height * -1.0,
-        seat_round,
-        backrest_material,
-        slat_material,
+        dimensions=dimensions,
+        thickness=thickness,
+        front_bow=front_bow,
+        back_bow=back_bow,
+        front_dip=front_dip,
+        seat_material=seat_material,
+        back_height=back_built,
+        back_sink=back_sink,
+        slant=slant,
+        back_bend=back_bend,
+        seat_round=seat_round,
+        detail_material=backrest_material,
+        slat_material=slat_material,
     ).mesh
 
     # a long span needs its legs near the ends, so spread further than a chair does

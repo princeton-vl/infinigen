@@ -105,6 +105,7 @@ infinigen2 = "infinigen2.generate:main"
 # Version comes from the latest release tag; pre2/* and other non-release tags are ignored
 [tool.setuptools_scm]
 tag_regex = '^v?(?P<version>\d+(\.\d+)*((a|b|rc)\d+)?)$'
+fallback_version = "0.0.0"
 
 [tool.setuptools_scm.scm.git]
 describe_command = ["git", "describe", "--dirty", "--tags", "--long", "--abbrev=40", "--match", "[0-9]*", "--match", "v[0-9]*"]

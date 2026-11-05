@@ -46,7 +46,7 @@ def eevee_engine_name() -> str:
 
 
 def scene_compositor_node_tree(scene: bpy.types.Scene) -> bpy.types.NodeTree:
-    if bpy_version() < (5, 2):
+    if bpy_version() < (5, 0):
         scene.use_nodes = True
         return scene.node_tree
     if scene.compositing_node_group is None:

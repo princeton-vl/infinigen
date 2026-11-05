@@ -146,7 +146,8 @@ def _knife_edge_cushion_geometry(
     top = pf.nodes.geo.store_named_attribute(
         geometry=top,
         name="UVMap",
-        value=pf.nodes.math.combine_xyz(x=x, y=y),
+        # fields re-evaluate after set_position, so this reads the moved x/y
+        value=pf.nodes.math.combine_xyz(x=position.x, y=position.y),
         domain="CORNER",
         data_type="FLOAT2",
     )

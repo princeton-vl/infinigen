@@ -9,7 +9,6 @@ from typing import NamedTuple
 import bpy
 import numpy as np
 import procfunc as pf
-from mathutils.bvhtree import BVHTree
 
 from infinigen2 import context
 from infinigen2.exporters.render_error_check.util import (
@@ -21,9 +20,6 @@ logger = logging.getLogger(__name__)
 
 MIN_EDGE_LENGTH = 1e-6
 MIN_FACE_AREA = MIN_EDGE_LENGTH**2
-COINCIDENT_DISTANCE = 1e-4
-COINCIDENT_PARALLEL_DOT = 0.999
-COINCIDENT_LATERAL = 1e-5
 
 
 class DegenerateGeometryError(ValueError):
@@ -43,48 +39,6 @@ def _foreach(
     arr = np.empty(len(collection) * width, dtype=dtype)
     collection.foreach_get(attr, arr)
     return arr.reshape(-1, width) if width > 1 else arr
-
-
-def _nearby_hits(tree: BVHTree, centroids: np.ndarray) -> np.ndarray:
-    rows = []
-    for i, point in enumerate(centroids):
-        for location, normal, j, _ in tree.find_nearest_range(
-            point, COINCIDENT_DISTANCE
-        ):
-            rows.append((i, j, *location, *normal))
-    return np.array(rows, dtype=np.float64).reshape(-1, 8)
-
-
-def coincident_triangle_count(mesh: bpy.types.Mesh) -> int:
-    mesh.calc_loop_triangles()
-    co = _foreach(mesh.vertices, "co", np.float64, 3)
-    # collapsed triangles are counted as zero-area faces; left in, they all hit each other
-    keep = _foreach(mesh.loop_triangles, "area", np.float64, 1) >= MIN_FACE_AREA
-    tris = _foreach(mesh.loop_triangles, "vertices", np.int64, 3)[keep]
-    normals = _foreach(mesh.loop_triangles, "normal", np.float64, 3)[keep]
-    materials = _foreach(mesh.loop_triangles, "material_index", np.int64, 1)[keep]
-    centroids = co[tris].mean(axis=1)
-    co_list = co.tolist()
-
-    # only cross-material pairs z-fight; querying per material skips dense same-material neighbours
-    fighting = np.zeros(len(tris), dtype=bool)
-    for material in np.unique(materials):
-        own = np.flatnonzero(materials == material)
-        others = np.flatnonzero(materials != material)
-        tree = BVHTree.FromPolygons(co_list, tris[own].tolist(), epsilon=0.0)
-        hits = _nearby_hits(tree, centroids[others])
-        i = others[hits[:, 0].astype(np.int64)]
-        j = own[hits[:, 1].astype(np.int64)]
-        offset = centroids[i] - hits[:, 2:5]
-        perpendicular = np.einsum("ij,ij->i", offset, hits[:, 5:8])
-        lateral_sq = np.einsum("ij,ij->i", offset, offset) - perpendicular**2
-        shares_vertex = (tris[i][:, :, None] == tris[j][:, None, :]).any(axis=(1, 2))
-        parallel = (
-            np.einsum("ij,ij->i", normals[i], normals[j]) > COINCIDENT_PARALLEL_DOT
-        )
-        coincident = ~shares_vertex & parallel & (lateral_sq < COINCIDENT_LATERAL**2)
-        fighting[i[coincident]] = True
-    return int(np.count_nonzero(fighting))
 
 
 def mesh_defects(mesh: bpy.types.Mesh) -> MeshDefects:
@@ -134,16 +88,3 @@ def assert_geometry_nondegenerate(objects: list[pf.MeshObject] | None = None) ->
         context.raise_or_warn(
             context.globals.error_mode_degenerate_geometry, error, logger
         )
-
-
-def coincident_face_counts(
-    objects: list[pf.MeshObject] | None = None,
-) -> dict[str, int]:
-    found = {}
-    for obj in context_meshes(objects):
-        if obj.type != "MESH" or len(obj.data.polygons) == 0:
-            continue
-        count = coincident_triangle_count(obj.data)
-        if count:
-            found[obj.name] = count
-    return found
