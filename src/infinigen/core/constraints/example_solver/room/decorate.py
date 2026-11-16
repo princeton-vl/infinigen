@@ -7,6 +7,7 @@
 # - Karhan Kayan: fix constants
 
 import importlib
+import inspect
 import logging
 import os
 from collections import defaultdict
@@ -220,6 +221,12 @@ def room_walls(walls: list[bpy.types.Object], constants: RoomConstants, n_walls=
     for wall_fn in set(wall_fns):
         shape = np.random.choice(["square", "rectangle", "hexagon"])
         kwargs = dict(vertical=True, alternating=False, shape=shape)
+        # Only pass tile kwargs to generators that accept them; several wall
+        # materials (e.g. Concrete, Ceramic, Brick) define generate(self) with
+        # no **kwargs and would otherwise raise TypeError.
+        params = inspect.signature(wall_fn.generate).parameters.values()
+        if not any(p.kind == inspect.Parameter.VAR_KEYWORD for p in params):
+            kwargs = {}
         rooms_ = [o for o, w in zip(walls, wall_fns) if w == wall_fn]
         indices = np.random.randint(0, n_walls, len(rooms_))
         for i in range(n_walls):
@@ -227,8 +234,6 @@ def room_walls(walls: list[bpy.types.Object], constants: RoomConstants, n_walls=
             if wall_fn.__class__.__name__ == "Plaster":
                 for r in rooms__:
                     unwrap_normal(r, selection=None)
-            if wall_fn.__class__.__name__ == "Brick":
-                kwargs = {}
             surface.assign_material(rooms__, wall_fn(**kwargs))
 
     for w in walls:
